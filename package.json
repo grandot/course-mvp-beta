@@ -4,6 +4,7 @@
   "description": "IntentOS Course MVP - 三層語義架構系統",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/index.js",
     "dev": "node src/index.js",
     "test": "jest --passWithNoTests",
     "lint": "eslint src/ --ext .js || true",
