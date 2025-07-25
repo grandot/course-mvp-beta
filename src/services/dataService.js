@@ -5,7 +5,8 @@
  * Phase 4: Firebase 實現（持久化存儲）
  */
 const TimeService = require('./timeService');
-const FirebaseService = require('../internal/firebaseService');
+// 條件式加載 FirebaseService - 只在生產環境需要時載入
+let FirebaseService = null;
 
 class DataService {
   // Firebase 集合名稱
@@ -40,6 +41,16 @@ class DataService {
            process.env.FIREBASE_PROJECT_ID === 'test-project' ||
            !process.env.FIREBASE_PRIVATE_KEY ||
            process.env.FIREBASE_PRIVATE_KEY === 'test-private-key';
+  }
+
+  /**
+   * 延遲加載 FirebaseService（只在生產環境需要時）
+   */
+  static getFirebaseService() {
+    if (!FirebaseService) {
+      FirebaseService = require('../internal/firebaseService');
+    }
+    return FirebaseService;
   }
 
   /**
@@ -89,7 +100,8 @@ class DataService {
 
     // 生產環境使用 Firebase
     try {
-      const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSES, course);
+      const firebaseService = this.getFirebaseService();
+      const result = await firebaseService.createDocument(this.COLLECTIONS.COURSES, course);
       
       return {
         success: true,
@@ -134,7 +146,8 @@ class DataService {
     // 生產環境使用 Firebase
     try {
       const queryFilters = { student_id: userId, ...filters };
-      const courses = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, queryFilters);
+      const firebaseService = this.getFirebaseService();
+      const courses = await firebaseService.queryDocuments(this.COLLECTIONS.COURSES, queryFilters);
       
       return this.applyFilters(courses, filters);
     } catch (error) {
@@ -309,7 +322,8 @@ class DataService {
 
     // 生產環境使用 Firebase
     try {
-      const result = await FirebaseService.createDocument(this.COLLECTIONS.TOKEN_USAGE, usage);
+      const firebaseService = this.getFirebaseService();
+      const result = await firebaseService.createDocument(this.COLLECTIONS.TOKEN_USAGE, usage);
       
       return {
         success: true,
