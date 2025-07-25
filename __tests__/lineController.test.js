@@ -60,7 +60,7 @@ describe('LineController', () => {
 
     test('should reject invalid signature', () => {
       const body = '{"test": "data"}';
-      const invalidSignature = 'invalid-hash';
+      const invalidSignature = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ==';
       
       const result = LineController.verifySignature(invalidSignature, body);
       expect(result).toBe(false);
@@ -76,7 +76,7 @@ describe('LineController', () => {
     test('should reject when missing channel secret', () => {
       delete process.env.LINE_CHANNEL_SECRET;
       const body = '{"test": "data"}';
-      const signature = 'some-hash';
+      const signature = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ==';
       
       const result = LineController.verifySignature(signature, body);
       expect(result).toBe(false);
@@ -342,7 +342,7 @@ describe('LineController', () => {
     });
 
     test('should reject invalid signature', async () => {
-      req.get.mockReturnValue('invalid-signature');
+      req.get.mockReturnValue('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ==');
 
       await LineController.webhook(req, res);
 
