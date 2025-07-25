@@ -45,7 +45,7 @@ class SemanticService {
             course_name: entities.course_name,
             location: entities.location,
             teacher: entities.teacher,
-            timeInfo: processedTimeInfo
+            timeInfo: processedTimeInfo,
           },
           context,
           analysis_time: Date.now(),
@@ -84,7 +84,7 @@ class SemanticService {
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
             // ✅ 使用統一處理的時間信息
-            timeInfo: processedTimeInfo
+            timeInfo: processedTimeInfo,
           },
           context,
           reasoning: analysis.reasoning,
@@ -103,7 +103,7 @@ class SemanticService {
           location: entities.location,
           teacher: entities.teacher,
           // ✅ 使用統一處理的時間信息
-          timeInfo: processedTimeInfo
+          timeInfo: processedTimeInfo,
         },
         context,
         openai_error: openaiResult.error,
@@ -122,7 +122,7 @@ class SemanticService {
           course_name: null,
           location: null,
           teacher: null,
-          timeInfo: null
+          timeInfo: null,
         },
         context,
         analysis_time: Date.now(),
@@ -209,9 +209,9 @@ class SemanticService {
 
     try {
       const timeInfo = await this.extractTimeInfo(text);
-      
+
       // 使用 TimeService 統一創建時間信息對象
-      return timeInfo?.parsed_time 
+      return timeInfo?.parsed_time
         ? TimeService.createTimeInfo(timeInfo.parsed_time)
         : null;
     } catch (error) {

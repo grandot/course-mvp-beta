@@ -60,20 +60,20 @@ class TimeService {
    */
   static formatForDisplay(isoTimeOrDate) {
     if (!isoTimeOrDate) return null;
-    
-    const date = typeof isoTimeOrDate === 'string' 
-      ? new Date(isoTimeOrDate) 
+
+    const date = typeof isoTimeOrDate === 'string'
+      ? new Date(isoTimeOrDate)
       : isoTimeOrDate;
-    
-    if (isNaN(date.getTime())) return null;
-    
+
+    if (Number.isNaN(date.getTime())) return null;
+
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    
+
     return `${month}/${day} ${displayHours}:${minutes} ${ampm}`;
   }
 
@@ -84,13 +84,13 @@ class TimeService {
    */
   static formatForStorage(isoTimeOrDate) {
     if (!isoTimeOrDate) return null;
-    
-    const date = typeof isoTimeOrDate === 'string' 
-      ? new Date(isoTimeOrDate) 
+
+    const date = typeof isoTimeOrDate === 'string'
+      ? new Date(isoTimeOrDate)
       : isoTimeOrDate;
-    
-    if (isNaN(date.getTime())) return null;
-    
+
+    if (Number.isNaN(date.getTime())) return null;
+
     return date.toISOString().split('T')[0];
   }
 
@@ -101,18 +101,18 @@ class TimeService {
    */
   static createTimeInfo(parsedTime) {
     if (!parsedTime) return null;
-    
-    const date = typeof parsedTime === 'string' 
-      ? new Date(parsedTime) 
+
+    const date = typeof parsedTime === 'string'
+      ? new Date(parsedTime)
       : parsedTime;
-    
-    if (isNaN(date.getTime())) return null;
-    
+
+    if (Number.isNaN(date.getTime())) return null;
+
     return {
       display: this.formatForDisplay(date),
       date: this.formatForStorage(date),
       raw: typeof parsedTime === 'string' ? parsedTime : date.toISOString(),
-      timestamp: date.getTime()
+      timestamp: date.getTime(),
     };
   }
 
@@ -123,24 +123,24 @@ class TimeService {
    */
   static validateTimeInfo(timeInfo) {
     if (!timeInfo) return true; // null 是有效的
-    
+
     if (typeof timeInfo !== 'object') return false;
-    
+
     const requiredFields = ['display', 'date', 'raw'];
-    const hasAllFields = requiredFields.every(field => field in timeInfo);
-    
+    const hasAllFields = requiredFields.every((field) => field in timeInfo);
+
     if (!hasAllFields) return false;
-    
+
     // 驗證 display 格式 (MM/DD HH:MM AM/PM)
     if (timeInfo.display && !timeInfo.display.match(/^\d{2}\/\d{2} \d{1,2}:\d{2} (AM|PM)$/)) {
       return false;
     }
-    
+
     // 驗證 date 格式 (YYYY-MM-DD)
     if (timeInfo.date && !timeInfo.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
       return false;
     }
-    
+
     return true;
   }
 

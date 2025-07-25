@@ -105,7 +105,7 @@ class LineController {
 
       // ✅ 使用 TaskService 統一處理所有業務邏輯
       const result = await TaskService.executeIntent(intent, entities, userId);
-      
+
       console.log('TaskService execution result:', JSON.stringify(result, null, 2));
 
       console.log('Final handling result:', JSON.stringify({
@@ -123,11 +123,12 @@ class LineController {
           replyMessage = result.message || '處理時發生錯誤，請稍後再試';
         } else {
           switch (intent) {
-            case 'query_schedule':
+            case 'query_schedule': {
               // TaskService.handleQuerySchedule 返回 { success: true, courses: [...] }
               const courses = result.courses || [];
               replyMessage = lineService.formatCourseResponse(courses, intent);
               break;
+            }
             case 'record_course':
               replyMessage = result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗');
               break;
