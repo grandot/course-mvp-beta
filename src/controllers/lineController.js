@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const semanticService = require('../services/semanticService');
 const courseService = require('../services/courseService');
 const TimeService = require('../services/timeService');
+const LineService = require('../internal/lineService');
 
 class LineController {
   /**
@@ -79,11 +80,12 @@ class LineController {
    * @returns {Promise<Object>} 處理結果
    */
   static async handleTextMessage(event) {
-    const { message, source } = event;
+    const { message, source, replyToken } = event;
     const { userId } = source;
     const userMessage = message.text;
 
     console.log(`Received message from ${userId}: ${userMessage}`);
+    console.log(`Reply token: ${replyToken}`);
 
     try {
       // 語義分析
@@ -179,6 +181,42 @@ class LineController {
         confidence,
         result,
       }, null, 2));
+
+      // 發送回覆給 LINE 用戶
+      if (event.replyToken) {
+        let replyMessage;
+        
+        if (result.success === false) {
+          replyMessage = result.message || '處理時發生錯誤，請稍後再試';
+        } else {
+          switch (intent) {
+            case 'query_schedule':
+              replyMessage = LineService.formatCourseResponse(result || [], intent);
+              break;
+            case 'record_course':
+              replyMessage = result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗');
+              break;
+            case 'cancel_course':
+              replyMessage = result.success ? '✅ 課程已成功取消！' : (result.message || '取消課程失敗');
+              break;
+            default:
+              replyMessage = '✅ 已收到您的訊息，正在處理中...';
+          }
+        }
+        
+        console.log('Sending reply:', replyMessage);
+        
+        const replyResult = await LineService.replyMessage(event.replyToken, replyMessage);
+        console.log('Reply result:', replyResult);
+        
+        return {
+          success: true,
+          intent,
+          confidence,
+          result,
+          reply: replyResult,
+        };
+      }
 
       return {
         success: true,
