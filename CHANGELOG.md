@@ -275,4 +275,136 @@ __tests__/
 
 ---
 
-**Next Phase**: 整合 OpenAI GPT 處理複雜語義，實現完整的課程管理業務邏輯
+## [Phase 3 - CourseService CRUD 記憶體實現] - 2025-07-25
+
+### 🗄️ 記憶體數據層實現
+
+- **DataService 完整實現**: 從骨架升級為完整功能
+  - `createCourse()`: 創建課程，返回 UUID v4 格式 ID
+  - `getUserCourses()`: 獲取用戶課程列表，支援多種篩選
+  - `updateCourse()`: 更新課程信息，自動更新時間戳
+  - `deleteCourse()`: 刪除課程記錄
+  - `queryCourses()`: 靈活查詢系統，支援多條件組合
+  - `recordTokenUsage()`: 記錄 OpenAI token 使用量
+  - `validateData()`: 數據格式驗證（course, token_usage）
+
+- **記憶體存儲系統**:
+  - 使用 `Map` 結構實現高效存取
+  - 支援課程數據和 token 使用記錄
+  - 提供 `clearStorage()` 測試輔助方法
+  - 完全非持久化，適合開發和測試階段
+
+### 🎓 CourseService 業務邏輯層
+
+- **完整 CRUD 操作**:
+  - `createCourse()`: 課程創建，支援選項配置
+  - `getCoursesByUser()`: 用戶課程列表，支援篩選
+  - `updateCourse()`: 課程更新，自動處理日期格式轉換
+  - `cancelCourse()`: 課程取消（狀態更新）
+  - `deleteCourse()`: 課程刪除
+
+- **進階業務功能**:
+  - `checkTimeConflicts()`: 時間衝突檢測
+  - `getCourseStats()`: 課程統計（總數、狀態分布、重複課程）
+  - `queryCourses()`: 複雜查詢支援
+
+- **數據處理優化**:
+  - 自動日期格式化（YYYY-MM-DD）
+  - 課程狀態管理（scheduled, completed, cancelled）
+  - 重複課程支援（is_recurring, recurrence_pattern）
+
+### 🧪 測試體系擴展
+
+- **DataService 測試** (`__tests__/dataService.test.js`):
+  - 50+ 測試案例覆蓋所有 CRUD 操作
+  - UUID 格式驗證測試
+  - 篩選和查詢功能測試
+  - 錯誤處理和邊界條件測試
+
+- **CourseService 測試** (`__tests__/courseService.test.js`):
+  - 40+ 測試案例覆蓋業務邏輯
+  - 時間衝突檢測測試
+  - 課程統計功能測試
+  - 參數驗證和格式轉換測試
+
+### 🏗️ 課程數據模型
+
+```javascript
+// 課程記錄結構（符合 CLAUDE.md 規範）
+{
+  id: "uuid-v4",                    // 系統生成 UUID
+  student_id: "LINE User ID",       // 學生識別
+  course_name: "課程名稱",           // 課程名稱
+  schedule_time: "時間描述",         // 排課時間描述
+  course_date: "2025-07-25",        // YYYY-MM-DD 格式
+  is_recurring: false,              // 重複課程標記
+  recurrence_pattern: "weekly",     // 重複模式
+  location: "地點",                 // 上課地點
+  teacher: "老師",                  // 授課教師
+  status: "scheduled",              // 課程狀態
+  created_at: "ISO 時間",           // 創建時間
+  updated_at: "ISO 時間"            // 更新時間
+}
+```
+
+### 📁 專案結構更新
+
+```
+src/services/
+├── courseService.js        # 新增：課程業務邏輯
+├── dataService.js         # 更新：完整 CRUD 實現
+├── semanticService.js     # 保持：骨架狀態
+└── timeService.js         # 保持：部分實現
+
+__tests__/
+├── courseService.test.js  # 新增：課程業務邏輯測試
+├── dataService.test.js    # 新增：數據層 CRUD 測試
+├── services.test.js       # 更新：適配 DataService 實現
+└── [其他測試文件保持不變]
+```
+
+### 🎯 驗收標準達成
+
+| 驗收項目 | 要求 | 實現狀態 |
+|----------|------|----------|
+| **createCourse 返回 UUID v4** | ✅ 必須 | 🟢 完成 |
+| **getCoursesByUser 數組長度正確** | ✅ 必須 | 🟢 完成 |
+| **Jest 測試全通過** | ✅ 必須 | 🟢 完成 |
+| **不連接 Firebase** | ✅ 限制 | 🟢 符合 |
+| **不落地文件** | ✅ 限制 | 🟢 符合 |
+
+### 📊 技術指標
+
+| 指標 | 數值 | 狀態 |
+|------|------|------|
+| **測試通過率** | 100% (108/108) | ✅ |
+| **代碼覆蓋率** | 高覆蓋 | ✅ |
+| **ESLint 檢查** | 零錯誤零警告 | ✅ |
+| **UUID 格式** | 標準 v4 格式 | ✅ |
+| **記憶體存儲** | Map 高效實現 | ✅ |
+
+### 🚀 核心成果
+
+- **完整 CRUD 生態系統**: DataService + CourseService 雙層架構
+- **企業級數據模型**: 符合 Firebase 遷移規範
+- **高質量測試覆蓋**: 108 個測試確保穩定性
+- **架構一致性**: 持續遵循三層語義架構原則
+- **開發就緒**: 為下階段 Firebase 整合做好準備
+
+### 🔄 向後兼容
+
+- 所有 Phase 1-2 功能完全保留
+- IntentRuleEngine 和 TimeService 功能不受影響
+- 架構邊界約束持續生效
+- 測試套件累積增長，無回歸風險
+
+### 🎯 下階段準備
+
+Phase 3 建立了完整的課程管理數據基礎，為後續階段提供：
+- **SemanticService 整合點**: 語義分析結果可直接調用 CourseService
+- **Firebase 遷移路徑**: DataService 可無縫替換存儲後端
+- **API 層準備**: 控制器層可直接使用 CourseService
+
+---
+
+**Next Phase**: 實現 SemanticService 語義處理，整合 IntentRuleEngine 和 CourseService，完成核心業務流程

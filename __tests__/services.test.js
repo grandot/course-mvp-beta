@@ -89,14 +89,24 @@ describe('Service Layer Architecture Tests', () => {
       await expect(TimeService.calculateTimeRange(new Date(), new Date())).rejects.toThrow('NotImplementedError');
       await expect(TimeService.checkTimeConflict(new Date(), [])).rejects.toThrow('NotImplementedError');
 
-      // DataService 方法測試
-      await expect(DataService.createCourse({})).rejects.toThrow('NotImplementedError');
-      await expect(DataService.getUserCourses('user1')).rejects.toThrow('NotImplementedError');
-      await expect(DataService.updateCourse('course1', {})).rejects.toThrow('NotImplementedError');
-      await expect(DataService.deleteCourse('course1')).rejects.toThrow('NotImplementedError');
-      await expect(DataService.queryCourses({})).rejects.toThrow('NotImplementedError');
-      await expect(DataService.recordTokenUsage({})).rejects.toThrow('NotImplementedError');
-      await expect(DataService.validateData({}, 'schema')).rejects.toThrow('NotImplementedError');
+      // DataService 方法測試（Phase 3: 已實現記憶體版本，不再拋出 NotImplementedError）
+      // 驗證 DataService 方法已正常實現
+      const courseResult = await DataService.createCourse({
+        student_id: 'test',
+        course_name: 'test',
+        course_date: '2025-07-25'
+      });
+      expect(courseResult.success).toBe(true);
+      
+      const courses = await DataService.getUserCourses('test');
+      expect(Array.isArray(courses)).toBe(true);
+      
+      const isValid = await DataService.validateData({
+        student_id: 'test',
+        course_name: 'test',
+        course_date: '2025-07-25'
+      }, 'course');
+      expect(isValid).toBe(true);
     });
   });
 });

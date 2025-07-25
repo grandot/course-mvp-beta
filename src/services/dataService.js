@@ -2,16 +2,63 @@
  * DataService - 數據處理統一入口
  * 職責：數據存取、查詢、格式化
  * 禁止：直接調用 Firebase
+ * Phase 3: 記憶體 Map 實現（非持久化）
  */
 class DataService {
+  // 記憶體存儲
+  static courses = new Map(); // courseId -> courseData
+
+  static tokenUsage = new Map(); // entryId -> usageData
+
+  /**
+   * 生成 UUID v4
+   * @returns {string} UUID v4 格式的字符串
+   */
+  static generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      // eslint-disable-next-line no-bitwise
+      const r = Math.random() * 16 | 0;
+      // eslint-disable-next-line no-bitwise
+      const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+      return v.toString(16);
+    });
+  }
+
   /**
    * 創建課程記錄
    * @param {Object} courseData - 課程數據
    * @returns {Promise<Object>} 創建結果
    */
-  // eslint-disable-next-line no-unused-vars
   static async createCourse(courseData) {
-    throw new Error('NotImplementedError: DataService.createCourse not implemented');
+    if (!courseData) {
+      throw new Error('DataService: courseData is required');
+    }
+
+    const courseId = this.generateUUID();
+    const timestamp = new Date().toISOString();
+
+    const course = {
+      id: courseId,
+      student_id: courseData.student_id,
+      course_name: courseData.course_name,
+      schedule_time: courseData.schedule_time,
+      course_date: courseData.course_date,
+      is_recurring: courseData.is_recurring || false,
+      recurrence_pattern: courseData.recurrence_pattern || null,
+      location: courseData.location || null,
+      teacher: courseData.teacher || null,
+      status: courseData.status || 'scheduled',
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    this.courses.set(courseId, course);
+
+    return {
+      success: true,
+      courseId,
+      course,
+    };
   }
 
   /**
@@ -20,9 +67,38 @@ class DataService {
    * @param {Object} filters - 篩選條件
    * @returns {Promise<Array>} 課程列表
    */
-  // eslint-disable-next-line no-unused-vars
   static async getUserCourses(userId, filters = {}) {
-    throw new Error('NotImplementedError: DataService.getUserCourses not implemented');
+    if (!userId) {
+      throw new Error('DataService: userId is required');
+    }
+
+    const userCourses = Array.from(this.courses.values())
+      .filter((course) => course.student_id === userId);
+
+    // 應用篩選條件
+    let filteredCourses = userCourses;
+
+    if (filters.status) {
+      filteredCourses = filteredCourses.filter((course) => course.status === filters.status);
+    }
+
+    if (filters.course_name) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.course_name.toLowerCase()
+          .includes(filters.course_name.toLowerCase()),
+      );
+    }
+
+    if (filters.date_from || filters.date_to) {
+      filteredCourses = filteredCourses.filter((course) => {
+        const courseDate = course.course_date;
+        if (filters.date_from && courseDate < filters.date_from) return false;
+        if (filters.date_to && courseDate > filters.date_to) return false;
+        return true;
+      });
+    }
+
+    return filteredCourses;
   }
 
   /**
@@ -31,9 +107,33 @@ class DataService {
    * @param {Object} updateData - 更新數據
    * @returns {Promise<Object>} 更新結果
    */
-  // eslint-disable-next-line no-unused-vars
   static async updateCourse(courseId, updateData) {
-    throw new Error('NotImplementedError: DataService.updateCourse not implemented');
+    if (!courseId) {
+      throw new Error('DataService: courseId is required');
+    }
+
+    if (!updateData) {
+      throw new Error('DataService: updateData is required');
+    }
+
+    const course = this.courses.get(courseId);
+    if (!course) {
+      throw new Error(`DataService: Course with id ${courseId} not found`);
+    }
+
+    const updatedCourse = {
+      ...course,
+      ...updateData,
+      updated_at: new Date().toISOString(),
+    };
+
+    this.courses.set(courseId, updatedCourse);
+
+    return {
+      success: true,
+      courseId,
+      course: updatedCourse,
+    };
   }
 
   /**
@@ -41,9 +141,18 @@ class DataService {
    * @param {string} courseId - 課程ID
    * @returns {Promise<boolean>} 刪除是否成功
    */
-  // eslint-disable-next-line no-unused-vars
   static async deleteCourse(courseId) {
-    throw new Error('NotImplementedError: DataService.deleteCourse not implemented');
+    if (!courseId) {
+      throw new Error('DataService: courseId is required');
+    }
+
+    const exists = this.courses.has(courseId);
+    if (!exists) {
+      throw new Error(`DataService: Course with id ${courseId} not found`);
+    }
+
+    this.courses.delete(courseId);
+    return true;
   }
 
   /**
@@ -51,9 +160,38 @@ class DataService {
    * @param {Object} criteria - 查詢條件
    * @returns {Promise<Array>} 查詢結果
    */
-  // eslint-disable-next-line no-unused-vars
   static async queryCourses(criteria) {
-    throw new Error('NotImplementedError: DataService.queryCourses not implemented');
+    if (!criteria) {
+      throw new Error('DataService: criteria is required');
+    }
+
+    let results = Array.from(this.courses.values());
+
+    // 應用查詢條件
+    if (criteria.student_id) {
+      results = results.filter((course) => course.student_id === criteria.student_id);
+    }
+
+    if (criteria.course_name) {
+      results = results.filter(
+        (course) => course.course_name.toLowerCase()
+          .includes(criteria.course_name.toLowerCase()),
+      );
+    }
+
+    if (criteria.status) {
+      results = results.filter((course) => course.status === criteria.status);
+    }
+
+    if (criteria.date_range) {
+      const { start, end } = criteria.date_range;
+      results = results.filter((course) => {
+        const courseDate = course.course_date;
+        return courseDate >= start && courseDate <= end;
+      });
+    }
+
+    return results;
   }
 
   /**
@@ -61,9 +199,31 @@ class DataService {
    * @param {Object} usageData - 使用量數據
    * @returns {Promise<Object>} 記錄結果
    */
-  // eslint-disable-next-line no-unused-vars
   static async recordTokenUsage(usageData) {
-    throw new Error('NotImplementedError: DataService.recordTokenUsage not implemented');
+    if (!usageData) {
+      throw new Error('DataService: usageData is required');
+    }
+
+    const entryId = this.generateUUID();
+    const timestamp = new Date().toISOString();
+
+    const usage = {
+      id: entryId,
+      user_id: usageData.user_id,
+      model: usageData.model,
+      total_tokens: usageData.total_tokens,
+      total_cost_twd: usageData.total_cost_twd,
+      user_message: usageData.user_message,
+      timestamp,
+    };
+
+    this.tokenUsage.set(entryId, usage);
+
+    return {
+      success: true,
+      entryId,
+      usage,
+    };
   }
 
   /**
@@ -72,9 +232,32 @@ class DataService {
    * @param {string} schema - 驗證模式
    * @returns {Promise<boolean>} 驗證結果
    */
-  // eslint-disable-next-line no-unused-vars
   static async validateData(data, schema) {
-    throw new Error('NotImplementedError: DataService.validateData not implemented');
+    if (!data) {
+      throw new Error('DataService: data is required');
+    }
+
+    if (!schema) {
+      throw new Error('DataService: schema is required');
+    }
+
+    // 簡化版本驗證邏輯
+    switch (schema) {
+      case 'course':
+        return !!(data.student_id && data.course_name && data.course_date);
+      case 'token_usage':
+        return !!(data.user_id && data.model && data.total_tokens);
+      default:
+        throw new Error(`DataService: Unknown schema: ${schema}`);
+    }
+  }
+
+  /**
+   * 清空記憶體存儲（測試用）
+   */
+  static clearStorage() {
+    this.courses.clear();
+    this.tokenUsage.clear();
   }
 }
 
