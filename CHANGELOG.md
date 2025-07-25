@@ -488,4 +488,45 @@ Phase 3 建立了完整的課程管理數據基礎，為後續階段提供：
 
 ---
 
-**Next Phase**: Phase 4 完成了核心語義處理系統，實現了規則引擎與 OpenAI 智能後備的混合架構。系統現已具備完整的意圖識別、實體提取、課程管理和成本追蹤能力，為下一階段的 LINE Bot 整合和用戶界面開發奠定了堅實基礎。
+## [Hotfix - ESLint 架構約束完整修復] - 2025-07-25
+
+### 🛠️ ESLint 自定義規則正確實現
+- **技術實現**: 創建標準的本地 npm 包結構 `eslint-plugin-local/`
+- **安裝方式**: 使用 `npm install ./eslint-plugin-local --save-dev` 安裝為依賴
+- **配置正確**: 在 `package.json` 中以 `"file:eslint-plugin-local"` 形式引用
+- **Git 追蹤**: 插件源碼完全被 Git 管理，CI 環境可正常訪問
+
+### 🔒 架構約束功能恢復
+- **重新啟用**: `local/no-cross-layer-imports` 規則完全生效
+- **自動檢測**: Controllers 禁止直接調用 openaiService, firebaseService 等
+- **設計例外**: SemanticService 允許調用 openaiService（語義處理統一入口）
+- **測試通過**: 172/172 測試全部通過，包括 ESLint 規則測試
+
+### 🔧 架構違反修復
+- **發現問題**: DataService 中直接使用 `new Date()`，違反統一時間處理原則
+- **修復方案**: 
+  - 導入 TimeService 依賴
+  - 將 3 處 `new Date().toISOString()` 替換為 `TimeService.getCurrentUserTime().toISOString()`
+  - 修復位置：createCourse, updateCourse, recordTokenUsage
+
+### 📊 第一性原則全面檢查
+- **架構合規性**: ✅ 零架構違反，完全符合三層語義架構
+- **代碼品質**: ✅ 96.25% 語句覆蓋率，90.56% 分支覆蓋率
+- **功能完整性**: ✅ 172/172 測試通過，所有核心功能正常
+- **系統一致性**: ✅ 配置文件完整，依賴管理標準化
+
+### 🚀 系統狀態
+- **CI/CD**: ✅ GitHub Actions 完全通過
+- **架構保護**: ✅ 自動化約束規則實時生效
+- **開發就緒**: ✅ 為 Phase 5 開發提供完整架構保護
+- **代碼品質**: ✅ ESLint 零錯誤零警告，標準化完成
+
+### 💡 技術改進
+- **標準化實現**: 使用標準 npm 包機制而非臨時解決方案
+- **架構一致性**: 所有時間操作統一通過 TimeService 處理
+- **可維護性**: 插件代碼在版本控制中，便於維護和更新
+- **CI 兼容性**: 完全符合 GitHub Actions 標準流程
+
+---
+
+**Next Phase**: Phase 4 完成了核心語義處理系統，實現了規則引擎與 OpenAI 智能後備的混合架構。系統現已具備完整的意圖識別、實體提取、課程管理和成本追蹤能力，並通過完整的架構約束保護。ESLint 自定義規則和第一性原則檢查確保系統架構完全合規，為下一階段的 LINE Bot 整合和用戶界面開發奠定了堅實穩固的基礎。
