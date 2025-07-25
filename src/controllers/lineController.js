@@ -55,7 +55,7 @@ class LineController {
       .update(body)
       .digest('base64');
 
-    const expectedSignature = `sha256=${hash}`;
+    const expectedSignature = hash; // LINE 不使用 sha256= 前綴
     console.log('- Expected signature:', expectedSignature);
 
     // 檢查長度是否相同，避免 timingSafeEqual 錯誤

@@ -48,9 +48,8 @@ describe('LineController', () => {
       const body = '{"test": "data"}';
       const secret = 'test-secret';
       
-      // 生成正確的簽名
-      const hash = crypto.createHmac('sha256', secret).update(body).digest('base64');
-      const signature = `sha256=${hash}`;
+      // 生成正確的簽名 - LINE 不使用 sha256= 前綴
+      const signature = crypto.createHmac('sha256', secret).update(body).digest('base64');
       
       // 設定環境變數
       process.env.LINE_CHANNEL_SECRET = secret;
@@ -61,7 +60,7 @@ describe('LineController', () => {
 
     test('should reject invalid signature', () => {
       const body = '{"test": "data"}';
-      const invalidSignature = 'sha256=invalid-hash';
+      const invalidSignature = 'invalid-hash';
       
       const result = LineController.verifySignature(invalidSignature, body);
       expect(result).toBe(false);
@@ -77,7 +76,7 @@ describe('LineController', () => {
     test('should reject when missing channel secret', () => {
       delete process.env.LINE_CHANNEL_SECRET;
       const body = '{"test": "data"}';
-      const signature = 'sha256=some-hash';
+      const signature = 'some-hash';
       
       const result = LineController.verifySignature(signature, body);
       expect(result).toBe(false);
@@ -272,10 +271,9 @@ describe('LineController', () => {
     });
 
     test('should process valid webhook request', async () => {
-      // 生成有效簽名 - 使用原始 Buffer 字符串
+      // 生成有效簽名 - 使用原始 Buffer 字符串，不含 sha256= 前綴
       const body = req.body.toString();
-      const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
-      const signature = `sha256=${hash}`;
+      const signature = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       
       req.get.mockReturnValue(signature);
 
@@ -317,8 +315,7 @@ describe('LineController', () => {
 
       req.body = Buffer.from(JSON.stringify(bodyObject));
       const body = req.body.toString();
-      const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
-      const signature = `sha256=${hash}`;
+      const signature = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       
       req.get.mockReturnValue(signature);
 
@@ -334,8 +331,7 @@ describe('LineController', () => {
 
     test('should handle webhook processing errors', async () => {
       const body = req.body.toString();
-      const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
-      const signature = `sha256=${hash}`;
+      const signature = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       
       req.get.mockReturnValue(signature);
 
