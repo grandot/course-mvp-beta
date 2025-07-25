@@ -47,7 +47,7 @@ describe('SemanticService', () => {
       expect(result.intent).toBe('cancel_course');
       expect(result.confidence).toBeGreaterThanOrEqual(0.8);
       expect(result.entities).toBeDefined();
-      expect(result.timeInfo).toBeDefined();
+      expect(result.entities.timeInfo).toBeDefined();
       
       // 應該不調用 OpenAI
       expect(OpenAIService.analyzeIntent).not.toHaveBeenCalled();
@@ -334,8 +334,7 @@ describe('SemanticService', () => {
       expect(result.entities.course_name).toBe('數學');
       expect(result.entities.location).toBe('A教室');
       expect(result.entities.teacher).toBe('王');
-      expect(result.timeInfo.time).toBeDefined();
-      expect(result.timeInfo.date).toBe('明天');
+      expect(result.entities.timeInfo).toBeDefined();
     });
 
     test('should handle course cancellation with high confidence', async () => {

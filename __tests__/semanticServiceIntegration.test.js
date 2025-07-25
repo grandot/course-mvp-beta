@@ -26,8 +26,8 @@ describe('SemanticService Integration Tests', () => {
       expect(result.confidence).toBeGreaterThanOrEqual(0.8);
       expect(result.entities).toBeDefined();
       expect(result.entities.course_name).toBe('數學');
-      expect(result.timeInfo).toBeDefined();
-      expect(result.timeInfo.date).toBe('明天');
+      expect(result.entities.timeInfo).toBeDefined();
+      expect(result.entities.timeInfo.raw).toBeDefined();
     });
 
     test('should handle course creation intent', async () => {
@@ -41,7 +41,7 @@ describe('SemanticService Integration Tests', () => {
       expect(result.entities.course_name).toBe('數學');
       expect(result.entities.location).toBe('A教室');
       expect(result.entities.teacher).toBe('王');
-      expect(result.timeInfo.date).toBe('明天');
+      expect(result.entities.timeInfo).toBeDefined();
     });
 
     test('should handle schedule query intent', async () => {

@@ -4,12 +4,12 @@
  */
 const LineController = require('../src/controllers/lineController');
 const semanticService = require('../src/services/semanticService');
-const courseService = require('../src/services/courseService');
+const TaskService = require('../src/services/taskService');
 const crypto = require('crypto');
 
 // Mock 服務
 jest.mock('../src/services/semanticService');
-jest.mock('../src/services/courseService');
+jest.mock('../src/services/taskService');
 
 describe('LineController', () => {
   beforeEach(() => {
@@ -90,26 +90,28 @@ describe('LineController', () => {
     };
 
     test('should handle record_course intent successfully', async () => {
-      // Mock 語義分析返回
+      // Mock 語義分析返回（新契約格式）
       semanticService.analyzeMessage.mockResolvedValue({
         success: true,
         intent: 'record_course',
         confidence: 0.85,
         entities: {
           course_name: '數學',
-          timeInfo: {
-            display: '明天2點',
-            date: '2025-07-26'
-          },
           location: null,
-          teacher: null
+          teacher: null,
+          timeInfo: {  // ✅ 正確的契約結構
+            display: '07/26 2:00 PM',
+            date: '2025-07-26',
+            raw: '2025-07-26T14:00:00.000Z',
+            timestamp: 1721998800000
+          }
         }
       });
 
-      // Mock 課程創建返回
-      courseService.createCourse.mockResolvedValue({
+      // Mock TaskService 執行返回
+      TaskService.executeIntent.mockResolvedValue({
         success: true,
-        courseId: 'course-123',
+        id: 'course-123',
         message: '課程創建成功'
       });
 
@@ -118,14 +120,21 @@ describe('LineController', () => {
       expect(result.success).toBe(true);
       expect(result.intent).toBe('record_course');
       expect(semanticService.analyzeMessage).toHaveBeenCalledWith('明天2點數學課', 'test-user-123');
-      expect(courseService.createCourse).toHaveBeenCalledWith({
-        student_id: 'test-user-123',
-        course_name: '數學',
-        schedule_time: '明天2點',
-        course_date: '2025-07-26',
-        location: null,
-        teacher: null
-      });
+      expect(TaskService.executeIntent).toHaveBeenCalledWith(
+        'record_course',
+        {
+          course_name: '數學',
+          location: null,
+          teacher: null,
+          timeInfo: {
+            display: '07/26 2:00 PM',
+            date: '2025-07-26',
+            raw: '2025-07-26T14:00:00.000Z',
+            timestamp: 1721998800000
+          }
+        },
+        'test-user-123'
+      );
     });
 
     test('should handle cancel_course intent successfully', async () => {
@@ -134,15 +143,14 @@ describe('LineController', () => {
         intent: 'cancel_course',
         confidence: 0.9,
         entities: {
-          course_name: '數學'
+          course_name: '數學',
+          location: null,
+          teacher: null,
+          timeInfo: null
         }
       });
 
-      courseService.getCoursesByUser.mockResolvedValue([
-        { id: 'course-123', course_name: '數學' }
-      ]);
-
-      courseService.cancelCourse.mockResolvedValue({
+      TaskService.executeIntent.mockResolvedValue({
         success: true,
         message: '課程已取消'
       });
@@ -156,11 +164,16 @@ describe('LineController', () => {
 
       expect(result.success).toBe(true);
       expect(result.intent).toBe('cancel_course');
-      expect(courseService.getCoursesByUser).toHaveBeenCalledWith('test-user-123', {
-        course_name: '數學',
-        status: 'scheduled'
-      });
-      expect(courseService.cancelCourse).toHaveBeenCalledWith('course-123');
+      expect(TaskService.executeIntent).toHaveBeenCalledWith(
+        'cancel_course',
+        {
+          course_name: '數學',
+          location: null,
+          teacher: null,
+          timeInfo: null
+        },
+        'test-user-123'
+      );
     });
 
     test('should handle query_schedule intent', async () => {
@@ -168,13 +181,22 @@ describe('LineController', () => {
         success: true,
         intent: 'query_schedule',
         confidence: 0.9,
-        entities: {}
+        entities: {
+          course_name: null,
+          location: null,
+          teacher: null,
+          timeInfo: null
+        }
       });
 
-      courseService.getCoursesByUser.mockResolvedValue([
-        { id: 'course-1', course_name: '數學' },
-        { id: 'course-2', course_name: '英文' }
-      ]);
+      TaskService.executeIntent.mockResolvedValue({
+        success: true,
+        courses: [
+          { id: 'course-1', course_name: '數學' },
+          { id: 'course-2', course_name: '英文' }
+        ],
+        count: 2
+      });
 
       const queryEvent = {
         message: { text: '查詢我的課表' },
@@ -185,9 +207,16 @@ describe('LineController', () => {
 
       expect(result.success).toBe(true);
       expect(result.intent).toBe('query_schedule');
-      expect(courseService.getCoursesByUser).toHaveBeenCalledWith('test-user-123', {
-        status: 'scheduled'
-      });
+      expect(TaskService.executeIntent).toHaveBeenCalledWith(
+        'query_schedule',
+        {
+          course_name: null,
+          location: null,
+          teacher: null,
+          timeInfo: null
+        },
+        'test-user-123'
+      );
     });
 
     test('should handle missing required information for record_course', async () => {
@@ -196,9 +225,17 @@ describe('LineController', () => {
         intent: 'record_course',
         confidence: 0.8,
         entities: {
-          course_name: '數學'
-          // 缺少 timeInfo
+          course_name: '數學',
+          location: null,
+          teacher: null,
+          timeInfo: null  // 缺少時間信息
         }
+      });
+
+      TaskService.executeIntent.mockResolvedValue({
+        success: false,
+        error: 'Missing required course information',
+        message: '請提供課程名稱和時間信息'
       });
 
       const result = await LineController.handleTextMessage(mockEvent);
@@ -213,7 +250,18 @@ describe('LineController', () => {
         success: true,
         intent: 'unknown_intent',
         confidence: 0.6,
-        entities: {}
+        entities: {
+          course_name: null,
+          location: null,
+          teacher: null,
+          timeInfo: null
+        }
+      });
+
+      TaskService.executeIntent.mockResolvedValue({
+        success: false,
+        error: 'Unknown intent',
+        message: '抱歉，我無法理解您的需求，請重新描述'
       });
 
       const result = await LineController.handleTextMessage(mockEvent);
