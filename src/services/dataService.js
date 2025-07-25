@@ -5,8 +5,7 @@
  * Phase 4: Firebase 實現（持久化存儲）
  */
 const TimeService = require('./timeService');
-// 條件式加載 FirebaseService - 只在生產環境需要時載入
-let FirebaseService = null;
+const FirebaseService = require('../internal/firebaseService');
 
 class DataService {
   // Firebase 集合名稱
@@ -15,9 +14,6 @@ class DataService {
     TOKEN_USAGE: 'token_usage'
   };
 
-  // 記憶體緩存（用於測試環境或作為後備）
-  static courses = new Map();
-  static tokenUsage = new Map();
 
   /**
    * 生成 UUID v4
@@ -33,25 +29,6 @@ class DataService {
     });
   }
 
-  /**
-   * 檢查是否為測試環境
-   */
-  static isTestEnvironment() {
-    return process.env.NODE_ENV === 'test' || 
-           process.env.FIREBASE_PROJECT_ID === 'test-project' ||
-           !process.env.FIREBASE_PRIVATE_KEY ||
-           process.env.FIREBASE_PRIVATE_KEY === 'test-private-key';
-  }
-
-  /**
-   * 延遲加載 FirebaseService（只在生產環境需要時）
-   */
-  static getFirebaseService() {
-    if (!FirebaseService) {
-      FirebaseService = require('../internal/firebaseService');
-    }
-    return FirebaseService;
-  }
 
   /**
    * 創建課程記錄
@@ -85,43 +62,14 @@ class DataService {
       updated_at: timestamp,
     };
 
-    // 測試環境使用記憶體存儲
-    if (this.isTestEnvironment()) {
-      const courseId = this.generateUUID();
-      const courseWithId = { id: courseId, ...course };
-      this.courses.set(courseId, courseWithId);
-      
-      return {
-        success: true,
-        courseId,
-        course: courseWithId,
-      };
-    }
-
-    // 生產環境使用 Firebase
-    try {
-      const firebaseService = this.getFirebaseService();
-      const result = await firebaseService.createDocument(this.COLLECTIONS.COURSES, course);
-      
-      return {
-        success: true,
-        courseId: result.id,
-        course: result.data,
-      };
-    } catch (error) {
-      console.error('❌ Firebase createCourse failed, falling back to memory:', error.message);
-      
-      // Firebase 失敗時後備到記憶體存儲
-      const courseId = this.generateUUID();
-      const courseWithId = { id: courseId, ...course };
-      this.courses.set(courseId, courseWithId);
-      
-      return {
-        success: true,
-        courseId,
-        course: courseWithId,
-      };
-    }
+    // 直接使用 Firebase
+    const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSES, course);
+    
+    return {
+      success: true,
+      courseId: result.id,
+      course: result.data,
+    };
   }
 
   /**
@@ -135,30 +83,11 @@ class DataService {
       throw new Error('DataService: userId is required');
     }
 
-    // 測試環境使用記憶體存儲
-    if (this.isTestEnvironment()) {
-      const userCourses = Array.from(this.courses.values())
-        .filter((course) => course.student_id === userId);
-
-      return this.applyFilters(userCourses, filters);
-    }
-
-    // 生產環境使用 Firebase
-    try {
-      const queryFilters = { student_id: userId, ...filters };
-      const firebaseService = this.getFirebaseService();
-      const courses = await firebaseService.queryDocuments(this.COLLECTIONS.COURSES, queryFilters);
-      
-      return this.applyFilters(courses, filters);
-    } catch (error) {
-      console.error('❌ Firebase getUserCourses failed, falling back to memory:', error.message);
-      
-      // Firebase 失敗時後備到記憶體存儲
-      const userCourses = Array.from(this.courses.values())
-        .filter((course) => course.student_id === userId);
-
-      return this.applyFilters(userCourses, filters);
-    }
+    // 直接使用 Firebase
+    const queryFilters = { student_id: userId, ...filters };
+    const courses = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, queryFilters);
+    
+    return this.applyFilters(courses, filters);
   }
 
   /**
@@ -208,23 +137,17 @@ class DataService {
       throw new Error('DataService: updateData is required');
     }
 
-    const course = this.courses.get(courseId);
-    if (!course) {
-      throw new Error(`DataService: Course with id ${courseId} not found`);
-    }
-
-    const updatedCourse = {
-      ...course,
+    const updatedData = {
       ...updateData,
       updated_at: TimeService.getCurrentUserTime().toISOString(),
     };
 
-    this.courses.set(courseId, updatedCourse);
+    const result = await FirebaseService.updateDocument(this.COLLECTIONS.COURSES, courseId, updatedData);
 
     return {
       success: true,
-      courseId,
-      course: updatedCourse,
+      courseId: result.id,
+      course: result.data,
     };
   }
 
@@ -238,12 +161,7 @@ class DataService {
       throw new Error('DataService: courseId is required');
     }
 
-    const exists = this.courses.has(courseId);
-    if (!exists) {
-      throw new Error(`DataService: Course with id ${courseId} not found`);
-    }
-
-    this.courses.delete(courseId);
+    await FirebaseService.deleteDocument(this.COLLECTIONS.COURSES, courseId);
     return true;
   }
 
@@ -257,33 +175,7 @@ class DataService {
       throw new Error('DataService: criteria is required');
     }
 
-    let results = Array.from(this.courses.values());
-
-    // 應用查詢條件
-    if (criteria.student_id) {
-      results = results.filter((course) => course.student_id === criteria.student_id);
-    }
-
-    if (criteria.course_name) {
-      results = results.filter(
-        (course) => course.course_name.toLowerCase()
-          .includes(criteria.course_name.toLowerCase()),
-      );
-    }
-
-    if (criteria.status) {
-      results = results.filter((course) => course.status === criteria.status);
-    }
-
-    if (criteria.date_range) {
-      const { start, end } = criteria.date_range;
-      results = results.filter((course) => {
-        const courseDate = course.course_date;
-        return courseDate >= start && courseDate <= end;
-      });
-    }
-
-    return results;
+    return await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, criteria);
   }
 
   /**
@@ -307,43 +199,14 @@ class DataService {
       timestamp,
     };
 
-    // 測試環境使用記憶體存儲
-    if (this.isTestEnvironment()) {
-      const entryId = this.generateUUID();
-      const usageWithId = { id: entryId, ...usage };
-      this.tokenUsage.set(entryId, usageWithId);
-      
-      return {
-        success: true,
-        entryId,
-        usage: usageWithId,
-      };
-    }
-
-    // 生產環境使用 Firebase
-    try {
-      const firebaseService = this.getFirebaseService();
-      const result = await firebaseService.createDocument(this.COLLECTIONS.TOKEN_USAGE, usage);
-      
-      return {
-        success: true,
-        entryId: result.id,
-        usage: result.data,
-      };
-    } catch (error) {
-      console.error('❌ Firebase recordTokenUsage failed, falling back to memory:', error.message);
-      
-      // Firebase 失敗時後備到記憶體存儲
-      const entryId = this.generateUUID();
-      const usageWithId = { id: entryId, ...usage };
-      this.tokenUsage.set(entryId, usageWithId);
-      
-      return {
-        success: true,
-        entryId,
-        usage: usageWithId,
-      };
-    }
+    // 直接使用 Firebase
+    const result = await FirebaseService.createDocument(this.COLLECTIONS.TOKEN_USAGE, usage);
+    
+    return {
+      success: true,
+      entryId: result.id,
+      usage: result.data,
+    };
   }
 
   /**
@@ -381,13 +244,6 @@ class DataService {
     }
   }
 
-  /**
-   * 清空記憶體存儲（測試用）
-   */
-  static clearStorage() {
-    this.courses.clear();
-    this.tokenUsage.clear();
-  }
 }
 
 module.exports = DataService;

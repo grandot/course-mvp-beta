@@ -30,13 +30,4 @@ jobs:
       run: npm run lint
     
     - name: Run tests
-      env:
-        NODE_ENV: test
-        # Mock credentials prevent real API calls in testing
-        # - OPENAI_API_KEY: prevents real OpenAI API usage
-        # - LINE_*: allows signature verification testing without real LINE API
-        # - Firebase: automatic memory storage when NODE_ENV=test
-        OPENAI_API_KEY: test-api-key
-        LINE_CHANNEL_ACCESS_TOKEN: test-channel-token
-        LINE_CHANNEL_SECRET: test-channel-secret
       run: npm test
