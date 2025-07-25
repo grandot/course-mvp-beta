@@ -238,8 +238,10 @@ describe('TimeService', () => {
 
   describe('other methods still throw NotImplementedError', () => {
 
-    test('formatForDisplay should throw NotImplementedError', () => {
-      expect(() => TimeService.formatForDisplay(new Date())).toThrow('NotImplementedError');
+    test('formatForDisplay should work correctly now (implemented in Step 1)', () => {
+      const date = new Date('2025-07-26T14:30:00.000Z');
+      const result = TimeService.formatForDisplay(date);
+      expect(result).toMatch(/^\d{2}\/\d{2} \d{1,2}:\d{2} (AM|PM)$/);
     });
 
     test('validateTime should throw NotImplementedError', async () => {
