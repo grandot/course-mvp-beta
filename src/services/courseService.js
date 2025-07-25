@@ -97,6 +97,117 @@ class CourseService {
   }
 
   /**
+   * 修改課程（高級更新方法，支持業務邏輯）
+   * @param {string} courseId - 課程ID
+   * @param {Object} updateData - 更新數據
+   * @param {Object} options - 選項配置
+   * @returns {Promise<Object>} 修改結果
+   */
+  static async modifyCourse(courseId, updateData, options = {}) {
+    if (!courseId) {
+      throw new Error('CourseService: courseId is required');
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      throw new Error('CourseService: updateData is required and cannot be empty');
+    }
+
+    const { originalCourse, userId } = options;
+
+    // 記錄修改前的狀態
+    const modificationLog = {
+      courseId,
+      userId,
+      timestamp: TimeService.getCurrentUserTime().toISOString(),
+      operationType: 'MODIFY_COURSE',
+      originalData: originalCourse,
+      updateData,
+    };
+
+    try {
+      // 處理日期格式化
+      const processedData = { ...updateData };
+      if (processedData.course_date) {
+        const formattedDate = processedData.course_date instanceof Date
+          ? processedData.course_date.toISOString().split('T')[0]
+          : processedData.course_date;
+        processedData.course_date = formattedDate;
+      }
+
+      // 檢查時間衝突（如果修改了時間）
+      if (processedData.schedule_time && processedData.course_date && originalCourse) {
+        const conflicts = await this.checkTimeConflicts(
+          userId || originalCourse.student_id,
+          processedData.course_date,
+          processedData.schedule_time,
+        );
+
+        // 排除當前課程本身
+        const otherConflicts = conflicts.filter(c => c.id !== courseId);
+        if (otherConflicts.length > 0) {
+          return {
+            success: false,
+            error: 'Time conflict detected',
+            message: `修改失敗：${processedData.course_date} ${processedData.schedule_time} 時間已有其他課程安排`,
+            conflicts: otherConflicts,
+          };
+        }
+      }
+
+      // 執行更新
+      const updateResult = await DataService.updateCourse(courseId, processedData);
+
+      if (!updateResult.success) {
+        return {
+          success: false,
+          error: updateResult.error,
+          message: '修改課程時發生錯誤',
+          modificationLog,
+        };
+      }
+
+      // 獲取更新後的課程信息
+      const updatedCourse = await DataService.getCourseById(courseId);
+
+      // 構建修改成功訊息
+      const changedFields = [];
+      if (processedData.schedule_time) changedFields.push('時間');
+      if (processedData.course_date) changedFields.push('日期');
+      if (processedData.location) changedFields.push('地點');
+      if (processedData.teacher) changedFields.push('老師');
+
+      const successMessage = changedFields.length > 0
+        ? `✅ 成功修改「${originalCourse?.course_name || '課程'}」的${changedFields.join('、')}`
+        : '✅ 課程修改完成';
+
+      return {
+        success: true,
+        action: 'modify_course',
+        courseId,
+        message: successMessage,
+        modifiedFields: Object.keys(processedData),
+        updatedCourse,
+        modificationLog: {
+          ...modificationLog,
+          result: 'success',
+        },
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: '修改課程時發生錯誤，請稍後再試',
+        modificationLog: {
+          ...modificationLog,
+          result: 'error',
+          errorDetails: error.message,
+        },
+      };
+    }
+  }
+
+  /**
    * 取消課程
    * @param {string} courseId - 課程ID
    * @returns {Promise<Object>} 取消結果

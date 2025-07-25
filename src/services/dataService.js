@@ -167,6 +167,32 @@ class DataService {
   }
 
   /**
+   * 根據課程ID獲取課程記錄
+   * @param {string} courseId - 課程ID
+   * @returns {Promise<Object|null>} 課程記錄，如果不存在則返回null
+   */
+  static async getCourseById(courseId) {
+    if (!courseId) {
+      throw new Error('DataService: courseId is required');
+    }
+
+    try {
+      const result = await FirebaseService.getDocument(this.COLLECTIONS.COURSES, courseId);
+      
+      if (!result || !result.exists) {
+        return null;
+      }
+
+      return {
+        id: result.id,
+        ...result.data,
+      };
+    } catch (error) {
+      throw new Error(`DataService: Failed to get course by ID: ${error.message}`);
+    }
+  }
+
+  /**
    * 查詢課程記錄
    * @param {Object} criteria - 查詢條件
    * @returns {Promise<Array>} 查詢結果

@@ -170,6 +170,51 @@ class LineController {
               }
               break;
             }
+            case 'modify_course': {
+              // 處理修改課程的各種回應情況
+              if (result.success) {
+                // 修改成功
+                let successMessage = result.message;
+
+                // 如果有更新的課程信息，添加詳細信息
+                if (result.updatedCourse && result.originalCourse) {
+                  const details = [];
+                  if (result.modifiedFields.includes('schedule_time') || result.modifiedFields.includes('course_date')) {
+                    details.push(`🕒 新時間：${result.updatedCourse.schedule_time}`);
+                  }
+                  if (result.modifiedFields.includes('location')) {
+                    details.push(`📍 新地點：${result.updatedCourse.location || '未指定'}`);
+                  }
+                  if (result.modifiedFields.includes('teacher')) {
+                    details.push(`👨‍🏫 新老師：${result.updatedCourse.teacher || '未指定'}`);
+                  }
+
+                  if (details.length > 0) {
+                    successMessage += `\n\n${details.join('\n')}`;
+                  }
+                }
+
+                replyMessage = successMessage;
+              } else {
+                // 修改失敗
+                if (result.error === 'Course not found') {
+                  replyMessage = result.message;
+                } else if (result.error === 'Missing course name') {
+                  replyMessage = result.message;
+                } else if (result.error === 'No update fields provided') {
+                  replyMessage = result.message;
+                } else if (result.error === 'Time conflict detected') {
+                  replyMessage = result.message;
+                } else if (result.error === 'Invalid time information') {
+                  replyMessage = result.message;
+                } else if (result.error) {
+                  replyMessage = result.message || '修改課程時發生錯誤，請稍後再試';
+                } else {
+                  replyMessage = '修改課程時發生未知錯誤，請稍後再試';
+                }
+              }
+              break;
+            }
             default:
               replyMessage = '✅ 已收到您的訊息，正在處理中...';
           }

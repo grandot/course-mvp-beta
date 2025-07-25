@@ -7,6 +7,7 @@
 
 const dataService = require('./dataService');
 const TimeService = require('./timeService');
+const CourseService = require('./courseService');
 
 class TaskService {
   /**
@@ -40,6 +41,8 @@ class TaskService {
           return this.handleClearSchedule(entities, userId);
 
         case 'modify_course':
+          return this.handleModifyCourse(entities, userId);
+
         case 'set_reminder':
           return {
             success: false,
@@ -247,7 +250,6 @@ class TaskService {
       }
 
       // 調用 CourseService 執行清空
-      const CourseService = require('./courseService');
       const result = await CourseService.clearAllCourses(userId, { confirmed: true });
 
       // 清理確認狀態
@@ -332,6 +334,107 @@ class TaskService {
       }
     } catch (error) {
       console.error('Error clearing confirmation pending:', error);
+    }
+  }
+
+  /**
+   * 處理課程修改
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  static async handleModifyCourse(entities, userId) {
+    try {
+      // 驗證必要參數：課程名稱是必須的，用於識別要修改的課程
+      if (!entities.course_name) {
+        return {
+          success: false,
+          error: 'Missing course name',
+          message: '請指定要修改的課程名稱，例如：「修改數學課時間」',
+        };
+      }
+
+      // 查找用戶的該課程
+      const existingCourses = await dataService.getUserCourses(userId, {
+        course_name: entities.course_name,
+        status: 'scheduled',
+      });
+
+      if (existingCourses.length === 0) {
+        return {
+          success: false,
+          error: 'Course not found',
+          message: `找不到「${entities.course_name}」課程，請確認課程名稱是否正確`,
+        };
+      }
+
+      // 如果有多個同名課程，修改最近的一個
+      const courseToModify = existingCourses[0];
+
+      // 構建修改數據，只包含提供的字段
+      const updateData = {};
+      let hasUpdates = false;
+
+      // 處理時間信息修改
+      if (entities.timeInfo) {
+        if (TimeService.validateTimeInfo(entities.timeInfo)) {
+          updateData.schedule_time = entities.timeInfo.display;
+          updateData.course_date = entities.timeInfo.date;
+          hasUpdates = true;
+        } else {
+          return {
+            success: false,
+            error: 'Invalid time information',
+            message: '時間格式不正確，請重新輸入時間信息',
+          };
+        }
+      }
+
+      // 處理其他可修改字段
+      if (entities.location) {
+        updateData.location = entities.location;
+        hasUpdates = true;
+      }
+
+      if (entities.teacher) {
+        updateData.teacher = entities.teacher;
+        hasUpdates = true;
+      }
+
+      // 如果沒有任何要修改的內容
+      if (!hasUpdates) {
+        return {
+          success: false,
+          error: 'No update fields provided',
+          message: '請指定要修改的內容，例如：「修改數學課時間到下午3點」',
+        };
+      }
+
+      // 調用 CourseService 執行修改
+      const result = await CourseService.modifyCourse(courseToModify.id, updateData, {
+        originalCourse: courseToModify,
+        userId,
+      });
+
+      return {
+        success: result.success,
+        action: 'modify_course',
+        message: result.message,
+        modifiedFields: Object.keys(updateData),
+        originalCourse: {
+          name: courseToModify.course_name,
+          originalTime: courseToModify.schedule_time,
+          originalDate: courseToModify.course_date,
+        },
+        updatedCourse: result.updatedCourse,
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: '修改課程時發生錯誤，請稍後再試',
+      };
     }
   }
 
