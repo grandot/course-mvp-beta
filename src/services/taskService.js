@@ -67,21 +67,41 @@ class TaskService {
    * @returns {Promise<Object>} 執行結果
    */
   static async handleRecordCourse(entities, userId) {
-    // 驗證新的數據契約
-    if (!entities.course_name || !entities.timeInfo) {
+    // 改進驗證邏輯：更友好的錯誤處理
+    const missingInfo = [];
+    
+    if (!entities.course_name) {
+      missingInfo.push('課程名稱');
+    }
+    
+    if (!entities.timeInfo) {
+      missingInfo.push('時間信息');
+    }
+    
+    // 如果缺少課程名稱，提供更具體的建議
+    if (!entities.course_name) {
       return {
         success: false,
-        error: 'Missing required course information',
-        message: '請提供課程名稱和時間信息',
+        error: 'Missing course name',
+        message: '請告訴我課程名稱，例如：「數學課」、「英文課」等',
+      };
+    }
+    
+    // 如果缺少時間信息，允許創建課程但提醒用戶補充
+    if (!entities.timeInfo) {
+      return {
+        success: false,
+        error: 'Missing time information',
+        message: '請提供上課時間，例如：「明天下午2點」、「週三晚上7點」等',
       };
     }
 
-    // 驗證時間信息格式
-    if (!TimeService.validateTimeInfo(entities.timeInfo)) {
+    // 驗證時間信息格式（允許部分字段為空）
+    if (entities.timeInfo && !TimeService.validateTimeInfo(entities.timeInfo)) {
       return {
         success: false,
         error: 'Invalid time information format',
-        message: '時間信息格式不正確',
+        message: '時間格式不正確，請重新輸入時間信息',
       };
     }
 

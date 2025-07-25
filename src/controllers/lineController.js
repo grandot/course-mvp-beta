@@ -44,34 +44,50 @@ class LineController {
       return false;
     }
 
-    // Debug logging
-    console.log('Signature verification debug:');
-    console.log('- Received signature:', signature);
-    console.log('- Body type:', typeof body);
-    console.log('- Body length:', body ? body.length : 'null');
-    console.log('- Body content (first 100 chars):', body ? body.substring(0, 100) : 'null');
+    try {
+      // 確保 body 是 Buffer 或字符串
+      let bodyToVerify;
+      if (Buffer.isBuffer(body)) {
+        bodyToVerify = body;
+      } else if (typeof body === 'string') {
+        bodyToVerify = Buffer.from(body, 'utf8');
+      } else {
+        bodyToVerify = Buffer.from(JSON.stringify(body), 'utf8');
+      }
 
-    const hash = crypto
-      .createHmac('sha256', channelSecret)
-      .update(body)
-      .digest('base64');
+      // Debug logging (reduced for production)
+      console.log('Signature verification debug:');
+      console.log('- Received signature length:', signature.length);
+      console.log('- Body length:', bodyToVerify.length);
 
-    const expectedSignature = hash; // LINE 不使用 sha256= 前綴
-    console.log('- Expected signature:', expectedSignature);
+      // 計算預期簽名
+      const hash = crypto
+        .createHmac('sha256', channelSecret)
+        .update(bodyToVerify)
+        .digest('base64');
 
-    // 檢查長度是否相同，避免 timingSafeEqual 錯誤
-    if (signature.length !== expectedSignature.length) {
-      console.error('Signature length mismatch:', signature.length, 'vs', expectedSignature.length);
+      const expectedSignature = hash;
+      console.log('- Expected signature length:', expectedSignature.length);
+
+      // 檢查長度是否相同
+      if (signature.length !== expectedSignature.length) {
+        console.error('Signature length mismatch:', signature.length, 'vs', expectedSignature.length);
+        return false;
+      }
+
+      // 安全比較簽名
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(signature, 'base64'),
+        Buffer.from(expectedSignature, 'base64'),
+      );
+
+      console.log('- Signature valid:', isValid);
+      return isValid;
+
+    } catch (error) {
+      console.error('Signature verification error:', error);
       return false;
     }
-
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature),
-    );
-
-    console.log('- Signature valid:', isValid);
-    return isValid;
   }
 
   /**
@@ -162,10 +178,28 @@ class LineController {
       };
     } catch (error) {
       console.error('Error handling text message:', error);
+      console.error('Error stack:', error.stack);
+      
+      // 提供更詳細的錯誤信息
+      let errorMessage = '處理訊息時發生錯誤，請稍後再試';
+      let errorType = 'unknown_error';
+      
+      if (error.message.includes('Missing required')) {
+        errorMessage = '請提供完整的課程信息';
+        errorType = 'missing_info';
+      } else if (error.message.includes('Database')) {
+        errorMessage = '數據庫連接失敗，請稍後再試';
+        errorType = 'database_error';
+      } else if (error.message.includes('Service')) {
+        errorMessage = '服務暫時不可用，請稍後再試';
+        errorType = 'service_error';
+      }
+      
       return {
         success: false,
-        error: error.message,
-        message: '處理訊息時發生錯誤，請稍後再試',
+        error: errorType,
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       };
     }
   }

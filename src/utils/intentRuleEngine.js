@@ -77,25 +77,57 @@ class IntentRuleEngine {
    * @returns {Object} 匹配結果 {confidence, priority}
    */
   static matchRule(text, rule) {
-    const { keywords = [], exclusions = [], priority = 1 } = rule;
+    const { keywords = [], exclusions = [], patterns = [], priority = 1 } = rule;
 
     // 檢查排除詞
     if (exclusions.some((exclusion) => text.includes(exclusion))) {
       return { confidence: 0, priority };
     }
 
+    let matchScore = 0;
+    let maxScore = 0;
+
     // 計算關鍵詞匹配度
     const matchedKeywords = keywords.filter((keyword) => text.includes(keyword));
+    if (matchedKeywords.length > 0) {
+      matchScore += matchedKeywords.length;
+    }
+    maxScore += keywords.length > 0 ? keywords.length : 0;
 
-    if (matchedKeywords.length === 0) {
+    // 計算正則模式匹配度
+    const matchedPatterns = patterns.filter((pattern) => {
+      try {
+        const regex = new RegExp(pattern, 'i');
+        return regex.test(text);
+      } catch (error) {
+        console.warn(`Invalid regex pattern: ${pattern}`);
+        return false;
+      }
+    });
+    
+    if (matchedPatterns.length > 0) {
+      matchScore += matchedPatterns.length * 2; // 模式匹配權重更高
+    }
+    maxScore += patterns.length * 2;
+
+    // 如果沒有任何匹配
+    if (matchScore === 0) {
       return { confidence: 0, priority };
     }
 
-    // 如果匹配到任意關鍵詞，給予高置信度（簡化邏輯）
-    // 匹配越多關鍵詞，置信度越高，但至少0.8
+    // 計算最終置信度 - 保持向後兼容
     const baseConfidence = 0.8;
-    const bonusConfidence = Math.min(0.2, (matchedKeywords.length - 1) * 0.1);
-    const confidence = baseConfidence + bonusConfidence;
+    let confidence = baseConfidence;
+    
+    // 關鍵詞匹配加分
+    if (matchedKeywords.length > 1) {
+      confidence = Math.min(confidence + ((matchedKeywords.length - 1) * 0.1), 1.0);
+    }
+    
+    // 模式匹配加分（較少，因為是新功能）
+    if (matchedPatterns.length > 0) {
+      confidence = Math.min(confidence + (matchedPatterns.length * 0.05), 1.0);
+    }
 
     return { confidence, priority };
   }
