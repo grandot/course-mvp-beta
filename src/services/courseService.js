@@ -4,7 +4,7 @@
  * 依賴：DataService, TimeService
  */
 const DataService = require('./dataService');
-const TimeService = require('../utils/timeService');
+const TimeService = require('./timeService');
 
 class CourseService {
   /**
