@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Phase 0] - 2025-07-25
+## [Phase 0 - 初始化 Repo 與 CI] - 2025-07-25
 
 ### 🚀 專案初始化
 - 建立 IntentOS Course MVP 專案骨架

@@ -11,7 +11,9 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
+  plugins: ['local'],
   rules: {
     'no-console': 'warn',
+    'local/no-cross-layer-imports': 'error',
   },
 };
