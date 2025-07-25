@@ -14,4 +14,10 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(some-esm-package)/)',
   ],
+  moduleFileExtensions: ['js', 'json'],
+  setupFilesAfterEnv: [],
+  verbose: true,
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true
 };

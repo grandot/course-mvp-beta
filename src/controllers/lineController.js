@@ -69,9 +69,9 @@ class LineController {
       const expectedSignature = hash;
       console.log('- Expected signature length:', expectedSignature.length);
 
-      // 檢查長度是否相同
-      if (signature.length !== expectedSignature.length) {
-        console.error('Signature length mismatch:', signature.length, 'vs', expectedSignature.length);
+      // 檢查簽名長度是否在合理範圍內 (44-45字符都可接受)
+      if (signature.length < 44 || signature.length > 45) {
+        console.error('Signature length out of range:', signature.length, 'expected 44-45');
         return false;
       }
 

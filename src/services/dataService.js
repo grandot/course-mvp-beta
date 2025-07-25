@@ -37,7 +37,13 @@ class DataService {
     }
 
     const courseId = this.generateUUID();
-    const timestamp = TimeService.getCurrentUserTime().toISOString();
+    let timestamp;
+    try {
+      timestamp = TimeService.getCurrentUserTime().toISOString();
+    } catch (error) {
+      // 如果 TimeService 失敗，使用系統時間作為後備
+      timestamp = new Date().toISOString();
+    }
 
     const course = {
       id: courseId,

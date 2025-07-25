@@ -3,8 +3,21 @@ module.exports = {
     ['@babel/preset-env', {
       targets: {
         node: '18'
-      }
+      },
+      modules: 'commonjs'
     }]
   ],
-  plugins: []
+  plugins: [],
+  env: {
+    test: {
+      presets: [
+        ['@babel/preset-env', {
+          targets: {
+            node: 'current'
+          },
+          modules: 'commonjs'
+        }]
+      ]
+    }
+  }
 };
