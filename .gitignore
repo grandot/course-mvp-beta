@@ -58,7 +58,7 @@ coverage/
 .nyc_output/
 
 # 依賴鎖定檔案（可選）
-package-lock.json
+# package-lock.json  # 現在需要追蹤此檔案以支援 CI 快取
 yarn.lock
 
 # Vercel
