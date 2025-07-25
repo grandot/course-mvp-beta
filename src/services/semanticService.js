@@ -26,15 +26,16 @@ class SemanticService {
     }
 
     try {
-      // Step 1: 先嘗試規則引擎分析
+      // Step 1: 統一提取實體和時間信息（避免重複調用）
+      const entities = await this.extractCourseEntities(text, userId);
+      const processedTimeInfo = await this.processTimeInfo(text);
+
+      // Step 2: 先嘗試規則引擎分析
       const ruleResult = IntentRuleEngine.analyzeIntent(text);
 
-      // Step 2: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
+      // Step 3: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
       if (ruleResult.confidence >= 0.8 && ruleResult.intent !== 'unknown') {
         // 高信心度：使用規則引擎結果
-        const entities = await this.extractCourseEntities(text, userId);
-        const timeInfo = await this.extractTimeInfo(text);
-
         return {
           success: true,
           method: 'rule_engine',
@@ -44,10 +45,7 @@ class SemanticService {
             course_name: entities.course_name,
             location: entities.location,
             teacher: entities.teacher,
-            // ✅ 使用 TimeService 標準化時間信息
-            timeInfo: timeInfo?.parsed_time 
-              ? TimeService.createTimeInfo(timeInfo.parsed_time)
-              : null
+            timeInfo: processedTimeInfo
           },
           context,
           analysis_time: Date.now(),
@@ -75,7 +73,6 @@ class SemanticService {
       if (openaiResult.success) {
         // OpenAI 成功返回結構化結果
         const { analysis } = openaiResult;
-        const timeInfo = await this.extractTimeInfo(text);
 
         return {
           success: true,
@@ -86,10 +83,8 @@ class SemanticService {
             course_name: analysis.entities.course_name,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
-            // ✅ 使用 TimeService 標準化時間信息
-            timeInfo: timeInfo?.parsed_time 
-              ? TimeService.createTimeInfo(timeInfo.parsed_time)
-              : null
+            // ✅ 使用統一處理的時間信息
+            timeInfo: processedTimeInfo
           },
           context,
           reasoning: analysis.reasoning,
@@ -98,9 +93,6 @@ class SemanticService {
         };
       }
       // OpenAI 無法解析，回退到規則引擎結果
-      const entities = await this.extractCourseEntities(text, userId);
-      const timeInfo = await this.extractTimeInfo(text);
-
       return {
         success: true,
         method: 'rule_engine_fallback',
@@ -110,10 +102,8 @@ class SemanticService {
           course_name: entities.course_name,
           location: entities.location,
           teacher: entities.teacher,
-          // ✅ 使用 TimeService 標準化時間信息
-          timeInfo: timeInfo?.parsed_time 
-            ? TimeService.createTimeInfo(timeInfo.parsed_time)
-            : null
+          // ✅ 使用統一處理的時間信息
+          timeInfo: processedTimeInfo
         },
         context,
         openai_error: openaiResult.error,
@@ -210,7 +200,28 @@ class SemanticService {
   }
 
   /**
-   * 提取時間相關信息
+   * 統一處理時間信息（避免重複調用）
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Object|null>} 處理後的時間信息
+   */
+  static async processTimeInfo(text) {
+    if (!text) return null;
+
+    try {
+      const timeInfo = await this.extractTimeInfo(text);
+      
+      // 使用 TimeService 統一創建時間信息對象
+      return timeInfo?.parsed_time 
+        ? TimeService.createTimeInfo(timeInfo.parsed_time)
+        : null;
+    } catch (error) {
+      console.warn('Time processing failed:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * 提取時間相關信息（內部使用）
    * @param {string} text - 用戶輸入文本
    * @returns {Promise<Object>} 時間信息
    */
