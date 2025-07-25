@@ -4,6 +4,7 @@
  * 依賴：DataService, TimeService
  */
 const DataService = require('./dataService');
+const TimeService = require('../utils/timeService');
 
 class CourseService {
   /**
@@ -189,6 +190,63 @@ class CourseService {
     };
 
     return stats;
+  }
+
+  /**
+   * 清空用戶所有課程（高風險操作）
+   * @param {string} studentId - 學生ID
+   * @param {Object} options - 選項配置
+   * @returns {Promise<Object>} 清空結果
+   */
+  static async clearAllCourses(studentId, options = {}) {
+    if (!studentId) {
+      throw new Error('CourseService: studentId is required');
+    }
+
+    // 安全檢查：確認參數
+    if (!options.confirmed) {
+      throw new Error('CourseService: This is a high-risk operation that requires explicit confirmation');
+    }
+
+    // 獲取當前課程統計，用於操作前記錄
+    const statsBefore = await this.getCourseStats(studentId);
+    
+    if (statsBefore.total === 0) {
+      return {
+        success: true,
+        action: 'clear_all_courses',
+        studentId,
+        deletedCount: 0,
+        message: '用戶沒有任何課程需要清空',
+        statsBefore,
+        statsAfter: statsBefore,
+      };
+    }
+
+    // 執行批量刪除
+    const result = await DataService.clearUserCourses(studentId);
+    
+    // 獲取操作後統計
+    const statsAfter = await this.getCourseStats(studentId);
+
+    return {
+      success: result.success,
+      action: 'clear_all_courses',
+      studentId,
+      deletedCount: result.deletedCount,
+      totalCourses: result.totalCourses,
+      errors: result.errors,
+      message: result.success 
+        ? `✅ 成功清空課表！共刪除 ${result.deletedCount} 門課程`
+        : `⚠️ 清空課表部分失敗：成功刪除 ${result.deletedCount}/${result.totalCourses} 門課程`,
+      statsBefore,
+      statsAfter,
+      operationDetails: {
+        timestamp: TimeService.getCurrentUserTime().toISOString(),
+        operationType: 'CLEAR_ALL_COURSES',
+        affectedRecords: result.deletedCount,
+      },
+    };
   }
 }
 

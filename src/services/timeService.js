@@ -322,6 +322,44 @@ class TimeService {
     const timeString = formatter.format(sourceDate);
     return new Date(timeString);
   }
+
+  /**
+   * 在指定時間基礎上添加分鐘
+   * @param {Date} date - 基準時間
+   * @param {number} minutes - 要添加的分鐘數
+   * @returns {Date} 添加後的時間
+   */
+  static addMinutes(date, minutes) {
+    if (!date || !(date instanceof Date)) {
+      throw new Error('TimeService: date must be a Date object');
+    }
+    
+    if (typeof minutes !== 'number') {
+      throw new Error('TimeService: minutes must be a number');
+    }
+
+    const result = new Date(date.getTime());
+    result.setMinutes(result.getMinutes() + minutes);
+    return result;
+  }
+
+  /**
+   * 解析 ISO 日期時間字符串為 Date 對象
+   * @param {string} isoString - ISO 格式的日期時間字符串
+   * @returns {Date} 解析後的 Date 對象
+   */
+  static parseDateTime(isoString) {
+    if (!isoString || typeof isoString !== 'string') {
+      throw new Error('TimeService: isoString must be a non-empty string');
+    }
+
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      throw new Error('TimeService: Invalid date string format');
+    }
+
+    return date;
+  }
 }
 
 module.exports = TimeService;

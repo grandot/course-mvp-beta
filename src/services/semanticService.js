@@ -45,6 +45,7 @@ class SemanticService {
             course_name: entities.course_name,
             location: entities.location,
             teacher: entities.teacher,
+            confirmation: entities.confirmation,
             timeInfo: processedTimeInfo,
           },
           context,
@@ -83,6 +84,7 @@ class SemanticService {
             course_name: analysis.entities.course_name,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
+            confirmation: entities.confirmation,
             // ✅ 使用統一處理的時間信息
             timeInfo: processedTimeInfo,
           },
@@ -102,6 +104,7 @@ class SemanticService {
           course_name: entities.course_name,
           location: entities.location,
           teacher: entities.teacher,
+          confirmation: entities.confirmation,
           // ✅ 使用統一處理的時間信息
           timeInfo: processedTimeInfo,
         },
@@ -122,6 +125,7 @@ class SemanticService {
           course_name: null,
           location: null,
           teacher: null,
+          confirmation: null,
           timeInfo: null,
         },
         context,
@@ -142,6 +146,7 @@ class SemanticService {
         course_name: null,
         location: null,
         teacher: null,
+        confirmation: null,
       };
     }
 
@@ -192,10 +197,17 @@ class SemanticService {
       }
     });
 
+    // 檢查是否為確認回應
+    let confirmation = null;
+    if (text === '確認清空' || text === '確認') {
+      confirmation = '確認清空';
+    }
+
     return {
       course_name: courseName,
       location,
       teacher,
+      confirmation,
     };
   }
 
@@ -316,6 +328,7 @@ class SemanticService {
       'query_schedule',
       'modify_course',
       'set_reminder',
+      'clear_schedule',
       'unknown',
     ];
 

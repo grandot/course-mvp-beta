@@ -150,6 +150,26 @@ class LineController {
             case 'cancel_course':
               replyMessage = result.success ? '✅ 課程已成功取消！' : (result.message || '取消課程失敗');
               break;
+            case 'clear_schedule': {
+              // 處理清空課表的各種回應情況
+              if (result.action === 'clear_schedule_confirmation_required') {
+                // 需要確認的情況
+                replyMessage = result.message;
+              } else if (result.action === 'clear_schedule_executed') {
+                // 執行完成的情況
+                replyMessage = result.message;
+              } else if (result.action === 'clear_schedule_check') {
+                // 沒有課程需要清空
+                replyMessage = result.message;
+              } else if (result.action === 'clear_schedule_expired') {
+                // 確認已過期
+                replyMessage = result.message;
+              } else {
+                // 其他錯誤情況
+                replyMessage = result.message || '清空課表時發生錯誤，請稍後再試';
+              }
+              break;
+            }
             default:
               replyMessage = '✅ 已收到您的訊息，正在處理中...';
           }

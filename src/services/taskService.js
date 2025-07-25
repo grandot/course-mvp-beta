@@ -36,6 +36,9 @@ class TaskService {
         case 'query_schedule':
           return this.handleQuerySchedule(userId);
 
+        case 'clear_schedule':
+          return this.handleClearSchedule(entities, userId);
+
         case 'modify_course':
         case 'set_reminder':
           return {
@@ -193,6 +196,142 @@ class TaskService {
         error: error.message,
         message: '查詢課表時發生錯誤，請稍後再試',
       };
+    }
+  }
+
+  /**
+   * 處理清空課表（高風險操作，需要二步確認）
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  static async handleClearSchedule(entities, userId) {
+    try {
+      // 檢查是否是確認操作
+      const isConfirmation = entities.confirmation === '確認清空' || entities.confirmed === true;
+
+      if (!isConfirmation) {
+        // 第一步：檢查用戶課程數量並要求確認
+        const courses = await dataService.getUserCourses(userId);
+        
+        if (courses.length === 0) {
+          return {
+            success: true,
+            action: 'clear_schedule_check',
+            message: '您目前沒有任何課程安排需要清空。',
+            courseCount: 0,
+          };
+        }
+
+        // 存儲確認狀態（設置5分鐘過期）
+        await this.setClearConfirmationPending(userId);
+
+        return {
+          success: false,
+          action: 'clear_schedule_confirmation_required',
+          requiresConfirmation: true,
+          message: `⚠️ 警告：此操作將刪除您的所有 ${courses.length} 門課程，且無法恢復！\n\n如果確定要清空課表，請回覆「確認清空」。`,
+          courseCount: courses.length,
+          expiresIn: '5分鐘',
+        };
+      }
+
+      // 第二步：執行清空操作
+      const canConfirm = await this.checkClearConfirmationPending(userId);
+      if (!canConfirm) {
+        return {
+          success: false,
+          action: 'clear_schedule_expired',
+          message: '確認操作已過期，請重新發起清空課表請求。',
+        };
+      }
+
+      // 調用 CourseService 執行清空
+      const CourseService = require('./courseService');
+      const result = await CourseService.clearAllCourses(userId, { confirmed: true });
+
+      // 清理確認狀態
+      await this.clearClearConfirmationPending(userId);
+
+      return {
+        success: result.success,
+        action: 'clear_schedule_executed',
+        message: result.message,
+        deletedCount: result.deletedCount,
+        operationDetails: result.operationDetails,
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: '清空課表時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 設置清空確認待處理狀態
+   * @param {string} userId - 用戶ID
+   */
+  static async setClearConfirmationPending(userId) {
+    const currentTime = TimeService.getCurrentUserTime();
+    const expiryTime = TimeService.addMinutes(currentTime, 5); // 5分鐘後過期
+    
+    const confirmationData = {
+      user_id: userId,
+      action: 'clear_schedule',
+      timestamp: currentTime.toISOString(),
+      expires_at: expiryTime.toISOString(),
+    };
+    
+    // 使用統一數據服務存儲確認狀態
+    await dataService.createDocument('pending_confirmations', confirmationData);
+  }
+
+  /**
+   * 檢查清空確認待處理狀態
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<boolean>} 是否可以確認
+   */
+  static async checkClearConfirmationPending(userId) {
+    try {
+      const confirmations = await dataService.queryDocuments('pending_confirmations', {
+        user_id: userId,
+        action: 'clear_schedule',
+      });
+
+      if (confirmations.length === 0) {
+        return false;
+      }
+
+      const confirmation = confirmations[0];
+      const now = TimeService.getCurrentUserTime();
+      const expiresAt = TimeService.parseDateTime(confirmation.expires_at);
+
+      return now < expiresAt;
+    } catch (error) {
+      console.error('Error checking confirmation pending:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 清理清空確認待處理狀態
+   * @param {string} userId - 用戶ID
+   */
+  static async clearClearConfirmationPending(userId) {
+    try {
+      const confirmations = await dataService.queryDocuments('pending_confirmations', {
+        user_id: userId,
+        action: 'clear_schedule',
+      });
+
+      for (const confirmation of confirmations) {
+        await dataService.deleteDocument('pending_confirmations', confirmation.id);
+      }
+    } catch (error) {
+      console.error('Error clearing confirmation pending:', error);
     }
   }
 

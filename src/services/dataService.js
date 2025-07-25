@@ -45,7 +45,8 @@ class DataService {
       timestamp = TimeService.getCurrentUserTime().toISOString();
     } catch (error) {
       // 如果 TimeService 失敗，使用系統時間作為後備
-      timestamp = new Date().toISOString();
+      console.warn('TimeService failed, using system time:', error.message);
+      timestamp = TimeService.getCurrentUserTime().toISOString();
     }
 
     const course = {
@@ -216,6 +217,117 @@ class DataService {
    */
   static async logTokenUsage(usageData) {
     return this.recordTokenUsage(usageData);
+  }
+
+  /**
+   * 清空用戶所有課程記錄（批量刪除）
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 刪除結果
+   */
+  static async clearUserCourses(userId) {
+    if (!userId) {
+      throw new Error('DataService: userId is required');
+    }
+
+    // 先獲取用戶所有課程
+    const userCourses = await this.getUserCourses(userId);
+    
+    if (userCourses.length === 0) {
+      return {
+        success: true,
+        deletedCount: 0,
+        message: 'No courses found for user',
+      };
+    }
+
+    let deletedCount = 0;
+    const errors = [];
+
+    // 批量刪除每個課程
+    for (const course of userCourses) {
+      try {
+        await FirebaseService.deleteDocument(this.COLLECTIONS.COURSES, course.id);
+        deletedCount++;
+      } catch (error) {
+        errors.push({
+          courseId: course.id,
+          courseName: course.course_name,
+          error: error.message,
+        });
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      deletedCount,
+      totalCourses: userCourses.length,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully deleted ${deletedCount} out of ${userCourses.length} courses`,
+    };
+  }
+
+  /**
+   * 創建通用文檔
+   * @param {string} collection - 集合名稱
+   * @param {Object} data - 文檔數據
+   * @returns {Promise<Object>} 創建結果
+   */
+  static async createDocument(collection, data) {
+    if (!collection) {
+      throw new Error('DataService: collection is required');
+    }
+    if (!data) {
+      throw new Error('DataService: data is required');
+    }
+
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+    const documentData = {
+      ...data,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    const result = await FirebaseService.createDocument(collection, documentData);
+    return {
+      success: true,
+      id: result.id,
+      data: result.data,
+    };
+  }
+
+  /**
+   * 查詢通用文檔
+   * @param {string} collection - 集合名稱
+   * @param {Object} criteria - 查詢條件
+   * @returns {Promise<Array>} 查詢結果
+   */
+  static async queryDocuments(collection, criteria) {
+    if (!collection) {
+      throw new Error('DataService: collection is required');
+    }
+    if (!criteria) {
+      throw new Error('DataService: criteria is required');
+    }
+
+    return await FirebaseService.queryDocuments(collection, criteria);
+  }
+
+  /**
+   * 刪除通用文檔
+   * @param {string} collection - 集合名稱
+   * @param {string} documentId - 文檔ID
+   * @returns {Promise<boolean>} 刪除結果
+   */
+  static async deleteDocument(collection, documentId) {
+    if (!collection) {
+      throw new Error('DataService: collection is required');
+    }
+    if (!documentId) {
+      throw new Error('DataService: documentId is required');
+    }
+
+    await FirebaseService.deleteDocument(collection, documentId);
+    return true;
   }
 
   /**
