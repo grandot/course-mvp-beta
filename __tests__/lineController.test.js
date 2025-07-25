@@ -96,7 +96,7 @@ describe('LineController', () => {
         intent: 'record_course',
         confidence: 0.85,
         entities: {
-          courseName: '數學',
+          course_name: '數學',
           timeInfo: {
             display: '明天2點',
             date: '2025-07-26'
@@ -134,7 +134,7 @@ describe('LineController', () => {
         intent: 'cancel_course',
         confidence: 0.9,
         entities: {
-          courseName: '數學'
+          course_name: '數學'
         }
       });
 
@@ -196,7 +196,7 @@ describe('LineController', () => {
         intent: 'record_course',
         confidence: 0.8,
         entities: {
-          courseName: '數學'
+          course_name: '數學'
           // 缺少 timeInfo
         }
       });

@@ -108,10 +108,10 @@ class LineController {
 
       switch (intent) {
         case 'record_course':
-          if (entities.courseName && entities.timeInfo) {
+          if (entities.course_name && entities.timeInfo) {
             result = await courseService.createCourse({
               student_id: userId,
-              course_name: entities.courseName,
+              course_name: entities.course_name,
               schedule_time: entities.timeInfo.display,
               course_date: entities.timeInfo.date,
               location: entities.location,
@@ -127,9 +127,9 @@ class LineController {
           break;
 
         case 'cancel_course':
-          if (entities.courseName) {
+          if (entities.course_name) {
             const courses = await courseService.getCoursesByUser(userId, {
-              course_name: entities.courseName,
+              course_name: entities.course_name,
               status: 'scheduled',
             });
 
@@ -139,7 +139,7 @@ class LineController {
               result = {
                 success: false,
                 error: 'Course not found',
-                message: `找不到要取消的「${entities.courseName}」課程`,
+                message: `找不到要取消的「${entities.course_name}」課程`,
               };
             }
           } else {
