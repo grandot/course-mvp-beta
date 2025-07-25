@@ -7,7 +7,7 @@ const { ESLint } = require('eslint');
 const path = require('path');
 const fs = require('fs');
 
-describe.skip('ESLint Cross-Layer Import Rules - Temporarily Disabled for CI', () => {
+describe('ESLint Cross-Layer Import Rules', () => {
   let eslint;
   const tempDir = path.join(__dirname, '..', 'temp-test-files');
 

@@ -1,0 +1,9 @@
+{
+  "name": "eslint-plugin-local",
+  "version": "1.0.0", 
+  "description": "Local ESLint plugin for architecture constraints",
+  "main": "index.js",
+  "keywords": ["eslint", "plugin", "architecture"],
+  "author": "Course MVP Team",
+  "license": "MIT"
+}
