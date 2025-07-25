@@ -30,23 +30,21 @@ module.exports = {
     // 禁止的跨層調用規則
     const forbiddenImports = {
       controllers: ['internal', 'utils'], // controllers 只能調用 services
-      services: ['internal'], // services 只能調用 utils，不能直接調用 internal
+      services: [], // services 可以調用 utils 和 internal 進行內部協調
       utils: ['controllers', 'services'], // utils 不能調用上層
     };
 
-    // 特定的底層服務禁止規則
+    // 特定的底層服務禁止規則 - controllers 絕對不能直接調用這些
     const forbiddenDirectImports = {
       controllers: [
         'openaiService',
         'firebaseService',
-        'lineService',
+        '../internal/lineService', // 禁止直接調用 internal
         'intentRuleEngine',
         'timeParser',
       ],
-      services: [
-        'firebaseService',
-        'lineService',
-      ],
+      // services 層移除限制，允許內部協調
+      services: [],
     };
 
     // SemanticService 作為語義處理統一入口，允許調用 internal 服務進行內部協調

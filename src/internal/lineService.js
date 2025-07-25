@@ -14,56 +14,56 @@ class LineService {
    */
   static async replyMessage(replyToken, messages) {
     const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-    
+
     if (!accessToken) {
       throw new Error('LINE_CHANNEL_ACCESS_TOKEN not configured');
     }
-    
+
     if (!replyToken) {
       throw new Error('replyToken is required');
     }
-    
+
     // 確保 messages 是陣列格式
     const messageArray = Array.isArray(messages) ? messages : [messages];
-    
+
     const requestBody = {
       replyToken,
-      messages: messageArray.map(msg => {
+      messages: messageArray.map((msg) => {
         if (typeof msg === 'string') {
           return {
             type: 'text',
-            text: msg
+            text: msg,
           };
         }
         return msg;
-      })
+      }),
     };
-    
+
     console.log('Sending LINE reply:', JSON.stringify(requestBody, null, 2));
-    
+
     try {
       const response = await this.makeLineApiRequest(
         'POST',
         '/v2/bot/message/reply',
         requestBody,
-        accessToken
+        accessToken,
       );
-      
+
       console.log('LINE API response:', response);
-      
+
       return {
         success: true,
-        response
+        response,
       };
     } catch (error) {
       console.error('LINE API error:', error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
-  
+
   /**
    * 發送 LINE API 請求
    * @param {string} method - HTTP 方法
@@ -75,7 +75,7 @@ class LineService {
   static makeLineApiRequest(method, path, data, accessToken) {
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify(data);
-      
+
       const options = {
         hostname: 'api.line.me',
         port: 443,
@@ -84,25 +84,25 @@ class LineService {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(postData),
-          'Authorization': `Bearer ${accessToken}`
-        }
+          Authorization: `Bearer ${accessToken}`,
+        },
       };
-      
+
       const req = https.request(options, (res) => {
         let responseData = '';
-        
+
         res.on('data', (chunk) => {
           responseData += chunk;
         });
-        
+
         res.on('end', () => {
           try {
             const response = responseData ? JSON.parse(responseData) : {};
-            
+
             if (res.statusCode >= 200 && res.statusCode < 300) {
               resolve({
                 statusCode: res.statusCode,
-                data: response
+                data: response,
               });
             } else {
               reject(new Error(`LINE API error: ${res.statusCode} - ${responseData}`));
@@ -112,16 +112,16 @@ class LineService {
           }
         });
       });
-      
+
       req.on('error', (error) => {
         reject(new Error(`LINE API request failed: ${error.message}`));
       });
-      
+
       req.write(postData);
       req.end();
     });
   }
-  
+
   /**
    * 格式化課程查詢結果為 LINE 訊息
    * @param {Array} courses - 課程陣列
@@ -130,11 +130,11 @@ class LineService {
    */
   static formatCourseResponse(courses, intent) {
     switch (intent) {
-      case 'query_schedule':
+      case 'query_schedule': {
         if (!courses || courses.length === 0) {
           return '📅 目前沒有安排課程\n\n您可以發送「明天2點數學課」來新增課程';
         }
-        
+
         let message = '📅 您的課程安排：\n\n';
         courses.forEach((course, index) => {
           message += `${index + 1}. ${course.course_name}\n`;
@@ -148,13 +148,14 @@ class LineService {
           message += '\n';
         });
         return message.trim();
-        
+      }
+
       case 'record_course':
         return '✅ 課程已成功新增！';
-        
+
       case 'cancel_course':
         return '✅ 課程已成功取消！';
-        
+
       default:
         return '✅ 操作完成！';
     }

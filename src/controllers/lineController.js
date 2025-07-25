@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const semanticService = require('../services/semanticService');
 const courseService = require('../services/courseService');
 const TimeService = require('../services/timeService');
-const LineService = require('../internal/lineService');
+const lineService = require('../services/lineService');
 
 class LineController {
   /**
@@ -185,13 +185,13 @@ class LineController {
       // 發送回覆給 LINE 用戶
       if (event.replyToken) {
         let replyMessage;
-        
+
         if (result.success === false) {
           replyMessage = result.message || '處理時發生錯誤，請稍後再試';
         } else {
           switch (intent) {
             case 'query_schedule':
-              replyMessage = LineService.formatCourseResponse(result || [], intent);
+              replyMessage = lineService.formatCourseResponse(result || [], intent);
               break;
             case 'record_course':
               replyMessage = result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗');
@@ -203,12 +203,12 @@ class LineController {
               replyMessage = '✅ 已收到您的訊息，正在處理中...';
           }
         }
-        
+
         console.log('Sending reply:', replyMessage);
-        
-        const replyResult = await LineService.replyMessage(event.replyToken, replyMessage);
+
+        const replyResult = await lineService.replyMessage(event.replyToken, replyMessage);
         console.log('Reply result:', replyResult);
-        
+
         return {
           success: true,
           intent,
@@ -243,7 +243,7 @@ class LineController {
     console.log('- Headers:', JSON.stringify(req.headers, null, 2));
     console.log('- Body type:', typeof req.body);
     console.log('- Body is Buffer:', Buffer.isBuffer(req.body));
-    
+
     try {
       // 獲取原始 body 用於簽名驗證
       const signature = req.get('X-Line-Signature');

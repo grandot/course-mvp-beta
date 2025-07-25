@@ -83,28 +83,28 @@ module.exports = {
     expect(errors[0].message).toContain('禁止直接調用底層服務');
   });
 
-  test('Service 不能直接調用 firebaseService（應觸發錯誤）', async () => {
-    const violationFile = path.join(tempDir, 'services', 'violationService.js');
-    const violationCode = `
-// 這應該觸發 ESLint 錯誤
-const firebaseService = require('../utils/firebaseService');
+  test('Service 調用 internal 是合法的（根據分離式架構v2.0）', async () => {
+    const validFile = path.join(tempDir, 'services', 'validService.js');
+    const validCode = `
+// Services 層可以調用 internal 進行內部協調（架構v2.0）
+const InternalLineService = require('../internal/lineService');
 
-class ViolationService {
-  static async save() {
-    return await firebaseService.save();
+class ValidService {
+  static async processMessage() {
+    return await InternalLineService.replyMessage();
   }
 }
 
-module.exports = ViolationService;
+module.exports = ValidService;
 `;
 
-    fs.writeFileSync(violationFile, violationCode);
+    fs.writeFileSync(validFile, validCode);
     
-    const results = await eslint.lintFiles([violationFile]);
+    const results = await eslint.lintFiles([validFile]);
     const errors = results[0].messages.filter(msg => msg.ruleId === 'local/no-cross-layer-imports');
     
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].message).toContain('禁止直接調用底層服務');
+    // 這應該是合法的，不應該有錯誤
+    expect(errors.length).toBe(0);
   });
 
   test('合法的 import 不應觸發錯誤', async () => {
