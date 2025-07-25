@@ -140,7 +140,7 @@ class SemanticService {
    * @param {string} userId - 用戶ID
    * @returns {Promise<Object>} 課程實體信息
    */
-  static async extractCourseEntities(text) {
+  static async extractCourseEntities(text, userId = null) {
     if (!text) {
       return {
         course_name: null,
@@ -151,7 +151,31 @@ class SemanticService {
     }
 
     // 使用 OpenAI 的輔助方法提取實體
-    const courseName = OpenAIService.extractCourseName(text);
+    let courseName = OpenAIService.extractCourseName(text);
+
+    // 如果有用戶ID且提取到課程名稱，嘗試模糊匹配現有課程
+    if (userId && courseName) {
+      try {
+        const dataService = require('./dataService');
+        const existingCourses = await dataService.getUserCourses(userId, { status: 'scheduled' });
+        
+        // 模糊匹配：尋找包含提取到課程名稱的課程
+        const matchedCourse = existingCourses.find(course => {
+          const existingName = course.course_name.toLowerCase();
+          const extractedName = courseName.toLowerCase();
+          
+          // 雙向匹配：提取的名稱包含在現有課程中，或現有課程包含在提取的名稱中
+          return existingName.includes(extractedName) || extractedName.includes(existingName);
+        });
+        
+        if (matchedCourse) {
+          courseName = matchedCourse.course_name; // 使用完整的課程名稱
+        }
+      } catch (error) {
+        // 模糊匹配失敗不影響原有流程
+        console.warn('Course fuzzy matching failed:', error.message);
+      }
+    }
 
     // 提取地點
     let location = null;
