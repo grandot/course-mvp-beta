@@ -69,15 +69,15 @@ class TaskService {
   static async handleRecordCourse(entities, userId) {
     // 改進驗證邏輯：更友好的錯誤處理
     const missingInfo = [];
-    
+
     if (!entities.course_name) {
       missingInfo.push('課程名稱');
     }
-    
+
     if (!entities.timeInfo) {
       missingInfo.push('時間信息');
     }
-    
+
     // 如果缺少課程名稱，提供更具體的建議
     if (!entities.course_name) {
       return {
@@ -86,7 +86,7 @@ class TaskService {
         message: '請告訴我課程名稱，例如：「數學課」、「英文課」等',
       };
     }
-    
+
     // 如果缺少時間信息，允許創建課程但提醒用戶補充
     if (!entities.timeInfo) {
       return {

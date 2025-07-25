@@ -8,4 +8,10 @@ module.exports = {
     '**/__tests__/**/*.js',
     '**/?(*.)+(spec|test).js',
   ],
+  transform: {
+    '^.+\\.jsx?$': 'babel-jest',
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(some-esm-package)/)',
+  ],
 };

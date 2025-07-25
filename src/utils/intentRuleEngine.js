@@ -77,7 +77,9 @@ class IntentRuleEngine {
    * @returns {Object} 匹配結果 {confidence, priority}
    */
   static matchRule(text, rule) {
-    const { keywords = [], exclusions = [], patterns = [], priority = 1 } = rule;
+    const {
+      keywords = [], exclusions = [], patterns = [], priority = 1,
+    } = rule;
 
     // 檢查排除詞
     if (exclusions.some((exclusion) => text.includes(exclusion))) {
@@ -104,11 +106,11 @@ class IntentRuleEngine {
         return false;
       }
     });
-    
+
     if (matchedPatterns.length > 0) {
       matchScore += matchedPatterns.length * 2; // 模式匹配權重更高
     }
-    maxScore += patterns.length * 2;
+    // maxScore += patterns.length * 2; // 暫時註解，未來可能用於標準化
 
     // 如果沒有任何匹配
     if (matchScore === 0) {
@@ -118,12 +120,12 @@ class IntentRuleEngine {
     // 計算最終置信度 - 保持向後兼容
     const baseConfidence = 0.8;
     let confidence = baseConfidence;
-    
+
     // 關鍵詞匹配加分
     if (matchedKeywords.length > 1) {
       confidence = Math.min(confidence + ((matchedKeywords.length - 1) * 0.1), 1.0);
     }
-    
+
     // 模式匹配加分（較少，因為是新功能）
     if (matchedPatterns.length > 0) {
       confidence = Math.min(confidence + (matchedPatterns.length * 0.05), 1.0);

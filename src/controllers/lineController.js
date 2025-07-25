@@ -75,15 +75,14 @@ class LineController {
         return false;
       }
 
-      // 安全比較簽名
+      // 安全比較簽名 - 直接比較 base64 字符串
       const isValid = crypto.timingSafeEqual(
-        Buffer.from(signature, 'base64'),
-        Buffer.from(expectedSignature, 'base64'),
+        Buffer.from(signature),
+        Buffer.from(expectedSignature),
       );
 
       console.log('- Signature valid:', isValid);
       return isValid;
-
     } catch (error) {
       console.error('Signature verification error:', error);
       return false;
@@ -179,10 +178,10 @@ class LineController {
     } catch (error) {
       console.error('Error handling text message:', error);
       console.error('Error stack:', error.stack);
-      
+
       // 提供更詳細的錯誤信息，但保持與測試的兼容性
       let errorMessage = '處理訊息時發生錯誤，請稍後再試';
-      
+
       if (error.message.includes('Missing required')) {
         errorMessage = '請提供完整的課程信息';
       } else if (error.message.includes('Database')) {
@@ -190,7 +189,7 @@ class LineController {
       } else if (error.message.includes('Service')) {
         errorMessage = '服務暫時不可用，請稍後再試';
       }
-      
+
       return {
         success: false,
         error: error.message, // 保持原始錯誤訊息，與測試期待一致

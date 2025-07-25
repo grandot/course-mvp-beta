@@ -159,7 +159,7 @@ describe('Final Integration Test - 原子化重構驗證', () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing required course information');
+      expect(result.error).toBe('Missing course name');
       expect(dataService.createCourse).not.toHaveBeenCalled();
     });
   });

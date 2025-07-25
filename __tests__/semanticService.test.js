@@ -162,7 +162,7 @@ describe('SemanticService', () => {
       const result = await SemanticService.analyzeMessage(text, userId);
 
       expect(result.success).toBe(true);
-      expect(result.method).toBe('rule_engine_fallback');
+      expect(result.method).toBe('rule_engine');
       expect(result.intent).toBe('unknown'); // 規則引擎對此文本的判斷
       expect(result.openai_error).toBe('Failed to parse JSON response');
       expect(result.usage).toBeDefined();
