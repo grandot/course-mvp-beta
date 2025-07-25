@@ -43,22 +43,34 @@ class LineController {
       return false;
     }
 
+    // Debug logging
+    console.log('Signature verification debug:');
+    console.log('- Received signature:', signature);
+    console.log('- Body type:', typeof body);
+    console.log('- Body length:', body ? body.length : 'null');
+    console.log('- Body content (first 100 chars):', body ? body.substring(0, 100) : 'null');
+
     const hash = crypto
       .createHmac('sha256', channelSecret)
       .update(body)
       .digest('base64');
 
     const expectedSignature = `sha256=${hash}`;
+    console.log('- Expected signature:', expectedSignature);
 
     // 檢查長度是否相同，避免 timingSafeEqual 錯誤
     if (signature.length !== expectedSignature.length) {
+      console.error('Signature length mismatch:', signature.length, 'vs', expectedSignature.length);
       return false;
     }
 
-    return crypto.timingSafeEqual(
+    const isValid = crypto.timingSafeEqual(
       Buffer.from(signature),
       Buffer.from(expectedSignature),
     );
+
+    console.log('- Signature valid:', isValid);
+    return isValid;
   }
 
   /**
@@ -181,14 +193,23 @@ class LineController {
    * POST /callback
    */
   static async webhook(req, res) {
+    console.log('Webhook request received');
+    console.log('- Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('- Body type:', typeof req.body);
+    console.log('- Body is Buffer:', Buffer.isBuffer(req.body));
+    
     try {
       // 獲取原始 body 用於簽名驗證
       const signature = req.get('X-Line-Signature');
       const body = req.body.toString(); // 原始 Buffer 轉為字符串
 
+      console.log('Processing webhook:');
+      console.log('- Signature header:', signature);
+      console.log('- Body after toString():', body.substring(0, 200));
+
       // 驗證簽名
       if (!LineController.verifySignature(signature, body)) {
-        console.error('Invalid signature');
+        console.error('Invalid signature - rejecting request');
         return res.status(403).json({ error: 'Forbidden' });
       }
 
