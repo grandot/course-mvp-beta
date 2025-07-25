@@ -78,9 +78,12 @@ describe('Service Layer Architecture Tests', () => {
       await expect(SemanticService.identifyIntent('test')).rejects.toThrow('NotImplementedError');
       await expect(SemanticService.validateAnalysis({})).rejects.toThrow('NotImplementedError');
 
-      // TimeService 方法測試
-      expect(() => TimeService.getCurrentUserTime()).toThrow('NotImplementedError');
-      await expect(TimeService.parseTimeString('tomorrow')).rejects.toThrow('NotImplementedError');
+      // TimeService 方法測試（注意：parseTimeString 和 getCurrentUserTime 已實現，其他方法仍為骨架）
+      // getCurrentUserTime 和 parseTimeString 已實現，不應拋出 NotImplementedError
+      const currentTime = TimeService.getCurrentUserTime();
+      expect(currentTime).toBeInstanceOf(Date);
+      const parsedTime = await TimeService.parseTimeString('今天 2:30');
+      expect(parsedTime).toBeInstanceOf(Date);
       expect(() => TimeService.formatForDisplay(new Date())).toThrow('NotImplementedError');
       await expect(TimeService.validateTime(new Date())).rejects.toThrow('NotImplementedError');
       await expect(TimeService.calculateTimeRange(new Date(), new Date())).rejects.toThrow('NotImplementedError');
