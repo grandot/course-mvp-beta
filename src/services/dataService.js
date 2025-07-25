@@ -227,6 +227,15 @@ class DataService {
   }
 
   /**
+   * 記錄 token 使用量（別名方法，用於 logTokenUsage）
+   * @param {Object} usageData - 使用量數據
+   * @returns {Promise<Object>} 記錄結果
+   */
+  static async logTokenUsage(usageData) {
+    return this.recordTokenUsage(usageData);
+  }
+
+  /**
    * 驗證數據格式
    * @param {Object} data - 待驗證數據
    * @param {string} schema - 驗證模式

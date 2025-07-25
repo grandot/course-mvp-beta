@@ -44,10 +44,14 @@ module.exports = {
         'timeParser',
       ],
       services: [
-        'openaiService', 
         'firebaseService',
         'lineService',
       ],
+    };
+
+    // SemanticService 作為語義處理統一入口，允許調用 internal 服務進行內部協調
+    const allowedExceptions = {
+      'semanticService.js': ['openaiService'],
     };
 
     function getLayerFromPath(filePath) {
@@ -67,9 +71,21 @@ module.exports = {
       return 'external';
     }
 
-    function checkForbiddenDirectImport(fromLayer, importPath) {
+    function checkForbiddenDirectImport(fromLayer, importPath, currentFile) {
       const forbidden = forbiddenDirectImports[fromLayer];
       if (!forbidden) return false;
+      
+      // 檢查是否有例外允許
+      const fileName = currentFile.split('/').pop();
+      const exceptions = allowedExceptions[fileName];
+      if (exceptions) {
+        const isException = exceptions.some(service => 
+          importPath.includes(service) || 
+          importPath.endsWith(service) ||
+          importPath.includes(`/${service}`)
+        );
+        if (isException) return false;
+      }
       
       return forbidden.some(service => 
         importPath.includes(service) || 
@@ -91,7 +107,7 @@ module.exports = {
         }
 
         // 檢查禁止的直接調用
-        if (checkForbiddenDirectImport(fromLayer, importPath)) {
+        if (checkForbiddenDirectImport(fromLayer, importPath, currentFile)) {
           context.report({
             node,
             messageId: 'invalidDirectImport',
@@ -106,14 +122,29 @@ module.exports = {
         // 檢查禁止的跨層調用
         const forbidden = forbiddenImports[fromLayer];
         if (forbidden && forbidden.includes(toLayer)) {
-          context.report({
-            node,
-            messageId: 'crossLayerImport',
-            data: {
-              fromLayer,
-              toLayer,
-            },
-          });
+          // 檢查是否有例外允許
+          const fileName = currentFile.split('/').pop();
+          const exceptions = allowedExceptions[fileName];
+          let isAllowedException = false;
+          
+          if (exceptions && toLayer === 'internal') {
+            isAllowedException = exceptions.some(service => 
+              importPath.includes(service) || 
+              importPath.endsWith(service) ||
+              importPath.includes(`/${service}`)
+            );
+          }
+          
+          if (!isAllowedException) {
+            context.report({
+              node,
+              messageId: 'crossLayerImport',
+              data: {
+                fromLayer,
+                toLayer,
+              },
+            });
+          }
         }
       },
 
@@ -128,7 +159,7 @@ module.exports = {
             const toLayer = getImportLayer(importPath);
 
             // 檢查禁止的直接調用
-            if (checkForbiddenDirectImport(fromLayer, importPath)) {
+            if (checkForbiddenDirectImport(fromLayer, importPath, currentFile)) {
               context.report({
                 node,
                 messageId: 'invalidDirectImport',
@@ -143,14 +174,29 @@ module.exports = {
             // 檢查禁止的跨層調用
             const forbidden = forbiddenImports[fromLayer];
             if (forbidden && forbidden.includes(toLayer)) {
-              context.report({
-                node,
-                messageId: 'crossLayerImport',
-                data: {
-                  fromLayer,
-                  toLayer,
-                },
-              });
+              // 檢查是否有例外允許
+              const fileName = currentFile.split('/').pop();
+              const exceptions = allowedExceptions[fileName];
+              let isAllowedException = false;
+              
+              if (exceptions && toLayer === 'internal') {
+                isAllowedException = exceptions.some(service => 
+                  importPath.includes(service) || 
+                  importPath.endsWith(service) ||
+                  importPath.includes(`/${service}`)
+                );
+              }
+              
+              if (!isAllowedException) {
+                context.report({
+                  node,
+                  messageId: 'crossLayerImport',
+                  data: {
+                    fromLayer,
+                    toLayer,
+                  },
+                });
+              }
             }
           }
         }

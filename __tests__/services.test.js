@@ -71,12 +71,26 @@ describe('Service Layer Architecture Tests', () => {
       const TimeService = require('../src/services/timeService');
       const DataService = require('../src/services/dataService');
 
-      // SemanticService 方法測試
-      await expect(SemanticService.analyzeMessage('test', 'user1')).rejects.toThrow('NotImplementedError');
-      await expect(SemanticService.extractCourseEntities('test', 'user1')).rejects.toThrow('NotImplementedError');
-      await expect(SemanticService.extractTimeInfo('test')).rejects.toThrow('NotImplementedError');
-      await expect(SemanticService.identifyIntent('test')).rejects.toThrow('NotImplementedError');
-      await expect(SemanticService.validateAnalysis({})).rejects.toThrow('NotImplementedError');
+      // SemanticService 方法測試（Phase 4: 已實現完整功能，不再拋出 NotImplementedError）
+      // 驗證 SemanticService 方法已正常實現
+      const analysisResult = await SemanticService.analyzeMessage('test', 'user1');
+      expect(analysisResult.success).toBeDefined();
+      
+      const entities = await SemanticService.extractCourseEntities('test', 'user1');
+      expect(entities).toBeDefined();
+      
+      const timeInfo = await SemanticService.extractTimeInfo('test');
+      expect(timeInfo).toBeDefined();
+      
+      const intent = await SemanticService.identifyIntent('test');
+      expect(typeof intent).toBe('string');
+      
+      const validationResult = await SemanticService.validateAnalysis({ 
+        success: true, 
+        intent: 'unknown', 
+        confidence: 0.5 
+      });
+      expect(typeof validationResult).toBe('boolean');
 
       // TimeService 方法測試（注意：parseTimeString 和 getCurrentUserTime 已實現，其他方法仍為骨架）
       // getCurrentUserTime 和 parseTimeString 已實現，不應拋出 NotImplementedError
@@ -101,12 +115,12 @@ describe('Service Layer Architecture Tests', () => {
       const courses = await DataService.getUserCourses('test');
       expect(Array.isArray(courses)).toBe(true);
       
-      const isValid = await DataService.validateData({
+      const dataValidationResult = await DataService.validateData({
         student_id: 'test',
         course_name: 'test',
         course_date: '2025-07-25'
       }, 'course');
-      expect(isValid).toBe(true);
+      expect(dataValidationResult).toBe(true);
     });
   });
 });
