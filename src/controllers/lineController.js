@@ -153,6 +153,7 @@ class LineController {
           result = await courseService.getCoursesByUser(userId, {
             status: 'scheduled',
           });
+          console.log('Query schedule result:', JSON.stringify(result, null, 2));
           break;
 
         case 'modify_course':
@@ -171,6 +172,13 @@ class LineController {
             message: '抱歉，我無法理解您的需求，請重新描述',
           };
       }
+
+      console.log('Final handling result:', JSON.stringify({
+        success: true,
+        intent,
+        confidence,
+        result,
+      }, null, 2));
 
       return {
         success: true,
@@ -234,6 +242,12 @@ class LineController {
       }
 
       // 返回處理結果
+      console.log('Webhook processing completed:', JSON.stringify({
+        success: true,
+        processed: results.length,
+        results,
+      }, null, 2));
+
       return res.status(200).json({
         success: true,
         processed: results.length,
