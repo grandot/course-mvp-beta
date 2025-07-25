@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
-    "test": "jest --passWithNoTests",
     "lint": "eslint src/ --ext .js || true",
     "lint:fix": "eslint src/ --fix",
     "prettier": "prettier --write src/"
@@ -26,14 +25,10 @@
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
-    "@babel/preset-env": "^7.28.0",
-    "babel-jest": "^30.0.5",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-local": "file:eslint-plugin-local",
-    "jest": "^29.7.0",
     "prettier": "^3.2.5"
   },
   "engines": {
