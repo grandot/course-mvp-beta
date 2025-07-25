@@ -6,7 +6,7 @@
  */
 const crypto = require('crypto');
 const semanticService = require('../services/semanticService');
-const courseService = require('../services/courseService');
+const TaskService = require('../services/taskService');
 const TimeService = require('../services/timeService');
 const lineService = require('../services/lineService');
 
@@ -103,77 +103,10 @@ class LineController {
 
       console.log(`Intent: ${intent}, Confidence: ${confidence}`);
 
-      // 根據意圖調用相應的課程服務
-      let result;
-
-      switch (intent) {
-        case 'record_course':
-          if (entities.course_name && entities.timeInfo) {
-            result = await courseService.createCourse({
-              student_id: userId,
-              course_name: entities.course_name,
-              schedule_time: entities.timeInfo.display,
-              course_date: entities.timeInfo.date,
-              location: entities.location,
-              teacher: entities.teacher,
-            });
-          } else {
-            result = {
-              success: false,
-              error: 'Missing required course information',
-              message: '請提供課程名稱和時間信息',
-            };
-          }
-          break;
-
-        case 'cancel_course':
-          if (entities.course_name) {
-            const courses = await courseService.getCoursesByUser(userId, {
-              course_name: entities.course_name,
-              status: 'scheduled',
-            });
-
-            if (courses.length > 0) {
-              result = await courseService.cancelCourse(courses[0].id);
-            } else {
-              result = {
-                success: false,
-                error: 'Course not found',
-                message: `找不到要取消的「${entities.course_name}」課程`,
-              };
-            }
-          } else {
-            result = {
-              success: false,
-              error: 'Missing course name',
-              message: '請指定要取消的課程名稱',
-            };
-          }
-          break;
-
-        case 'query_schedule':
-          result = await courseService.getCoursesByUser(userId, {
-            status: 'scheduled',
-          });
-          console.log('Query schedule result:', JSON.stringify(result, null, 2));
-          break;
-
-        case 'modify_course':
-        case 'set_reminder':
-          result = {
-            success: false,
-            error: 'Feature not implemented',
-            message: '此功能將在後續版本中實現',
-          };
-          break;
-
-        default:
-          result = {
-            success: false,
-            error: 'Unknown intent',
-            message: '抱歉，我無法理解您的需求，請重新描述',
-          };
-      }
+      // ✅ 使用 TaskService 統一處理所有業務邏輯
+      const result = await TaskService.executeIntent(intent, entities, userId);
+      
+      console.log('TaskService execution result:', JSON.stringify(result, null, 2));
 
       console.log('Final handling result:', JSON.stringify({
         success: true,
@@ -191,7 +124,9 @@ class LineController {
         } else {
           switch (intent) {
             case 'query_schedule':
-              replyMessage = lineService.formatCourseResponse(result || [], intent);
+              // TaskService.handleQuerySchedule 返回 { success: true, courses: [...] }
+              const courses = result.courses || [];
+              replyMessage = lineService.formatCourseResponse(courses, intent);
               break;
             case 'record_course':
               replyMessage = result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗');
