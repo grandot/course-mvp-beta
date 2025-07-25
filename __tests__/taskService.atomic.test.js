@@ -67,8 +67,8 @@ describe('TaskService Atomic Tests - Step 3 Task Coordination Layer', () => {
       const result = await TaskService.executeIntent('record_course', entities, 'test-user');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing required course information');
-      expect(result.message).toBe('請提供課程名稱和時間信息');
+      expect(result.error).toBe('Missing course name');
+      expect(result.message).toBe('請告訴我課程名稱，例如：「數學課」、「英文課」等');
       expect(dataService.createCourse).not.toHaveBeenCalled();
     });
 
@@ -81,7 +81,8 @@ describe('TaskService Atomic Tests - Step 3 Task Coordination Layer', () => {
       const result = await TaskService.executeIntent('record_course', entities, 'test-user');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Missing required course information');
+      expect(result.error).toBe('Missing time information');
+      expect(result.message).toBe('請提供上課時間，例如：「明天下午2點」、「週三晚上7點」等');
       expect(dataService.createCourse).not.toHaveBeenCalled();
     });
 
@@ -101,7 +102,7 @@ describe('TaskService Atomic Tests - Step 3 Task Coordination Layer', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Invalid time information format');
-      expect(result.message).toBe('時間信息格式不正確');
+      expect(result.message).toBe('時間格式不正確，請重新輸入時間信息');
       expect(dataService.createCourse).not.toHaveBeenCalled();
     });
 

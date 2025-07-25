@@ -180,25 +180,21 @@ class LineController {
       console.error('Error handling text message:', error);
       console.error('Error stack:', error.stack);
       
-      // 提供更詳細的錯誤信息
+      // 提供更詳細的錯誤信息，但保持與測試的兼容性
       let errorMessage = '處理訊息時發生錯誤，請稍後再試';
-      let errorType = 'unknown_error';
       
       if (error.message.includes('Missing required')) {
         errorMessage = '請提供完整的課程信息';
-        errorType = 'missing_info';
       } else if (error.message.includes('Database')) {
         errorMessage = '數據庫連接失敗，請稍後再試';
-        errorType = 'database_error';
       } else if (error.message.includes('Service')) {
         errorMessage = '服務暫時不可用，請稍後再試';
-        errorType = 'service_error';
       }
       
       return {
         success: false,
-        error: errorType,
-        message: errorMessage,
+        error: error.message, // 保持原始錯誤訊息，與測試期待一致
+        message: errorMessage, // 用戶友好的錯誤訊息
         details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       };
     }
