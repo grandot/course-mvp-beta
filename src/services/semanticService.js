@@ -40,8 +40,15 @@ class SemanticService {
           method: 'rule_engine',
           intent: ruleResult.intent,
           confidence: ruleResult.confidence,
-          entities,
-          timeInfo,
+          entities: {
+            course_name: entities.course_name,
+            location: entities.location,
+            teacher: entities.teacher,
+            // ✅ 使用 TimeService 標準化時間信息
+            timeInfo: timeInfo?.parsed_time 
+              ? TimeService.createTimeInfo(timeInfo.parsed_time)
+              : null
+          },
           context,
           analysis_time: Date.now(),
         };
@@ -75,8 +82,15 @@ class SemanticService {
           method: 'openai',
           intent: analysis.intent,
           confidence: analysis.confidence,
-          entities: analysis.entities,
-          timeInfo,
+          entities: {
+            course_name: analysis.entities.course_name,
+            location: analysis.entities.location,
+            teacher: analysis.entities.teacher,
+            // ✅ 使用 TimeService 標準化時間信息
+            timeInfo: timeInfo?.parsed_time 
+              ? TimeService.createTimeInfo(timeInfo.parsed_time)
+              : null
+          },
           context,
           reasoning: analysis.reasoning,
           usage: openaiResult.usage,
@@ -92,8 +106,15 @@ class SemanticService {
         method: 'rule_engine_fallback',
         intent: ruleResult.intent,
         confidence: ruleResult.confidence,
-        entities,
-        timeInfo,
+        entities: {
+          course_name: entities.course_name,
+          location: entities.location,
+          teacher: entities.teacher,
+          // ✅ 使用 TimeService 標準化時間信息
+          timeInfo: timeInfo?.parsed_time 
+            ? TimeService.createTimeInfo(timeInfo.parsed_time)
+            : null
+        },
         context,
         openai_error: openaiResult.error,
         usage: openaiResult.usage,
@@ -107,8 +128,12 @@ class SemanticService {
         method: 'error',
         intent: 'unknown',
         confidence: 0.0,
-        entities: {},
-        timeInfo: null,
+        entities: {
+          course_name: null,
+          location: null,
+          teacher: null,
+          timeInfo: null
+        },
         context,
         analysis_time: Date.now(),
       };
