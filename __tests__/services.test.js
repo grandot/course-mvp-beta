@@ -92,14 +92,25 @@ describe('Service Layer Architecture Tests', () => {
       });
       expect(typeof validationResult).toBe('boolean');
 
-      // TimeService 方法測試（注意：parseTimeString 和 getCurrentUserTime 已實現，其他方法仍為骨架）
-      // getCurrentUserTime 和 parseTimeString 已實現，不應拋出 NotImplementedError
+      // TimeService 方法測試（Step 1 完成：契約標準化方法已實現）
+      // Step 1 已實現的方法不應拋出 NotImplementedError
       const currentTime = TimeService.getCurrentUserTime();
       expect(currentTime).toBeInstanceOf(Date);
       const parsedTime = await TimeService.parseTimeString('今天 2:30');
       expect(parsedTime).toBeInstanceOf(Date);
-      expect(() => TimeService.formatForDisplay(new Date())).toThrow('NotImplementedError');
-      await expect(TimeService.validateTime(new Date())).rejects.toThrow('NotImplementedError');
+      
+      // Step 1 契約標準化：這些方法已實現
+      const displayTime = TimeService.formatForDisplay(new Date());
+      expect(typeof displayTime).toBe('string');
+      const storageTime = TimeService.formatForStorage(new Date());
+      expect(typeof storageTime).toBe('string');
+      const timeInfo = TimeService.createTimeInfo(new Date());
+      expect(timeInfo).toHaveProperty('display');
+      expect(timeInfo).toHaveProperty('date');
+      const validationResult = TimeService.validateTimeInfo(timeInfo);
+      expect(typeof validationResult).toBe('boolean');
+      
+      // 未實現的方法仍應拋出 NotImplementedError
       await expect(TimeService.calculateTimeRange(new Date(), new Date())).rejects.toThrow('NotImplementedError');
       await expect(TimeService.checkTimeConflict(new Date(), [])).rejects.toThrow('NotImplementedError');
 
