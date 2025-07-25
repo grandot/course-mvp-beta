@@ -7,7 +7,8 @@ const lineController = require('./controllers/lineController');
 
 const app = express();
 
-// 中間件配置
+// 中間件配置 - 為 LINE webhook 保留原始 body
+app.use('/callback', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

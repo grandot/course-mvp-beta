@@ -184,7 +184,7 @@ class LineController {
     try {
       // 獲取原始 body 用於簽名驗證
       const signature = req.get('X-Line-Signature');
-      const body = JSON.stringify(req.body);
+      const body = req.body.toString(); // 原始 Buffer 轉為字符串
 
       // 驗證簽名
       if (!LineController.verifySignature(signature, body)) {
@@ -192,8 +192,9 @@ class LineController {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
-      // 處理事件
-      const { events } = req.body;
+      // 解析 JSON 事件
+      const requestBody = JSON.parse(body);
+      const { events } = requestBody;
       const results = [];
 
       // eslint-disable-next-line no-restricted-syntax
