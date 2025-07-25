@@ -250,16 +250,18 @@ describe('LineController', () => {
     let req, res;
 
     beforeEach(() => {
+      const bodyObject = {
+        events: [
+          {
+            type: 'message',
+            message: { type: 'text', text: '測試訊息' },
+            source: { userId: 'test-user' }
+          }
+        ]
+      };
+      
       req = {
-        body: {
-          events: [
-            {
-              type: 'message',
-              message: { type: 'text', text: '測試訊息' },
-              source: { userId: 'test-user' }
-            }
-          ]
-        },
+        body: Buffer.from(JSON.stringify(bodyObject)), // 模擬原始 Buffer
         get: jest.fn()
       };
 
@@ -270,8 +272,8 @@ describe('LineController', () => {
     });
 
     test('should process valid webhook request', async () => {
-      // 生成有效簽名
-      const body = JSON.stringify(req.body);
+      // 生成有效簽名 - 使用原始 Buffer 字符串
+      const body = req.body.toString();
       const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       const signature = `sha256=${hash}`;
       
@@ -303,15 +305,18 @@ describe('LineController', () => {
     });
 
     test('should ignore non-text message events', async () => {
-      req.body.events = [
-        {
-          type: 'message',
-          message: { type: 'image' },
-          source: { userId: 'test-user' }
-        }
-      ];
+      const bodyObject = {
+        events: [
+          {
+            type: 'message',
+            message: { type: 'image' },
+            source: { userId: 'test-user' }
+          }
+        ]
+      };
 
-      const body = JSON.stringify(req.body);
+      req.body = Buffer.from(JSON.stringify(bodyObject));
+      const body = req.body.toString();
       const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       const signature = `sha256=${hash}`;
       
@@ -328,7 +333,7 @@ describe('LineController', () => {
     });
 
     test('should handle webhook processing errors', async () => {
-      const body = JSON.stringify(req.body);
+      const body = req.body.toString();
       const hash = crypto.createHmac('sha256', 'test-channel-secret').update(body).digest('base64');
       const signature = `sha256=${hash}`;
       
