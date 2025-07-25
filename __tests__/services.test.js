@@ -104,10 +104,10 @@ describe('Service Layer Architecture Tests', () => {
       expect(typeof displayTime).toBe('string');
       const storageTime = TimeService.formatForStorage(new Date());
       expect(typeof storageTime).toBe('string');
-      const timeInfo = TimeService.createTimeInfo(new Date());
-      expect(timeInfo).toHaveProperty('display');
-      expect(timeInfo).toHaveProperty('date');
-      const validationResult = TimeService.validateTimeInfo(timeInfo);
+      const createdTimeInfo = TimeService.createTimeInfo(new Date());
+      expect(createdTimeInfo).toHaveProperty('display');
+      expect(createdTimeInfo).toHaveProperty('date');
+      const validationResult = TimeService.validateTimeInfo(createdTimeInfo);
       expect(typeof validationResult).toBe('boolean');
       
       // 未實現的方法仍應拋出 NotImplementedError
