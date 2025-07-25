@@ -4,6 +4,8 @@
  * 禁止：直接調用 Firebase
  * Phase 3: 記憶體 Map 實現（非持久化）
  */
+const TimeService = require('./timeService');
+
 class DataService {
   // 記憶體存儲
   static courses = new Map(); // courseId -> courseData
@@ -35,7 +37,7 @@ class DataService {
     }
 
     const courseId = this.generateUUID();
-    const timestamp = new Date().toISOString();
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
 
     const course = {
       id: courseId,
@@ -124,7 +126,7 @@ class DataService {
     const updatedCourse = {
       ...course,
       ...updateData,
-      updated_at: new Date().toISOString(),
+      updated_at: TimeService.getCurrentUserTime().toISOString(),
     };
 
     this.courses.set(courseId, updatedCourse);
@@ -205,7 +207,7 @@ class DataService {
     }
 
     const entryId = this.generateUUID();
-    const timestamp = new Date().toISOString();
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
 
     const usage = {
       id: entryId,
