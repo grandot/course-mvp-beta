@@ -107,8 +107,8 @@ describe('Service Layer Architecture Tests', () => {
       const createdTimeInfo = TimeService.createTimeInfo(new Date());
       expect(createdTimeInfo).toHaveProperty('display');
       expect(createdTimeInfo).toHaveProperty('date');
-      const validationResult = TimeService.validateTimeInfo(createdTimeInfo);
-      expect(typeof validationResult).toBe('boolean');
+      const timeValidationResult = TimeService.validateTimeInfo(createdTimeInfo);
+      expect(typeof timeValidationResult).toBe('boolean');
       
       // 未實現的方法仍應拋出 NotImplementedError
       await expect(TimeService.calculateTimeRange(new Date(), new Date())).rejects.toThrow('NotImplementedError');
