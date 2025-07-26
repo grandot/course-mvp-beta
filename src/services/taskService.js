@@ -12,16 +12,15 @@ const ScenarioManager = require('../scenario/ScenarioManager');
 
 class TaskService {
   constructor() {
-    // ⚡ 性能優化：使用預加載的場景實例，避免重複創建
-    const scenarioType = process.env.SCENARIO_TYPE || 'course_management';
-    
+    // ⚡ 性能優化：使用預加載的當前場景實例
     try {
-      this.scenarioTemplate = ScenarioManager.getScenario(scenarioType);
+      this.scenarioTemplate = ScenarioManager.getCurrentScenario();
+      const scenarioType = this.scenarioTemplate.getScenarioName();
       console.log(`✅ [TaskService] Initialized with scenario: ${scenarioType}`);
       console.log(`✅ [TaskService] Entity type: ${this.scenarioTemplate.getEntityType()}`);
       console.log(`✅ [TaskService] Entity name: ${this.scenarioTemplate.getEntityName()}`);
     } catch (error) {
-      console.error(`❌ [TaskService] Failed to initialize scenario: ${scenarioType}`);
+      console.error(`❌ [TaskService] Failed to initialize scenario`);
       console.error(`❌ [TaskService] Error: ${error.message}`);
       throw new Error(`TaskService initialization failed: ${error.message}`);
     }

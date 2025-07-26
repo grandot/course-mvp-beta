@@ -27,7 +27,8 @@ class ScenarioManager {
   }
 
   /**
-   * 初始化所有場景（啟動時調用一次）
+   * 初始化當前場景（啟動時調用一次）
+   * 🎯 獨立部署模式：每個 webservice 實例只加載一個場景
    * @returns {Promise<void>}
    */
   static async initialize() {
@@ -36,20 +37,26 @@ class ScenarioManager {
       return;
     }
 
-    console.log('🏭 [ScenarioManager] Initializing scenario manager...');
+    // 🎯 只加載當前環境指定的單一場景
+    const scenarioType = process.env.SCENARIO_TYPE || 'course_management';
+    console.log(`🏭 [ScenarioManager] Initializing single scenario: ${scenarioType}`);
     const startTime = Date.now();
 
     try {
-      // 預加載所有可用場景
+      // 驗證場景存在性
       const availableScenarios = this.getAvailableScenarios();
-      
-      for (const scenarioType of availableScenarios) {
-        await this.preloadScenario(scenarioType);
+      if (!availableScenarios.includes(scenarioType)) {
+        throw new Error(`Scenario "${scenarioType}" not found. Available: ${availableScenarios.join(', ')}`);
       }
 
+      // 只預加載當前場景
+      await this.preloadScenario(scenarioType);
+
       this.initialized = true;
+      this.currentScenarioType = scenarioType;
       const initTime = Date.now() - startTime;
-      console.log(`✅ [ScenarioManager] Initialized ${availableScenarios.length} scenarios in ${initTime}ms`);
+      console.log(`✅ [ScenarioManager] Initialized scenario "${scenarioType}" in ${initTime}ms`);
+      console.log(`🎯 WebService mode: Single scenario deployment`);
       
     } catch (error) {
       console.error('❌ [ScenarioManager] Initialization failed:', error.message);
@@ -85,8 +92,9 @@ class ScenarioManager {
   }
 
   /**
-   * 獲取場景實例（運行時調用，O(1) 查找）
-   * @param {string} scenarioType - 場景類型
+   * 獲取當前場景實例（運行時調用，O(1) 查找）
+   * 🎯 單場景模式：只能獲取當前已加載的場景
+   * @param {string} scenarioType - 場景類型（應該與當前場景匹配）
    * @returns {Object} 場景實例
    */
   static getScenario(scenarioType) {
@@ -94,12 +102,29 @@ class ScenarioManager {
       throw new Error('ScenarioManager not initialized. Call initialize() first.');
     }
 
+    // 🎯 安全檢查：只允許獲取當前部署的場景
+    if (scenarioType !== this.currentScenarioType) {
+      throw new Error(`Scenario "${scenarioType}" not available in this webservice. Current scenario: "${this.currentScenarioType}"`);
+    }
+
     const scenario = this.scenarios.get(scenarioType);
     if (!scenario) {
-      throw new Error(`Scenario "${scenarioType}" not found. Available: ${Array.from(this.scenarios.keys()).join(', ')}`);
+      throw new Error(`Scenario "${scenarioType}" not loaded. This should not happen.`);
     }
 
     return scenario;
+  }
+
+  /**
+   * 獲取當前場景實例（簡化版）
+   * @returns {Object} 當前場景實例
+   */
+  static getCurrentScenario() {
+    if (!this.initialized) {
+      throw new Error('ScenarioManager not initialized. Call initialize() first.');
+    }
+
+    return this.scenarios.get(this.currentScenarioType);
   }
 
   /**
@@ -239,9 +264,10 @@ class ScenarioManager {
   static getStatus() {
     return {
       initialized: this.initialized,
+      deploymentMode: 'single_scenario',
+      currentScenario: this.currentScenarioType,
       loadedScenarios: Array.from(this.scenarios.keys()),
-      loadedConfigs: Array.from(this.configs.keys()),
-      loadedTemplates: Array.from(this.templates.keys()),
+      availableScenarios: this.getAvailableScenarios(),
       memoryUsage: {
         scenarios: this.scenarios.size,
         configs: this.configs.size,

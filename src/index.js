@@ -23,8 +23,9 @@ async function startServer() {
       
       // 顯示 ScenarioManager 狀態
       const status = ScenarioManager.getStatus();
-      console.log(`🎯 Loaded scenarios: ${status.loadedScenarios.join(', ')}`);
-      console.log(`⚡ Current scenario: ${process.env.SCENARIO_TYPE || 'course_management'}`);
+      console.log(`🎯 Deployment mode: ${status.deploymentMode}`);
+      console.log(`⚡ Active scenario: ${status.currentScenario}`);
+      console.log(`📦 Available scenarios: ${status.availableScenarios.join(', ')}`);
     });
 
     return server;
