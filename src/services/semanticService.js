@@ -17,6 +17,9 @@ class SemanticService {
    * @returns {Promise<Object>} 語義分析結果
    */
   static async analyzeMessage(text, userId, context = {}) {
+    console.log(`🔧 [DEBUG] SemanticService.analyzeMessage - 開始分析: "${text}"`); // [REMOVE_ON_PROD]
+    console.log(`🔧 [DEBUG] SemanticService.analyzeMessage - UserId: ${userId}`); // [REMOVE_ON_PROD]
+
     if (!text || typeof text !== 'string') {
       throw new Error('SemanticService: text must be a non-empty string');
     }
@@ -27,15 +30,21 @@ class SemanticService {
 
     try {
       // Step 1: 先嘗試規則引擎分析獲取意圖上下文
+      console.log(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`); // [REMOVE_ON_PROD]
       const ruleResult = IntentRuleEngine.analyzeIntent(text);
+      console.log(`🔧 [DEBUG] SemanticService - 規則引擎結果:`, ruleResult); // [REMOVE_ON_PROD]
       
       // Step 2: 💡 利用意圖上下文進行語義理解的實體提取
+      console.log(`🔧 [DEBUG] SemanticService - 開始實體提取`); // [REMOVE_ON_PROD]
       const entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
       const processedTimeInfo = await this.processTimeInfo(text);
+      console.log(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities); // [REMOVE_ON_PROD]
+      console.log(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo); // [REMOVE_ON_PROD]
 
       // Step 3: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
       if (ruleResult.confidence >= 0.8 && ruleResult.intent !== 'unknown') {
         // 高信心度：使用規則引擎結果
+        console.log(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
         return {
           success: true,
           method: 'rule_engine',
@@ -53,7 +62,9 @@ class SemanticService {
         };
       }
       // 低信心度：調用 OpenAI 作為後備
+      console.log(`🔧 [DEBUG] SemanticService - 調用 OpenAI 作為後備 (低信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
       const openaiResult = await OpenAIService.analyzeIntent(text, userId);
+      console.log(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult); // [REMOVE_ON_PROD]
 
       // 記錄 token 使用量
       if (openaiResult.usage) {

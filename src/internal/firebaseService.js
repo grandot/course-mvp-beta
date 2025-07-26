@@ -128,6 +128,33 @@ class FirebaseService {
   }
 
   /**
+   * 獲取單個文檔
+   */
+  static async getDocument(collection, docId) {
+    try {
+      const db = this.getDb();
+      const doc = await db.collection(collection).doc(docId).get();
+
+      if (!doc.exists) {
+        return {
+          exists: false,
+          id: docId,
+          data: null
+        };
+      }
+
+      return {
+        exists: true,
+        id: doc.id,
+        data: doc.data()
+      };
+    } catch (error) {
+      console.error(`❌ Get document failed in ${collection}:`, error);
+      throw new Error(`Database get failed: ${error.message}`);
+    }
+  }
+
+  /**
    * 更新文檔
    */
   static async updateDocument(collection, docId, data) {

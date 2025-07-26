@@ -116,9 +116,11 @@ class LineController {
 
       const { intent, entities, confidence } = analysis;
 
-      console.log(`Intent: ${intent}, Confidence: ${confidence}`);
+      console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
+      console.log(`🔧 [DEBUG] 提取實體:`, entities);
 
       // ✅ 使用 TaskService 統一處理所有業務邏輯
+      console.log(`🔧 [DEBUG] 開始執行任務 - Intent: ${intent}, UserId: ${userId}`);
       const result = await TaskService.executeIntent(intent, entities, userId);
 
       console.log('TaskService execution result:', JSON.stringify(result, null, 2));
@@ -134,8 +136,12 @@ class LineController {
       if (event.replyToken) {
         let replyMessage;
 
+        // 🔧 [DEBUG] 添加調試信息到回覆中 (開發模式)
+        const debugInfo = process.env.NODE_ENV === 'development' ? 
+          `\n\n🔧 [調試信息] [REMOVE_ON_PROD]\n📊 Intent: ${intent} (信心度: ${confidence})\n📋 執行結果: ${result.success ? '✅ 成功' : '❌ 失敗'}\n${result.error ? `⚠️ 錯誤: ${result.error}` : ''}` : '';
+
         if (result.success === false) {
-          replyMessage = result.message || '處理時發生錯誤，請稍後再試';
+          replyMessage = (result.message || '處理時發生錯誤，請稍後再試') + debugInfo;
         } else {
           switch (intent) {
             case 'query_schedule': {
@@ -145,10 +151,10 @@ class LineController {
               break;
             }
             case 'record_course':
-              replyMessage = result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗');
+              replyMessage = (result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗')) + debugInfo;
               break;
             case 'cancel_course':
-              replyMessage = result.success ? '✅ 課程已成功取消！' : (result.message || '取消課程失敗');
+              replyMessage = (result.success ? '✅ 課程已成功取消！' : (result.message || '取消課程失敗')) + debugInfo;
               break;
             case 'clear_schedule': {
               // 處理清空課表的各種回應情況
@@ -194,24 +200,26 @@ class LineController {
                   }
                 }
 
-                replyMessage = successMessage;
+                replyMessage = successMessage + debugInfo;
               } else {
                 // 修改失敗
+                let failureMessage;
                 if (result.error === 'Course not found') {
-                  replyMessage = result.message;
+                  failureMessage = result.message;
                 } else if (result.error === 'Missing course name') {
-                  replyMessage = result.message;
+                  failureMessage = result.message;
                 } else if (result.error === 'No update fields provided') {
-                  replyMessage = result.message;
+                  failureMessage = result.message;
                 } else if (result.error === 'Time conflict detected') {
-                  replyMessage = result.message;
+                  failureMessage = result.message;
                 } else if (result.error === 'Invalid time information') {
-                  replyMessage = result.message;
+                  failureMessage = result.message;
                 } else if (result.error) {
-                  replyMessage = result.message || '修改課程時發生錯誤，請稍後再試';
+                  failureMessage = result.message || '修改課程時發生錯誤，請稍後再試';
                 } else {
-                  replyMessage = '修改課程時發生未知錯誤，請稍後再試';
+                  failureMessage = '修改課程時發生未知錯誤，請稍後再試';
                 }
+                replyMessage = failureMessage + debugInfo;
               }
               break;
             }

@@ -199,17 +199,35 @@ class DataService {
     }
 
     try {
+      console.log('🔧 DataService.getCourseById - CourseId:', courseId);
+
       const result = await FirebaseService.getDocument(this.COLLECTIONS.COURSES, courseId);
       
+      console.log('🔧 DataService.getCourseById - Firebase result:', {
+        exists: result?.exists,
+        hasData: !!result?.data
+      });
+
       if (!result || !result.exists) {
+        console.log('🔧 DataService.getCourseById - Course not found');
         return null;
       }
 
-      return {
+      const course = {
         id: result.id,
         ...result.data,
       };
+
+      console.log('🔧 DataService.getCourseById - Found course:', course.course_name);
+
+      return course;
     } catch (error) {
+      console.error('❌ DataService.getCourseById failed:', {
+        courseId,
+        error: error.message,
+        stack: error.stack
+      });
+      
       throw new Error(`DataService: Failed to get course by ID: ${error.message}`);
     }
   }

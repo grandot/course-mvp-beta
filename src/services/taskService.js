@@ -18,7 +18,11 @@ class TaskService {
    * @returns {Promise<Object>} 執行結果
    */
   static async executeIntent(intent, entities, userId) {
+    console.log(`🔧 [DEBUG] TaskService.executeIntent - Intent: ${intent}, UserId: ${userId}`); // [REMOVE_ON_PROD]
+    console.log(`🔧 [DEBUG] TaskService.executeIntent - Entities:`, entities); // [REMOVE_ON_PROD]
+
     if (!intent || !userId) {
+      console.log(`🔧 [DEBUG] TaskService.executeIntent - 參數驗證失敗`); // [REMOVE_ON_PROD]
       return {
         success: false,
         error: 'Missing required parameters',
@@ -27,20 +31,27 @@ class TaskService {
     }
 
     try {
+      console.log(`🔧 [DEBUG] TaskService.executeIntent - 開始處理 ${intent}`); // [REMOVE_ON_PROD]
+      
       switch (intent) {
         case 'record_course':
+          console.log(`🔧 [DEBUG] TaskService - 開始處理新增課程`); // [REMOVE_ON_PROD]
           return this.handleRecordCourse(entities, userId);
 
         case 'cancel_course':
+          console.log(`🔧 [DEBUG] TaskService - 開始處理取消課程`); // [REMOVE_ON_PROD]
           return this.handleCancelCourse(entities, userId);
 
         case 'query_schedule':
+          console.log(`🔧 [DEBUG] TaskService - 開始處理查詢課表`); // [REMOVE_ON_PROD]
           return this.handleQuerySchedule(userId);
 
         case 'clear_schedule':
+          console.log(`🔧 [DEBUG] TaskService - 開始處理清空課表`); // [REMOVE_ON_PROD]
           return this.handleClearSchedule(entities, userId);
 
         case 'modify_course':
+          console.log(`🔧 [DEBUG] TaskService - 開始處理修改課程`); // [REMOVE_ON_PROD]
           return this.handleModifyCourse(entities, userId);
 
         case 'set_reminder':
@@ -58,6 +69,7 @@ class TaskService {
           };
       }
     } catch (error) {
+      console.error(`❌ [ERROR] TaskService.executeIntent - 執行失敗:`, error); // 保留
       return {
         success: false,
         error: error.message,
