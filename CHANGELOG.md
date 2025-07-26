@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Hotfix 7.0.3 - 調試日誌增強 & 異常處理完善] - 2025-07-26
+
+### 🔧 調試能力大幅提升
+- **CourseService.modifyCourse()**: 新增詳細調試日誌，精確定位修改課程失敗原因
+- **DataService.updateCourse()**: 完善異常處理，返回具體錯誤信息而非拋出異常
+- **DataService.queryCourses()**: 新增調試日誌和異常處理，便於問題排查
+- **用戶友好錯誤**: 顯示具體錯誤信息取代通用提示
+
+### 🎯 調試日誌輸出
+```javascript
+// 完整調試鏈路
+🔧 ModifyCourse Debug - Input params: {courseId, updateData, options}
+🔧 DataService.updateCourse - Firebase result: {success, error}
+❌ 具體錯誤: "5 NOT_FOUND: No document to update"
+
+// 用戶錯誤信息改進
+❌ 修復前: "修改課程時發生錯誤，請稍後再試"
+✅ 修復後: "修改課程時發生錯誤：Database update failed: 5 NOT_FOUND"
+```
+
+### 🐛 問題定位能力
+- **精確錯誤定位**: 可快速識別是 courseId 不存在、權限問題還是網絡錯誤
+- **完整調用鏈追蹤**: 從語義分析→課程服務→數據服務→Firebase 完整日誌
+- **異常處理標準化**: 統一的錯誤處理和日誌格式
+
+### 🔍 實際問題發現
+通過調試發現用戶 "網球改成下午四點20" 問題的真實原因：
+- 語義分析 ✅ 成功
+- 時間解析 ✅ 成功  
+- 課程更新 ❌ 失敗：courseId 不存在或不正確
+
+---
+
 ## [Hotfix 7.0.2 - 語義時間提取架構修復] - 2025-07-26
 
 ### 🏗️ 分離式架構修復  

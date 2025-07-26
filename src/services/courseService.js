@@ -125,6 +125,12 @@ class CourseService {
     };
 
     try {
+      console.log('🔧 ModifyCourse Debug - Input params:', {
+        courseId,
+        updateData,
+        options: { userId, originalCourse: originalCourse?.course_name }
+      });
+
       // 處理日期格式化
       const processedData = { ...updateData };
       if (processedData.course_date) {
@@ -134,30 +140,44 @@ class CourseService {
         processedData.course_date = formattedDate;
       }
 
+      console.log('🔧 ModifyCourse Debug - Processed data:', processedData);
+
       // 檢查時間衝突（如果修改了時間）
       if (processedData.schedule_time && processedData.course_date && originalCourse) {
-        const conflicts = await this.checkTimeConflicts(
-          userId || originalCourse.student_id,
-          processedData.course_date,
-          processedData.schedule_time,
-        );
+        console.log('🔧 ModifyCourse Debug - Checking time conflicts...');
+        try {
+          const conflicts = await this.checkTimeConflicts(
+            userId || originalCourse.student_id,
+            processedData.course_date,
+            processedData.schedule_time,
+          );
 
-        // 排除當前課程本身
-        const otherConflicts = conflicts.filter(c => c.id !== courseId);
-        if (otherConflicts.length > 0) {
-          return {
-            success: false,
-            error: 'Time conflict detected',
-            message: `修改失敗：${processedData.course_date} ${processedData.schedule_time} 時間已有其他課程安排`,
-            conflicts: otherConflicts,
-          };
+          console.log('🔧 ModifyCourse Debug - Found conflicts:', conflicts?.length || 0);
+
+          // 排除當前課程本身
+          const otherConflicts = conflicts.filter(c => c.id !== courseId);
+          if (otherConflicts.length > 0) {
+            console.log('🔧 ModifyCourse Debug - Time conflict detected:', otherConflicts);
+            return {
+              success: false,
+              error: 'Time conflict detected',
+              message: `修改失敗：${processedData.course_date} ${processedData.schedule_time} 時間已有其他課程安排`,
+              conflicts: otherConflicts,
+            };
+          }
+        } catch (conflictError) {
+          console.error('❌ ModifyCourse Debug - Time conflict check failed:', conflictError);
+          throw new Error(`Time conflict check failed: ${conflictError.message}`);
         }
       }
 
       // 執行更新
+      console.log('🔧 ModifyCourse Debug - Executing DataService.updateCourse...');
       const updateResult = await DataService.updateCourse(courseId, processedData);
+      console.log('🔧 ModifyCourse Debug - Update result:', updateResult);
 
       if (!updateResult.success) {
+        console.error('❌ ModifyCourse Debug - Update failed:', updateResult);
         return {
           success: false,
           error: updateResult.error,
@@ -167,7 +187,9 @@ class CourseService {
       }
 
       // 獲取更新後的課程信息
+      console.log('🔧 ModifyCourse Debug - Getting updated course info...');
       const updatedCourse = await DataService.getCourseById(courseId);
+      console.log('🔧 ModifyCourse Debug - Updated course:', updatedCourse?.course_name);
 
       // 構建修改成功訊息
       const changedFields = [];
@@ -194,14 +216,24 @@ class CourseService {
       };
 
     } catch (error) {
+      // 🔧 詳細錯誤日誌輸出
+      console.error('❌ ModifyCourse Error Details:', {
+        courseId,
+        updateData,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        modificationLog
+      });
+
       return {
         success: false,
         error: error.message,
-        message: '修改課程時發生錯誤，請稍後再試',
+        message: `修改課程時發生錯誤：${error.message}`, // 顯示具體錯誤信息
         modificationLog: {
           ...modificationLog,
           result: 'error',
           errorDetails: error.message,
+          errorStack: error.stack, // 添加堆疊信息用於調試
         },
       };
     }

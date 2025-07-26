@@ -138,18 +138,40 @@ class DataService {
       throw new Error('DataService: updateData is required');
     }
 
-    const updatedData = {
-      ...updateData,
-      updated_at: TimeService.getCurrentUserTime().toISOString(),
-    };
+    try {
+      console.log('🔧 DataService.updateCourse - Input:', { courseId, updateData });
 
-    const result = await FirebaseService.updateDocument(this.COLLECTIONS.COURSES, courseId, updatedData);
+      const updatedData = {
+        ...updateData,
+        updated_at: TimeService.getCurrentUserTime().toISOString(),
+      };
 
-    return {
-      success: true,
-      courseId: result.id,
-      course: result.data,
-    };
+      console.log('🔧 DataService.updateCourse - Processed data:', updatedData);
+
+      const result = await FirebaseService.updateDocument(this.COLLECTIONS.COURSES, courseId, updatedData);
+
+      console.log('🔧 DataService.updateCourse - Firebase result:', result);
+
+      return {
+        success: true,
+        courseId: result.id,
+        course: result.data,
+      };
+    } catch (error) {
+      console.error('❌ DataService.updateCourse failed:', {
+        courseId,
+        updateData,
+        error: error.message,
+        stack: error.stack
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        courseId,
+        details: `Database update failed for course ${courseId}: ${error.message}`
+      };
+    }
   }
 
   /**
@@ -202,7 +224,23 @@ class DataService {
       throw new Error('DataService: criteria is required');
     }
 
-    return await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, criteria);
+    try {
+      console.log('🔧 DataService.queryCourses - Criteria:', criteria);
+      
+      const result = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, criteria);
+      
+      console.log('🔧 DataService.queryCourses - Found courses:', result?.length || 0);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ DataService.queryCourses failed:', {
+        criteria,
+        error: error.message,
+        stack: error.stack
+      });
+      
+      throw new Error(`Course query failed: ${error.message}`);
+    }
   }
 
   /**
