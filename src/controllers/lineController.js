@@ -151,10 +151,68 @@ class LineController {
               break;
             }
             case 'record_course':
-              replyMessage = (result.success ? '✅ 課程已成功新增！' : (result.message || '新增課程失敗')) + debugInfo;
+              if (result.success) {
+                // 構建詳細的成功消息
+                let successMessage = '✅ 課程已成功新增！';
+                
+                // 如果有創建的課程信息，添加詳細信息
+                if (result.course) {
+                  const details = [];
+                  details.push(`📚 課程：${result.course.course_name}`);
+                  
+                  if (result.course.schedule_time) {
+                    details.push(`🕒 時間：${result.course.schedule_time}`);
+                  }
+                  
+                  if (result.course.course_date) {
+                    details.push(`📅 日期：${result.course.course_date}`);
+                  }
+                  
+                  if (result.course.location) {
+                    details.push(`📍 地點：${result.course.location}`);
+                  }
+                  
+                  if (result.course.teacher) {
+                    details.push(`👨‍🏫 老師：${result.course.teacher}`);
+                  }
+                  
+                  if (details.length > 0) {
+                    successMessage += `\n\n${details.join('\n')}`;
+                  }
+                }
+                
+                replyMessage = successMessage + debugInfo;
+              } else {
+                replyMessage = (result.message || '新增課程失敗') + debugInfo;
+              }
               break;
             case 'cancel_course':
-              replyMessage = (result.success ? '✅ 課程已成功取消！' : (result.message || '取消課程失敗')) + debugInfo;
+              if (result.success) {
+                // 構建詳細的取消成功消息
+                let successMessage = '✅ 課程已成功取消！';
+                
+                // 如果有被取消的課程信息，添加詳細信息
+                if (result.cancelledCourse) {
+                  const details = [];
+                  details.push(`📚 課程：${result.cancelledCourse.course_name}`);
+                  
+                  if (result.cancelledCourse.schedule_time) {
+                    details.push(`🕒 時間：${result.cancelledCourse.schedule_time}`);
+                  }
+                  
+                  if (result.cancelledCourse.course_date) {
+                    details.push(`📅 日期：${result.cancelledCourse.course_date}`);
+                  }
+                  
+                  if (details.length > 0) {
+                    successMessage += `\n\n${details.join('\n')}`;
+                  }
+                }
+                
+                replyMessage = successMessage + debugInfo;
+              } else {
+                replyMessage = (result.message || '取消課程失敗') + debugInfo;
+              }
               break;
             case 'clear_schedule': {
               // 處理清空課表的各種回應情況

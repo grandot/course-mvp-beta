@@ -2,6 +2,63 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Hotfix 7.1.1 - 時間解析 & 回覆內容增強] - 2025-07-26
+
+### 🕒 時間解析系統修復
+- **晚上時間處理**: 修復 "晚上八點" 被錯誤解析為 AM 的問題，現在正確解析為 PM
+- **完整時制支援**: 新增 "早上"、"中午"、"晚上" 等時制關鍵詞完整支援
+- **統一時制轉換**: 所有時間處理分支（中文數字、阿拉伯數字、帶分鐘）統一修復
+
+### 💬 LINE Bot 回覆內容增強  
+- **新增課程詳細信息**: 成功新增課程時顯示具體課程名稱、時間、日期、地點、老師
+- **取消課程詳細信息**: 成功取消課程時顯示被取消課程的具體信息
+- **用戶體驗提升**: 用戶可立即確認操作結果的準確性
+
+### 🎯 修復前後對比
+```javascript
+// 時間解析修復
+❌ 修復前: "今天晚上八點" → 07/26 8:00 AM  
+✅ 修復後: "今天晚上八點" → 07/26 8:00 PM
+
+// 回覆內容增強  
+❌ 修復前: "✅ 課程已成功新增！"
+✅ 修復後: 
+  ✅ 課程已成功新增！
+  📚 課程：法語試聽課
+  🕒 時間：07/26 8:00 PM
+  📅 日期：2025-07-26
+```
+
+### 🔧 技術實現詳情
+```javascript
+// TimeService.parseTimeComponent() 時制處理增強
+if (input.includes('下午') || input.includes('晚上') || input.includes('pm')) {
+  if (hour < 12) hour += 12;  // 下午/晚上轉換為24小時制
+} else if (input.includes('上午') || input.includes('早上') || input.includes('am')) {
+  if (hour === 12) hour = 0;  // 上午/早上12點轉換為0點
+} else if (input.includes('中午')) {
+  if (hour !== 12 && hour < 12) hour += 12;  // 中午時間處理
+}
+
+// LineController 回覆信息構建
+if (result.course) {
+  const details = [];
+  details.push(`📚 課程：${result.course.course_name}`);
+  details.push(`🕒 時間：${result.course.schedule_time}`);
+  details.push(`📅 日期：${result.course.course_date}`);
+  successMessage += `\n\n${details.join('\n')}`;
+}
+```
+
+### 📊 全面時制關鍵詞支援
+- ✅ **晚上** → PM (新增修復)
+- ✅ **早上** → AM (新增支援)  
+- ✅ **中午** → PM (新增支援)
+- ✅ **下午** → PM (原有保留)
+- ✅ **上午** → AM (原有保留)
+
+---
+
 ## [Major 7.1 - 完整調試日誌系統實施] - 2025-07-26
 
 ### 🔧 調試日誌系統革命性升級

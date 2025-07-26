@@ -272,12 +272,15 @@ class TimeService {
       }
     }
 
-    // 處理上午/下午/PM/AM
+    // 處理上午/下午/晚上/PM/AM
     if (hour !== null) {
-      if (input.includes('下午') || input.includes('pm')) {
+      if (input.includes('下午') || input.includes('晚上') || input.includes('pm')) {
         if (hour < 12) hour += 12;
-      } else if (input.includes('上午') || input.includes('am')) {
+      } else if (input.includes('上午') || input.includes('早上') || input.includes('am')) {
         if (hour === 12) hour = 0;
+      } else if (input.includes('中午')) {
+        // 中午12點保持為12，其他時間需要判斷
+        if (hour !== 12 && hour < 12) hour += 12;
       }
     }
 
@@ -286,18 +289,21 @@ class TimeService {
       minute = 30;
     }
 
-    // 處理數字時間（如：下午三點、3 PM）
+    // 處理數字時間（如：下午三點、晚上八點、3 PM）
     const numberMatch = input.match(/(\d{1,2})點/) || input.match(/(\d{1,2})\s*(pm|am)/);
     if (numberMatch && hour === null) {
       hour = parseInt(numberMatch[1], 10);
-      if (input.includes('下午') || input.includes('pm')) {
+      if (input.includes('下午') || input.includes('晚上') || input.includes('pm')) {
         if (hour < 12) hour += 12;
-      } else if (input.includes('上午') || input.includes('am')) {
+      } else if (input.includes('上午') || input.includes('早上') || input.includes('am')) {
         if (hour === 12) hour = 0;
+      } else if (input.includes('中午')) {
+        // 中午12點保持為12，其他時間需要判斷
+        if (hour !== 12 && hour < 12) hour += 12;
       }
     }
 
-    // 🔧 修復：處理分鐘數 (四點20、3點45)
+    // 🔧 修復：處理分鐘數 (四點20、3點45、晚上八點30)
     const minuteMatch = input.match(/(\d{1,2})點(\d{1,2})/) || input.match(/(\d{1,2})\s*:\s*(\d{1,2})/);
     if (minuteMatch) {
       const matchedHour = parseInt(minuteMatch[1], 10);
@@ -306,11 +312,14 @@ class TimeService {
       // 如果還沒設定小時，使用匹配到的小時
       if (hour === null) {
         hour = matchedHour;
-        // 處理上午/下午
-        if (input.includes('下午') || input.includes('pm')) {
+        // 處理上午/下午/晚上
+        if (input.includes('下午') || input.includes('晚上') || input.includes('pm')) {
           if (hour < 12) hour += 12;
-        } else if (input.includes('上午') || input.includes('am')) {
+        } else if (input.includes('上午') || input.includes('早上') || input.includes('am')) {
           if (hour === 12) hour = 0;
+        } else if (input.includes('中午')) {
+          // 中午12點保持為12，其他時間需要判斷
+          if (hour !== 12 && hour < 12) hour += 12;
         }
       }
       
