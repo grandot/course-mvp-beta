@@ -293,27 +293,27 @@ class SemanticService {
     }
 
     try {
-      // 使用 OpenAI 的輔助方法提取時間和日期
-      const time = OpenAIService.extractTime(text);
-      const date = OpenAIService.extractDate(text);
-
-      // 🔧 修復：使用提取出的時間字符串，而不是完整句子
+      // 🔧 修復：直接使用完整文本進行時間解析，避免 OpenAI 提取遺漏
       let parsedTime = null;
-      if (time || date) {
-        try {
-          // 構建純時間字符串用於解析
+      try {
+        // 直接用完整文本解析，TimeService 已經能處理複雜時間表達
+        parsedTime = await TimeService.parseTimeString(text);
+      } catch (parseError) {
+        // 如果直接解析失敗，嘗試使用 OpenAI 輔助提取
+        console.log(`🔧 [DEBUG] 直接時間解析失敗，嘗試 OpenAI 輔助提取: ${parseError.message}`);
+        
+        const time = await OpenAIService.extractTime(text);
+        const date = await OpenAIService.extractDate(text);
+        
+        if (time || date) {
           const timeString = [date, time].filter(Boolean).join(' ') || time || text;
           parsedTime = await TimeService.parseTimeString(timeString);
-        } catch (parseError) {
-          // 解析失敗，但不影響其他信息
-          console.warn('Time parsing failed for:', timeString, parseError.message);
-          parsedTime = null;
         }
       }
 
       return {
-        time,
-        date,
+        time: null, // 保持舊接口兼容
+        date: null, // 保持舊接口兼容
         parsed_time: parsedTime,
       };
     } catch (error) {
