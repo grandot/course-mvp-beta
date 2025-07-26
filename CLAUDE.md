@@ -188,40 +188,51 @@ class ScenarioTemplate {
 }
 ```
 
-#### ScenarioFactory 工廠模式
+#### ScenarioManager 單例模式（性能優化）
 ```javascript
-class ScenarioFactory {
-  // 動態場景創建
-  static create(scenarioType) {
-    const config = this.loadConfig(scenarioType);
-    const TemplateClass = this.loadTemplateClass(scenarioType);
-    return new TemplateClass(config);
+class ScenarioManager {
+  // 🎯 啟動時一次性預加載當前場景
+  static async initialize() {
+    const scenarioType = process.env.SCENARIO_TYPE || 'course_management';
+    console.log(`🏭 [ScenarioManager] Initializing single scenario: ${scenarioType}`);
+    
+    // 只加載當前部署場景，不加載其他場景
+    await this.preloadScenario(scenarioType);
+    this.currentScenarioType = scenarioType;
+    
+    console.log(`✅ [ScenarioManager] Initialized scenario "${scenarioType}" in 3ms`);
+    console.log(`🎯 WebService mode: Single scenario deployment`);
   }
 
-  // 場景管理
-  static getAvailableScenarios() {
-    return ['course_management', 'healthcare_management', 'insurance_sales'];
+  // 🎯 獲取當前場景實例（O(1) 查找，無文件 I/O）
+  static getCurrentScenario() {
+    return this.scenarios.get(this.currentScenarioType);
   }
 
-  static validateScenarioIntegrity(scenarioType) {
-    // 驗證配置文件 + 模板類完整性
+  // 🔒 安全檢查：禁止獲取未加載的場景
+  static getScenario(scenarioType) {
+    if (scenarioType !== this.currentScenarioType) {
+      throw new Error(`Scenario "${scenarioType}" not available in this webservice. Current: "${this.currentScenarioType}"`);
+    }
+    return this.scenarios.get(scenarioType);
   }
 }
 ```
 
-#### TaskService 委託架構
+#### TaskService 委託架構（優化版）
 ```javascript
-// 修改前：static methods with hardcoded course logic
+// 原版：static methods with hardcoded course logic
 class TaskService {
   static async executeIntent(intent, entities, userId) {
     // hardcoded course management logic
   }
 }
 
-// 修改後：instance-based with scenario delegation
+// 重構版：instance-based with scenario delegation + 性能優化
 class TaskService {
   constructor() {
-    this.scenario = ScenarioFactory.create(process.env.SCENARIO_TYPE);
+    // ⚡ 使用預加載的場景實例，避免重複創建和文件 I/O
+    this.scenario = ScenarioManager.getCurrentScenario();
   }
   
   async executeIntent(intent, entities, userId) {
@@ -278,34 +289,73 @@ course_specific:
   time_slots: ["上午", "下午", "晚上"]
 ```
 
-### 🚀 多場景部署模式
+### 🚀 獨立 WebService 部署模式
 
-#### 環境變數控制場景
-```env
-# 課程管理系統
-SCENARIO_TYPE=course_management
+**核心原則**：每個 chatbot 是完全獨立的 webservice，只包含一個業務場景
 
-# 長照系統  
-SCENARIO_TYPE=healthcare_management
+#### 獨立 WebService 實例
+```
+課程管理 Chatbot:
+- 部署地址: render.com/course-bot
+- 環境變數: SCENARIO_TYPE=course_management  
+- LINE Bot 設定: 連接到課程管理 webhook
+- 只加載: 課程管理配置 + 模板 + 相關依賴
+- 內存佔用: 最小化，只包含課程邏輯
 
-# 保險業務系統
-SCENARIO_TYPE=insurance_sales
+長照系統 Chatbot:
+- 部署地址: render.com/healthcare-bot
+- 環境變數: SCENARIO_TYPE=healthcare_management
+- LINE Bot 設定: 連接到長照系統 webhook
+- 只加載: 長照系統配置 + 模板 + 相關依賴
+- 完全獨立: 與課程系統無任何共享
+
+保險業務 Chatbot:
+- 部署地址: render.com/insurance-bot
+- 環境變數: SCENARIO_TYPE=insurance_sales
+- LINE Bot 設定: 連接到保險業務 webhook
+- 只加載: 保險業務配置 + 模板 + 相關依賴
+- 獨立擴展: 可根據業務需求獨立調整資源
 ```
 
-#### 場景示例對比
+#### 單場景載入實現
 ```javascript
-// 課程管理場景
+// 🎯 每個 webservice 實例啟動時
+🏭 [ScenarioManager] Initializing single scenario: course_management
+✅ [ScenarioManager] Initialized scenario "course_management" in 3ms
+🎯 WebService mode: Single scenario deployment
+
+// 🚫 不會加載其他場景的任何配置或代碼
+// 課程管理 bot 完全不知道長照和保險場景的存在
+```
+
+#### 微服務架構優勢
+- ✅ **資源隔離**: 課程 bot 不佔用長照/保險的內存和配置
+- ✅ **安全隔離**: 不同業務場景數據完全分離
+- ✅ **故障隔離**: 一個場景故障不影響其他場景
+- ✅ **獨立擴展**: 根據各場景負載獨立調整實例數量
+- ✅ **技術隔離**: 不同場景可使用不同的技術栈版本
+
+#### 場景功能示例
+```javascript
+// 課程管理 Chatbot (course-bot)
 "數學課明天下午2點" → CourseManagementScenarioTemplate.createEntity()
 → "✅ 課程「數學課」已成功新增！🕒 時間：07/27 2:00 PM"
 
-// 長照系統場景  
+// 長照系統 Chatbot (healthcare-bot)  
 "王奶奶復健治療明天下午2點" → HealthcareManagementScenarioTemplate.createEntity()
 → "✅ 王奶奶的復健治療已安排完成！🕒 時間：07/27 2:00 PM"
 
-// 保險業務場景
+// 保險業務 Chatbot (insurance-bot)
 "張先生產品介紹明天下午2點" → InsuranceSalesScenarioTemplate.createEntity() 
 → "✅ 與張先生的產品介紹會議已安排！🕒 時間：07/27 2:00 PM"
 ```
+
+#### 擴展新場景流程
+1. **創建配置**: 複製 `config/scenarios/template.yaml` 為新場景配置
+2. **實現模板**: 繼承 `ScenarioTemplate` 實現業務邏輯
+3. **獨立部署**: 設置 `SCENARIO_TYPE=new_scenario` 部署新實例
+4. **LINE 整合**: 創建新的 LINE Bot 連接到新實例
+5. **完全隔離**: 新場景與現有場景完全獨立運行
 
 ### 🔧 統一服務層架構
 

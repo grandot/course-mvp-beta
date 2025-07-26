@@ -2,6 +2,100 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Critical Fix 9.1.0 - 單場景獨立部署修正] - 2025-07-26
+
+### 🚨 重大架構修正：獨立 WebService 部署模式
+
+**問題識別**：之前的實現錯誤地在每個 webservice 實例中加載所有場景，違反了微服務獨立部署原則
+
+**正確架構**：每個 chatbot 應該是完全獨立的 webservice，只包含一個業務場景
+
+### 🎯 修正後的部署模式
+
+#### 獨立 WebService 實例
+```
+課程管理 Chatbot:
+- 部署地址: render.com/course-bot
+- 環境變數: SCENARIO_TYPE=course_management  
+- 只加載: 課程管理配置 + 模板
+- 用途: 學生課程安排
+
+長照系統 Chatbot:
+- 部署地址: render.com/healthcare-bot
+- 環境變數: SCENARIO_TYPE=healthcare_management
+- 只加載: 長照系統配置 + 模板  
+- 用途: 照護服務排程
+
+保險業務 Chatbot:
+- 部署地址: render.com/insurance-bot
+- 環境變數: SCENARIO_TYPE=insurance_sales
+- 只加載: 保險業務配置 + 模板
+- 用途: 客戶會議安排
+```
+
+### ⚡ ScenarioManager 單例化優化
+
+#### 性能修正實現
+- **修正前**: `ScenarioManager.initialize()` 加載所有3個場景
+- **修正後**: 只加載 `process.env.SCENARIO_TYPE` 指定的單一場景
+- **新增方法**: `getCurrentScenario()` 簡化場景獲取
+- **安全檢查**: 禁止訪問未加載的場景
+
+#### 資源效率提升
+```
+修正前: ✅ [ScenarioManager] Initialized 3 scenarios in 4ms
+修正後: ✅ [ScenarioManager] Initialized scenario "course_management" in 3ms
+       🎯 WebService mode: Single scenario deployment
+```
+
+### 🏗️ 技術實現修正
+
+#### ScenarioManager 核心變更
+```javascript
+// 修正前：加載所有場景（錯誤）
+const availableScenarios = this.getAvailableScenarios();
+for (const scenarioType of availableScenarios) {
+  await this.preloadScenario(scenarioType);
+}
+
+// 修正後：只加載當前場景（正確）
+const scenarioType = process.env.SCENARIO_TYPE || 'course_management';
+await this.preloadScenario(scenarioType);
+this.currentScenarioType = scenarioType;
+```
+
+#### TaskService 簡化
+```javascript
+// 修正前：需要場景類型參數
+this.scenarioTemplate = ScenarioManager.getScenario(scenarioType);
+
+// 修正後：直接獲取當前場景
+this.scenarioTemplate = ScenarioManager.getCurrentScenario();
+```
+
+### 🎯 架構優勢
+
+#### 資源和安全隔離
+- **內存效率**: 課程管理 bot 不再加載長照/保險配置
+- **安全隔離**: 不同業務場景完全分離，無交叉訪問
+- **故障隔離**: 一個場景的問題不影響其他場景
+- **獨立擴展**: 每個業務場景可以獨立部署和擴展
+
+#### 微服務架構符合性
+- ✅ **單一責任**: 每個 webservice 只負責一個業務域
+- ✅ **獨立部署**: 每個場景可以獨立發布和回滾
+- ✅ **技術隔離**: 不同場景的依賴和配置完全分離
+- ✅ **擴展靈活**: 根據業務需求獨立擴展特定場景
+
+### 📊 影響評估
+
+**代碼變更**: ScenarioManager 核心邏輯重構
+**部署影響**: 確保每個實例只設置對應的 SCENARIO_TYPE
+**性能提升**: 啟動時間減少，內存使用優化
+**架構合規**: 正確實現微服務獨立部署原則
+
+---
+
 ## [Architecture 9.0.0 - Scenario Layer 實現] - 2025-07-26
 
 ### 🎯 核心架構革新：Template-Based 業務層
