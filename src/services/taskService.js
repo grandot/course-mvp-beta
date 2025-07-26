@@ -16,12 +16,10 @@ class TaskService {
     try {
       this.scenarioTemplate = ScenarioManager.getCurrentScenario();
       const scenarioType = this.scenarioTemplate.getScenarioName();
-      console.log(`✅ [TaskService] Initialized with scenario: ${scenarioType}`);
-      console.log(`✅ [TaskService] Entity type: ${this.scenarioTemplate.getEntityType()}`);
-      console.log(`✅ [TaskService] Entity name: ${this.scenarioTemplate.getEntityName()}`);
+      // 🎯 優化：簡化初始化日誌，一行即可
+      console.log(`✅ [TaskService] Initialized: ${scenarioType} (${this.scenarioTemplate.getEntityType()})`);
     } catch (error) {
-      console.error(`❌ [TaskService] Failed to initialize scenario`);
-      console.error(`❌ [TaskService] Error: ${error.message}`);
+      console.error(`❌ [TaskService] Initialization failed: ${error.message}`);
       throw new Error(`TaskService initialization failed: ${error.message}`);
     }
   }
@@ -34,11 +32,12 @@ class TaskService {
    * @returns {Promise<Object>} 執行結果
    */
   async executeIntent(intent, entities, userId) {
-    console.log(`🔧 [TaskService] executeIntent - Intent: ${intent}, UserId: ${userId}`);
-    console.log(`🔧 [TaskService] executeIntent - Entities:`, JSON.stringify(entities, null, 2));
+    // 🎯 優化：簡化參數日誌，只在 debug 模式顯示詳細信息
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔧 [TaskService] ${intent} - User: ${userId}`);
+    }
 
     if (!intent || !userId) {
-      console.log(`🔧 [TaskService] executeIntent - 參數驗證失敗`);
       return {
         success: false,
         error: 'Missing required parameters',
@@ -47,28 +46,21 @@ class TaskService {
     }
 
     try {
-      console.log(`🔧 [TaskService] executeIntent - 開始處理 ${intent}`);
-      
-      // 直接委託給場景模板，不再有複雜的協調邏輯
+      // 🎯 優化：直接委託，無需逐步記錄日誌
       switch (intent) {
         case 'record_course':
-          console.log(`🔧 [TaskService] - 委託創建實體給場景模板`);
           return await this.scenarioTemplate.createEntity(entities, userId);
 
         case 'modify_course':
-          console.log(`🔧 [TaskService] - 委託修改實體給場景模板`);
           return await this.scenarioTemplate.modifyEntity(entities, userId);
 
         case 'cancel_course':
-          console.log(`🔧 [TaskService] - 委託取消實體給場景模板`);
           return await this.scenarioTemplate.cancelEntity(entities, userId);
 
         case 'query_schedule':
-          console.log(`🔧 [TaskService] - 委託查詢實體給場景模板`);
           return await this.scenarioTemplate.queryEntities(userId);
 
         case 'clear_schedule':
-          console.log(`🔧 [TaskService] - 委託清空實體給場景模板`);
           return await this.scenarioTemplate.clearAllEntities(entities, userId);
 
         case 'set_reminder':
@@ -86,7 +78,8 @@ class TaskService {
           };
       }
     } catch (error) {
-      console.error(`❌ [TaskService] executeIntent - 執行失敗:`, error);
+      // 🎯 優化：簡化錯誤日誌
+      console.error(`❌ [TaskService] ${intent} failed:`, error.message);
       return {
         success: false,
         error: error.message,

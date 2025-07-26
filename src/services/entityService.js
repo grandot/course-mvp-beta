@@ -1,16 +1,84 @@
 /**
- * EntityService - 通用實體服務層
+ * EntityService - 通用實體服務層（優化版）
  * 職責：提供統一的CRUD操作，從CourseService抽象出通用功能
  * 設計原則：
  * - 場景無關的通用操作
  * - 統一的錯誤處理和驗證
  * - 支援批量操作和複雜查詢
+ * 優化特性：
+ * - 緩存驗證方案以減少重複映射
+ * - 策略性日誌記錄減少冗餘輸出
+ * - 統一參數驗證減少重複代碼
  * 依賴：DataService, TimeService
  */
 const DataService = require('./dataService');
 const TimeService = require('./timeService');
 
+// 🎯 性能優化：Schema 映射緩存
+const SCHEMA_CACHE = new Map([
+  ['courses', 'course'],
+  ['care_sessions', 'generic_entity'],
+  ['client_meetings', 'generic_entity']
+]);
+
 class EntityService {
+  /**
+   * 統一參數驗證 - 減少重複驗證代碼
+   * @param {string} entityType - 實體類型
+   * @param {Object} data - 待驗證數據（可選）
+   * @param {string} entityId - 實體ID（可選）
+   * @returns {void} 驗證失敗時拋出異常
+   * @private
+   */
+  static _validateParams(entityType, data = null, entityId = null) {
+    if (!entityType || typeof entityType !== 'string') {
+      throw new Error('EntityService: entityType must be a non-empty string');
+    }
+    
+    if (data !== null && (typeof data !== 'object' || data === null)) {
+      throw new Error('EntityService: data must be an object');
+    }
+    
+    if (entityId !== null && !entityId) {
+      throw new Error('EntityService: entityId is required when provided');
+    }
+  }
+
+  /**
+   * 獲取實體驗證方案 - 使用緩存避免重複映射
+   * @param {string} entityType - 實體類型
+   * @returns {string} 驗證方案名稱
+   * @private
+   */
+  static _getValidationSchema(entityType) {
+    return SCHEMA_CACHE.get(entityType) || 'generic_entity';
+  }
+
+  /**
+   * 策略性日誌記錄 - 只在關鍵節點記錄
+   * @param {string} level - 日誌級別 (debug|info|error)
+   * @param {string} operation - 操作類型
+   * @param {string} entityType - 實體類型
+   * @param {string} message - 消息
+   * @param {Object} data - 額外數據（可選）
+   * @private
+   */
+  static _log(level, operation, entityType, message, data = null) {
+    const prefix = {
+      debug: '🔧',
+      info: '✅', 
+      error: '❌'
+    }[level] || '📝';
+    
+    const baseMessage = `${prefix} [EntityService] ${operation} ${entityType}: ${message}`;
+    
+    if (level === 'error') {
+      console.error(baseMessage, data || '');
+    } else if (level === 'info') {
+      console.log(baseMessage);
+    }
+    // debug 級別在生產環境中靜默，減少日誌噪音
+  }
   /**
    * 創建實體
    * @param {string} entityType - 實體類型（資料庫集合名稱）
@@ -18,38 +86,20 @@ class EntityService {
    * @returns {Promise<Object>} 創建結果
    */
   static async createEntity(entityType, entityData) {
-    if (!entityType || typeof entityType !== 'string') {
-      throw new Error('EntityService: entityType must be a non-empty string');
-    }
-
-    if (!entityData || typeof entityData !== 'object') {
-      throw new Error('EntityService: entityData must be an object');
-    }
-
-    console.log(`🔧 [EntityService] Creating ${entityType}:`, JSON.stringify(entityData, null, 2));
+    // 🎯 優化：統一參數驗證，減少重複代碼
+    this._validateParams(entityType, entityData);
 
     try {
       // 添加系統欄位
+      const currentTime = TimeService.getCurrentUserTime().toISOString();
       const enrichedData = {
         ...entityData,
-        created_at: TimeService.getCurrentUserTime().toISOString(),
-        updated_at: TimeService.getCurrentUserTime().toISOString()
+        created_at: currentTime,
+        updated_at: currentTime
       };
 
-      // 驗證數據格式 - 根據實體類型進行驗證
-      let schema;
-      switch (entityType) {
-        case 'courses':
-          schema = 'course';
-          break;
-        case 'care_sessions':
-        case 'client_meetings':
-          schema = 'generic_entity';
-          break;
-        default:
-          schema = 'generic_entity';
-      }
-      
+      // 🎯 優化：使用緩存的驗證方案，避免 switch 語句
+      const schema = this._getValidationSchema(entityType);
       const isValid = await DataService.validateData(enrichedData, schema);
       if (!isValid) {
         throw new Error('EntityService: Invalid entity data format');
@@ -58,11 +108,12 @@ class EntityService {
       // 委託給DataService執行創建
       const result = await DataService.createDocument(entityType, enrichedData);
       
-      console.log(`✅ [EntityService] Successfully created ${entityType}:`, result.success);
+      // 🎯 優化：策略性日誌記錄，只記錄成功信息
+      this._log('info', 'create', entityType, 'Success');
       return result;
 
     } catch (error) {
-      console.error(`❌ [EntityService] Failed to create ${entityType}:`, error.message);
+      this._log('error', 'create', entityType, 'Failed', error.message);
       throw new Error(`EntityService: Failed to create ${entityType}: ${error.message}`);
     }
   }
@@ -75,19 +126,12 @@ class EntityService {
    * @returns {Promise<Object>} 更新結果
    */
   static async updateEntity(entityType, entityId, updateData) {
-    if (!entityType || typeof entityType !== 'string') {
-      throw new Error('EntityService: entityType must be a non-empty string');
-    }
-
-    if (!entityId) {
-      throw new Error('EntityService: entityId is required');
-    }
-
-    if (!updateData || typeof updateData !== 'object' || Object.keys(updateData).length === 0) {
+    // 🎯 優化：統一參數驗證
+    this._validateParams(entityType, updateData, entityId);
+    
+    if (Object.keys(updateData).length === 0) {
       throw new Error('EntityService: updateData must be a non-empty object');
     }
-
-    console.log(`🔧 [EntityService] Updating ${entityType} ${entityId}:`, JSON.stringify(updateData, null, 2));
 
     try {
       // 添加更新時間戳
@@ -99,11 +143,12 @@ class EntityService {
       // 委託給DataService執行更新
       const result = await DataService.updateDocument(entityType, entityId, enrichedUpdateData);
       
-      console.log(`✅ [EntityService] Successfully updated ${entityType} ${entityId}:`, result.success);
+      // 🎯 優化：策略性日誌記錄
+      this._log('info', 'update', entityType, `ID ${entityId} - Success`);
       return result;
 
     } catch (error) {
-      console.error(`❌ [EntityService] Failed to update ${entityType} ${entityId}:`, error.message);
+      this._log('error', 'update', entityType, `ID ${entityId} - Failed`, error.message);
       throw new Error(`EntityService: Failed to update ${entityType}: ${error.message}`);
     }
   }
@@ -115,21 +160,21 @@ class EntityService {
    * @returns {Promise<Array>} 查詢結果
    */
   static async queryEntities(entityType, criteria = {}) {
-    if (!entityType || typeof entityType !== 'string') {
-      throw new Error('EntityService: entityType must be a non-empty string');
-    }
-
-    console.log(`🔧 [EntityService] Querying ${entityType} with criteria:`, JSON.stringify(criteria, null, 2));
+    // 🎯 優化：統一參數驗證
+    this._validateParams(entityType);
 
     try {
       // 委託給DataService執行查詢
       const results = await DataService.queryDocuments(entityType, criteria);
       
-      console.log(`✅ [EntityService] Successfully queried ${entityType}, found ${results.length} records`);
+      // 🎯 優化：只在找到記錄時記錄日誌，減少噪音
+      if (results.length > 0) {
+        this._log('info', 'query', entityType, `Found ${results.length} records`);
+      }
       return results;
 
     } catch (error) {
-      console.error(`❌ [EntityService] Failed to query ${entityType}:`, error.message);
+      this._log('error', 'query', entityType, 'Failed', error.message);
       throw new Error(`EntityService: Failed to query ${entityType}: ${error.message}`);
     }
   }
@@ -141,25 +186,19 @@ class EntityService {
    * @returns {Promise<boolean>} 刪除結果
    */
   static async deleteEntity(entityType, entityId) {
-    if (!entityType || typeof entityType !== 'string') {
-      throw new Error('EntityService: entityType must be a non-empty string');
-    }
-
-    if (!entityId) {
-      throw new Error('EntityService: entityId is required');
-    }
-
-    console.log(`🔧 [EntityService] Deleting ${entityType} ${entityId}`);
+    // 🎯 優化：統一參數驗證
+    this._validateParams(entityType, null, entityId);
 
     try {
       // 委託給DataService執行刪除
       const result = await DataService.deleteDocument(entityType, entityId);
       
-      console.log(`✅ [EntityService] Successfully deleted ${entityType} ${entityId}`);
+      // 🎯 優化：策略性日誌記錄
+      this._log('info', 'delete', entityType, `ID ${entityId} - Success`);
       return result;
 
     } catch (error) {
-      console.error(`❌ [EntityService] Failed to delete ${entityType} ${entityId}:`, error.message);
+      this._log('error', 'delete', entityType, `ID ${entityId} - Failed`, error.message);
       throw new Error(`EntityService: Failed to delete ${entityType}: ${error.message}`);
     }
   }
@@ -179,8 +218,6 @@ class EntityService {
       throw new Error('EntityService: userId is required');
     }
 
-    console.log(`🔧 [EntityService] Clearing all ${entityType} for user ${userId}`);
-
     try {
       // 查詢用戶的所有實體
       const entities = await this.queryEntities(entityType, { 
@@ -188,7 +225,7 @@ class EntityService {
       });
 
       if (entities.length === 0) {
-        console.log(`✅ [EntityService] No ${entityType} found for user ${userId}`);
+        this._log('info', 'clear', entityType, `No records found for user ${userId}`);
         return {
           success: true,
           totalCount: 0,
@@ -197,7 +234,10 @@ class EntityService {
         };
       }
 
-      console.log(`🔧 [EntityService] Found ${entities.length} ${entityType} to delete for user ${userId}`);
+      // 🎯 優化：批量操作只在數量較大時記錄日誌
+      if (entities.length > 5) {
+        this._log('info', 'clear', entityType, `Processing ${entities.length} records for user ${userId}`);
+      }
 
       // 批量刪除
       const deletePromises = entities.map(entity => 
@@ -226,7 +266,8 @@ class EntityService {
         errors
       };
 
-      console.log(`✅ [EntityService] Clear ${entityType} completed:`, clearResult);
+      // 🎯 優化：策略性日誌記錄清理結果
+      this._log('info', 'clear', entityType, `Completed: ${clearResult.deletedCount}/${clearResult.totalCount} deleted`);
       return clearResult;
 
     } catch (error) {
@@ -282,8 +323,6 @@ class EntityService {
       throw new Error('EntityService: entityType, userId, date, and time are required');
     }
 
-    console.log(`🔧 [EntityService] Checking time conflicts for ${entityType}: ${date} ${time} (exclude: ${excludeId})`);
-
     try {
       // 查詢同一天同一時間的實體
       const conflicts = await this.queryEntities(entityType, {
@@ -298,7 +337,10 @@ class EntityService {
         ? conflicts.filter(entity => entity.id !== excludeId)
         : conflicts;
 
-      console.log(`✅ [EntityService] Found ${filteredConflicts.length} time conflicts`);
+      // 🎯 優化：只在找到衝突時記錄日誌
+      if (filteredConflicts.length > 0) {
+        this._log('info', 'conflict', entityType, `Found ${filteredConflicts.length} time conflicts`);
+      }
       return filteredConflicts;
 
     } catch (error) {
@@ -370,8 +412,9 @@ class EntityService {
         };
       }
 
-      // 使用DataService的驗證邏輯
-      const isValid = await DataService.validateData(entityData, 'entity');
+      // 🎯 優化：使用緩存的驗證方案
+      const schema = this._getValidationSchema(entityType) || 'entity';
+      const isValid = await DataService.validateData(entityData, schema);
       
       return {
         isValid,
