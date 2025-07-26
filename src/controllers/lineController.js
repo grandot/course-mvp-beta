@@ -13,6 +13,24 @@ const lineService = require('../services/lineService');
 const ConversationContext = require('../utils/conversationContext');
 
 class LineController {
+  // 靜態初始化TaskService實例
+  static taskService = null;
+  
+  /**
+   * 初始化TaskService實例（單例模式）
+   */
+  static initializeTaskService() {
+    if (!this.taskService) {
+      try {
+        this.taskService = new TaskService();
+        console.log('✅ [LineController] TaskService initialized successfully');
+      } catch (error) {
+        console.error('❌ [LineController] Failed to initialize TaskService:', error.message);
+        throw error;
+      }
+    }
+    return this.taskService;
+  }
   /**
    * 健康檢查端點
    * GET /health → 200 OK
@@ -129,7 +147,10 @@ class LineController {
 
       // ✅ 使用 TaskService 統一處理所有業務邏輯
       console.log(`🔧 [DEBUG] 開始執行任務 - Intent: ${intent}, UserId: ${userId}`);
-      const result = await TaskService.executeIntent(intent, entities, userId);
+      
+      // 初始化TaskService實例
+      const taskService = LineController.initializeTaskService();
+      const result = await taskService.executeIntent(intent, entities, userId);
 
       console.log('TaskService execution result:', JSON.stringify(result, null, 2));
 

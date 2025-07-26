@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 // 錯誤處理中間件
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({
     error: 'Internal Server Error',

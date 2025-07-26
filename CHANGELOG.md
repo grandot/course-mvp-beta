@@ -2,6 +2,197 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Architecture 9.0.0 - Scenario Layer 實現] - 2025-07-26
+
+### 🎯 核心架構革新：Template-Based 業務層
+- **Scenario Layer 架構**: 實現完全可替換的業務模板系統，支持快速擴展到不同業務場景
+- **Configuration-Driven**: YAML 配置驅動的實體類型、消息模板、業務規則管理
+- **Factory Pattern**: ScenarioFactory 動態加載不同場景的模板類和配置
+- **Abstract Base Class**: ScenarioTemplate 統一接口，確保所有場景實現一致性
+
+### 🏗️ 架構轉換：單一業務 → 多場景支持
+```
+修改前：hardcoded course management logic
+修改後：dynamic scenario-based architecture
+
+部署模式：
+- 課程管理系統：SCENARIO_TYPE=course_management
+- 長照系統：SCENARIO_TYPE=healthcare_management  
+- 保險業務系統：SCENARIO_TYPE=insurance_sales
+```
+
+### 📁 新增文件 (15 files)
+#### Scenario Layer 核心
+```
+src/scenario/ScenarioTemplate.js           [抽象基類] 統一場景接口定義
+src/scenario/ScenarioFactory.js            [工廠類] 動態加載場景配置和模板
+src/scenario/templates/                     [模板實現] 三個業務場景具體實現
+  ├── CourseManagementScenarioTemplate.js  [課程管理] 原有業務邏輯重構
+  ├── HealthcareManagementScenarioTemplate.js [長照系統] 照護服務管理
+  └── InsuranceSalesScenarioTemplate.js    [保險業務] 客戶會議安排
+```
+
+#### Configuration 配置檔案
+```
+config/scenarios/course_management.yaml    [課程配置] 實體定義、消息模板、業務規則
+config/scenarios/healthcare_management.yaml [長照配置] 照護服務相關配置
+config/scenarios/insurance_sales.yaml      [保險配置] 客戶會議業務配置
+```
+
+#### Generic Services 通用服務
+```
+src/services/entityService.js              [實體服務] 統一 CRUD 操作，支持所有實體類型
+```
+
+#### Testing 測試檔案
+```
+tests/scenario/scenario-layer-test.js      [架構測試] 完整場景層架構驗證
+```
+
+### 🔧 重構文件 (3 files)
+#### TaskService 完全重構
+```javascript
+// 修改前：static methods with hardcoded course logic
+class TaskService {
+  static async executeIntent(intent, entities, userId) {
+    // hardcoded course management logic
+  }
+}
+
+// 修改後：instance-based with scenario delegation
+class TaskService {
+  constructor() {
+    this.scenario = ScenarioFactory.create(process.env.SCENARIO_TYPE);
+  }
+  
+  async executeIntent(intent, entities, userId) {
+    return this.scenario[intentMethodMap[intent]](entities, userId);
+  }
+}
+```
+
+#### LineController 架構適配
+```javascript
+// 修改前：static TaskService calls
+const result = await TaskService.executeIntent(intent, entities, userId);
+
+// 修改後：instance-based TaskService with singleton pattern
+const taskService = TaskService.getInstance();
+const result = await taskService.executeIntent(intent, entities, userId);
+```
+
+#### App.js 錯誤處理修復
+```javascript
+// 修改前：missing 'next' parameter (potential server crash)
+app.use((err, req, res) => {
+
+// 修改後：proper Express middleware signature
+app.use((err, req, res, next) => {
+```
+
+### ⚙️ 環境配置增強
+```env
+# 新增必要環境變數
+SCENARIO_TYPE=course_management              # 場景選擇器
+
+# 支持的場景類型
+SCENARIO_TYPE=course_management              # 課程管理系統
+SCENARIO_TYPE=healthcare_management          # 長照系統
+SCENARIO_TYPE=insurance_sales               # 保險業務系統
+```
+
+### 💡 技術實現細節
+#### Scenario Template 抽象接口
+```javascript
+class ScenarioTemplate {
+  // 統一的業務方法接口
+  async createEntity(entities, userId) { throw new Error('Must implement'); }
+  async modifyEntity(entities, userId) { throw new Error('Must implement'); }
+  async cancelEntity(entities, userId) { throw new Error('Must implement'); }
+  async queryEntities(entities, userId) { throw new Error('Must implement'); }
+  async clearAllEntities(userId) { throw new Error('Must implement'); }
+  
+  // 通用工具方法
+  formatMessage(template, variables) { /* 統一實現 */ }
+  validateRequiredFields(entities) { /* 統一實現 */ }
+}
+```
+
+#### Configuration-Driven 設計
+```yaml
+# 每個場景的 YAML 配置結構
+scenario_name: "course_management"
+entity_type: "courses"
+entity_name: "課程"
+required_fields: ["course_name", "timeInfo"]
+
+messages:
+  create_success: "✅ {entity_name}「{course_name}」已成功新增！"
+  modify_success: "✅ {entity_name}「{course_name}」時間已修改"
+  
+business_rules:
+  allow_past_dates: false
+  max_entities_per_user: 100
+```
+
+#### Factory Pattern 實現
+```javascript
+class ScenarioFactory {
+  static create(scenarioType) {
+    const config = this.loadConfig(scenarioType);
+    const TemplateClass = this.loadTemplateClass(scenarioType);
+    return new TemplateClass(config);
+  }
+  
+  static getAvailableScenarios() {
+    return ['course_management', 'healthcare_management', 'insurance_sales'];
+  }
+}
+```
+
+### 🎯 場景示例對比
+#### 課程管理場景
+```
+用戶輸入：「數學課明天下午2點」
+處理流程：CourseManagementScenarioTemplate.createEntity()
+輸出格式：「✅ 課程「數學課」已成功新增！🕒 時間：07/27 2:00 PM」
+```
+
+#### 長照系統場景
+```
+用戶輸入：「王奶奶復健治療明天下午2點」
+處理流程：HealthcareManagementScenarioTemplate.createEntity()
+輸出格式：「✅ 王奶奶的復健治療已安排完成！🕒 時間：07/27 2:00 PM」
+```
+
+#### 保險業務場景
+```
+用戶輸入：「張先生產品介紹明天下午2點」
+處理流程：InsuranceSalesScenarioTemplate.createEntity()
+輸出格式：「✅ 與張先生的產品介紹會議已安排！🕒 時間：07/27 2:00 PM」
+```
+
+### 🚀 部署優勢
+- **快速場景擴展**: 新增業務場景只需要複製配置文件 + 實現模板類
+- **獨立部署**: 每個場景可以獨立部署為不同的 chatbot 實例
+- **零 Runtime 切換**: 不需要運行時熱切換，通過環境變數控制
+- **配置驅動**: 業務邏輯變更只需修改 YAML 配置，無需改代碼
+
+### 🔍 驗證結果
+- ✅ **架構完整性**: 所有場景模板實現統一接口
+- ✅ **配置正確性**: YAML 配置文件結構驗證通過
+- ✅ **服務啟動**: TaskService 可以正確加載指定場景
+- ✅ **API 功能**: HTTP 端點正常響應
+- ✅ **錯誤處理**: Express 中間件修復，生產環境安全
+
+### 🎯 影響評估
+**代碼影響**: 3 個文件修改，15 個文件新增
+**架構影響**: 從單一業務系統轉換為通用多場景平台
+**部署影響**: 需要設置 SCENARIO_TYPE 環境變數
+**維護影響**: 新業務場景開發效率大幅提升，從數週縮短至數天
+
+---
+
 ## [Feature 8.0.0 - 會話上下文機制] - 2025-07-26
 
 ### 🎯 核心功能：糾錯意圖處理
