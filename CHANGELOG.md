@@ -2,6 +2,87 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Feature 8.0.0 - 會話上下文機制] - 2025-07-26
+
+### 🎯 核心功能：糾錯意圖處理
+- **會話狀態管理**: 實現用戶會話上下文追蹤，支持跨輪對話的實體解析
+- **糾錯意圖識別**: 新增 `correction_intent` 意圖，處理「不對」、「錯了」等糾錯表達
+- **上下文實體解析**: 自動回溯上一次操作的課程信息，無需重複輸入課程名稱
+
+### 🔧 解決的用戶場景
+```
+用戶流程：
+1. "扯鈴改成四點30" → ✅ 成功修改「扯鈴」課程時間
+2. "不對 改成下午四點30" → ✅ 自動識別糾錯意圖，修改「扯鈴」為下午時間
+
+修復前：❌ 系統嘗試查找名為「不對」的課程 → Course not found
+修復後：✅ 系統理解這是糾錯，從上下文獲取「扯鈴」課程信息
+```
+
+### 🏗️ 技術架構增強
+#### 新增組件
+- **ConversationContext**: 會話上下文管理器，5分鐘自動過期
+- **correction_intent**: 新意圖類型，最高優先級 (priority: 15)
+- **上下文感知語義分析**: SemanticService 支持上下文實體解析
+
+#### 文件更新
+```
+src/utils/conversationContext.js     [新增] 會話狀態管理
+config/intent-rules.yaml            [修改] 新增糾錯意圖規則
+src/services/semanticService.js     [增強] 上下文感知分析
+src/controllers/lineController.js   [集成] 會話狀態集成
+```
+
+### 💡 技術實現細節
+#### 會話上下文存儲
+```javascript
+// 會話狀態結構
+{
+  userId: "user123",
+  lastAction: "modify_course",
+  lastCourse: "扯鈴", 
+  lastTime: "07/26 4:30 AM",
+  timestamp: 1753516937885,
+  expiresAt: 1753517237885  // 5分鐘後過期
+}
+```
+
+#### 糾錯意圖處理流程
+```javascript
+// 1. 識別糾錯意圖
+correction_intent (confidence: 0.9)
+
+// 2. 檢查會話上下文
+hasContext = true → 從上下文獲取課程名稱
+
+// 3. 意圖映射
+correction_intent → modify_course (提高信心度)
+
+// 4. 實體解析
+course_name: "扯鈴" (從上下文)
+timeInfo: "下午四點30" (從當前輸入)
+```
+
+### 🧪 測試驗證
+- ✅ **第一階段**: 正常修改課程 → 會話上下文正確存儲
+- ✅ **第二階段**: 糾錯意圖 → 從上下文正確獲取課程名稱
+- ✅ **第三階段**: 無上下文糾錯 → 正確回退到普通處理
+- ✅ **第四階段**: 規則引擎 → 正確識別 correction_intent
+
+### 🎨 用戶體驗改進
+- **自然對話**: 支持人類自然的糾錯表達方式
+- **減少重複**: 無需重複輸入課程名稱
+- **智能理解**: 系統理解「不對」指的是前一次操作
+- **容錯性強**: 上下文過期時自動回退到普通流程
+
+### 🔒 安全和穩定性
+- **自動過期**: 會話上下文 5分鐘自動清理，避免內存泄漏
+- **Fallback 機制**: 無上下文時回退到原有流程，不影響系統穩定性
+- **Single Source of Truth**: 會話狀態統一由 ConversationContext 管理
+- **架構約束**: 遵循分離式架構，禁止跨層直接調用
+
+---
+
 ## [Hotfix 7.2.1 - OpenAI JSON 解析修復] - 2025-07-26
 
 ### 🔧 OpenAI 服務關鍵修復

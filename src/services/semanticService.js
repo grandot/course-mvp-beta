@@ -2,11 +2,13 @@
  * SemanticService - 語義處理統一入口
  * 職責：意圖識別、實體提取、上下文分析
  * Phase 4: 整合規則引擎 + OpenAI 後備流程
+ * Phase 5: 增加會話上下文支持和糾錯意圖處理
  */
 const IntentRuleEngine = require('../utils/intentRuleEngine');
 const OpenAIService = require('../internal/openaiService');
 const DataService = require('./dataService');
 const TimeService = require('./timeService');
+const ConversationContext = require('../utils/conversationContext');
 
 class SemanticService {
   /**
@@ -31,24 +33,58 @@ class SemanticService {
     try {
       // Step 1: 先嘗試規則引擎分析獲取意圖上下文
       console.log(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`); // [REMOVE_ON_PROD]
-      const ruleResult = IntentRuleEngine.analyzeIntent(text);
+      let ruleResult = IntentRuleEngine.analyzeIntent(text);
       console.log(`🔧 [DEBUG] SemanticService - 規則引擎結果:`, ruleResult); // [REMOVE_ON_PROD]
       
-      // Step 2: 💡 利用意圖上下文進行語義理解的實體提取
-      console.log(`🔧 [DEBUG] SemanticService - 開始實體提取`); // [REMOVE_ON_PROD]
-      const entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
-      const processedTimeInfo = await this.processTimeInfo(text);
+      // Step 1.5: 🔧 處理糾錯意圖 - 需要會話上下文
+      let finalIntent = ruleResult.intent;
+      let entities = null;
+      let processedTimeInfo = null;
+      
+      if (ruleResult.intent === 'correction_intent') {
+        console.log(`🔧 [DEBUG] SemanticService - 檢測到糾錯意圖，嘗試從會話上下文解析`); // [REMOVE_ON_PROD]
+        
+        // 檢查是否有有效的會話上下文
+        const hasContext = ConversationContext.hasValidContext(userId);
+        if (hasContext) {
+          // 從上下文解析實體
+          entities = ConversationContext.resolveEntitiesFromContext(userId, text);
+          // 處理當前輸入的時間信息（糾錯的新時間）
+          processedTimeInfo = await this.processTimeInfo(text);
+          
+          // 將糾錯意圖映射為修改課程意圖進行後續處理
+          finalIntent = 'modify_course';
+          ruleResult.intent = 'modify_course';
+          ruleResult.confidence = Math.min(ruleResult.confidence + 0.1, 1.0); // 提高信心度
+          
+          console.log(`🔧 [DEBUG] SemanticService - 糾錯意圖處理完成，映射為: ${finalIntent}, 課程: ${entities?.course_name}`); // [REMOVE_ON_PROD]
+        } else {
+          console.log(`🔧 [DEBUG] SemanticService - 糾錯意圖但無會話上下文，回退到普通處理`); // [REMOVE_ON_PROD]
+          // 沒有上下文，使用普通流程處理
+          entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
+          processedTimeInfo = await this.processTimeInfo(text);
+          
+          // 保持原始意圖，但降低信心度
+          ruleResult.confidence = Math.max(ruleResult.confidence - 0.3, 0.1);
+        }
+      } else {
+        // Step 2: 💡 利用意圖上下文進行語義理解的實體提取（非糾錯意圖）
+        console.log(`🔧 [DEBUG] SemanticService - 開始實體提取`); // [REMOVE_ON_PROD]
+        entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
+        processedTimeInfo = await this.processTimeInfo(text);
+      }
+      
       console.log(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities); // [REMOVE_ON_PROD]
       console.log(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo); // [REMOVE_ON_PROD]
 
       // Step 3: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
-      if (ruleResult.confidence >= 0.8 && ruleResult.intent !== 'unknown') {
+      if (ruleResult.confidence >= 0.8 && finalIntent !== 'unknown') {
         // 高信心度：使用規則引擎結果
         console.log(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
-        return {
+        const result = {
           success: true,
           method: 'rule_engine',
-          intent: ruleResult.intent,
+          intent: finalIntent,
           confidence: ruleResult.confidence,
           entities: {
             course_name: entities.course_name,
@@ -60,6 +96,13 @@ class SemanticService {
           context,
           analysis_time: Date.now(),
         };
+        
+        // 🔧 更新會話上下文（除了糾錯意圖，因為已經在上面處理過了）
+        if (ruleResult.intent !== 'correction_intent') {
+          this.updateConversationContext(userId, finalIntent, entities, result);
+        }
+        
+        return result;
       }
       // 低信心度：調用 OpenAI 作為後備
       console.log(`🔧 [DEBUG] SemanticService - 調用 OpenAI 作為後備 (低信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
@@ -85,8 +128,7 @@ class SemanticService {
       if (openaiResult.success) {
         // OpenAI 成功返回結構化結果
         const { analysis } = openaiResult;
-
-        return {
+        const result = {
           success: true,
           method: 'openai',
           intent: analysis.intent,
@@ -104,12 +146,17 @@ class SemanticService {
           usage: openaiResult.usage,
           analysis_time: Date.now(),
         };
+        
+        // 🔧 更新會話上下文
+        this.updateConversationContext(userId, analysis.intent, result.entities, result);
+        
+        return result;
       }
       // OpenAI 無法解析，回退到規則引擎結果
-      return {
+      const fallbackResult = {
         success: true,
         method: 'rule_engine_fallback',
-        intent: ruleResult.intent,
+        intent: finalIntent,
         confidence: ruleResult.confidence,
         entities: {
           course_name: entities.course_name,
@@ -124,6 +171,13 @@ class SemanticService {
         usage: openaiResult.usage,
         analysis_time: Date.now(),
       };
+      
+      // 🔧 更新會話上下文（除了糾錯意圖）
+      if (ruleResult.intent !== 'correction_intent') {
+        this.updateConversationContext(userId, finalIntent, entities, fallbackResult);
+      }
+      
+      return fallbackResult;
     } catch (error) {
       // 所有方法失敗，返回錯誤信息
       return {
@@ -484,6 +538,7 @@ class SemanticService {
       'modify_course',
       'set_reminder',
       'clear_schedule',
+      'correction_intent',
       'unknown',
     ];
 
@@ -492,6 +547,32 @@ class SemanticService {
     }
 
     return true;
+  }
+
+  /**
+   * 更新會話上下文
+   * @param {string} userId - 用戶ID
+   * @param {string} intent - 意圖類型
+   * @param {Object} entities - 提取的實體
+   * @param {Object} result - 執行結果（可選）
+   */
+  static updateConversationContext(userId, intent, entities, result = null) {
+    // 只有特定意圖才需要更新會話上下文
+    const contextUpdateIntents = [
+      'record_course',
+      'modify_course', 
+      'cancel_course',
+    ];
+
+    if (!contextUpdateIntents.includes(intent)) {
+      return;
+    }
+
+    // 只有提取到課程名稱才更新上下文
+    if (entities?.course_name) {
+      ConversationContext.updateContext(userId, intent, entities, result);
+      console.log(`🔧 [DEBUG] SemanticService - 已更新會話上下文: ${intent} -> ${entities.course_name}`); // [REMOVE_ON_PROD]
+    }
   }
 }
 

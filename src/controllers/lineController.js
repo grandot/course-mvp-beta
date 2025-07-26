@@ -3,12 +3,14 @@
  * 職責：接收 LINE Webhook、驗證簽名、處理文字訊息
  * 禁止：直接調用 openaiService, firebaseService, lineService
  * Phase 5: LINE Bot Integration
+ * Phase 6: 增加會話上下文支持
  */
 const crypto = require('crypto');
 const semanticService = require('../services/semanticService');
 const TaskService = require('../services/taskService');
 const TimeService = require('../services/timeService');
 const lineService = require('../services/lineService');
+const ConversationContext = require('../utils/conversationContext');
 
 class LineController {
   /**
@@ -103,8 +105,14 @@ class LineController {
     console.log(`Reply token: ${replyToken}`);
 
     try {
-      // 語義分析
-      const analysis = await semanticService.analyzeMessage(userMessage, userId);
+      // 🔧 獲取用戶會話上下文
+      const conversationContext = ConversationContext.getContext(userId);
+      console.log(`🔧 [DEBUG] 會話上下文:`, conversationContext ? 
+        `存在 - 上次操作: ${conversationContext.lastAction}, 課程: ${conversationContext.lastCourse}` : 
+        '不存在'); // [REMOVE_ON_PROD]
+      
+      // 語義分析 - 傳遞會話上下文
+      const analysis = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
 
       if (!analysis.success) {
         return {
