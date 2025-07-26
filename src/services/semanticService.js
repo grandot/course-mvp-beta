@@ -233,11 +233,16 @@ class SemanticService {
       confirmation = '確認清空';
     }
 
+    // 🔧 修復：添加時間信息處理
+    const timeInfo = await this.processTimeInfo(text);
+
     return {
-      course_name: courseName,
+      courseName, // 統一使用駝峰式命名
+      course_name: courseName, // 保持向後兼容
       location,
       teacher,
       confirmation,
+      timeInfo, // 新增時間信息
     };
   }
 
@@ -281,13 +286,16 @@ class SemanticService {
       const time = OpenAIService.extractTime(text);
       const date = OpenAIService.extractDate(text);
 
-      // 嘗試使用 TimeService 解析完整時間
+      // 🔧 修復：使用提取出的時間字符串，而不是完整句子
       let parsedTime = null;
       if (time || date) {
         try {
-          parsedTime = await TimeService.parseTimeString(text);
+          // 構建純時間字符串用於解析
+          const timeString = [date, time].filter(Boolean).join(' ') || time || text;
+          parsedTime = await TimeService.parseTimeString(timeString);
         } catch (parseError) {
           // 解析失敗，但不影響其他信息
+          console.warn('Time parsing failed for:', timeString, parseError.message);
           parsedTime = null;
         }
       }

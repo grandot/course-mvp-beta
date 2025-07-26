@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Hotfix 7.0.2 - 語義時間提取架構修復] - 2025-07-26
+
+### 🏗️ 分離式架構修復  
+- **語義層職責分離**: 修復 SemanticService 時間提取邏輯，正確分離完整句子 vs 純時間字符串
+- **時間提取增強**: OpenAIService.extractTime() 新增完整中文數字時間格式支援
+- **實體提取完整性**: extractCourseEntities() 現在包含完整時間信息處理
+- **架構邊界維持**: 確保語義層→時間層調用遵循職責分離原則
+
+### 🧠 架構修復原理
+```javascript
+// ❌ 修復前：架構違反
+SemanticService → TimeService.parseTimeString("網球改成下午四點20") 
+// 語義層傳完整句子給時間層，職責混亂
+
+// ✅ 修復後：架構合規
+SemanticService → OpenAIService.extractTime("網球改成下午四點20") → "下午四點20"
+SemanticService → TimeService.parseTimeString("下午四點20") → Date對象
+// 語義層先提取實體，時間層專門解析，職責清晰
+```
+
+### 🎯 完整修復效果
+```javascript
+// 語義分析結果
+輸入: "網球改成下午四點20"
+✅ 課程名稱: "網球"
+✅ 時間信息: {display: "07/26 4:20 PM", date: "2025-07-26"}
+✅ 修改課程: 準備就緒
+```
+
+### 🔧 技術實現
+- **OpenAIService.extractTime()**: 新增 `/(上午|下午)?\s*(十一|十二|一|二|三|四|五|六|七|八|九|十)[點点](\d{1,2})/` 正則
+- **SemanticService.extractTimeInfo()**: 使用提取的時間字符串而非完整句子
+- **SemanticService.extractCourseEntities()**: 新增 timeInfo 欄位，統一返回格式
+
+---
+
 ## [Hotfix 7.0.1 - 時間解析分鐘數Bug修復] - 2025-07-26
 
 ### 🔧 時間解析系統修復
