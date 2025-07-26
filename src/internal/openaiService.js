@@ -31,9 +31,14 @@ class OpenAIService {
     }
 
     try {
-      // 模擬 OpenAI API 調用結構
-      // 實際生產環境中應使用真實的 OpenAI SDK
-      const response = await this.mockOpenAICall({
+      // 🧠 使用真正的 OpenAI API 進行語義理解
+      const { OpenAI } = require('openai');
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const response = await openai.chat.completions.create({
         model,
         messages: [
           {
@@ -54,10 +59,39 @@ class OpenAIService {
         content: response.choices[0].message.content,
         usage: response.usage,
         model: response.model,
-        response_time: response.response_time || Date.now(),
+        response_time: Date.now(),
       };
     } catch (error) {
-      throw new Error(`OpenAIService API Error: ${error.message}`);
+      // 🛡️ OpenAI API 失敗時，回退到 mock 服務確保系統穩定性
+      console.warn('OpenAI API failed, falling back to mock service:', error.message);
+      
+      try {
+        const mockResponse = await this.mockOpenAICall({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: '你是一個課程管理助手，專門幫助用戶分析課程相關的自然語言輸入。',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          max_tokens: maxTokens,
+          temperature,
+        });
+
+        return {
+          success: true,
+          content: mockResponse.choices[0].message.content,
+          usage: mockResponse.usage,
+          model: `${mockResponse.model}-mock-fallback`,
+          response_time: mockResponse.response_time || Date.now(),
+        };
+      } catch (mockError) {
+        throw new Error(`OpenAI Service Error: ${error.message}, Mock fallback also failed: ${mockError.message}`);
+      }
     }
   }
 
@@ -211,23 +245,79 @@ class OpenAIService {
   }
 
   /**
-   * 從文本中提取課程名稱
+   * 🧠 AI 驅動的課程名稱提取
    * @param {string} text - 輸入文本
+   * @returns {Promise<string|null>} 課程名稱
+   */
+  static async extractCourseName(text) {
+    try {
+      const prompt = `
+請從以下用戶輸入中提取課程名稱。如果沒有明確的課程名稱，請返回 null。
+
+用戶輸入: "${text}"
+
+規則：
+1. 只提取課程的主要名稱部分，去掉"課"字後綴
+2. 如果是修改/取消語句，提取動作前的課程名稱
+3. 如果沒有明確課程名稱，返回 null
+4. 只返回課程名稱，不要其他文字
+
+範例：
+- "數學課" → "數學"
+- "網球改成下午四點" → "網球"  
+- "直排輪課改時間" → "直排輪"
+- "明天下午2點" → null (沒有課程名稱)
+
+課程名稱:`;
+
+      const result = await this.complete({
+        prompt,
+        model: 'gpt-3.5-turbo',
+        maxTokens: 50,
+        temperature: 0.1, // 低溫度確保一致性
+      });
+
+      if (result.success) {
+        const extracted = result.content.trim();
+        // 處理 AI 回應，過濾無效結果
+        if (extracted && 
+            extracted !== 'null' && 
+            extracted !== 'NULL' &&
+            extracted !== '無' &&
+            extracted !== '沒有' &&
+            extracted.length <= 20 && 
+            extracted.length >= 1) {
+          return extracted;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('AI course name extraction failed, using fallback:', error.message);
+      // 回退到原有模式匹配
+      return this.fallbackExtractCourseName(text);
+    }
+  }
+
+  /**
+   * 回退課程名稱提取（保持系統穩定性）
+   * @param {string} text - 輸入文本  
    * @returns {string|null} 課程名稱
    */
-  static extractCourseName(text) {
+  static fallbackExtractCourseName(text) {
     const coursePatterns = [
-      /(數學|英文|物理|化學|生物|歷史|地理|國文|英語|中文|法語|德語|日語|韓語|西班牙語|義大利語|俄語|阿拉伯語)課?/, // 具體課程名稱
-      /([一-龯]+語)課?/, // 各類語言課程
-      /([一-龯]+)課/, // 中文字符課程名稱
-      /([一-龯]+)班/, // 中文字符班級名稱
+      /(數學|英文|物理|化學|生物|歷史|地理|國文|英語|中文|法語|德語|日語|韓語|西班牙語|義大利語|俄語|阿拉伯語|籃球|足球|排球|羽毛球|乒乓球|網球|游泳|跑步|健身|瑜伽|舞蹈|武術|跆拳道|空手道|柔道|劍道|直排輪|鋼琴|吉他|小提琴)課?/,
+      /([一-龯]+語)課?/,
+      /([一-龯]+)課/,
+      /([一-龯]+)班/,
+      // 💡 新增：提取修改語句中的課程名稱
+      /^([^修改取消刪除調整更改變更改成改到換成換到]{1,10})(?=修改|取消|刪除|調整|更改|變更|改成|改到|換成|換到)/,
     ];
 
     for (const pattern of coursePatterns) {
       const match = text.match(pattern);
       if (match) {
         const courseName = match[1] || match[0];
-        // 移除課字後綴
         return courseName.replace(/課$/, '');
       }
     }

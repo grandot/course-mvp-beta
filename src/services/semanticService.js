@@ -151,10 +151,10 @@ class SemanticService {
       };
     }
 
-    // 使用 OpenAI 的輔助方法提取實體
-    let courseName = OpenAIService.extractCourseName(text);
+    // 🧠 使用 AI 驅動的課程名稱提取（異步）
+    let courseName = await OpenAIService.extractCourseName(text);
 
-    // 💡 語義理解增強：如果基礎提取失敗，但有意圖上下文，則智能提取
+    // 💡 語義理解增強：如果 AI 提取失敗，使用意圖上下文智能提取
     if (!courseName && intentHint && userId) {
       courseName = await this.intelligentCourseExtraction(text, intentHint, userId);
     }
