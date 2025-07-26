@@ -36,8 +36,21 @@ class EntityService {
         updated_at: TimeService.getCurrentUserTime().toISOString()
       };
 
-      // 驗證數據格式（使用DataService的驗證）
-      const isValid = await DataService.validateData(enrichedData, 'entity');
+      // 驗證數據格式 - 根據實體類型進行驗證
+      let schema;
+      switch (entityType) {
+        case 'courses':
+          schema = 'course';
+          break;
+        case 'care_sessions':
+        case 'client_meetings':
+          schema = 'generic_entity';
+          break;
+        default:
+          schema = 'generic_entity';
+      }
+      
+      const isValid = await DataService.validateData(enrichedData, schema);
       if (!isValid) {
         throw new Error('EntityService: Invalid entity data format');
       }

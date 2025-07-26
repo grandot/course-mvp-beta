@@ -433,6 +433,9 @@ class DataService {
         return !!(data.student_id && data.course_name && data.course_date);
       case 'token_usage':
         return !!(data.user_id && data.model && data.total_tokens);
+      case 'generic_entity':
+        // 通用實體驗證 - 確保基本字段存在
+        return !!(data && typeof data === 'object');
       default:
         throw new Error(`DataService: Unknown schema: ${schema}`);
     }
