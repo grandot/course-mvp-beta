@@ -115,99 +115,244 @@ if (message.includes('取消')) return 'cancel_course'
 
 ### 核心技術棧
 ```
-LINE Bot → Express.js → OpenAI GPT-3.5 → YAML Config → Firebase Firestore
+LINE Bot → Express.js → Scenario Layer → EntityService → Firebase Firestore
+                 ↓
+              OpenAI GPT-3.5 + YAML Config + TimeService
 ```
 
-### 專案結構（分離式架構 v2.0）
+### 🎯 Scenario Layer 架構 (v9.0 - 2025-07-26)
+
+**Template-Based 多場景業務平台**：從單一課程管理系統轉換為通用多場景平台
+
+```
+用戶自然語言 → 語義處理層 → Scenario Layer → EntityService → 統一格式回覆
+```
+
+#### 專案結構（Scenario-Based 架構）
 ```
 src/
-├── controllers/lineController.js   # 請求接收層（重構完成 ✅）
+├── controllers/lineController.js     # 請求接收層 ✅
+├── scenario/                         # 🆕 Scenario Layer 核心
+│   ├── ScenarioTemplate.js          # 抽象基類 - 統一場景接口
+│   ├── ScenarioFactory.js           # 工廠類 - 動態加載場景
+│   └── templates/                   # 場景模板實現
+│       ├── CourseManagementScenarioTemplate.js    # 課程管理
+│       ├── HealthcareManagementScenarioTemplate.js # 長照系統
+│       └── InsuranceSalesScenarioTemplate.js      # 保險業務
 ├── services/
-│   ├── semanticService.js         # 語義處理唯一入口 ✅
-│   ├── dataService.js             # 數據處理唯一入口 ✅
-│   ├── courseService.js           # 課程業務邏輯（重構完成 ✅）
-│   └── taskExecutor.js            # 任務執行協調層
+│   ├── semanticService.js           # 語義處理統一入口 ✅
+│   ├── dataService.js               # 數據處理統一入口 ✅
+│   ├── entityService.js             # 🆕 通用實體 CRUD 服務
+│   └── taskService.js               # 🔄 重構為 instance-based 委託模式
 ├── utils/
-│   ├── timeService.js             # 時間處理唯一入口 ✅
-│   ├── intentRuleEngine.js        # 規則引擎實現
-│   ├── intentParser.js            # 參數標準化層
-│   ├── scheduleFormatter.js       # 課表格式化
-│   └── timeRangeManager.js        # 時間範圍管理
+│   ├── timeService.js               # 時間處理統一入口 ✅
+│   ├── intentRuleEngine.js          # 規則引擎實現
+│   ├── conversationContext.js       # 會話上下文管理器
+│   └── [其他工具...]
 ├── config/
-│   └── intent-rules.yaml          # 意圖規則配置
-└── [待移至 internal/]             # 下階段重構
-    ├── openaiService.js           # OpenAI 調用實現
-    ├── firebaseService.js         # Firebase 操作實現
-    └── lineService.js             # LINE API 實現
+│   ├── intent-rules.yaml            # 意圖規則配置
+│   └── scenarios/                   # 🆕 場景配置文件
+│       ├── course_management.yaml   # 課程管理配置
+│       ├── healthcare_management.yaml # 長照系統配置
+│       └── insurance_sales.yaml     # 保險業務配置
+└── internal/                        # 底層實現
+    ├── openaiService.js             # OpenAI 調用實現
+    ├── firebaseService.js           # Firebase 操作實現
+    └── lineService.js               # LINE API 實現
 ```
 
-### 🏗️ 分離式架構實現（2025-07-24）
+### 🏗️ Scenario Layer 核心設計
 
-**核心設計原則**：Single Source of Truth + Forced Boundaries + No Cross-Layer Access
-
-#### 統一服務層
-
-**SemanticService - 語義處理統一入口**
+#### ScenarioTemplate 抽象基類
 ```javascript
-// ✅ 正確用法：所有語義處理都通過此服務
-const analysis = await semanticService.analyzeMessage(text, userId);
-const entities = await semanticService.extractCourseEntities(text, userId);
+class ScenarioTemplate {
+  constructor(config) {
+    this.config = config;
+    this.entityType = config.entity_type;
+    this.entityName = config.entity_name;
+  }
 
-// ❌ 禁止：直接調用底層服務
-const analysis = await openaiService.analyzeIntent(); // 違反架構約束
-const result = intentRuleEngine.analyzeIntent();      // 違反架構約束
+  // 統一業務接口 - 所有場景必須實現
+  async createEntity(entities, userId) { throw new Error('Must implement'); }
+  async modifyEntity(entities, userId) { throw new Error('Must implement'); }
+  async cancelEntity(entities, userId) { throw new Error('Must implement'); }
+  async queryEntities(entities, userId) { throw new Error('Must implement'); }
+  async clearAllEntities(userId) { throw new Error('Must implement'); }
+
+  // 通用工具方法 - 統一實現
+  formatMessage(template, variables) { /* 統一訊息格式化 */ }
+  formatConfigMessage(messageKey, variables) { /* 配置驅動訊息 */ }
+  validateRequiredFields(entities) { /* 統一欄位驗證 */ }
+  createSuccessResponse(message, data) { /* 統一成功回應 */ }
+  createErrorResponse(error, message, details) { /* 統一錯誤回應 */ }
+}
 ```
 
-**TimeService - 時間處理統一入口**
+#### ScenarioFactory 工廠模式
 ```javascript
-// ✅ 正確用法：所有時間操作都通過此服務
-const parsedTime = TimeService.parseTimeString(timeInput);
-const displayTime = TimeService.formatForDisplay(timeValue, courseDate);
-const currentTime = TimeService.getCurrentUserTime();
-const validation = TimeService.validateTime(timeObj);
+class ScenarioFactory {
+  // 動態場景創建
+  static create(scenarioType) {
+    const config = this.loadConfig(scenarioType);
+    const TemplateClass = this.loadTemplateClass(scenarioType);
+    return new TemplateClass(config);
+  }
 
-// ❌ 禁止：直接使用原生時間或其他時間邏輯
-const now = new Date();                    // 違反架構約束
-const parsed = timeParser.parseTime();     // 違反架構約束
+  // 場景管理
+  static getAvailableScenarios() {
+    return ['course_management', 'healthcare_management', 'insurance_sales'];
+  }
+
+  static validateScenarioIntegrity(scenarioType) {
+    // 驗證配置文件 + 模板類完整性
+  }
+}
 ```
 
-**DataService - 數據操作統一入口**
+#### TaskService 委託架構
 ```javascript
-// ✅ 正確用法：所有數據操作都通過此服務
-const result = await dataService.createCourse(courseData);
-const courses = await dataService.getUserCourses(userId);
-const updated = await dataService.updateCourse(courseId, updateData);
+// 修改前：static methods with hardcoded course logic
+class TaskService {
+  static async executeIntent(intent, entities, userId) {
+    // hardcoded course management logic
+  }
+}
 
-// ❌ 禁止：直接調用底層數據服務
-const course = await firebaseService.createCourse(); // 違反架構約束
+// 修改後：instance-based with scenario delegation
+class TaskService {
+  constructor() {
+    this.scenario = ScenarioFactory.create(process.env.SCENARIO_TYPE);
+  }
+  
+  async executeIntent(intent, entities, userId) {
+    // 純委託模式 - 所有業務邏輯委託給 Scenario Template
+    const intentMethodMap = {
+      'record_course': 'createEntity',
+      'modify_course': 'modifyEntity',
+      'cancel_course': 'cancelEntity',
+      'query_courses': 'queryEntities',
+      'clear_courses': 'clearAllEntities'
+    };
+    
+    return this.scenario[intentMethodMap[intent]](entities, userId);
+  }
+}
 ```
 
-#### 強制邊界機制
+### 📁 Configuration-Driven 設計
 
-| 層級 | 允許調用 | 禁止調用 | 實現狀態 |
-|------|----------|----------|----------|
-| **Controller 層** | semanticService, lineService | openaiService, intentRuleEngine | ✅ 已實現 |
-| **Service 層** | TimeService, dataService | firebaseService, new Date() | ✅ 已實現 |
-| **統一服務層** | 內部協調所有底層邏輯 | - | ✅ 已實現 |
-
-#### 重構成果
-
-**問題解決率**：
-- ✅ **消除分散邏輯**：時間處理、語義處理、數據操作完全統一
-- ✅ **強制架構約束**：無法直接跨層調用，必須通過統一入口
-- ✅ **單一數據源**：每個領域只有一個真實來源
-- ✅ **可維護性提升**：修改邏輯只需在一處進行
-
-**架構優勢**：
-- ✅ **調試容易**：所有操作都通過統一入口，日誌清晰
-- ✅ **測試簡單**：每個服務職責明確，單元測試容易編寫
-- ✅ **擴展性強**：新增功能只需在對應統一服務中添加
-- ✅ **錯誤隔離**：錯誤處理在服務層統一管理
-
-### 🎯 YAML 配置驅動架構
-
-**意圖規則配置 (`intent-rules.yaml`)**：
+#### 場景配置結構 (YAML)
 ```yaml
+# config/scenarios/course_management.yaml
+scenario_name: "course_management"
+entity_type: "courses"                    # Firebase 集合名稱
+entity_name: "課程"                       # 顯示名稱
+required_fields: ["course_name", "timeInfo"]
+
+# 訊息模板
+messages:
+  create_success: "✅ {entity_name}「{course_name}」已成功新增！\n🕒 時間：{schedule_time}"
+  modify_success: "✅ {entity_name}「{course_name}」時間已修改為 {schedule_time}"
+  cancel_success: "✅ {entity_name}「{course_name}」已取消"
+  
+# 業務規則
+business_rules:
+  create:
+    allow_duplicate_names: false
+    auto_generate_missing_fields: true
+  modify:
+    allowed_fields: ["schedule_time", "course_date", "location", "teacher"]
+    conflict_resolution: "time_priority"
+  cancel:
+    confirmation_required: false
+    soft_delete: true
+
+# 驗證規則
+validation_rules:
+  time_conflict_check: true
+  name_format_check: true
+  
+# 場景特定配置
+course_specific:
+  course_types: ["學科", "才藝", "語言", "運動"]
+  time_slots: ["上午", "下午", "晚上"]
+```
+
+### 🚀 多場景部署模式
+
+#### 環境變數控制場景
+```env
+# 課程管理系統
+SCENARIO_TYPE=course_management
+
+# 長照系統  
+SCENARIO_TYPE=healthcare_management
+
+# 保險業務系統
+SCENARIO_TYPE=insurance_sales
+```
+
+#### 場景示例對比
+```javascript
+// 課程管理場景
+"數學課明天下午2點" → CourseManagementScenarioTemplate.createEntity()
+→ "✅ 課程「數學課」已成功新增！🕒 時間：07/27 2:00 PM"
+
+// 長照系統場景  
+"王奶奶復健治療明天下午2點" → HealthcareManagementScenarioTemplate.createEntity()
+→ "✅ 王奶奶的復健治療已安排完成！🕒 時間：07/27 2:00 PM"
+
+// 保險業務場景
+"張先生產品介紹明天下午2點" → InsuranceSalesScenarioTemplate.createEntity() 
+→ "✅ 與張先生的產品介紹會議已安排！🕒 時間：07/27 2:00 PM"
+```
+
+### 🔧 統一服務層架構
+
+#### EntityService - 通用實體操作
+```javascript
+class EntityService {
+  // 通用 CRUD 操作 - 支持所有實體類型
+  static async createEntity(entityType, entityData) {
+    // 統一創建邏輯 + 時間戳 + 數據驗證
+  }
+  
+  static async updateEntity(entityType, entityId, updateData) {
+    // 統一更新邏輯 + 衝突檢查
+  }
+  
+  static async queryEntities(entityType, criteria) {
+    // 統一查詢邏輯 + 過濾排序
+  }
+  
+  static async checkTimeConflicts(entityType, userId, date, time, excludeId) {
+    // 統一時間衝突檢查
+  }
+}
+```
+
+#### 分離式架構約束 (Single Source of Truth)
+
+| 功能域 | 唯一入口 | 職責 | 禁止事項 |
+|-------|---------|------|---------|
+| **Scenario Layer** | `ScenarioTemplate` | 業務邏輯實現 | ❌ 直接調用 DataService |
+| **語義處理** | `SemanticService` | 意圖+實體+上下文 | ❌ 直接調用 OpenAI/規則引擎 |
+| **實體操作** | `EntityService` | 通用 CRUD + 驗證 | ❌ 直接調用 Firebase |
+| **時間處理** | `TimeService` | 解析+格式化+計算+驗證 | ❌ 直接使用 `new Date()` |
+| **數據處理** | `DataService` | 存取+查詢+格式化 | ❌ 直接調用 Firebase |
+| **任務執行** | `TaskService` | 場景委託協調 | ❌ 硬編碼業務邏輯 |
+
+### 🎯 配置驅動意圖處理
+
+#### 意圖規則配置 (`intent-rules.yaml`)
+```yaml
+# 糾錯意圖 (最高優先級)
+correction_intent:
+  keywords: ['不對', '錯了', '不是', '改成']
+  priority: 15
+  requires_context: true
+
+# 課程操作意圖
 cancel_course:
   keywords: ['取消', '刪除', '移除', '不要', '不上']
   priority: 10
@@ -217,16 +362,6 @@ record_course:
   keywords: ['新增', '安排', '預約', '上課', '學習', '有']
   priority: 5
   exclusions: ['取消', '刪除', '不要']
-```
-
-**參數提取配置 (`intent-params.yaml`)**：
-```yaml
-record_course:
-  required: ['courseName', 'time']
-  optional: ['location', 'teacher']
-  mappings:
-    courseName: ['課程', 'course']
-    time: ['時間', 'time']
 ```
 
 ### 資料庫設計 (Firebase Firestore)
