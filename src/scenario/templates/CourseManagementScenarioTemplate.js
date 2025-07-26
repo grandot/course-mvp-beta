@@ -188,10 +188,16 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         modifiedFields 
       });
 
+      // 格式化新時間用於顯示
+      const newTimeDisplay = updatedCourse.timeInfo ? 
+        updatedCourse.timeInfo.display : 
+        TimeService.formatForDisplay(updatedCourse.schedule_time);
+
       return this.createSuccessResponse(
         this.formatConfigMessage('modify_success', {
           course_name,
-          modified_fields: modifiedFields.join('、')
+          modified_fields: modifiedFields.join('、'),
+          new_time: newTimeDisplay
         }),
         {
           modifiedFields,

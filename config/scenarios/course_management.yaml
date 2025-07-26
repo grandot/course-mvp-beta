@@ -21,7 +21,7 @@ messages:
   create_error: "創建{entity_name}時發生錯誤，請稍後再試"
   
   # 修改相關訊息
-  modify_success: "✅ 成功修改「{course_name}」的{modified_fields}"
+  modify_success: "✅ 成功修改「{course_name}」的{modified_fields}\n\n🕒 新時間：{new_time}"
   modify_not_found: "找不到「{course_name}」{entity_name}，請確認名稱是否正確"
   modify_missing_name: "請指定要修改的{entity_name}名稱，例如：「修改數學課時間」"
   modify_no_fields: "請指定要修改的內容，例如：「修改數學課時間到下午3點」"
