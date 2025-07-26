@@ -1,50 +1,72 @@
-# IntentOS Course MVP
+# IntentOS - 多場景智能管理平台
 
-IntentOS 課程管理 MVP 系統 - 三層語義架構設計
+Template-Based 多場景業務平台，支持課程管理、長照系統、保險業務等多種場景。
+
+## 架構
+
+```
+用戶自然語言 → 語義處理層 → Scenario Layer → EntityService → 統一格式回覆
+```
+
+### 核心組件
+- **Scenario Layer**: 業務邏輯模板，支持多場景切換
+- **SemanticService**: 語義處理統一入口
+- **EntityService**: 通用實體 CRUD 操作
+- **TimeService**: 時間處理統一入口
+- **TaskService**: 場景委託協調
+
+### 技術棧
+- LINE Bot + Express.js + OpenAI GPT-3.5
+- Firebase Firestore + YAML 配置
+- 環境變數控制場景切換
+
+## 已完成功能
+
+### 核心功能
+- ✅ 多場景支持：課程管理、長照系統、保險業務
+- ✅ 自然語言處理：智能語義識別和意圖提取
+- ✅ 統一時間格式：MM/DD HH:MM AM/PM
+- ✅ 配置驅動：YAML 場景配置和業務規則
+- ✅ 成本監控：Token 使用統計和管理後台
+
+### 架構特色
+- ✅ ScenarioTemplate 抽象基類：統一業務接口
+- ✅ TaskService 委託架構：純委託模式
+- ✅ 強制邊界約束：Single Source of Truth
+
+## 待開發功能
+
+### 短期 (v10.0)
+- 🔄 提醒系統：課前、課中、課後提醒
+- 🔄 重複課程：週期性課程管理
+- 🔄 衝突檢測：時間衝突自動檢測
+
+### 中期 (v11.0)
+- 🔄 AI 模板生成：智能場景模板提案
+- 🔄 多語言支持：國際化架構
+- 🔄 高級分析：使用模式分析和優化建議
+
+### 長期 (v12.0+)
+- 🔄 企業級功能：多租戶、權限管理
+- 🔄 生態系統：第三方集成、API 開放平台
+- 🔄 智能進化：語音交互、圖像識別
 
 ## 快速開始
 
-### 本地安裝
-
 ```bash
-# 安裝依賴
 npm install
-
-# 開發模式
 npm run dev
-
-# 執行測試
-npm test
-
-# 檢查程式碼風格
-npm run lint
-
-# 自動修正程式碼風格
-npm run lint:fix
 ```
 
-### CI 驗證
-
-此專案使用 GitHub Actions 自動執行：
-- ESLint 程式碼檢查
-- Jest 單元測試
-
-推送到 `main` 或 `develop` 分支時會自動觸發 CI 流程。
-
-## 專案結構
-
-```
-├── src/                    # 原始碼目錄（空）
-├── .github/workflows/      # CI/CD 配置
-├── package.json           # 專案配置
-├── .eslintrc.js          # ESLint 規則
-├── .prettierrc           # Prettier 格式化規則
-└── jest.config.js        # Jest 測試配置
+### 環境變數
+```env
+OPENAI_API_KEY=your_key
+FIREBASE_PROJECT_ID=your_project
+LINE_CHANNEL_ACCESS_TOKEN=your_token
+SCENARIO_TYPE=course_management
 ```
 
-## 開發規範
+## 相關文檔
 
-- 使用 Airbnb ESLint 規則
-- Node.js 20+ 版本
-- CommonJS 模組系統
-- Jest 測試框架
+- [CLAUDE.md](./CLAUDE.md) - 詳細技術架構
+- [CHANGELOG.md](./CHANGELOG.md) - 版本更新記錄

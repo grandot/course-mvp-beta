@@ -395,6 +395,38 @@ class DataService {
   }
 
   /**
+   * 更新通用文檔
+   * @param {string} collection - 集合名稱
+   * @param {string} documentId - 文檔ID
+   * @param {Object} updateData - 更新數據
+   * @returns {Promise<Object>} 更新結果
+   */
+  static async updateDocument(collection, documentId, updateData) {
+    if (!collection) {
+      throw new Error('DataService: collection is required');
+    }
+    if (!documentId) {
+      throw new Error('DataService: documentId is required');
+    }
+    if (!updateData || typeof updateData !== 'object') {
+      throw new Error('DataService: updateData must be an object');
+    }
+
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+    const enrichedUpdateData = {
+      ...updateData,
+      updated_at: timestamp,
+    };
+
+    const result = await FirebaseService.updateDocument(collection, documentId, enrichedUpdateData);
+    return {
+      success: true,
+      id: result.id,
+      data: result.data,
+    };
+  }
+
+  /**
    * 查詢通用文檔
    * @param {string} collection - 集合名稱
    * @param {Object} criteria - 查詢條件
