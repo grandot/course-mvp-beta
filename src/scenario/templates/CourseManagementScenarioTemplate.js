@@ -201,9 +201,14 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       );
 
     } catch (error) {
-      this.log('error', 'Failed to modify course', { error: error.message });
+      this.log('error', 'Failed to modify course', { 
+        error: error.message, 
+        stack: error.stack,
+        entities,
+        userId 
+      });
       return this.createErrorResponse(
-        'Modify error',
+        `Modify error: ${error.message}`,
         this.formatConfigMessage('modify_error')
       );
     }

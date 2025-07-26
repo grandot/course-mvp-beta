@@ -378,6 +378,23 @@ class DataService {
   }
 
   /**
+   * 獲取通用文檔
+   * @param {string} collection - 集合名稱
+   * @param {string} documentId - 文檔ID
+   * @returns {Promise<Object|null>} 文檔數據
+   */
+  static async getDocumentById(collection, documentId) {
+    if (!collection) {
+      throw new Error('DataService: collection is required');
+    }
+    if (!documentId) {
+      throw new Error('DataService: documentId is required');
+    }
+
+    return await FirebaseService.getDocument(collection, documentId);
+  }
+
+  /**
    * 查詢通用文檔
    * @param {string} collection - 集合名稱
    * @param {Object} criteria - 查詢條件
