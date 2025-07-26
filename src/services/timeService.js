@@ -253,11 +253,23 @@ class TimeService {
       十点: 10,
     };
 
-    // 檢查中文時間
-    const chineseEntries = Object.entries(chineseTimeMap);
-    const matchedEntry = chineseEntries.find(([chinese]) => input.includes(chinese));
-    if (matchedEntry) {
-      [, hour] = matchedEntry;
+    // 檢查中文時間 - 優先檢查帶分鐘的格式
+    const chineseMinuteMatch = input.match(/(十一|十二|一|二|三|四|五|六|七|八|九|十)[點点](\d{1,2})/);
+    if (chineseMinuteMatch) {
+      const chineseHour = chineseMinuteMatch[1];
+      const chineseHourMap = {
+        十一: 11, 十二: 12, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5,
+        六: 6, 七: 7, 八: 8, 九: 9, 十: 10
+      };
+      hour = chineseHourMap[chineseHour];
+      minute = parseInt(chineseMinuteMatch[2], 10);
+    } else {
+      // 檢查中文時間（無分鐘）
+      const chineseEntries = Object.entries(chineseTimeMap);
+      const matchedEntry = chineseEntries.find(([chinese]) => input.includes(chinese));
+      if (matchedEntry) {
+        [, hour] = matchedEntry;
+      }
     }
 
     // 處理上午/下午/PM/AM
@@ -283,6 +295,27 @@ class TimeService {
       } else if (input.includes('上午') || input.includes('am')) {
         if (hour === 12) hour = 0;
       }
+    }
+
+    // 🔧 修復：處理分鐘數 (四點20、3點45)
+    const minuteMatch = input.match(/(\d{1,2})點(\d{1,2})/) || input.match(/(\d{1,2})\s*:\s*(\d{1,2})/);
+    if (minuteMatch) {
+      const matchedHour = parseInt(minuteMatch[1], 10);
+      const matchedMinute = parseInt(minuteMatch[2], 10);
+      
+      // 如果還沒設定小時，使用匹配到的小時
+      if (hour === null) {
+        hour = matchedHour;
+        // 處理上午/下午
+        if (input.includes('下午') || input.includes('pm')) {
+          if (hour < 12) hour += 12;
+        } else if (input.includes('上午') || input.includes('am')) {
+          if (hour === 12) hour = 0;
+        }
+      }
+      
+      // 設定分鐘數
+      minute = matchedMinute;
     }
 
     return { hour, minute };
