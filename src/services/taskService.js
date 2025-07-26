@@ -8,15 +8,15 @@
  * - 保持向後兼容的介面
  */
 
-const ScenarioFactory = require('../scenario/ScenarioFactory');
+const ScenarioManager = require('../scenario/ScenarioManager');
 
 class TaskService {
   constructor() {
-    // 啟動時載入場景模板，不再動態切換
+    // ⚡ 性能優化：使用預加載的場景實例，避免重複創建
     const scenarioType = process.env.SCENARIO_TYPE || 'course_management';
     
     try {
-      this.scenarioTemplate = ScenarioFactory.create(scenarioType);
+      this.scenarioTemplate = ScenarioManager.getScenario(scenarioType);
       console.log(`✅ [TaskService] Initialized with scenario: ${scenarioType}`);
       console.log(`✅ [TaskService] Entity type: ${this.scenarioTemplate.getEntityType()}`);
       console.log(`✅ [TaskService] Entity name: ${this.scenarioTemplate.getEntityName()}`);
