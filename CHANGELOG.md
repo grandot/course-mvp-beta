@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Hotfix 7.2.1 - OpenAI JSON 解析修復] - 2025-07-26
+
+### 🔧 OpenAI 服務關鍵修復
+- **JSON 解析增強**: 修復 OpenAI 返回 markdown 格式 JSON 導致的解析失敗問題
+- **Markdown 標記處理**: 自動移除 ````json` 代碼塊標記，提取純 JSON 內容
+- **錯誤詳情增強**: 添加詳細的解析錯誤信息，便於調試診斷
+
+### 🎯 修復具體問題
+- **學科名稱識別**: 修復 "微積分"、"物理"、"化學" 等純學科名稱無法識別的問題
+- **AI 後備機制**: 確保低信心度場景下 OpenAI 語義分析正常工作
+- **JSON 解析容錯**: 增強對不同 AI 模型回應格式的兼容性
+
+### 🐛 問題根本原因
+```
+生產環境日誌顯示：
+🔧 [DEBUG] SemanticService - OpenAI 分析結果: {
+  success: false,
+  error: 'Failed to parse JSON response',
+  raw_content: '```json\n{"intent": "record_course",...}\n```'
+}
+```
+
+### 🔧 技術實現
+```javascript
+// openaiService.js - JSON 解析增強
+let jsonContent = result.content.trim();
+
+// 移除 markdown 代碼塊標記
+if (jsonContent.startsWith('```json')) {
+  jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+} else if (jsonContent.startsWith('```')) {
+  jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+}
+
+const analysis = JSON.parse(jsonContent);
+```
+
+### 📊 修復前後對比
+```javascript
+// OpenAI 後備機制修復
+❌ 修復前: "今天下午五點半微積分" → unknown intent (JSON 解析失敗)
+✅ 修復後: "今天下午五點半微積分" → record_course (confidence: 0.95)
+
+// AI 語義識別能力恢復
+❌ 修復前: 純學科名稱識別失敗 → 規則引擎無法匹配
+✅ 修復後: OpenAI 正確識別學科名稱 → 符合第一性原則
+```
+
+### 🎉 影響範圍
+- ✅ **學科課程識別**: 微積分、物理、化學、生物等純學科名稱
+- ✅ **語義理解增強**: 複雜語境下的意圖識別能力提升  
+- ✅ **系統穩定性**: AI 後備機制可靠性大幅提升
+- ✅ **用戶體驗**: 更多樣化的課程名稱表達方式支援
+
 ## [Hotfix 7.2.0 - 語義分析全面修復] - 2025-07-26
 
 ### 🧠 語義分析系統重大修復

@@ -137,8 +137,18 @@ class OpenAIService {
     });
 
     try {
-      // 嘗試解析 JSON 回應
-      const analysis = JSON.parse(result.content);
+      // 🔧 修復：處理 markdown 格式的 JSON 回應
+      let jsonContent = result.content.trim();
+      
+      // 移除 markdown 代碼塊標記
+      if (jsonContent.startsWith('```json')) {
+        jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // 嘗試解析清理後的 JSON
+      const analysis = JSON.parse(jsonContent);
 
       return {
         success: true,
@@ -147,10 +157,11 @@ class OpenAIService {
         model: result.model,
       };
     } catch (parseError) {
-      // JSON 解析失敗，回傳原始文本
+      // JSON 解析失敗，回傳原始文本和詳細錯誤信息
       return {
         success: false,
         error: 'Failed to parse JSON response',
+        parseError: parseError.message,
         raw_content: result.content,
         usage: result.usage,
         model: result.model,
