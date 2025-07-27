@@ -11,6 +11,12 @@ const TimeService = require('./timeService');
 const ConversationContext = require('../utils/conversationContext');
 
 class SemanticService {
+  // 🚀 性能優化：條件式調試日誌（生產環境自動關閉）
+  static debugLog(...args) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(...args);
+    }
+  }
   /**
    * 分析用戶訊息的整體語義
    * @param {string} text - 用戶輸入文本
@@ -19,8 +25,8 @@ class SemanticService {
    * @returns {Promise<Object>} 語義分析結果
    */
   static async analyzeMessage(text, userId, context = {}) {
-    console.log(`🔧 [DEBUG] SemanticService.analyzeMessage - 開始分析: "${text}"`); // [REMOVE_ON_PROD]
-    console.log(`🔧 [DEBUG] SemanticService.analyzeMessage - UserId: ${userId}`); // [REMOVE_ON_PROD]
+    this.debugLog(`🔧 [DEBUG] SemanticService.analyzeMessage - 開始分析: "${text}"`);
+    this.debugLog(`🔧 [DEBUG] SemanticService.analyzeMessage - UserId: ${userId}`);
 
     if (!text || typeof text !== 'string') {
       throw new Error('SemanticService: text must be a non-empty string');
@@ -32,9 +38,9 @@ class SemanticService {
 
     try {
       // Step 1: 先嘗試規則引擎分析獲取意圖上下文
-      console.log(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`);
       let ruleResult = IntentRuleEngine.analyzeIntent(text);
-      console.log(`🔧 [DEBUG] SemanticService - 規則引擎結果:`, ruleResult); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - 規則引擎結果:`, ruleResult);
       
       // Step 1.5: 🔧 處理糾錯意圖 - 需要會話上下文
       let finalIntent = ruleResult.intent;
@@ -42,7 +48,7 @@ class SemanticService {
       let processedTimeInfo = null;
       
       if (ruleResult.intent === 'correction_intent') {
-        console.log(`🔧 [DEBUG] SemanticService - 檢測到糾錯意圖，嘗試從會話上下文解析`); // [REMOVE_ON_PROD]
+        this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到糾錯意圖，嘗試從會話上下文解析`);
         
         // 檢查是否有有效的會話上下文
         const hasContext = ConversationContext.hasValidContext(userId);
@@ -69,18 +75,18 @@ class SemanticService {
         }
       } else {
         // Step 2: 💡 利用意圖上下文進行語義理解的實體提取（非糾錯意圖）
-        console.log(`🔧 [DEBUG] SemanticService - 開始實體提取`); // [REMOVE_ON_PROD]
+        this.debugLog(`🔧 [DEBUG] SemanticService - 開始實體提取`);
         entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
         processedTimeInfo = await this.processTimeInfo(text);
       }
       
-      console.log(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities); // [REMOVE_ON_PROD]
-      console.log(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities);
+      this.debugLog(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo);
 
       // Step 3: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
       if (ruleResult.confidence >= 0.8 && finalIntent !== 'unknown') {
         // 高信心度：使用規則引擎結果
-        console.log(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
+        this.debugLog(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`);
         const result = {
           success: true,
           method: 'rule_engine',
@@ -105,9 +111,9 @@ class SemanticService {
         return result;
       }
       // 低信心度：調用 OpenAI 作為後備
-      console.log(`🔧 [DEBUG] SemanticService - 調用 OpenAI 作為後備 (低信心度: ${ruleResult.confidence})`); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - 調用 OpenAI 作為後備 (低信心度: ${ruleResult.confidence})`);
       const openaiResult = await OpenAIService.analyzeIntent(text, userId);
-      console.log(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult);
 
       // 記錄 token 使用量
       if (openaiResult.usage) {
@@ -216,16 +222,21 @@ class SemanticService {
       };
     }
 
-    // 🧠 使用 AI 驅動的課程名稱提取（異步）
-    let courseName = await OpenAIService.extractCourseName(text);
+    // 🚀 性能優化：優先使用快速正則提取，OpenAI 作為後備
+    let courseName = this.extractCourseNameByRegex(text);
+    
+    // 只有正則提取失敗時才調用 OpenAI（減少 API 調用）
+    if (!courseName) {
+      courseName = await OpenAIService.extractCourseName(text);
+    }
 
     // 💡 語義理解增強：如果 AI 提取失敗，使用意圖上下文智能提取
     if (!courseName && intentHint && userId) {
       courseName = await this.intelligentCourseExtraction(text, intentHint, userId);
     }
 
-    // 如果有用戶ID且提取到課程名稱，嘗試模糊匹配現有課程
-    if (userId && courseName) {
+    // 🚀 性能優化：只在修改/取消操作時進行模糊匹配（避免不必要查詢）
+    if (userId && courseName && (intentHint === 'modify_course' || intentHint === 'cancel_course')) {
       try {
         const dataService = require('./dataService');
         const existingCourses = await dataService.getUserCourses(userId, { status: 'scheduled' });
@@ -571,8 +582,51 @@ class SemanticService {
     // 只有提取到課程名稱才更新上下文
     if (entities?.course_name) {
       ConversationContext.updateContext(userId, intent, entities, result);
-      console.log(`🔧 [DEBUG] SemanticService - 已更新會話上下文: ${intent} -> ${entities.course_name}`); // [REMOVE_ON_PROD]
+      this.debugLog(`🔧 [DEBUG] SemanticService - 已更新會話上下文: ${intent} -> ${entities.course_name}`);
     }
+  }
+
+  /**
+   * 🚀 性能優化：使用正則表達式快速提取課程名稱
+   * @param {string} text - 輸入文本
+   * @returns {string|null} 提取的課程名稱
+   */
+  static extractCourseNameByRegex(text) {
+    if (!text || typeof text !== 'string') return null;
+
+    // 常見課程名稱模式
+    const coursePatterns = [
+      // 直接課程名 + 課/班等
+      /([^\s，。！？]+(?:課|班|課程|課堂|學習|訓練))/g,
+      // 學科名稱
+      /(數學|國文|英文|物理|化學|生物|歷史|地理|公民|音樂|美術|體育|電腦|程式|鋼琴|小提琴|吉他|舞蹈|繪畫|書法|珠算|心算|作文|閱讀|口語|聽力|發音|文法|單字|會話)/g,
+      // 語言課程
+      /(中文|英語|日文|韓文|法文|德文|西班牙文|義大利文|俄文|阿拉伯文)/g,
+      // 才藝類
+      /(鋼琴|小提琴|大提琴|吉他|爵士鼓|薩克斯風|長笛|二胡|古箏|琵琶|笛子|唱歌|聲樂|合唱|舞蹈|芭蕾|街舞|國標舞|民族舞|現代舞|繪畫|素描|水彩|油畫|國畫|書法|陶藝|雕塑)/g,
+      // 運動類
+      /(游泳|籃球|足球|排球|網球|桌球|羽毛球|棒球|跆拳道|空手道|柔道|劍道|瑜珈|有氧|健身|田徑|體操|攀岩|滑板|直排輪)/g,
+    ];
+
+    for (const pattern of coursePatterns) {
+      const matches = text.match(pattern);
+      if (matches && matches.length > 0) {
+        // 返回第一個匹配的課程名稱
+        const courseName = matches[0].trim();
+        if (courseName.length >= 2 && courseName.length <= 10) {
+          return courseName;
+        }
+      }
+    }
+
+    // 如果沒有匹配到特定模式，嘗試提取主要名詞
+    const nounPattern = /([一-龯a-zA-Z0-9]{2,8})(?=課|班|學習|上課|下課|時間|地點|老師)/;
+    const nounMatch = text.match(nounPattern);
+    if (nounMatch && nounMatch[1]) {
+      return nounMatch[1].trim();
+    }
+
+    return null;
   }
 }
 

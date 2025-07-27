@@ -31,8 +31,8 @@ class TimeService {
     const baseTime = referenceTime || new Date();
     const normalizedInput = timeString.trim().toLowerCase();
 
-    // 解析相對日期（今天、明天）
-    const dateOffset = this.parseDateOffset(normalizedInput);
+    // 解析相對日期（今天、明天、週幾）
+    const dateOffset = this.parseDateOffset(normalizedInput, baseTime);
 
     // 解析時間部分
     const timeInfo = this.parseTimeComponent(normalizedInput);
@@ -177,11 +177,13 @@ class TimeService {
   }
 
   /**
-   * 解析日期偏移（今天、明天等）
+   * 解析日期偏移（今天、明天、週幾等）
    * @param {string} input - 標準化輸入
+   * @param {Date} referenceTime - 參考時間，用於計算星期幾
    * @returns {number} 日期偏移量
    */
-  static parseDateOffset(input) {
+  static parseDateOffset(input, referenceTime = null) {
+    // 處理相對日期
     if (input.includes('今天') || input.includes('今日')) {
       return 0;
     }
@@ -197,6 +199,31 @@ class TimeService {
     if (input.includes('前天')) {
       return -2;
     }
+
+    // 🔧 新增：處理星期幾
+    const weekdayMap = {
+      '週一': 1, '週二': 2, '週三': 3, '週四': 4, '週五': 5, '週六': 6, '週日': 0,
+      '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6, '星期日': 0,
+      '禮拜一': 1, '禮拜二': 2, '禮拜三': 3, '禮拜四': 4, '禮拜五': 5, '禮拜六': 6, '禮拜日': 0
+    };
+
+    for (const [weekdayText, targetDay] of Object.entries(weekdayMap)) {
+      if (input.includes(weekdayText)) {
+        const baseTime = referenceTime || new Date();
+        const currentDay = baseTime.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+        
+        // 計算到目標星期幾的偏移天數
+        let offset = targetDay - currentDay;
+        
+        // 如果目標日期是今天或過去的，則指向下一週
+        if (offset <= 0) {
+          offset += 7;
+        }
+        
+        return offset;
+      }
+    }
+
     return 0; // 默認今天
   }
 

@@ -189,9 +189,32 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       });
 
       // 格式化新時間用於顯示
-      const newTimeDisplay = updatedCourse.timeInfo ? 
-        updatedCourse.timeInfo.display : 
-        TimeService.formatForDisplay(updatedCourse.schedule_time);
+      let newTimeDisplay = null;
+      
+      if (updatedCourse.data) {
+        // EntityService 返回的格式: { exists: true, id: string, data: {...} }
+        const courseData = updatedCourse.data;
+        
+        if (courseData.timeInfo && courseData.timeInfo.display) {
+          newTimeDisplay = courseData.timeInfo.display;
+        } else if (courseData.schedule_time) {
+          newTimeDisplay = courseData.schedule_time;
+        } else {
+          // 從 updateData 中獲取時間信息作為後備方案
+          if (timeInfo && timeInfo.display) {
+            newTimeDisplay = timeInfo.display;
+          }
+        }
+      } else if (updatedCourse.timeInfo && updatedCourse.timeInfo.display) {
+        newTimeDisplay = updatedCourse.timeInfo.display;
+      } else if (updatedCourse.schedule_time) {
+        newTimeDisplay = TimeService.formatForDisplay(updatedCourse.schedule_time);
+      }
+      
+      // 確保有一個有效的顯示值
+      if (!newTimeDisplay && timeInfo && timeInfo.display) {
+        newTimeDisplay = timeInfo.display;
+      }
 
       return this.createSuccessResponse(
         this.formatConfigMessage('modify_success', {
