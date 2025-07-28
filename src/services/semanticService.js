@@ -232,20 +232,26 @@ class SemanticService {
     }
 
     try {
+      // 檢查是否有等待補充資訊的上下文
+      const pendingContext = ConversationContext.getPendingContext(userId);
+
       // Step 0: 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
-      const pureTimeInputCheck = SemanticService.detectPureTimeInput(text);
-      if (pureTimeInputCheck.isPureTimeInput) {
-        this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到純時間輸入，拒絕處理: ${text}`);
-        return {
-          success: false,
-          method: 'rejected_pure_time',
-          intent: 'ambiguous_input',
-          confidence: 0,
-          entities: null,
-          context,
-          message: pureTimeInputCheck.rejectionMessage,
-          analysis_time: Date.now(),
-        };
+      // 僅在沒有等待補充的上下文時執行
+      if (!pendingContext) {
+        const pureTimeInputCheck = SemanticService.detectPureTimeInput(text);
+        if (pureTimeInputCheck.isPureTimeInput) {
+          this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到純時間輸入，拒絕處理: ${text}`);
+          return {
+            success: false,
+            method: 'rejected_pure_time',
+            intent: 'ambiguous_input',
+            confidence: 0,
+            entities: null,
+            context,
+            message: pureTimeInputCheck.rejectionMessage,
+            analysis_time: Date.now(),
+          };
+        }
       }
 
       // Step 1: 先嘗試規則引擎分析獲取意圖上下文

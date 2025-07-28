@@ -207,6 +207,20 @@ class ConversationContext {
   }
 
   /**
+   * 檢查是否有等待後續資訊的上下文
+   * @param {string} userId - 用戶ID
+   * @returns {Object|null} 如果是pending狀態，返回上下文，否則返回null
+   */
+  static getPendingContext(userId) {
+    const context = this.getContext(userId);
+    if (context && context.lastAction && context.lastAction.endsWith('_pending')) {
+      console.log(`🔧 [DEBUG] 檢測到等待補充的上下文 - UserId: ${userId}, Action: ${context.lastAction}`);
+      return context;
+    }
+    return null;
+  }
+
+  /**
    * 重置所有會話上下文（主要用於測試）
    */
   static reset() {
