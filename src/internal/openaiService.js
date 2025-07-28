@@ -360,6 +360,85 @@ class OpenAIService {
    * @param {string} text - 輸入文本
    * @returns {Promise<string|null>} 課程名稱
    */
+
+  /**
+   * 🚨 新增：提取所有課程相關實體（課程、學生、地點、時間信息）
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Object>} 所有實體的提取結果
+   */
+  static async extractAllEntities(text) {
+    try {
+      const prompt = `
+請從以下用戶輸入中提取所有課程相關的信息，並以JSON格式返回。
+
+用戶輸入: "${text}"
+
+提取規則：
+1. course_name: 課程名稱（去掉"課"字，保留完整語義）
+2. student: 學生姓名（可以是中文名、英文名、或任何名字）
+3. location: 上課地點（前台、後台、教室、樓層等）
+4. time_phrase: 時間短語（早上、下午、具體時間等）
+5. date_phrase: 日期短語（明天、後天、具體日期等）
+
+如果某個欄位無法提取，請設為null。
+
+請只返回JSON格式，不要其他文字：
+{
+  "course_name": "提取的課程名稱或null",
+  "student": "提取的學生姓名或null", 
+  "location": "提取的地點或null",
+  "time_phrase": "提取的時間短語或null",
+  "date_phrase": "提取的日期短語或null"
+}
+
+範例：
+- "LUMI早上十點乒乓球課" → {"course_name": "乒乓球", "student": "LUMI", "location": null, "time_phrase": "早上十點", "date_phrase": null}
+- "後台下午兩點小美直排輪課" → {"course_name": "直排輪", "student": "小美", "location": "後台", "time_phrase": "下午兩點", "date_phrase": null}
+- "明天晚上七點鋼琴課" → {"course_name": "鋼琴", "student": null, "location": null, "time_phrase": "晚上七點", "date_phrase": "明天"}`;
+
+      const response = await this.complete({
+        prompt,
+        maxTokens: 200,
+        temperature: 0.1, // 較低溫度確保一致性
+      });
+
+      const content = response.response.trim();
+      console.log(`🔧 [DEBUG] OpenAI實體提取原始回應:`, content);
+
+      // 嘗試解析JSON
+      try {
+        const entities = JSON.parse(content);
+        return {
+          success: true,
+          entities,
+          usage: response.usage
+        };
+      } catch (parseError) {
+        console.warn('JSON解析失敗，嘗試修正:', parseError.message);
+        
+        // 嘗試提取JSON部分
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const entities = JSON.parse(jsonMatch[0]);
+          return {
+            success: true,
+            entities,
+            usage: response.usage
+          };
+        }
+        
+        throw new Error('無法解析實體提取結果');
+      }
+    } catch (error) {
+      console.error('OpenAI實體提取失敗:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        entities: null
+      };
+    }
+  }
+
   static async extractCourseName(text) {
     try {
       const prompt = `

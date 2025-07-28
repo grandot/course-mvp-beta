@@ -415,14 +415,65 @@ class SemanticService {
         course_name: null,
         location: null,
         teacher: null,
+        student: null,
         confirmation: null,
       };
     }
 
-    // 🚀 性能優化：優先使用快速正則提取，OpenAI 作為後備
+    // 🚨 架構重構：OpenAI優先，正則fallback
+    console.log(`🔧 [DEBUG] 檢測到混雜內容，嘗試OpenAI完整實體提取: "${text}"`);
+    
+    // Step 1: 優先使用 OpenAI 完整實體提取
+    const openaiResult = await OpenAIService.extractAllEntities(text);
+    
+    if (openaiResult.success && openaiResult.entities) {
+      console.log(`🔧 [DEBUG] OpenAI實體提取成功:`, openaiResult.entities);
+      
+      const entities = openaiResult.entities;
+      let courseName = entities.course_name;
+      let student = entities.student;
+      let location = entities.location;
+      
+      // 🚨 重要：處理OpenAI提取的時間和日期信息
+      let extractedDateTime = '';
+      
+      // 合併日期和時間短語
+      if (entities.date_phrase) {
+        extractedDateTime += entities.date_phrase;
+      }
+      if (entities.time_phrase) {
+        extractedDateTime += entities.time_phrase;
+      }
+      
+      console.log(`🔧 [DEBUG] OpenAI時間合併: "${extractedDateTime}"`);
+      
+      // 🚨 關鍵：用提取的日期時間替換原始文本進行時間處理
+      if (extractedDateTime) {
+        text = extractedDateTime; // 例如: "明天早上十點"
+      }
+      
+      // 執行模糊匹配（如果需要）
+      if (userId && courseName && (intentHint === 'modify_course' || intentHint === 'cancel_course')) {
+        courseName = await this.performFuzzyMatching(courseName, userId);
+      }
+      
+      return await this.buildEntityResult(text, courseName, location, student);
+    }
+    
+    // Step 2: OpenAI失敗，fallback到正則表達式智能分離
+    console.log(`🔧 [DEBUG] OpenAI提取失敗，fallback到正則表達式分離`);
+    
+    return await this.extractEntitiesWithRegex(text, userId, intentHint);
+  }
+
+  /**
+   * 🚨 新增：使用正則表達式進行實體提取（fallback方法）
+   */
+  static async extractEntitiesWithRegex(text, userId, intentHint) {
+    // 傳統的正則提取邏輯
     let courseName = this.extractCourseNameByRegex(text);
     
-    // 只有正則提取失敗時才調用 OpenAI（減少 API 調用）
+    // 如果正則也失敗，嘗試單獨調用OpenAI課程名提取
     if (!courseName) {
       courseName = await OpenAIService.extractCourseName(text);
     }
@@ -432,28 +483,9 @@ class SemanticService {
       courseName = await this.intelligentCourseExtraction(text, intentHint, userId);
     }
 
-    // 🚀 性能優化：只在修改/取消操作時進行模糊匹配（避免不必要查詢）
+    // 執行模糊匹配（如果需要）
     if (userId && courseName && (intentHint === 'modify_course' || intentHint === 'cancel_course')) {
-      try {
-        const dataService = require('./dataService');
-        const existingCourses = await dataService.getUserCourses(userId, { status: 'scheduled' });
-        
-        // 模糊匹配：尋找包含提取到課程名稱的課程
-        const matchedCourse = existingCourses.find(course => {
-          const existingName = course.course_name.toLowerCase();
-          const extractedName = courseName.toLowerCase();
-          
-          // 雙向匹配：提取的名稱包含在現有課程中，或現有課程包含在提取的名稱中
-          return existingName.includes(extractedName) || extractedName.includes(existingName);
-        });
-        
-        if (matchedCourse) {
-          courseName = matchedCourse.course_name; // 使用完整的課程名稱
-        }
-      } catch (error) {
-        // 模糊匹配失敗不影響原有流程
-        console.warn('Course fuzzy matching failed:', error.message);
-      }
+      courseName = await this.performFuzzyMatching(courseName, userId);
     }
 
     // 🚨 智能分離：從混雜內容中提取地點、學生
@@ -465,7 +497,7 @@ class SemanticService {
     const smartExtraction = /^(明天|後天|今天|昨天)?(前台|後台|一樓|二樓|三樓|四樓|五樓)?(下午|上午|晚上|早上)?(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)?(小[\u4e00-\u9fff]{1,2})?([\u4e00-\u9fff]*課)$/;
     const smartMatch = text.match(smartExtraction);
     if (smartMatch) {
-      console.log(`🔧 [DEBUG] 智能分離成功: 日期="${smartMatch[1]}", 地點="${smartMatch[2]}", 模糊時間="${smartMatch[3]}", 具體時間="${smartMatch[4]}", 學生="${smartMatch[5]}", 課程="${smartMatch[6]}"`);
+      console.log(`🔧 [DEBUG] 正則智能分離成功: 日期="${smartMatch[1]}", 地點="${smartMatch[2]}", 模糊時間="${smartMatch[3]}", 具體時間="${smartMatch[4]}", 學生="${smartMatch[5]}", 課程="${smartMatch[6]}"`);
       if (smartMatch[2]) location = smartMatch[2];
       if (smartMatch[5]) student = smartMatch[5];
       // 🚨 同時更新課程名稱，使用分離出的課程
@@ -494,13 +526,48 @@ class SemanticService {
         }
       }
       
-      console.log(`🔧 [DEBUG] 智能分離時間合併: "${extractedDateTime}"`);
+      console.log(`🔧 [DEBUG] 正則時間合併: "${extractedDateTime}"`);
       
       // 🚨 關鍵：用提取的日期時間替換原始文本進行時間處理
       if (extractedDateTime) {
         text = extractedDateTime; // 例如: "後天下午兩點"
       }
     }
+    
+    return await this.buildEntityResult(text, courseName, location, student);
+  }
+
+  /**
+   * 🚨 新增：執行模糊匹配
+   */
+  static async performFuzzyMatching(courseName, userId) {
+    try {
+      const dataService = require('./dataService');
+      const existingCourses = await dataService.getUserCourses(userId, { status: 'scheduled' });
+      
+      // 模糊匹配：尋找包含提取到課程名稱的課程
+      const matchedCourse = existingCourses.find(course => {
+        const existingName = course.course_name.toLowerCase();
+        const extractedName = courseName.toLowerCase();
+        
+        // 雙向匹配：提取的名稱包含在現有課程中，或現有課程包含在提取的名稱中
+        return existingName.includes(extractedName) || extractedName.includes(existingName);
+      });
+      
+      if (matchedCourse) {
+        return matchedCourse.course_name; // 使用完整的課程名稱
+      }
+    } catch (error) {
+      // 模糊匹配失敗不影響原有流程
+      console.warn('Course fuzzy matching failed:', error.message);
+    }
+    return courseName;
+  }
+
+  /**
+   * 🚨 新增：構建最終的實體結果
+   */
+  static async buildEntityResult(text, courseName, location, student) {
     
     // 如果智能分離未成功，使用傳統模式提取地點
     if (!location) {
