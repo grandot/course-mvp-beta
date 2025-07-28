@@ -425,7 +425,7 @@ class LineController {
         };
       }
 
-      const { intent, entities, confidence } = analysis;
+      let { intent, entities, confidence } = analysis;
 
       console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
