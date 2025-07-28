@@ -232,6 +232,22 @@ class SemanticService {
     }
 
     try {
+      // Step 0: 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
+      const pureTimeInputCheck = this.detectPureTimeInput(text);
+      if (pureTimeInputCheck.isPureTimeInput) {
+        this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到純時間輸入，拒絕處理: ${text}`);
+        return {
+          success: false,
+          method: 'rejected_pure_time',
+          intent: 'ambiguous_input',
+          confidence: 0,
+          entities: null,
+          context,
+          message: pureTimeInputCheck.rejectionMessage,
+          analysis_time: Date.now(),
+        };
+      }
+
       // Step 1: 先嘗試規則引擎分析獲取意圖上下文
       this.debugLog(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`);
       let ruleResult = IntentRuleEngine.analyzeIntent(text);
@@ -879,6 +895,51 @@ class SemanticService {
     }
 
     return true;
+  }
+
+  /**
+   * 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
+   * @param {string} text - 用戶輸入文本
+   * @returns {Object} 檢測結果 {isPureTimeInput: boolean, rejectionMessage: string}
+   */
+  static detectPureTimeInput(text) {
+    const trimmedText = text.trim();
+    
+    // 純時間表達模式（無課程相關內容）
+    const pureTimePatterns = [
+      // 日期+時間組合
+      /^(今天|明天|後天|昨天|前天|下週|上週|週[一二三四五六日]|星期[一二三四五六日]).*(早上|上午|中午|下午|晚上|夜晚).*[點時]?\d*$/,
+      /^(今天|明天|後天|昨天|前天).*(早上|上午|中午|下午|晚上|夜晚)$/,
+      /^(早上|上午|中午|下午|晚上|夜晚).*[點時]\d*$/,
+      // 純數字時間
+      /^\d{1,2}[點時]\d*$/,
+      /^\d{1,2}:\d{2}$/,
+      // 中文數字時間
+      /^(早上|上午|中午|下午|晚上|夜晚)?(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时](\d{1,2}|半)?$/
+    ];
+    
+    // 排除明確包含課程相關關鍵詞的輸入
+    const courseKeywords = ['課', '教', '學', '訓練', '培訓', '輔導', '班', '指導', '安排', '預約', '報名', '登記'];
+    const hasCourseKeywords = courseKeywords.some(keyword => trimmedText.includes(keyword));
+    
+    // 如果包含課程關鍵詞，不視為純時間輸入
+    if (hasCourseKeywords) {
+      return { isPureTimeInput: false };
+    }
+    
+    // 檢查是否匹配純時間模式
+    const isPureTime = pureTimePatterns.some(pattern => pattern.test(trimmedText));
+    
+    if (isPureTime) {
+      const rejectionMessage = `我需要更清楚的課程資訊才能幫您安排。僅提供時間「${trimmedText}」無法確定您的具體需求。\n\n請完整輸入課程資訊，例如：「明天下午3點數學課」、「後天早上10點鋼琴課」`;
+      
+      return {
+        isPureTimeInput: true,
+        rejectionMessage
+      };
+    }
+    
+    return { isPureTimeInput: false };
   }
 
   /**
