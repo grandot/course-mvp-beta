@@ -30,10 +30,18 @@ class ConversationContext {
       lastAction: action,
       lastIntent: action,
       lastCourse: entities.course_name || entities.courseName,
-      lastTime: entities.timeInfo?.schedule_time,
-      lastDate: entities.timeInfo?.course_date,
+      lastTime: entities.timeInfo?.display || entities.timeInfo?.schedule_time,
+      lastDate: entities.timeInfo?.date || entities.timeInfo?.course_date,
       lastLocation: entities.location,
       lastTeacher: entities.teacher,
+      lastStudent: entities.student, // 🚨 新增：保存學生信息
+      // 🚨 修復：保存完整的 timeInfo 結構
+      lastTimeInfo: entities.timeInfo ? {
+        display: entities.timeInfo.display,
+        date: entities.timeInfo.date,
+        raw: entities.timeInfo.raw,
+        timestamp: entities.timeInfo.timestamp
+      } : null,
       executionResult: result,
       timestamp: now,
       expiresAt: now + this.CONTEXT_EXPIRE_TIME,
@@ -42,6 +50,7 @@ class ConversationContext {
     this.contexts.set(userId, context);
     
     console.log(`🔧 [DEBUG] 更新會話上下文 - UserId: ${userId}, Action: ${action}, Course: ${context.lastCourse}`);
+    console.log(`🔧 [DEBUG] 上下文詳情:`, context);
     
     // 定期清理過期上下文
     this.clearExpired();

@@ -119,22 +119,21 @@ class LineController {
    * @returns {boolean} 是否為補充信息
    */
   static detectSupplementInfo(userMessage, entities, conversationContext) {
-    // 檢查條件1：上一次操作需要追問且還未完成
-    if (!conversationContext.lastCourse) {
-      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 無上次課程上下文`);
+    // 🚨 修復：檢查是否有等待補充的狀態
+    if (!conversationContext) {
+      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 無會話上下文`);
       return false;
     }
 
-    // 檢查條件2：當前輸入缺少課程名稱但有其他信息（時間、地點等）
-    const hasNoCourse = !entities.course_name || entities.course_name === null;
-    const hasTimeInfo = entities.timeInfo && entities.timeInfo.display;
-    const hasLocation = entities.location;
-
-    // 🚨 改進的檢測邏輯：更嚴格的條件判斷
-    // 檢查條件3：當前輸入主要是時間表達（補充時間信息）
-    const isMainlyTimeExpression = /^(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
-                                  /^\d{1,2}點?$/.test(userMessage.trim()) ||
-                                  /^\d{1,2}:\d{2}$/.test(userMessage.trim());
+    // 檢查條件1：是否處於等待補充狀態
+    const isAwaitingSupplement = conversationContext.lastAction === 'record_course_pending' || 
+                                 (conversationContext.executionResult && conversationContext.executionResult.status === 'awaiting_supplement');
+    
+    if (!isAwaitingSupplement) {
+      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 非等待補充狀態`);
+      console.log(`🔧 [DEBUG] - lastAction: ${conversationContext.lastAction}`);
+      return false;
+    }
 
     // 🚨 新增：檢查是否為完整的日期+時間表達（不應視為補充）
     const isCompleteDateTime = /^(明天|後天|今天)(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
@@ -151,12 +150,33 @@ class LineController {
       return false;
     }
 
-    const hasSupplementaryInfo = hasTimeInfo || hasLocation;
+    // 檢查條件2：根據等待補充的欄位類型判斷
+    const awaitingField = conversationContext.executionResult?.awaitingSupplementFor;
+    
+    if (awaitingField === 'course') {
+      // 等待課程名稱：檢查當前輸入是否可能是課程名
+      const isPossibleCourseName = entities.course_name || 
+                                  /^[一-龯a-zA-Z]+$/.test(userMessage.trim()) ||
+                                  /球|課|訓練|教學/.test(userMessage);
+      
+      console.log(`🔧 [DEBUG] 補充信息檢測 - 等待課程名稱: ${isPossibleCourseName}`);
+      return isPossibleCourseName;
+    } else if (awaitingField === 'time') {
+      // 等待時間：檢查當前輸入是否包含時間信息
+      const hasTimeInfo = entities.timeInfo && entities.timeInfo.display;
+      const isMainlyTimeExpression = /^(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
+                                    /^\d{1,2}點?$/.test(userMessage.trim()) ||
+                                    /^\d{1,2}:\d{2}$/.test(userMessage.trim());
+      
+      console.log(`🔧 [DEBUG] 補充信息檢測 - 等待時間: ${hasTimeInfo || isMainlyTimeExpression}`);
+      return hasTimeInfo || isMainlyTimeExpression;
+    }
 
-    console.log(`🔧 [DEBUG] 補充信息檢測 - 缺課程名: ${hasNoCourse}, 有補充信息: ${hasSupplementaryInfo}, 主要是時間: ${isMainlyTimeExpression}`);
-
-    // 更嚴格的條件：必須缺少課程名稱 AND (有補充信息 OR 純時間表達)
-    return hasNoCourse && (hasSupplementaryInfo || isMainlyTimeExpression);
+    // 通用檢測：當前輸入主要是補充信息
+    const hasSupplementaryInfo = entities.timeInfo || entities.location || entities.course_name;
+    console.log(`🔧 [DEBUG] 補充信息檢測 - 通用檢測: ${!!hasSupplementaryInfo}`);
+    
+    return !!hasSupplementaryInfo;
   }
 
   /**
@@ -166,26 +186,30 @@ class LineController {
    * @returns {Object} 合併後的實體信息
    */
   static mergeContextWithSupplement(conversationContext, supplementEntities) {
-    // 從上下文恢復課程信息
-    const mergedEntities = {
-      course_name: conversationContext.lastCourse || supplementEntities.course_name,
-      location: supplementEntities.location || conversationContext.lastLocation,
-      teacher: supplementEntities.teacher || conversationContext.lastTeacher,
-      student: supplementEntities.student,
-      confirmation: supplementEntities.confirmation,
-      timeInfo: supplementEntities.timeInfo, // 使用新提供的時間信息
+    console.log(`🔧 [DEBUG] 開始合併補充信息`);
+    console.log(`🔧 [DEBUG] - 上下文:`, conversationContext);
+    console.log(`🔧 [DEBUG] - 補充實體:`, supplementEntities);
+
+    // 🚨 修復：從等待補充狀態中恢復暫存的信息
+    const savedEntities = {
+      course_name: conversationContext.lastCourse,
+      location: conversationContext.lastLocation,
+      teacher: conversationContext.lastTeacher,
+      student: conversationContext.lastStudent,
+      timeInfo: conversationContext.lastTimeInfo || null
     };
 
-    // 如果上下文有時間但補充信息沒有，使用上下文的時間
-    if (!supplementEntities.timeInfo && conversationContext.lastTime) {
-      mergedEntities.timeInfo = {
-        display: conversationContext.lastTime,
-        date: conversationContext.lastDate,
-        raw: conversationContext.lastDate,
-        timestamp: new Date(conversationContext.lastDate).getTime()
-      };
-    }
+    // 合併：補充信息優先，但保留上下文中的有效信息
+    const mergedEntities = {
+      course_name: supplementEntities.course_name || savedEntities.course_name,
+      location: supplementEntities.location || savedEntities.location,
+      teacher: supplementEntities.teacher || savedEntities.teacher,
+      student: supplementEntities.student || savedEntities.student,
+      confirmation: supplementEntities.confirmation,
+      timeInfo: supplementEntities.timeInfo || savedEntities.timeInfo,
+    };
 
+    console.log(`🔧 [DEBUG] 合併完成:`, mergedEntities);
     return mergedEntities;
   }
 
@@ -224,8 +248,23 @@ class LineController {
       // 單一問題：暫存有效信息，追問缺失部分
       replyMessage = this.generateSingleProblemPrompt(validEntities, problems[0]);
       
-      // TODO: 實作暫存機制（現階段先用簡單的回應）
-      console.log(`🔧 [DEBUG] 單一問題處理 - 暫存信息:`, validEntities);
+      // 🚨 修復關鍵問題：實作真正的暫存機制
+      // 將暫存狀態保存到會話上下文，標記為等待補充
+      ConversationContext.updateContext(userId, 'record_course_pending', {
+        course_name: validEntities.course_name,
+        location: validEntities.location,
+        teacher: validEntities.teacher,
+        student: validEntities.student,
+        timeInfo: validEntities.timeInfo
+      }, {
+        pendingProblems: problems,
+        awaitingSupplementFor: problems[0].field,
+        status: 'awaiting_supplement'
+      });
+      
+      console.log(`🔧 [DEBUG] 單一問題處理 - 已保存暫存狀態到會話上下文 - UserId: ${userId}`);
+      console.log(`🔧 [DEBUG] 暫存信息:`, validEntities);
+      console.log(`🔧 [DEBUG] 等待補充欄位:`, problems[0].field);
       
     } else {
       // 多個問題：要求重新輸入
@@ -450,10 +489,26 @@ class LineController {
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
 
       // 🚨 檢查多輪對話：是否為補充信息（針對之前未完成的課程記錄）
-      if (intent === 'record_course' && conversationContext && conversationContext.lastAction === 'record_course') {
+      const isPendingState = conversationContext && conversationContext.lastAction === 'record_course_pending';
+      
+      // 🚨 修復：無論當前 intent 是什麼，如果處於等待補充狀態，都要檢查是否為補充信息
+      if (isPendingState) {
         const isSupplementInfo = this.detectSupplementInfo(userMessage, entities, conversationContext);
         if (isSupplementInfo) {
           console.log(`🔧 [DEBUG] 檢測到補充信息，正在合併上下文`);
+          entities = this.mergeContextWithSupplement(conversationContext, entities);
+          console.log(`🔧 [DEBUG] 合併後實體:`, entities);
+          
+          // 🚨 重要：強制設置 intent 為 record_course，確保後續邏輯正確執行
+          intent = 'record_course';
+          console.log(`🔧 [DEBUG] 強制設置 intent 為 record_course 以處理補充信息`);
+        }
+      }
+      // 正常的多輪對話檢查（針對已完成但需要修正的情況）
+      else if (intent === 'record_course' && conversationContext && conversationContext.lastAction === 'record_course') {
+        const isSupplementInfo = this.detectSupplementInfo(userMessage, entities, conversationContext);
+        if (isSupplementInfo) {
+          console.log(`🔧 [DEBUG] 檢測到修正信息，正在合併上下文`);
           entities = this.mergeContextWithSupplement(conversationContext, entities);
           console.log(`🔧 [DEBUG] 合併後實體:`, entities);
         }
