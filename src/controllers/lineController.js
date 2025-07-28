@@ -66,31 +66,31 @@ class LineController {
       });
     }
 
-    // 2. 檢查必填欄位：日期
-    if (!entities.timeInfo || !entities.timeInfo.date) {
-      problems.push({
-        type: 'missing_required', 
-        field: 'date',
-        message: '上課日期'
-      });
-    }
-
-    // 3. 檢查模糊時間（核心問題）
+    // 2. 🎯 第一性原則：區分"沒有時間"和"模糊時間"
+    const hasValidTimeInEntities = entities.timeInfo && entities.timeInfo.display && entities.timeInfo.date;
+    
+    // 3. 檢查模糊時間（有時間詞但不具體）
     const vagueTimePatterns = ['下午', '上午', '晚上', '早上', '中午', '傍晚'];
     const hasVagueTime = vagueTimePatterns.some(pattern => 
       originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)`))
     );
     
-    // 🚨 修復：檢查合併後的實體是否有有效時間，而不是只檢查原始文本
-    const hasValidTimeInEntities = entities.timeInfo && entities.timeInfo.display && entities.timeInfo.date;
-    
-    if (hasVagueTime || (!hasValidTimeInEntities && !this.hasSpecificTime(originalText))) {
-      const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern)) || '時間';
+    // 4. 🎯 智能時間檢查：區分三種情況
+    if (hasVagueTime) {
+      // 情況1：有模糊時間詞（如"下午"）但不具體
+      const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern));
       problems.push({
         type: 'vague_time',
         field: 'time', 
         value: vagueTimeFound,
         message: '具體上課時間'
+      });
+    } else if (!hasValidTimeInEntities && !this.hasSpecificTime(originalText)) {
+      // 情況2：完全沒有時間信息（如"鋼琴課"）- 友好詢問
+      problems.push({
+        type: 'missing_time',
+        field: 'time', 
+        message: '上課時間'
       });
     }
 
@@ -288,6 +288,11 @@ class LineController {
         questionPart = `🕐 還需要確認具體的上課時間`;
         examples = `例如可以回覆：下午3點、晚上7點半、19:30`;
         break;
+      case 'missing_time':
+        // 🎯 友好詢問時間 - 針對純課程名輸入（如"鋼琴課"）
+        questionPart = `🕐 請問什麼時候上${validEntities.course_name || '課'}？`;
+        examples = `例如可以回覆：明天下午3點、星期二晚上7點、12/25 上午10點`;
+        break;
       case 'missing_required':
         questionPart = `❓ 還需要確認${problem.message}`;
         examples = problem.field === 'date' 
@@ -442,6 +447,27 @@ class LineController {
       }
 
       if (!analysis.success) {
+        // 🎯 處理純時間輸入拒絕情況
+        if (analysis.method === 'rejected_pure_time') {
+          console.log(`🔧 [DEBUG] 檢測到純時間輸入，發送拒絕消息: ${analysis.message}`);
+          
+          if (event.replyToken) {
+            const replyResult = await lineService.replyMessage(event.replyToken, analysis.message);
+            console.log('Pure time input rejection reply result:', replyResult);
+          }
+          
+          return {
+            success: true, // 成功處理了拒絕情況
+            intent: analysis.intent,
+            confidence: analysis.confidence,
+            result: {
+              success: false,
+              type: 'pure_time_input_rejected',
+              message: analysis.message
+            }
+          };
+        }
+        
         return {
           success: false,
           error: 'Semantic analysis failed',
