@@ -24,23 +24,28 @@ class SemanticService {
     // Slot Template Manager 實例 (延遲初始化)
     this.slotTemplateManager = null;
     this.slotTemplateEnabled = false;
-    
-    // 嘗試初始化 Slot Template System
-    this.initializeSlotTemplateSystem();
+    this.slotTemplateInitialized = false;
   }
 
   /**
-   * 初始化 Slot Template System
+   * 初始化 Slot Template System (延遲初始化)
    */
   initializeSlotTemplateSystem() {
+    // 避免重複初始化
+    if (this.slotTemplateInitialized) {
+      return;
+    }
+    
     if (SlotTemplateManager) {
       try {
         this.slotTemplateManager = new SlotTemplateManager();
         this.slotTemplateEnabled = true;
-        console.log('[SemanticService] Slot Template System 已啟用');
+        this.slotTemplateInitialized = true;
+        console.log('[SemanticService] Slot Template System 已啟用 (延遲初始化)');
       } catch (error) {
         console.warn('[SemanticService] Slot Template System 初始化失敗:', error.message);
         this.slotTemplateEnabled = false;
+        this.slotTemplateInitialized = true; // 標記為已嘗試，避免重複
       }
     }
   }
@@ -61,6 +66,9 @@ class SemanticService {
    */
   async analyzeMessageWithSlotTemplate(text, userId, context = {}, options = {}) {
     const { enableSlotTemplate = true, useEnhancedExtraction = true } = options;
+    
+    // 延遲初始化 Slot Template System
+    this.initializeSlotTemplateSystem();
     
     // Step 1: 如果啟用增強提取，使用新的 OpenAI 方法
     let semanticResult;
