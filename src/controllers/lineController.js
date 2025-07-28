@@ -115,131 +115,65 @@ class LineController {
   }
 
   /**
-   * 檢測是否為補充信息（用於多輪對話）
+   * 🎯 第一性原則：簡化補充信息檢測 - 統一狀態管理
+   * 只檢查是否處於 'record_course_pending' 狀態
    * @param {string} userMessage - 用戶當前輸入
    * @param {Object} entities - 當前提取的實體
    * @param {Object} conversationContext - 會話上下文
    * @returns {boolean} 是否為補充信息
    */
   static detectSupplementInfo(userMessage, entities, conversationContext) {
-    // 🚨 修復：檢查是否有等待補充的狀態
-    if (!conversationContext) {
-      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 無會話上下文`);
+    // 🎯 簡化條件：只檢查一個條件 - 是否處於等待補充狀態
+    const isPendingState = conversationContext && conversationContext.lastAction === 'record_course_pending';
+    
+    if (!isPendingState) {
+      console.log(`🔧 [DEBUG] 非補充信息 - 狀態: ${conversationContext?.lastAction || 'null'}`);
       return false;
     }
 
-    // 檢查條件1：是否處於等待補充狀態
-    const isAwaitingSupplement = conversationContext.lastAction === 'record_course_pending' || 
-                                 (conversationContext.executionResult && conversationContext.executionResult.status === 'awaiting_supplement');
+    // 🎯 統一邏輯：處於 pending 狀態時，任何輸入都是補充信息
+    // 除非是明顯的新課程請求（包含課程關鍵詞）
+    const hasNewCourseKeywords = /課$|課程|上課|訓練|教學|學習|新增|安排|預約/.test(userMessage);
     
-    if (!isAwaitingSupplement) {
-      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 非等待補充狀態`);
-      console.log(`🔧 [DEBUG] - lastAction: ${conversationContext.lastAction}`);
+    if (hasNewCourseKeywords) {
+      console.log(`🔧 [DEBUG] 檢測為新課程請求 - 有課程關鍵詞: ${userMessage}`);
       return false;
     }
 
-    // 🚨 新增：檢查是否為完整的日期+時間表達（不應視為補充）
-    const isCompleteDateTime = /^(明天|後天|今天)(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
-                              /^(明天|後天|今天)\d{1,2}點?$/.test(userMessage.trim()) ||
-                              /^(明天|後天|今天)\d{1,2}:\d{2}$/.test(userMessage.trim());
-
-    // 🚨 新增：檢查是否包含新的課程相關關鍵詞（不應視為補充）
-    const hasNewCourseKeywords = /課$|課程|上課|訓練|教學|學習/.test(userMessage);
-
-    // 如果是完整的日期時間表達或包含課程關鍵詞，不視為補充信息
-    if (isCompleteDateTime || hasNewCourseKeywords) {
-      console.log(`🔧 [DEBUG] 補充信息檢測 - 檢測為新課程請求，非補充信息`);
-      console.log(`🔧 [DEBUG] - 完整日期時間: ${isCompleteDateTime}, 有課程關鍵詞: ${hasNewCourseKeywords}`);
-      return false;
-    }
-
-    // 檢查條件2：根據等待補充的欄位類型判斷
-    const awaitingField = conversationContext.executionResult?.awaitingSupplementFor;
-    
-    if (awaitingField === 'course') {
-      // 等待課程名稱：檢查當前輸入是否可能是課程名
-      const isPossibleCourseName = entities.course_name || 
-                                  /^[一-龯a-zA-Z]+$/.test(userMessage.trim()) ||
-                                  /球|課|訓練|教學/.test(userMessage);
-      
-      console.log(`🔧 [DEBUG] 補充信息檢測 - 等待課程名稱: ${isPossibleCourseName}`);
-      return isPossibleCourseName;
-    } else if (awaitingField === 'time') {
-      // 等待時間：檢查當前輸入是否包含時間信息
-      const hasTimeInfo = entities.timeInfo && entities.timeInfo.display;
-      const isMainlyTimeExpression = /^(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
-                                    /^\d{1,2}點?$/.test(userMessage.trim()) ||
-                                    /^\d{1,2}:\d{2}$/.test(userMessage.trim());
-      
-      console.log(`🔧 [DEBUG] 補充信息檢測 - 等待時間: ${hasTimeInfo || isMainlyTimeExpression}`);
-      return hasTimeInfo || isMainlyTimeExpression;
-    }
-
-    // 通用檢測：當前輸入主要是補充信息
-    const hasSupplementaryInfo = entities.timeInfo || entities.location || entities.course_name;
-    console.log(`🔧 [DEBUG] 補充信息檢測 - 通用檢測: ${!!hasSupplementaryInfo}`);
-    
-    return !!hasSupplementaryInfo;
+    console.log(`🔧 [DEBUG] 確認為補充信息 - pending狀態下的補充輸入: ${userMessage}`);
+    return true;
   }
 
   /**
-   * 合併會話上下文與補充信息
+   * 🎯 第一性原則：簡化合併邏輯 - 統一處理單一和多個問題
    * @param {Object} conversationContext - 會話上下文
    * @param {Object} supplementEntities - 補充的實體信息
    * @returns {Object} 合併後的實體信息
    */
   static mergeContextWithSupplement(conversationContext, supplementEntities) {
     console.log(`🔧 [DEBUG] 開始合併補充信息`);
-    console.log(`🔧 [DEBUG] - 上下文:`, conversationContext);
     console.log(`🔧 [DEBUG] - 補充實體:`, supplementEntities);
 
-    // 🚨 修復：從等待補充狀態中恢復暫存的信息
+    // 🎯 簡化：從上下文恢復暫存的信息（統一格式）
     const savedEntities = {
       course_name: conversationContext.lastCourse,
       location: conversationContext.lastLocation,
       teacher: conversationContext.lastTeacher,
       student: conversationContext.lastStudent,
-      timeInfo: conversationContext.lastTimeInfo || null
+      timeInfo: conversationContext.lastTimeInfo
     };
 
-    // 🚨 關鍵修復：根據等待補充的欄位智能合併，避免覆蓋已有信息
-    const awaitingField = conversationContext.executionResult?.awaitingSupplementFor;
-    console.log(`🔧 [DEBUG] 等待補充欄位: ${awaitingField}`);
+    console.log(`🔧 [DEBUG] - 暫存實體:`, savedEntities);
 
+    // 🎯 統一合併策略：智能更新 - 有新值就用新值，沒有就保留舊值
     const mergedEntities = {
-      course_name: savedEntities.course_name,
-      location: savedEntities.location,
-      teacher: savedEntities.teacher,
-      student: savedEntities.student,
-      confirmation: supplementEntities.confirmation,
-      timeInfo: savedEntities.timeInfo, // 預設使用保存的時間信息
+      course_name: supplementEntities.course_name || savedEntities.course_name,
+      location: supplementEntities.location || savedEntities.location,
+      teacher: supplementEntities.teacher || savedEntities.teacher,
+      student: supplementEntities.student || savedEntities.student,
+      timeInfo: supplementEntities.timeInfo || savedEntities.timeInfo,
+      confirmation: supplementEntities.confirmation
     };
-
-    // 根據等待的欄位選擇性更新
-    if (awaitingField === 'course' && supplementEntities.course_name) {
-      mergedEntities.course_name = supplementEntities.course_name;
-      console.log(`🔧 [DEBUG] 更新課程名稱: ${supplementEntities.course_name}`);
-    } else if (awaitingField === 'time' && supplementEntities.timeInfo) {
-      mergedEntities.timeInfo = supplementEntities.timeInfo;
-      console.log(`🔧 [DEBUG] 更新時間信息:`, supplementEntities.timeInfo);
-    } else if (awaitingField === 'location' && supplementEntities.location) {
-      mergedEntities.location = supplementEntities.location;
-      console.log(`🔧 [DEBUG] 更新地點信息: ${supplementEntities.location}`);
-    } else {
-      // 通用補充邏輯：只更新有意義的新信息
-      if (supplementEntities.course_name && !savedEntities.course_name) {
-        mergedEntities.course_name = supplementEntities.course_name;
-      }
-      if (supplementEntities.location && !savedEntities.location) {
-        mergedEntities.location = supplementEntities.location;
-      }
-      if (supplementEntities.teacher && !savedEntities.teacher) {
-        mergedEntities.teacher = supplementEntities.teacher;
-      }
-      if (supplementEntities.student && !savedEntities.student) {
-        mergedEntities.student = supplementEntities.student;
-      }
-    }
 
     console.log(`🔧 [DEBUG] 合併完成:`, mergedEntities);
     return mergedEntities;
@@ -274,34 +208,34 @@ class LineController {
   static async handleFollowUpRequired(userId, completenessCheck, replyToken) {
     const { problems, problemCount, validEntities } = completenessCheck;
     
+    // 🎯 第一性原則：統一處理 - 不管幾個問題都用相同邏輯
     let replyMessage;
+    let awaitingSupplementFor;
     
     if (problemCount === 1) {
-      // 單一問題：暫存有效信息，追問缺失部分
       replyMessage = this.generateSingleProblemPrompt(validEntities, problems[0]);
-      
-      // 🚨 修復關鍵問題：實作真正的暫存機制
-      // 將暫存狀態保存到會話上下文，標記為等待補充
-      ConversationContext.updateContext(userId, 'record_course_pending', {
-        course_name: validEntities.course_name,
-        location: validEntities.location,
-        teacher: validEntities.teacher,
-        student: validEntities.student,
-        timeInfo: validEntities.timeInfo
-      }, {
-        pendingProblems: problems,
-        awaitingSupplementFor: problems[0].field,
-        status: 'awaiting_supplement'
-      });
-      
-      console.log(`🔧 [DEBUG] 單一問題處理 - 已保存暫存狀態到會話上下文 - UserId: ${userId}`);
-      console.log(`🔧 [DEBUG] 暫存信息:`, validEntities);
-      console.log(`🔧 [DEBUG] 等待補充欄位:`, problems[0].field);
-      
+      awaitingSupplementFor = problems[0].field;
     } else {
-      // 多個問題：要求重新輸入
       replyMessage = this.generateMultiProblemPrompt(problems);
+      awaitingSupplementFor = 'multiple';
     }
+    
+    // 🚨 統一狀態保存：不管單一還是多個問題，都使用相同的暫存機制
+    ConversationContext.updateContext(userId, 'record_course_pending', {
+      course_name: validEntities.course_name,
+      location: validEntities.location,
+      teacher: validEntities.teacher,
+      student: validEntities.student,
+      timeInfo: validEntities.timeInfo
+    }, {
+      pendingProblems: problems,
+      awaitingSupplementFor,
+      status: 'awaiting_supplement'
+    });
+    
+    console.log(`🔧 [DEBUG] 統一追問處理 - 已保存暫存狀態 - UserId: ${userId}`);
+    console.log(`🔧 [DEBUG] 問題數量: ${problemCount}, 等待補充: ${awaitingSupplementFor}`);
+    console.log(`🔧 [DEBUG] 暫存信息:`, validEntities);
 
     // 發送回覆
     if (replyToken) {
