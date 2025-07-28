@@ -48,6 +48,9 @@ class TimeService {
     // 設置時間
     if (timeInfo.hour !== null) {
       userLocalTime.setHours(timeInfo.hour, timeInfo.minute, 0, 0);
+    } else {
+      // 🚨 修復：如果沒有找到時間組件，拋出錯誤而不是返回當前時間
+      throw new Error('No time component found in the input');
     }
 
     return userLocalTime;
