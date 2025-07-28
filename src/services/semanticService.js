@@ -469,6 +469,36 @@ class SemanticService {
       if (smartMatch[5]) student = smartMatch[5];
       // 🚨 同時更新課程名稱，使用分離出的課程
       if (smartMatch[6]) courseName = smartMatch[6];
+      
+      // 🚨 重要：處理智能分離出的時間和日期信息
+      let extractedDateTime = '';
+      
+      // 處理日期
+      if (smartMatch[1]) {
+        extractedDateTime += smartMatch[1]; // "後天"
+      }
+      
+      // 處理時間
+      if (smartMatch[3] || smartMatch[4]) {
+        const vagueTime = smartMatch[3]; // 下午、上午等
+        const specificTime = smartMatch[4]; // 兩點、三點等
+        
+        // 合併模糊時間和具體時間
+        if (vagueTime && specificTime) {
+          extractedDateTime += vagueTime + specificTime; // "後天下午兩點"
+        } else if (specificTime) {
+          extractedDateTime += specificTime; // "兩點"
+        } else if (vagueTime) {
+          extractedDateTime += vagueTime; // "下午"
+        }
+      }
+      
+      console.log(`🔧 [DEBUG] 智能分離時間合併: "${extractedDateTime}"`);
+      
+      // 🚨 關鍵：用提取的日期時間替換原始文本進行時間處理
+      if (extractedDateTime) {
+        text = extractedDateTime; // 例如: "後天下午兩點"
+      }
     }
     
     // 如果智能分離未成功，使用傳統模式提取地點
