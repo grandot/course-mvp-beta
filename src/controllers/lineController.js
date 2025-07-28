@@ -129,8 +129,22 @@ class LineController {
         `存在 - 上次操作: ${conversationContext.lastAction}, 課程: ${conversationContext.lastCourse}` : 
         '不存在'); // [REMOVE_ON_PROD]
       
-      // 語義分析 - 傳遞會話上下文
-      const analysis = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
+      // 語義分析 - 使用 Slot Template System (如果啟用)
+      const useSlotTemplate = process.env.ENABLE_SLOT_TEMPLATE === 'true';
+      
+      let analysis;
+      if (useSlotTemplate && semanticService.analyzeMessageWithSlotTemplate) {
+        console.log(`🔧 [DEBUG] 使用 Slot Template System 分析訊息`);
+        analysis = await semanticService.analyzeMessageWithSlotTemplate(
+          userMessage, 
+          userId, 
+          conversationContext || {},
+          { enableSlotTemplate: true, useEnhancedExtraction: true }
+        );
+      } else {
+        console.log(`🔧 [DEBUG] 使用標準語義分析`);
+        analysis = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
+      }
 
       if (!analysis.success) {
         return {
