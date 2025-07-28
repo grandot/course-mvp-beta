@@ -112,6 +112,65 @@ class LineController {
   }
 
   /**
+   * 檢測是否為補充信息（用於多輪對話）
+   * @param {string} userMessage - 用戶當前輸入
+   * @param {Object} entities - 當前提取的實體
+   * @param {Object} conversationContext - 會話上下文
+   * @returns {boolean} 是否為補充信息
+   */
+  static detectSupplementInfo(userMessage, entities, conversationContext) {
+    // 檢查條件1：上一次操作需要追問且還未完成
+    if (!conversationContext.lastCourse) {
+      return false;
+    }
+
+    // 檢查條件2：當前輸入缺少課程名稱但有其他信息（時間、地點等）
+    const hasNoCourse = !entities.course_name || entities.course_name === null;
+    const hasTimeInfo = entities.timeInfo && entities.timeInfo.display;
+    const hasLocation = entities.location;
+    const hasSupplementaryInfo = hasTimeInfo || hasLocation;
+
+    // 檢查條件3：當前輸入主要是時間表達（補充時間信息）
+    const isMainlyTimeExpression = /^(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
+                                  /^\d{1,2}點?$/.test(userMessage.trim()) ||
+                                  /^\d{1,2}:\d{2}$/.test(userMessage.trim());
+
+    console.log(`🔧 [DEBUG] 補充信息檢測 - 缺課程名: ${hasNoCourse}, 有補充信息: ${hasSupplementaryInfo}, 主要是時間: ${isMainlyTimeExpression}`);
+
+    return hasNoCourse && (hasSupplementaryInfo || isMainlyTimeExpression);
+  }
+
+  /**
+   * 合併會話上下文與補充信息
+   * @param {Object} conversationContext - 會話上下文
+   * @param {Object} supplementEntities - 補充的實體信息
+   * @returns {Object} 合併後的實體信息
+   */
+  static mergeContextWithSupplement(conversationContext, supplementEntities) {
+    // 從上下文恢復課程信息
+    const mergedEntities = {
+      course_name: conversationContext.lastCourse || supplementEntities.course_name,
+      location: supplementEntities.location || conversationContext.lastLocation,
+      teacher: supplementEntities.teacher || conversationContext.lastTeacher,
+      student: supplementEntities.student,
+      confirmation: supplementEntities.confirmation,
+      timeInfo: supplementEntities.timeInfo, // 使用新提供的時間信息
+    };
+
+    // 如果上下文有時間但補充信息沒有，使用上下文的時間
+    if (!supplementEntities.timeInfo && conversationContext.lastTime) {
+      mergedEntities.timeInfo = {
+        display: conversationContext.lastTime,
+        date: conversationContext.lastDate,
+        raw: conversationContext.lastDate,
+        timestamp: new Date(conversationContext.lastDate).getTime()
+      };
+    }
+
+    return mergedEntities;
+  }
+
+  /**
    * 檢查是否包含具體時間
    * @param {string} text - 文本
    * @returns {boolean} 是否有具體時間
@@ -370,6 +429,16 @@ class LineController {
 
       console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
+
+      // 🚨 檢查多輪對話：是否為補充信息（針對之前未完成的課程記錄）
+      if (intent === 'record_course' && conversationContext && conversationContext.lastAction === 'record_course') {
+        const isSupplementInfo = this.detectSupplementInfo(userMessage, entities, conversationContext);
+        if (isSupplementInfo) {
+          console.log(`🔧 [DEBUG] 檢測到補充信息，正在合併上下文`);
+          entities = this.mergeContextWithSupplement(conversationContext, entities);
+          console.log(`🔧 [DEBUG] 合併後實體:`, entities);
+        }
+      }
 
       // 🚨 第一性原則：簡單的完整性檢查與追問機制
       if (intent === 'record_course') {
