@@ -121,6 +121,7 @@ class LineController {
   static detectSupplementInfo(userMessage, entities, conversationContext) {
     // 檢查條件1：上一次操作需要追問且還未完成
     if (!conversationContext.lastCourse) {
+      console.log(`🔧 [DEBUG] 補充信息檢測失敗 - 無上次課程上下文`);
       return false;
     }
 
@@ -128,15 +129,33 @@ class LineController {
     const hasNoCourse = !entities.course_name || entities.course_name === null;
     const hasTimeInfo = entities.timeInfo && entities.timeInfo.display;
     const hasLocation = entities.location;
-    const hasSupplementaryInfo = hasTimeInfo || hasLocation;
 
+    // 🚨 改進的檢測邏輯：更嚴格的條件判斷
     // 檢查條件3：當前輸入主要是時間表達（補充時間信息）
     const isMainlyTimeExpression = /^(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
                                   /^\d{1,2}點?$/.test(userMessage.trim()) ||
                                   /^\d{1,2}:\d{2}$/.test(userMessage.trim());
 
+    // 🚨 新增：檢查是否為完整的日期+時間表達（不應視為補充）
+    const isCompleteDateTime = /^(明天|後天|今天)(早上|上午|下午|晚上|中午)\d{1,2}點?$/.test(userMessage.trim()) ||
+                              /^(明天|後天|今天)\d{1,2}點?$/.test(userMessage.trim()) ||
+                              /^(明天|後天|今天)\d{1,2}:\d{2}$/.test(userMessage.trim());
+
+    // 🚨 新增：檢查是否包含新的課程相關關鍵詞（不應視為補充）
+    const hasNewCourseKeywords = /課$|課程|上課|訓練|教學|學習/.test(userMessage);
+
+    // 如果是完整的日期時間表達或包含課程關鍵詞，不視為補充信息
+    if (isCompleteDateTime || hasNewCourseKeywords) {
+      console.log(`🔧 [DEBUG] 補充信息檢測 - 檢測為新課程請求，非補充信息`);
+      console.log(`🔧 [DEBUG] - 完整日期時間: ${isCompleteDateTime}, 有課程關鍵詞: ${hasNewCourseKeywords}`);
+      return false;
+    }
+
+    const hasSupplementaryInfo = hasTimeInfo || hasLocation;
+
     console.log(`🔧 [DEBUG] 補充信息檢測 - 缺課程名: ${hasNoCourse}, 有補充信息: ${hasSupplementaryInfo}, 主要是時間: ${isMainlyTimeExpression}`);
 
+    // 更嚴格的條件：必須缺少課程名稱 AND (有補充信息 OR 純時間表達)
     return hasNoCourse && (hasSupplementaryInfo || isMainlyTimeExpression);
   }
 
@@ -513,6 +532,11 @@ class LineController {
                     successMessage += `\n\n${details.join('\n')}`;
                   }
                 }
+                
+                // 🚨 修復關鍵問題：課程成功創建後清空會話上下文
+                // 防止後續輸入被誤判為補充信息
+                ConversationContext.clearContext(userId);
+                console.log(`🔧 [DEBUG] 課程創建成功，已清空用戶會話上下文 - UserId: ${userId}`);
                 
                 replyMessage = successMessage + debugInfo;
               } else {
