@@ -139,7 +139,7 @@ class LineController {
         '不存在'); // [REMOVE_ON_PROD]
       
       // 語義分析 - 使用 Slot Template System (如果啟用)
-      const useSlotTemplate = process.env.ENABLE_SLOT_TEMPLATE === 'true';
+      const useSlotTemplate = false; // 🚨 暫時禁用複雜 Slot Template，使用第一性原則解決方案
       
       // 詳細調試信息
       console.log(`🔧 [DEBUG] ENABLE_SLOT_TEMPLATE 環境變數:`, process.env.ENABLE_SLOT_TEMPLATE);

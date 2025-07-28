@@ -291,6 +291,7 @@ class SemanticService {
             course_name: entities.course_name,
             location: entities.location,
             teacher: entities.teacher,
+            student: entities.student, // 🚨 新增學生信息
             confirmation: entities.confirmation,
             timeInfo: processedTimeInfo,
           },
@@ -338,6 +339,7 @@ class SemanticService {
             course_name: analysis.entities.course_name,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
+            student: analysis.entities.student || entities.student, // 🚨 優先使用 OpenAI 提取的學生信息
             confirmation: entities.confirmation,
             // ✅ 使用統一處理的時間信息
             timeInfo: processedTimeInfo,
@@ -454,29 +456,44 @@ class SemanticService {
       }
     }
 
-    // 提取地點
+    // 🚨 智能分離：從混雜內容中提取地點、學生
     let location = null;
-    const locationPatterns = [
-      /在(.+?)教室/,
-      /在(.+?)上課/,
-      /地點[：:](.+)/,
-      /(.+?)教室/,
-      /(.+?)大樓/,
-    ];
+    let student = null;
+    
+    // 檢測混雜模式：「地點+時間+學生+課程」
+    const smartExtraction = /^(前台|後台|一樓|二樓|三樓|四樓|五樓)?(下午|上午|晚上|早上|[0-9]+點)?(小?[一-龯]{1,3})?([\u4e00-\u9fff]{2,6}課)$/;
+    const smartMatch = text.match(smartExtraction);
+    if (smartMatch) {
+      console.log(`🔧 [DEBUG] 智能分離成功: 地點="${smartMatch[1]}", 時間="${smartMatch[2]}", 學生="${smartMatch[3]}", 課程="${smartMatch[4]}"`);
+      if (smartMatch[1]) location = smartMatch[1];
+      if (smartMatch[3]) student = smartMatch[3];
+    }
+    
+    // 如果智能分離未成功，使用傳統模式提取地點
+    if (!location) {
+      const locationPatterns = [
+        /在(.+?)教室/,
+        /在(.+?)上課/,
+        /地點[：:](.+)/,
+        /(.+?)教室/,
+        /(.+?)大樓/,
+        /(前台|後台|一樓|二樓|三樓|四樓|五樓)/,
+      ];
 
-    locationPatterns.forEach((pattern) => {
-      if (!location) {
-        const match = text.match(pattern);
-        if (match) {
-          location = match[1] ? match[1].trim() : match[0].trim();
-          // 清理不必要的詞語
-          location = location.replace(/上課|在|教室$/, '').trim();
-          if (location) {
-            location += '教室'; // 統一格式
+      locationPatterns.forEach((pattern) => {
+        if (!location) {
+          const match = text.match(pattern);
+          if (match) {
+            location = match[1] ? match[1].trim() : match[0].trim();
+            // 清理不必要的詞語
+            location = location.replace(/上課|在|教室$/, '').trim();
+            if (location && !location.includes('樓')) {
+              location += '教室'; // 統一格式
+            }
           }
         }
-      }
-    });
+      });
+    }
 
     // 提取老師 (避免和地點信息混淆)
     let teacher = null;
@@ -512,6 +529,7 @@ class SemanticService {
       course_name: courseName, // 保持向後兼容
       location,
       teacher,
+      student, // 🚨 新增學生信息
       confirmation,
       timeInfo, // 新增時間信息
     };
@@ -789,27 +807,42 @@ class SemanticService {
   static extractCourseNameByRegex(text) {
     if (!text || typeof text !== 'string') return null;
 
+    // 🚨 智能分離：檢測混雜內容並分離課程名稱
+    const mixedPattern = /.*([明後今昨]天).*([下午晚早中]午|[0-9]+點).*([\u4e00-\u9fff]{1,3})(課|班|學習)/;
+    const mixedMatch = text.match(mixedPattern);
+    if (mixedMatch) {
+      console.log(`🔧 [DEBUG] 檢測到混雜內容，智能分離: "${text}"`);
+      // 嘗試提取真正的課程名稱
+      const potentialCourse = text.match(/([\u4e00-\u9fff]{2,6})(課|班)/);
+      if (potentialCourse) {
+        return potentialCourse[0];
+      }
+    }
+
     // 常見課程名稱模式
     const coursePatterns = [
+      // 才藝類 + 課
+      /(鋼琴|小提琴|大提琴|吉他|爵士鼓|薩克斯風|長笛|二胡|古箏|琵琶|笛子|唱歌|聲樂|合唱|舞蹈|芭蕾|街舞|國標舞|民族舞|現代舞|繪畫|素描|水彩|油畫|國畫|書法|陶藝|雕塑|直排輪|游泳|籃球|足球|排球|網球|桌球|羽毛球|棒球|跆拳道|空手道|柔道|劍道|瑜珈|有氧|健身|田徑|體操|攀岩|滑板)課?/g,
+      // 學科名稱
+      /(數學|國文|英文|物理|化學|生物|歷史|地理|公民|音樂|美術|體育|電腦|程式|作文|閱讀|口語|聽力|發音|文法|單字|會話)課?/g,
+      // 語言課程
+      /(中文|英語|日文|韓文|法文|德文|西班牙文|義大利文|俄文|阿拉伯文)課?/g,
       // 直接課程名 + 課/班等
       /([^\s，。！？]+(?:課|班|課程|課堂|學習|訓練))/g,
-      // 學科名稱
-      /(數學|國文|英文|物理|化學|生物|歷史|地理|公民|音樂|美術|體育|電腦|程式|鋼琴|小提琴|吉他|舞蹈|繪畫|書法|珠算|心算|作文|閱讀|口語|聽力|發音|文法|單字|會話)/g,
-      // 語言課程
-      /(中文|英語|日文|韓文|法文|德文|西班牙文|義大利文|俄文|阿拉伯文)/g,
-      // 才藝類
-      /(鋼琴|小提琴|大提琴|吉他|爵士鼓|薩克斯風|長笛|二胡|古箏|琵琶|笛子|唱歌|聲樂|合唱|舞蹈|芭蕾|街舞|國標舞|民族舞|現代舞|繪畫|素描|水彩|油畫|國畫|書法|陶藝|雕塑)/g,
-      // 運動類
-      /(游泳|籃球|足球|排球|網球|桌球|羽毛球|棒球|跆拳道|空手道|柔道|劍道|瑜珈|有氧|健身|田徑|體操|攀岩|滑板|直排輪)/g,
     ];
 
     for (const pattern of coursePatterns) {
       const matches = text.match(pattern);
       if (matches && matches.length > 0) {
-        // 返回第一個匹配的課程名稱
-        const courseName = matches[0].trim();
-        if (courseName.length >= 2 && courseName.length <= 10) {
-          return courseName;
+        // 智能過濾：排除包含時間/地點/人名的匹配
+        for (const match of matches) {
+          const courseName = match.trim();
+          // 排除明顯的混雜內容
+          if (!/(前台|後台|下午|上午|晚上|早上|明天|今天|昨天|[0-9]+點|小[一-龯]{1,2})/g.test(courseName)) {
+            if (courseName.length >= 2 && courseName.length <= 10) {
+              return courseName.endsWith('課') ? courseName : courseName + '課';
+            }
+          }
         }
       }
     }
