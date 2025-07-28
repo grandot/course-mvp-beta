@@ -6,11 +6,14 @@
  * Phase 6: 增加會話上下文支持
  */
 const crypto = require('crypto');
-const semanticService = require('../services/semanticService');
+const SemanticService = require('../services/semanticService');
 const TaskService = require('../services/taskService');
 const TimeService = require('../services/timeService');
 const lineService = require('../services/lineService');
 const ConversationContext = require('../utils/conversationContext');
+
+// 創建 SemanticService 實例
+const semanticService = new SemanticService();
 
 class LineController {
   // 靜態初始化TaskService實例
@@ -143,7 +146,7 @@ class LineController {
         );
       } else {
         console.log(`🔧 [DEBUG] 使用標準語義分析`);
-        analysis = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
+        analysis = await SemanticService.analyzeMessage(userMessage, userId, conversationContext || {});
       }
 
       if (!analysis.success) {
