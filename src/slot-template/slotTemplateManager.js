@@ -880,7 +880,7 @@ class SlotTemplateManager {
       const slotResult = await this.processSemanticResult(userId, semanticResult);
       
       // Step 3: 問題檢測
-      const template = await this.templateLoader.getTemplate(semanticResult.intent);
+      const template = await this.templateLoader.getTemplateByIntent(semanticResult.intent);
       const problems = this.problemDetector.detectProblems(slotResult.slot_state, template);
       
       // Step 4: 根據問題數量決定處理策略
@@ -1002,7 +1002,7 @@ class SlotTemplateManager {
    */
   async createTempStateAndPrompt(userId, slotResult, problems) {
     try {
-      const template = await this.templateLoader.getTemplate(slotResult.intent || 'course_management');
+      const template = await this.templateLoader.getTemplateByIntent(slotResult.intent || 'record_course');
       const allProblems = this.problemDetector.getAllProblems(problems);
       
       // 創建暫存狀態

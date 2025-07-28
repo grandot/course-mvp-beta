@@ -160,10 +160,11 @@ class FirebaseService {
   static async updateDocument(collection, docId, data) {
     try {
       const db = this.getDb();
-      await db.collection(collection).doc(docId).update({
+      // 使用 set 與 merge 選項，如果文檔不存在會自動創建
+      await db.collection(collection).doc(docId).set({
         ...data,
         updated_at: admin.firestore.FieldValue.serverTimestamp()
-      });
+      }, { merge: true });
 
       return {
         success: true,
