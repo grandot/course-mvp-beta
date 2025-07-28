@@ -233,7 +233,7 @@ class SemanticService {
 
     try {
       // Step 0: 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
-      const pureTimeInputCheck = this.detectPureTimeInput(text);
+      const pureTimeInputCheck = SemanticService.detectPureTimeInput(text);
       if (pureTimeInputCheck.isPureTimeInput) {
         this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到純時間輸入，拒絕處理: ${text}`);
         return {
@@ -905,30 +905,42 @@ class SemanticService {
   static detectPureTimeInput(text) {
     const trimmedText = text.trim();
     
-    // 純時間表達模式（無課程相關內容）
-    const pureTimePatterns = [
-      // 日期+時間組合
-      /^(今天|明天|後天|昨天|前天|下週|上週|週[一二三四五六日]|星期[一二三四五六日]).*(早上|上午|中午|下午|晚上|夜晚).*[點時]?\d*$/,
-      /^(今天|明天|後天|昨天|前天).*(早上|上午|中午|下午|晚上|夜晚)$/,
-      /^(早上|上午|中午|下午|晚上|夜晚).*[點時]\d*$/,
-      // 純數字時間
-      /^\d{1,2}[點時]\d*$/,
-      /^\d{1,2}:\d{2}$/,
-      // 中文數字時間
-      /^(早上|上午|中午|下午|晚上|夜晚)?(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时](\d{1,2}|半)?$/
-    ];
+    // 🎯 第一性原則：極其保守的純時間檢測 - 只攔截明顯的純時間
+    // 避免誤傷正常的課程創建請求
     
-    // 排除明確包含課程相關關鍵詞的輸入
-    const courseKeywords = ['課', '教', '學', '訓練', '培訓', '輔導', '班', '指導', '安排', '預約', '報名', '登記'];
-    const hasCourseKeywords = courseKeywords.some(keyword => trimmedText.includes(keyword));
-    
-    // 如果包含課程關鍵詞，不視為純時間輸入
-    if (hasCourseKeywords) {
+    // 1. 先快速檢查：如果輸入很長，很可能包含課程信息
+    if (trimmedText.length > 15) {
       return { isPureTimeInput: false };
     }
     
-    // 檢查是否匹配純時間模式
-    const isPureTime = pureTimePatterns.some(pattern => pattern.test(trimmedText));
+    // 2. 極其精確的純時間模式 - 只匹配明顯的純時間
+    const strictPureTimePatterns = [
+      // 純時段
+      /^(早上|上午|中午|下午|晚上|夜晚)$/,
+      
+      // 純數字時間  
+      /^\d{1,2}[點時]$/,
+      /^\d{1,2}[點時]半$/,
+      /^\d{1,2}:\d{2}$/,
+      
+      // 純中文數字時間
+      /^(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时]$/,
+      /^(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时]半$/,
+      
+      // 日期+時段（無具體時間）
+      /^(今天|明天|後天|昨天|前天)(早上|上午|中午|下午|晚上|夜晚)$/,
+      
+      // 日期+時段+數字時間（但沒有課程名）
+      /^(今天|明天|後天|昨天|前天)(早上|上午|中午|下午|晚上|夜晚)[0-9]+點$/,
+      /^(今天|明天|後天|昨天|前天)(早上|上午|中午|下午|晚上|夜晚)(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时]$/,
+      
+      // 時段+數字時間
+      /^(早上|上午|中午|下午|晚上|夜晚)[0-9]+點$/,
+      /^(早上|上午|中午|下午|晚上|夜晚)(十一|十二|一|二|兩|三|四|五|六|七|八|九|十)[點时]$/
+    ];
+    
+    // 3. 檢查是否匹配嚴格的純時間模式
+    const isPureTime = strictPureTimePatterns.some(pattern => pattern.test(trimmedText));
     
     if (isPureTime) {
       const rejectionMessage = `我需要更清楚的課程資訊才能幫您安排。僅提供時間「${trimmedText}」無法確定您的具體需求。\n\n請完整輸入課程資訊，例如：「明天下午3點數學課」、「後天早上10點鋼琴課」`;
