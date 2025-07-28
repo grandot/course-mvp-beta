@@ -2,6 +2,93 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Bugfix 9.3.0 - 純時間輸入拒絕機制] - 2025-07-28
+
+### 🎯 修復多輪對話純時間輸入誤判問題
+
+#### 問題背景
+用戶在多輪對話中輸入純時間（如"後天下午兩點"、"十點半"）時，系統會錯誤地將其識別為 `set_reminder` 或其他意圖，而不是拒絕處理這種歧義性極高的輸入。
+
+**具體問題場景**：
+```
+用戶: 排球
+系統: 請提供時間信息
+用戶: 明天早上十點  ← 應該被拒絕，但被誤判為 set_reminder
+```
+
+#### 🔧 技術修復
+
+**核心修復**：
+- ✅ 修復 `detectPureTimeInput` 方法調用問題 - 改為靜態方法
+- ✅ 在語義分析第一步實現純時間輸入攔截機制
+- ✅ 提供友好的拒絕訊息，引導用戶提供完整課程資訊
+
+**程式碼變更**：
+```javascript
+// semanticService.js:905
+- detectPureTimeInput(text) {
++ static detectPureTimeInput(text) {
+
+// analyzeMessage 方法第一步檢查
+// Step 0: 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
+const pureTimeInputCheck = this.detectPureTimeInput(text);
+if (pureTimeInputCheck.isPureTimeInput) {
+  return {
+    success: false,
+    method: 'rejected_pure_time',
+    intent: 'ambiguous_input',
+    confidence: 0,
+    message: pureTimeInputCheck.rejectionMessage
+  };
+}
+```
+
+#### 📝 拒絕處理效果
+
+**被拒絕的純時間輸入**：
+- "後天下午兩點"
+- "明天早上十點" 
+- "下午3點"
+- "19:30"
+- "十點半"
+
+**正常處理的完整輸入**：
+- "後天下午兩點數學課" ✅
+- "明天早上十點鋼琴訓練" ✅
+- "安排明天早上英文課" ✅
+
+**拒絕訊息範例**：
+```
+我需要更清楚的課程資訊才能幫您安排。僅提供時間「十點半」無法確定您的具體需求。
+
+請完整輸入課程資訊，例如：「明天下午3點數學課」、「後天早上10點鋼琴課」
+```
+
+#### ✅ 測試覆蓋
+
+**測試結果**: 11/11 通過
+- ✅ 純時間輸入正確拒絕 (6 個測試案例)
+- ✅ 完整課程資訊正常處理 (5 個測試案例)
+- ✅ 多輪對話狀態管理不受影響
+
+**測試腳本**：
+- `scripts/test-pure-time-detection.js` - 直接檢測邏輯測試
+- `scripts/test-pure-time-rejection.js` - 完整語義分析流程測試
+
+#### 🚨 架構影響
+
+**不破壞現有功能**：
+- ✅ 多輪對話機制完全保留
+- ✅ 完整課程輸入正常處理流程不變
+- ✅ 其他意圖識別不受影響
+
+**防止未來回歸**：
+- ✅ 在語義分析最早期攔截，避免後續誤判
+- ✅ 清晰的錯誤類型標識 (`rejected_pure_time`)
+- ✅ 完整的測試覆蓋確保穩定性
+
+---
+
 ## [Performance 9.2.0 - 內部服務層優化完成] - 2025-07-26
 
 ### 🚀 EntityService & TaskService 內部優化
