@@ -49,6 +49,201 @@ class LineController {
   }
 
   /**
+   * 🚨 第一性原則：檢查課程信息完整性
+   * @param {string} originalText - 用戶原始輸入
+   * @param {Object} entities - 提取的實體
+   * @returns {Object} 完整性檢查結果
+   */
+  static checkCourseCompleteness(originalText, entities) {
+    const problems = [];
+    
+    // 1. 檢查必填欄位：課程名
+    if (!entities.course_name || entities.course_name.trim() === '') {
+      problems.push({
+        type: 'missing_required',
+        field: 'course',
+        message: '課程名稱'
+      });
+    }
+
+    // 2. 檢查必填欄位：日期
+    if (!entities.timeInfo || !entities.timeInfo.date) {
+      problems.push({
+        type: 'missing_required', 
+        field: 'date',
+        message: '上課日期'
+      });
+    }
+
+    // 3. 檢查模糊時間（核心問題）
+    const vagueTimePatterns = ['下午', '上午', '晚上', '早上', '中午', '傍晚'];
+    const hasVagueTime = vagueTimePatterns.some(pattern => 
+      originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}[0-9]+點`))
+    );
+    
+    if (hasVagueTime || !this.hasSpecificTime(originalText)) {
+      const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern)) || '時間';
+      problems.push({
+        type: 'vague_time',
+        field: 'time', 
+        value: vagueTimeFound,
+        message: '具體上課時間'
+      });
+    }
+
+    // 4. 檢查無效日期（如「後台」「前台」被誤認為日期）
+    const invalidDatePatterns = ['後台', '前台', '那邊', '這裡', '不知道'];
+    if (entities.timeInfo && entities.timeInfo.date && 
+        invalidDatePatterns.some(pattern => originalText.includes(pattern))) {
+      problems.push({
+        type: 'invalid_date',
+        field: 'date',
+        value: invalidDatePatterns.find(pattern => originalText.includes(pattern)),
+        message: '有效的上課日期'
+      });
+    }
+
+    return {
+      needsFollowUp: problems.length > 0,
+      problems,
+      problemCount: problems.length,
+      validEntities: entities
+    };
+  }
+
+  /**
+   * 檢查是否包含具體時間
+   * @param {string} text - 文本
+   * @returns {boolean} 是否有具體時間
+   */
+  static hasSpecificTime(text) {
+    // 檢查具體時間格式：下午3點、晚上7點半、19:30等
+    const specificTimePatterns = [
+      /[下上晚早中][午]?[0-9]+點/,  // 下午3點
+      /[0-9]+點半?/,                // 3點、3點半
+      /[0-9]{1,2}:[0-9]{2}/,        // 15:30
+      /[0-9]{1,2}點[0-9]+分?/       // 3點30分
+    ];
+    
+    return specificTimePatterns.some(pattern => pattern.test(text));
+  }
+
+  /**
+   * 🚨 處理需要追問的情況
+   * @param {string} userId - 用戶ID
+   * @param {Object} completenessCheck - 完整性檢查結果
+   * @param {string} replyToken - LINE回覆Token
+   * @returns {Object} 處理結果
+   */
+  static async handleFollowUpRequired(userId, completenessCheck, replyToken) {
+    const { problems, problemCount, validEntities } = completenessCheck;
+    
+    let replyMessage;
+    
+    if (problemCount === 1) {
+      // 單一問題：暫存有效信息，追問缺失部分
+      replyMessage = this.generateSingleProblemPrompt(validEntities, problems[0]);
+      
+      // TODO: 實作暫存機制（現階段先用簡單的回應）
+      console.log(`🔧 [DEBUG] 單一問題處理 - 暫存信息:`, validEntities);
+      
+    } else {
+      // 多個問題：要求重新輸入
+      replyMessage = this.generateMultiProblemPrompt(problems);
+    }
+
+    // 發送回覆
+    if (replyToken) {
+      const replyResult = await lineService.replyMessage(replyToken, replyMessage);
+      console.log('Follow-up reply result:', replyResult);
+    }
+
+    return {
+      success: true,
+      type: problemCount === 1 ? 'single_problem_followup' : 'multi_problem_followup',
+      problems,
+      message: replyMessage,
+      needsFollowUp: true
+    };
+  }
+
+  /**
+   * 生成單一問題追問訊息
+   * @param {Object} validEntities - 有效的實體信息
+   * @param {Object} problem - 問題描述
+   * @returns {string} 追問訊息
+   */
+  static generateSingleProblemPrompt(validEntities, problem) {
+    const confirmedInfo = [];
+    
+    // 確認已收集的信息
+    if (validEntities.course_name) {
+      confirmedInfo.push(`📚 課程：${validEntities.course_name}`);
+    }
+    if (validEntities.student) {
+      confirmedInfo.push(`👤 學生：${validEntities.student}`);
+    }
+    if (validEntities.location) {
+      confirmedInfo.push(`📍 地點：${validEntities.location}`);
+    }
+    if (validEntities.timeInfo && validEntities.timeInfo.date && problem.type !== 'invalid_date') {
+      confirmedInfo.push(`📅 日期：${validEntities.timeInfo.date}`);
+    }
+
+    const confirmationPart = confirmedInfo.length > 0 
+      ? `✅ 已記錄：\n${confirmedInfo.join('\n')}\n\n` 
+      : '';
+
+    // 根據問題類型生成具體詢問
+    let questionPart;
+    let examples;
+
+    switch (problem.type) {
+      case 'vague_time':
+        questionPart = `🕐 還需要確認具體的上課時間`;
+        examples = `例如可以回覆：下午3點、晚上7點半、19:30`;
+        break;
+      case 'missing_required':
+        questionPart = `❓ 還需要確認${problem.message}`;
+        examples = problem.field === 'date' 
+          ? `例如可以回覆：明天、星期三、12/25`
+          : `例如可以回覆：下午3點、晚上7點半`;
+        break;
+      case 'invalid_date':
+        questionPart = `📅 「${problem.value}」不是有效的日期，請提供正確的上課日期`;
+        examples = `例如可以回覆：明天、星期三、12/25`;
+        break;
+      default:
+        questionPart = `❓ 還需要確認${problem.message}`;
+        examples = `請提供更具體的信息`;
+    }
+
+    return `${confirmationPart}${questionPart}\n\n${examples}`;
+  }
+
+  /**
+   * 生成多問題重新輸入訊息
+   * @param {Array} problems - 問題列表
+   * @returns {string} 重新輸入訊息
+   */
+  static generateMultiProblemPrompt(problems) {
+    const problemDescriptions = problems.map(problem => {
+      switch (problem.type) {
+        case 'invalid_date':
+          return `• 日期資訊不清楚（「${problem.value}」無法識別為有效日期）`;
+        case 'vague_time':
+          return `• 時間需要更具體（「${problem.value}」請提供確切時間）`;
+        case 'missing_required':
+          return `• 缺少${problem.message}資訊`;
+        default:
+          return `• ${problem.message}需要補充`;
+      }
+    }).join('\n');
+
+    return `我需要一些更清楚的資訊才能幫您安排課程：\n\n${problemDescriptions}\n\n請重新完整輸入課程資訊，例如：「明天下午3點小美鋼琴課」`;
+  }
+
+  /**
    * 驗證 LINE 簽名
    * @param {string} signature - X-Line-Signature header 值
    * @param {string} body - 請求 body 原始字符串
@@ -173,6 +368,15 @@ class LineController {
 
       console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
+
+      // 🚨 第一性原則：簡單的完整性檢查與追問機制
+      if (intent === 'record_course') {
+        const completenessCheck = this.checkCourseCompleteness(userMessage, entities);
+        if (completenessCheck.needsFollowUp) {
+          console.log(`🔧 [DEBUG] 需要追問 - 問題數量: ${completenessCheck.problems.length}`);
+          return await this.handleFollowUpRequired(userId, completenessCheck, event.replyToken);
+        }
+      }
 
       // ✅ 使用 TaskService 統一處理所有業務邏輯
       console.log(`🔧 [DEBUG] 開始執行任務 - Intent: ${intent}, UserId: ${userId}`);
