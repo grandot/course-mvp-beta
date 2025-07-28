@@ -15,6 +15,10 @@ const SlotMerger = require('./slotMerger');
 const SlotValidator = require('./slotValidator');
 const TaskTrigger = require('./taskTrigger');
 const { getTemplateLoader } = require('./templateLoader');
+// 🚨 Multi-Turn Dialog Enhancement - 新增組件
+const SlotProblemDetector = require('./slotProblemDetector');
+const TempSlotStateManager = require('./tempSlotStateManager');
+const HumanPromptGenerator = require('./humanPromptGenerator');
 
 class SlotTemplateManager {
   constructor() {
@@ -23,6 +27,11 @@ class SlotTemplateManager {
     this.slotValidator = new SlotValidator();
     this.taskTrigger = new TaskTrigger();
     this.templateLoader = getTemplateLoader();
+    
+    // 🚨 Multi-Turn Dialog Enhancement - 新增組件
+    this.problemDetector = new SlotProblemDetector();
+    this.tempStateManager = new TempSlotStateManager();
+    this.promptGenerator = new HumanPromptGenerator();
     
     // 效能監控統計
     this.stats = {
@@ -845,6 +854,200 @@ class SlotTemplateManager {
   setRetryConfig(config) {
     this.retryConfig = { ...this.retryConfig, ...config };
     console.log('[SlotTemplateManager] 重試配置已更新:', this.retryConfig);
+  }
+
+  // 🚨 Multi-Turn Dialog Enhancement - 新增方法
+
+  /**
+   * 🚨 帶問題檢測的語意處理 (任務 4.1.1)
+   * @param {string} userId - 用戶ID
+   * @param {Object} semanticResult - 語意分析結果
+   * @returns {Promise<Object>} 處理結果
+   */
+  async processWithProblemDetection(userId, semanticResult) {
+    console.log(`[SlotTemplateManager] 開始帶問題檢測的語意處理 - 用戶: ${userId}`);
+    
+    try {
+      // Step 1: 檢查是否為補充信息
+      const tempState = await this.tempStateManager.detectSupplementIntent(userId, semanticResult.text);
+      
+      if (tempState) {
+        console.log(`[SlotTemplateManager] 檢測到補充信息 - 用戶: ${userId}, 暫存ID: ${tempState.tempId}`);
+        return await this.handleSupplementInfo(userId, tempState, semanticResult);
+      }
+      
+      // Step 2: 正常 slot 處理
+      const slotResult = await this.processSemanticResult(userId, semanticResult);
+      
+      // Step 3: 問題檢測
+      const template = await this.templateLoader.getTemplate(semanticResult.intent);
+      const problems = this.problemDetector.detectProblems(slotResult.slot_state, template);
+      
+      // Step 4: 根據問題數量決定處理策略
+      return await this.handleProblemsStrategy(userId, slotResult, problems);
+      
+    } catch (error) {
+      console.error(`[SlotTemplateManager] 問題檢測處理失敗 - 用戶: ${userId}`, error);
+      // 降級到原始處理邏輯
+      return await this.processSemanticResult(userId, semanticResult);
+    }
+  }
+
+  /**
+   * 🚨 問題處理策略 (任務 4.1.2)
+   * @param {string} userId - 用戶ID
+   * @param {Object} slotResult - Slot 處理結果
+   * @param {Object} problems - 檢測到的問題
+   * @returns {Promise<Object>} 處理結果
+   */
+  async handleProblemsStrategy(userId, slotResult, problems) {
+    const problemCount = this.problemDetector.countProblems(problems);
+    console.log(`[SlotTemplateManager] 檢測到 ${problemCount} 個問題 - 用戶: ${userId}`);
+    
+    // 🚨 檢查是否有混雜提取問題，優先處理 (任務 4.1.3)
+    const mixedProblem = problems.mixedExtraction && problems.mixedExtraction.length > 0 ? problems.mixedExtraction[0] : null;
+    if (mixedProblem) {
+      console.log(`[SlotTemplateManager] 檢測到混雜提取問題，開始智能分離 - 用戶: ${userId}`);
+      const separatedSlots = this.problemDetector.separateMixedSlots(slotResult.slot_state);
+      
+      // 重新處理分離後的 slots
+      const newSemanticResult = {
+        ...slotResult.semantic_result,
+        entities: separatedSlots
+      };
+      
+      // 遞迴處理分離後的結果
+      return await this.processWithProblemDetection(userId, newSemanticResult);
+    }
+    
+    if (problemCount === 0) {
+      // 完整信息，直接執行任務
+      console.log(`[SlotTemplateManager] 信息完整，執行任務 - 用戶: ${userId}`);
+      return {
+        ...slotResult,
+        type: 'task_completed',
+        requiresExecution: true
+      };
+    } else if (problemCount === 1) {
+      // 單一問題，創建暫存狀態
+      console.log(`[SlotTemplateManager] 單一問題，創建暫存狀態 - 用戶: ${userId}`);
+      return await this.createTempStateAndPrompt(userId, slotResult, problems);
+    } else {
+      // 多問題，要求重新輸入
+      console.log(`[SlotTemplateManager] 多問題，要求重新輸入 - 用戶: ${userId}`);
+      return await this.generateMultiProblemPrompt(problems, slotResult.slot_state);
+    }
+  }
+
+  /**
+   * 🚨 處理補充信息 (任務 4.2.1)
+   * @param {string} userId - 用戶ID
+   * @param {Object} tempState - 暫存狀態
+   * @param {Object} semanticResult - 語意分析結果
+   * @returns {Promise<Object>} 處理結果
+   */
+  async handleSupplementInfo(userId, tempState, semanticResult) {
+    console.log(`[SlotTemplateManager] 處理補充信息 - 用戶: ${userId}, 暫存ID: ${tempState.tempId}`);
+    
+    try {
+      // 合併新信息到暫存狀態 (任務 4.2.2)
+      const mergedState = await this.tempStateManager.mergeSupplementInfo(
+        tempState.tempId, 
+        semanticResult.entities || {}
+      );
+      
+      // 重新檢查問題
+      const remainingProblems = this.problemDetector.detectProblems(
+        mergedState.validSlots, 
+        tempState.template
+      );
+      
+      if (this.problemDetector.countProblems(remainingProblems) === 0) {
+        // 信息完整，執行任務並清理暫存 (任務 4.2.3)
+        console.log(`[SlotTemplateManager] 補充信息完整，執行任務 - 用戶: ${userId}`);
+        
+        const result = {
+          type: 'task_completed',
+          slot_state: mergedState.validSlots,
+          requiresExecution: true,
+          tempStateCleared: true
+        };
+        
+        // 清理暫存狀態
+        await this.tempStateManager.clearTempState(tempState.tempId);
+        
+        return result;
+      } else {
+        // 仍有問題，繼續等待補充
+        console.log(`[SlotTemplateManager] 仍有問題，繼續等待補充 - 用戶: ${userId}`);
+        const singleProblem = this.problemDetector.getAllProblems(remainingProblems)[0];
+        return this.promptGenerator.generateSingleProblemPrompt(singleProblem, mergedState.validSlots);
+      }
+      
+    } catch (error) {
+      console.error(`[SlotTemplateManager] 補充信息處理失敗 - 用戶: ${userId}`, error);
+      return {
+        type: 'error',
+        message: '處理補充信息時發生錯誤，請重新輸入完整的課程信息'
+      };
+    }
+  }
+
+  /**
+   * 🚨 創建暫存狀態並生成提示 (任務 4.1.4)
+   * @param {string} userId - 用戶ID
+   * @param {Object} slotResult - Slot 處理結果
+   * @param {Object} problems - 檢測到的問題
+   * @returns {Promise<Object>} 處理結果
+   */
+  async createTempStateAndPrompt(userId, slotResult, problems) {
+    try {
+      const template = await this.templateLoader.getTemplate(slotResult.intent || 'course_management');
+      const allProblems = this.problemDetector.getAllProblems(problems);
+      
+      // 創建暫存狀態
+      const tempState = await this.tempStateManager.createTempState(
+        userId,
+        slotResult.slot_state,
+        allProblems,
+        template
+      );
+      
+      // 生成單一問題提示
+      const singleProblem = allProblems[0]; // 因為已確認只有一個問題
+      const promptResult = this.promptGenerator.generateSingleProblemPrompt(singleProblem, slotResult.slot_state);
+      
+      return {
+        ...promptResult,
+        tempState: tempState,
+        requiresExecution: false
+      };
+      
+    } catch (error) {
+      console.error(`[SlotTemplateManager] 創建暫存狀態失敗 - 用戶: ${userId}`, error);
+      // 降級處理：直接要求重新輸入
+      return this.promptGenerator.generateMultiProblemPrompt(
+        this.problemDetector.getAllProblems(problems),
+        slotResult.slot_state
+      );
+    }
+  }
+
+  /**
+   * 🚨 生成多問題提示 (任務 4.1.5)
+   * @param {Object} problems - 檢測到的問題
+   * @param {Object} slotState - 當前 slot 狀態
+   * @returns {Object} 處理結果
+   */
+  async generateMultiProblemPrompt(problems, slotState) {
+    const allProblems = this.problemDetector.getAllProblems(problems);
+    const promptResult = this.promptGenerator.generateMultiProblemPrompt(allProblems, slotState);
+    
+    return {
+      ...promptResult,
+      requiresExecution: false,
+      recorded: false
+    };
   }
 }
 

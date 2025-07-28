@@ -665,6 +665,215 @@ class SlotValidator {
     };
     console.log('[SlotValidator] 統計資訊已重置');
   }
+
+  // 🚨 Multi-Turn Dialog Enhancement - 新增方法
+
+  /**
+   * 🚨 帶問題檢測的驗證 (任務 5.2.1)
+   * @param {Object} slotState - Slot 狀態
+   * @param {Object} template - 模板配置
+   * @returns {Array} 問題列表
+   */
+  validateWithProblemDetection(slotState, template) {
+    const problems = [];
+    
+    // 檢查必填欄位 (任務 5.2.2)
+    if (template.completion_rules && template.completion_rules.minimum_required) {
+      for (const required of template.completion_rules.minimum_required) {
+        if (!slotState[required] || slotState[required] === null || slotState[required] === '') {
+          problems.push({
+            type: 'missing_required',
+            field: required,
+            severity: 'high',
+            message: `缺少必填欄位「${required}」`
+          });
+        }
+      }
+    }
+    
+    // 檢查欄位品質 (任務 5.2.3)
+    problems.push(...this.validateFieldQuality(slotState, template));
+    
+    return problems;
+  }
+
+  /**
+   * 🚨 欄位品質驗證 (任務 5.2.3)
+   * @param {Object} slotState - Slot 狀態
+   * @param {Object} template - 模板配置
+   * @returns {Array} 品質問題列表
+   */
+  validateFieldQuality(slotState, template) {
+    const problems = [];
+    const validationRules = template.completion_rules?.validation_rules || {};
+    
+    // 檢查日期品質
+    if (slotState.date && validationRules.date) {
+      const dateProblems = this.validateDateQuality(slotState.date, validationRules.date);
+      problems.push(...dateProblems);
+    }
+    
+    // 檢查時間品質
+    if (slotState.time && validationRules.time) {
+      const timeProblems = this.validateTimeQuality(slotState.time, validationRules.time);
+      problems.push(...timeProblems);
+    }
+    
+    // 檢查課程名稱混雜提取
+    if (slotState.course && validationRules.course) {
+      const courseProblems = this.validateCourseQuality(slotState.course, validationRules.course);
+      problems.push(...courseProblems);
+    }
+    
+    return problems;
+  }
+
+  /**
+   * 驗證日期品質
+   * @param {string} dateValue - 日期值
+   * @param {Object} rules - 驗證規則
+   * @returns {Array} 日期問題列表
+   */
+  validateDateQuality(dateValue, rules) {
+    const problems = [];
+    
+    if (!dateValue) return problems;
+    
+    // 檢查無效日期模式
+    if (rules.invalid_patterns) {
+      for (const pattern of rules.invalid_patterns) {
+        if (dateValue.includes(pattern)) {
+          problems.push({
+            type: 'invalid_date',
+            field: 'date',
+            value: dateValue,
+            severity: 'high',
+            message: `日期「${dateValue}」包含無效模式「${pattern}」`
+          });
+          break; // 只報告第一個匹配的無效模式
+        }
+      }
+    }
+    
+    return problems;
+  }
+
+  /**
+   * 驗證時間品質
+   * @param {string} timeValue - 時間值
+   * @param {Object} rules - 驗證規則
+   * @returns {Array} 時間問題列表
+   */
+  validateTimeQuality(timeValue, rules) {
+    const problems = [];
+    
+    if (!timeValue) return problems;
+    
+    // 檢查模糊時間
+    if (rules.vague_patterns && rules.require_specific) {
+      for (const pattern of rules.vague_patterns) {
+        if (timeValue.includes(pattern)) {
+          problems.push({
+            type: 'vague_time',
+            field: 'time',
+            value: timeValue,
+            severity: 'medium',
+            message: `時間「${timeValue}」過於模糊，需要具體時間`
+          });
+          break; // 只報告第一個匹配的模糊模式
+        }
+      }
+    }
+    
+    return problems;
+  }
+
+  /**
+   * 驗證課程品質（檢測混雜提取）
+   * @param {string} courseValue - 課程值
+   * @param {Object} rules - 驗證規則
+   * @returns {Array} 課程問題列表
+   */
+  validateCourseQuality(courseValue, rules) {
+    const problems = [];
+    
+    if (!courseValue || !rules.mixed_extraction_patterns) return problems;
+    
+    // 檢查混雜提取模式
+    const patterns = rules.mixed_extraction_patterns;
+    
+    if (patterns.date_time_mixed) {
+      const regex = new RegExp(patterns.date_time_mixed);
+      if (regex.test(courseValue)) {
+        problems.push({
+          type: 'mixed_extraction',
+          field: 'course',
+          value: courseValue,
+          mixedType: 'date_time_mixed',
+          severity: 'high',
+          message: '課程名稱包含日期和時間信息需要分離'
+        });
+        return problems; // 優先報告複合混雜
+      }
+    }
+    
+    if (patterns.date_mixed) {
+      const regex = new RegExp(patterns.date_mixed);
+      if (regex.test(courseValue)) {
+        problems.push({
+          type: 'mixed_extraction',
+          field: 'course',
+          value: courseValue,
+          mixedType: 'date_mixed',
+          severity: 'high',
+          message: '課程名稱包含日期信息需要分離'
+        });
+        return problems;
+      }
+    }
+    
+    if (patterns.time_mixed) {
+      const regex = new RegExp(patterns.time_mixed);
+      if (regex.test(courseValue)) {
+        problems.push({
+          type: 'mixed_extraction',
+          field: 'course',
+          value: courseValue,
+          mixedType: 'time_mixed',
+          severity: 'high',
+          message: '課程名稱包含時間信息需要分離'
+        });
+      }
+    }
+    
+    return problems;
+  }
+
+  /**
+   * 檢查是否符合完成條件（考慮動態必填欄位）
+   * @param {Object} slotState - Slot 狀態
+   * @param {Object} template - 模板配置
+   * @returns {boolean} 是否完成
+   */
+  isCompleteWithDynamicRules(slotState, template) {
+    if (!template.completion_rules) return false;
+    
+    const { minimum_required, future_required } = template.completion_rules;
+    
+    // 檢查當前必填欄位
+    if (minimum_required) {
+      for (const field of minimum_required) {
+        if (!slotState[field] || slotState[field] === null || slotState[field] === '') {
+          return false;
+        }
+      }
+    }
+    
+    // 未來版本可以加入 future_required 檢查
+    // 目前 future_required 字段暫不做強制要求
+    
+    return true;
+  }
 }
 
 module.exports = SlotValidator;

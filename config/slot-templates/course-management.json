@@ -135,14 +135,34 @@
     }
   },
   "completion_rules": {
-    "minimum_required": ["student", "course", "date", "time"],
+    "minimum_required": ["course", "date", "time"],
+    "future_required": ["student"],
     "auto_complete": ["reminder"],
     "optional": ["location", "teacher", "repeat", "note"],
     "conditional_required": {
       "has_repeat": ["repeat.pattern", "repeat.frequency"],
       "custom_reminder": ["reminder.custom_message"]
     },
-    "priority_order": ["student", "course", "date", "time", "location", "teacher", "reminder", "repeat", "note"]
+    "priority_order": ["student", "course", "date", "time", "location", "teacher", "reminder", "repeat", "note"],
+    "validation_rules": {
+      "date": {
+        "format": "YYYY-MM-DD",
+        "allow_relative": true,
+        "invalid_patterns": ["後台", "前台", "那邊", "這裡", "不知道", "昨天的明天"]
+      },
+      "time": {
+        "format": "HH:mm",
+        "vague_patterns": ["下午", "晚上", "早上", "中午", "傍晚"],
+        "require_specific": true
+      },
+      "course": {
+        "mixed_extraction_patterns": {
+          "date_time_mixed": ".*[明後今昨]天.*[0-9]+點.*課$|.*[明後今昨]天.*[下晚早中]午.*課$",
+          "date_mixed": ".*[明後今昨]天.*課$",
+          "time_mixed": ".*[0-9]+點.*課$|.*[下晚早中]午.*課$"
+        }
+      }
+    }
   },
   "intents": ["record_course", "modify_course", "cancel_course", "reschedule_course"],
   "question_templates": {

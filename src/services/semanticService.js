@@ -89,25 +89,19 @@ class SemanticService {
       semanticResult = await SemanticService.analyzeMessage(text, userId, context);
     }
     
-    // Step 2: 如果啟用並且可用，使用 Slot Template System 處理
+    // Step 2: 如果啟用並且可用，使用 Slot Template System 處理 (任務 4.3.1 & 4.3.2)
     if (enableSlotTemplate && this.slotTemplateEnabled && semanticResult.success) {
-      this.debugLog(`[SemanticService] 使用 Slot Template System 處理語意結果`);
+      this.debugLog(`[SemanticService] 使用 Slot Template System 與問題檢測處理語意結果`);
       
       try {
-        // 添加原始文本到上下文
-        const enhancedContext = {
-          ...context,
-          raw_text: text
-        };
-        
         // 增強語意結果格式以支援 Slot Template
         const enhancedSemanticResult = {
           ...semanticResult,
-          context: enhancedContext
+          text: text // 🚨 添加原始文本用於補充意圖檢測
         };
         
-        // 使用 Slot Template Manager 處理
-        const slotResult = await this.slotTemplateManager.processSemanticResult(
+        // 🚨 使用新的帶問題檢測的處理方法
+        const slotResult = await this.slotTemplateManager.processWithProblemDetection(
           userId, 
           enhancedSemanticResult
         );
@@ -117,6 +111,7 @@ class SemanticService {
           ...semanticResult,
           slotTemplate: slotResult,
           usedSlotTemplate: true,
+          usedProblemDetection: true, // 🚨 新增標記
           usedEnhancedExtraction: useEnhancedExtraction,
           originalSemanticResult: semanticResult
         };
