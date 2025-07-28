@@ -402,7 +402,7 @@ class OpenAIService {
         temperature: 0.1, // 較低溫度確保一致性
       });
 
-      const content = response.response.trim();
+      const content = response.content.trim();
       console.log(`🔧 [DEBUG] OpenAI實體提取原始回應:`, content);
 
       // 嘗試解析JSON
