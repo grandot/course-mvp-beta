@@ -141,6 +141,12 @@ class LineController {
       // 語義分析 - 使用 Slot Template System (如果啟用)
       const useSlotTemplate = process.env.ENABLE_SLOT_TEMPLATE === 'true';
       
+      // 詳細調試信息
+      console.log(`🔧 [DEBUG] ENABLE_SLOT_TEMPLATE 環境變數:`, process.env.ENABLE_SLOT_TEMPLATE);
+      console.log(`🔧 [DEBUG] useSlotTemplate:`, useSlotTemplate);
+      console.log(`🔧 [DEBUG] semanticService.analyzeMessageWithSlotTemplate 存在:`, !!semanticService.analyzeMessageWithSlotTemplate);
+      console.log(`🔧 [DEBUG] 條件檢查: useSlotTemplate=${useSlotTemplate} && method存在=${!!semanticService.analyzeMessageWithSlotTemplate}`);
+      
       let analysis;
       if (useSlotTemplate && semanticService.analyzeMessageWithSlotTemplate) {
         console.log(`🔧 [DEBUG] 使用 Slot Template System 分析訊息`);
