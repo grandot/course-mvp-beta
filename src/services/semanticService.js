@@ -73,7 +73,7 @@ class SemanticService {
     // Step 1: 如果啟用增強提取，使用新的 OpenAI 方法
     let semanticResult;
     if (useEnhancedExtraction) {
-      this.debugLog(`[SemanticService] 使用增強版 Slot 提取`);
+      SemanticService.debugLog(`[SemanticService] 使用增強版 Slot 提取`);
       try {
         const enhancedResult = await OpenAIService.analyzeIntentWithSlots(text, userId, {
           enableSlotExtraction: true,
@@ -99,7 +99,7 @@ class SemanticService {
     
     // Step 2: 如果啟用並且可用，使用 Slot Template System 處理 (任務 4.3.1 & 4.3.2)
     if (enableSlotTemplate && this.slotTemplateEnabled && semanticResult.success) {
-      this.debugLog(`[SemanticService] 使用 Slot Template System 與問題檢測處理語意結果`);
+      SemanticService.debugLog(`[SemanticService] 使用 Slot Template System 與問題檢測處理語意結果`);
       
       try {
         // 增強語意結果格式以支援 Slot Template

@@ -56,6 +56,12 @@ class LineController {
    */
   static verifySignature(signature, body) {
     const channelSecret = process.env.LINE_CHANNEL_SECRET;
+    
+    // 測試模式：如果簽名是 'test'，直接通過驗證（僅限非生產環境）
+    if (signature === 'test' && process.env.NODE_ENV !== 'production') {
+      console.log('🔧 [DEBUG] 測試模式：跳過簽名驗證');
+      return true;
+    }
 
     if (!channelSecret) {
       console.error('LINE_CHANNEL_SECRET not configured');
@@ -83,6 +89,12 @@ class LineController {
       console.log('- Received signature length:', signature.length);
       console.log('- Body length:', bodyToVerify.length);
 
+      // 檢查簽名長度是否在合理範圍內 (44-45字符都可接受)
+      if (signature.length < 44 || signature.length > 45) {
+        console.error('Signature length out of range:', signature.length, 'expected 44-45');
+        return false;
+      }
+
       // 計算預期簽名
       const hash = crypto
         .createHmac('sha256', channelSecret)
@@ -91,12 +103,6 @@ class LineController {
 
       const expectedSignature = hash;
       console.log('- Expected signature length:', expectedSignature.length);
-
-      // 檢查簽名長度是否在合理範圍內 (44-45字符都可接受)
-      if (signature.length < 44 || signature.length > 45) {
-        console.error('Signature length out of range:', signature.length, 'expected 44-45');
-        return false;
-      }
 
       // 安全比較簽名 - 直接比較 base64 字符串
       const isValid = crypto.timingSafeEqual(

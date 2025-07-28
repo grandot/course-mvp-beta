@@ -279,7 +279,24 @@ class SlotValidator {
   validateDateType(value, slotConfig, validation) {
     const config = { ...this.validationRules.date, ...slotConfig.validation };
     
-    if (!config.format.test(value)) {
+    // 確保 format 是正則表達式，如果是字符串則轉換
+    let formatRegex = config.format;
+    if (typeof formatRegex === 'string') {
+      // 如果是 "YYYY-MM-DD" 格式字符串，轉換為對應的正則表達式
+      if (formatRegex === 'YYYY-MM-DD') {
+        formatRegex = /^\d{4}-\d{2}-\d{2}$/;
+      } else {
+        // 嘗試將字符串轉換為正則表達式
+        try {
+          formatRegex = new RegExp(formatRegex);
+        } catch (e) {
+          // 如果轉換失敗，使用默認的正則表達式
+          formatRegex = this.validationRules.date.format;
+        }
+      }
+    }
+    
+    if (!formatRegex.test(value)) {
       validation.isValid = false;
       validation.errors.push({
         code: 'INVALID_DATE_FORMAT',
@@ -313,7 +330,24 @@ class SlotValidator {
   validateTimeType(value, slotConfig, validation) {
     const config = { ...this.validationRules.time, ...slotConfig.validation };
     
-    if (!config.format.test(value)) {
+    // 確保 format 是正則表達式，如果是字符串則轉換
+    let formatRegex = config.format;
+    if (typeof formatRegex === 'string') {
+      // 如果是 "HH:mm" 格式字符串，轉換為對應的正則表達式
+      if (formatRegex === 'HH:mm') {
+        formatRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      } else {
+        // 嘗試將字符串轉換為正則表達式
+        try {
+          formatRegex = new RegExp(formatRegex);
+        } catch (e) {
+          // 如果轉換失敗，使用默認的正則表達式
+          formatRegex = this.validationRules.time.format;
+        }
+      }
+    }
+    
+    if (!formatRegex.test(value)) {
       validation.isValid = false;
       validation.errors.push({
         code: 'INVALID_TIME_FORMAT',
