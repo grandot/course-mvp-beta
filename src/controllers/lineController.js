@@ -199,15 +199,44 @@ class LineController {
       timeInfo: conversationContext.lastTimeInfo || null
     };
 
-    // 合併：補充信息優先，但保留上下文中的有效信息
+    // 🚨 關鍵修復：根據等待補充的欄位智能合併，避免覆蓋已有信息
+    const awaitingField = conversationContext.executionResult?.awaitingSupplementFor;
+    console.log(`🔧 [DEBUG] 等待補充欄位: ${awaitingField}`);
+
     const mergedEntities = {
-      course_name: supplementEntities.course_name || savedEntities.course_name,
-      location: supplementEntities.location || savedEntities.location,
-      teacher: supplementEntities.teacher || savedEntities.teacher,
-      student: supplementEntities.student || savedEntities.student,
+      course_name: savedEntities.course_name,
+      location: savedEntities.location,
+      teacher: savedEntities.teacher,
+      student: savedEntities.student,
       confirmation: supplementEntities.confirmation,
-      timeInfo: supplementEntities.timeInfo || savedEntities.timeInfo,
+      timeInfo: savedEntities.timeInfo, // 預設使用保存的時間信息
     };
+
+    // 根據等待的欄位選擇性更新
+    if (awaitingField === 'course' && supplementEntities.course_name) {
+      mergedEntities.course_name = supplementEntities.course_name;
+      console.log(`🔧 [DEBUG] 更新課程名稱: ${supplementEntities.course_name}`);
+    } else if (awaitingField === 'time' && supplementEntities.timeInfo) {
+      mergedEntities.timeInfo = supplementEntities.timeInfo;
+      console.log(`🔧 [DEBUG] 更新時間信息:`, supplementEntities.timeInfo);
+    } else if (awaitingField === 'location' && supplementEntities.location) {
+      mergedEntities.location = supplementEntities.location;
+      console.log(`🔧 [DEBUG] 更新地點信息: ${supplementEntities.location}`);
+    } else {
+      // 通用補充邏輯：只更新有意義的新信息
+      if (supplementEntities.course_name && !savedEntities.course_name) {
+        mergedEntities.course_name = supplementEntities.course_name;
+      }
+      if (supplementEntities.location && !savedEntities.location) {
+        mergedEntities.location = supplementEntities.location;
+      }
+      if (supplementEntities.teacher && !savedEntities.teacher) {
+        mergedEntities.teacher = supplementEntities.teacher;
+      }
+      if (supplementEntities.student && !savedEntities.student) {
+        mergedEntities.student = supplementEntities.student;
+      }
+    }
 
     console.log(`🔧 [DEBUG] 合併完成:`, mergedEntities);
     return mergedEntities;
