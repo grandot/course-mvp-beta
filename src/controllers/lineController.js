@@ -81,7 +81,10 @@ class LineController {
       originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)`))
     );
     
-    if (hasVagueTime || !this.hasSpecificTime(originalText)) {
+    // 🚨 修復：檢查合併後的實體是否有有效時間，而不是只檢查原始文本
+    const hasValidTimeInEntities = entities.timeInfo && entities.timeInfo.display && entities.timeInfo.date;
+    
+    if (hasVagueTime || (!hasValidTimeInEntities && !this.hasSpecificTime(originalText))) {
       const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern)) || '時間';
       problems.push({
         type: 'vague_time',
