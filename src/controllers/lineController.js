@@ -78,7 +78,7 @@ class LineController {
     // 3. 檢查模糊時間（核心問題）
     const vagueTimePatterns = ['下午', '上午', '晚上', '早上', '中午', '傍晚'];
     const hasVagueTime = vagueTimePatterns.some(pattern => 
-      originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}[0-9]+點`))
+      originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)`))
     );
     
     if (hasVagueTime || !this.hasSpecificTime(originalText)) {
@@ -117,12 +117,14 @@ class LineController {
    * @returns {boolean} 是否有具體時間
    */
   static hasSpecificTime(text) {
-    // 檢查具體時間格式：下午3點、晚上7點半、19:30等
+    // 檢查具體時間格式：下午3點、晚上7點半、19:30、下午兩點等
     const specificTimePatterns = [
       /[下上晚早中][午]?[0-9]+點/,  // 下午3點
+      /[下上晚早中][午]?(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點)/,  // 下午兩點
       /[0-9]+點半?/,                // 3點、3點半
       /[0-9]{1,2}:[0-9]{2}/,        // 15:30
-      /[0-9]{1,2}點[0-9]+分?/       // 3點30分
+      /[0-9]{1,2}點[0-9]+分?/,      // 3點30分
+      /(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點)/  // 兩點
     ];
     
     return specificTimePatterns.some(pattern => pattern.test(text));

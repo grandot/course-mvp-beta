@@ -460,15 +460,15 @@ class SemanticService {
     let location = null;
     let student = null;
     
-    // 檢測混雜模式：「地點+時間+學生+課程」
-    const smartExtraction = /^(前台|後台|一樓|二樓|三樓|四樓|五樓)?(下午|上午|晚上|早上|[0-9]+點)?(小[一-龯]{1,2})?([\u4e00-\u9fff]{2,8}課)$/;
+    // 檢測混雜模式：「日期+地點+時間+學生+課程」
+    const smartExtraction = /^(明天|後天|今天|昨天)?(前台|後台|一樓|二樓|三樓|四樓|五樓)?(下午|上午|晚上|早上)?(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)?(小[一-龯]{1,2})?([\u4e00-\u9fff]{2,8}課)$/;
     const smartMatch = text.match(smartExtraction);
     if (smartMatch) {
-      console.log(`🔧 [DEBUG] 智能分離成功: 地點="${smartMatch[1]}", 時間="${smartMatch[2]}", 學生="${smartMatch[3]}", 課程="${smartMatch[4]}"`);
-      if (smartMatch[1]) location = smartMatch[1];
-      if (smartMatch[3]) student = smartMatch[3];
+      console.log(`🔧 [DEBUG] 智能分離成功: 日期="${smartMatch[1]}", 地點="${smartMatch[2]}", 模糊時間="${smartMatch[3]}", 具體時間="${smartMatch[4]}", 學生="${smartMatch[5]}", 課程="${smartMatch[6]}"`);
+      if (smartMatch[2]) location = smartMatch[2];
+      if (smartMatch[5]) student = smartMatch[5];
       // 🚨 同時更新課程名稱，使用分離出的課程
-      if (smartMatch[4]) courseName = smartMatch[4];
+      if (smartMatch[6]) courseName = smartMatch[6];
     }
     
     // 如果智能分離未成功，使用傳統模式提取地點
