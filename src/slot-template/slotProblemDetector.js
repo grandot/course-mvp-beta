@@ -112,11 +112,11 @@ class SlotProblemDetector {
   detectMixedExtraction(slotState) {
     const problems = [];
     
-    if (!slotState.course) {
+    // 檢查多種可能的課程字段名稱
+    const course = slotState.course || slotState.course_name;
+    if (!course) {
       return problems;
     }
-
-    const course = slotState.course;
     const patterns = PROBLEM_TYPES.MIXED_EXTRACTION.patterns;
 
     // 檢測各種混雜模式
