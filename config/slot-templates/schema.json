@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Slot Template Schema",
+  "description": "Schema for validating Slot Template configuration files",
+  "type": "object",
+  "required": ["template_id", "template_name", "version", "slots", "completion_rules", "intents"],
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "pattern": "^[a-z_]+$",
+      "description": "Unique identifier for the template"
+    },
+    "template_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name for the template"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the template"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the template's purpose"
+    },
+    "slots": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/slotDefinition"
+      },
+      "description": "Definition of all slots in this template"
+    },
+    "completion_rules": {
+      "type": "object",
+      "required": ["minimum_required"],
+      "properties": {
+        "minimum_required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Slots that must be filled for task completion"
+        },
+        "auto_complete": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Slots that can be auto-filled with default values"
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Slots that are completely optional"
+        },
+        "conditional_required": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": "Slots required under certain conditions"
+        },
+        "priority_order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Priority order for asking missing slots"
+        }
+      }
+    },
+    "intents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Intents that use this template"
+    },
+    "question_templates": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "description": "Templates for generating follow-up questions"
+    },
+    "validation_messages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "description": "Error messages for validation failures"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "category": {
+          "type": "string"
+        }
+      },
+      "description": "Metadata about the template"
+    }
+  },
+  "definitions": {
+    "slotDefinition": {
+      "type": "object",
+      "required": ["type", "required", "description"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string", "number", "date", "time", "object", "boolean", "array"],
+          "description": "Data type of the slot value"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this slot is required"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of the slot"
+        },
+        "default": {
+          "description": "Default value for the slot"
+        },
+        "validation": {
+          "type": "object",
+          "description": "Validation rules for the slot value"
+        },
+        "examples": {
+          "type": "array",
+          "items": {},
+          "description": "Example values for the slot"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Alternative names for the slot"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Other slots this slot depends on"
+        },
+        "schema": {
+          "type": "object",
+          "description": "Schema for object-type slots"
+        }
+      }
+    }
+  }
+}

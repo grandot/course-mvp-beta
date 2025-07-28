@@ -96,6 +96,106 @@ class OpenAIService {
   }
 
   /**
+   * 分析語義意圖並提取 Slot 信息（增強版，支援 Slot Template System）
+   * @param {string} text - 用戶輸入文本
+   * @param {string} userId - 用戶ID（用於上下文）
+   * @param {Object} options - 選項 { enableSlotExtraction: boolean, templateId: string }
+   * @returns {Promise<Object>} 語義分析結果
+   */
+  static async analyzeIntentWithSlots(text, userId, options = {}) {
+    if (!text) {
+      throw new Error('OpenAIService: text is required for intent analysis');
+    }
+
+    const { enableSlotExtraction = true, templateId = 'course_management' } = options;
+
+    const prompt = `
+分析以下用戶輸入，識別課程管理相關的意圖和提取所有可能的 slot 值：
+
+用戶輸入: "${text}"
+用戶ID: ${userId}
+
+請以 JSON 格式回應，包含：
+{
+  "intent": "意圖類型 (record_course, modify_course, cancel_course, query_schedule, set_reminder, clear_schedule)",
+  "confidence": "信心度 (0.0-1.0 的數字)",
+  "slot_state": {
+    "student": "學生姓名 (如：小光、小明、Amy) 或 null",
+    "course": "課程名稱 (如：鋼琴課、數學課、英文課) 或 null",
+    "date": "日期 (YYYY-MM-DD 格式，如：2025-08-01) 或 null",
+    "time": "時間 (HH:mm 格式，如：14:00) 或 null",
+    "location": "地點 (如：板橋教室、線上、家裡) 或 null",
+    "teacher": "老師 (如：王老師、李老師、Miss Chen) 或 null",
+    "reminder": "提醒設定物件 (如：{\"minutes_before\": 10}) 或 null",
+    "repeat": "重複設定物件 (如：{\"pattern\": \"weekly\", \"frequency\": 1}) 或 null",
+    "note": "備註 (字串) 或 null"
+  },
+  "extraction_details": {
+    "processed_entities": "已處理的實體資訊",
+    "ambiguous_slots": "模糊不清的 slots 列表",
+    "missing_slots": "缺失的 slots 列表"
+  },
+  "reasoning": "分析理由和置信度說明"
+}
+
+重要提醒：
+1. 所有 slot 值必須是具體的、可解析的值，模糊的資訊請設為 null
+2. 日期格式必須是 YYYY-MM-DD，時間格式必須是 HH:mm
+3. 如果無法確定具體值，寧可設為 null 也不要猜測
+4. confidence 必須是 0.0-1.0 之間的數字
+5. 只回應 JSON，不要其他文字
+
+只回應 JSON，不要其他文字。
+`;
+
+    const result = await this.complete({
+      prompt,
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      max_tokens: 350,
+      temperature: 0.2, // 更低溫度確保一致性和準確性
+    });
+
+    try {
+      // 處理 markdown 格式的 JSON 回應
+      let jsonContent = result.content.trim();
+      
+      // 移除 markdown 代碼塊標記
+      if (jsonContent.startsWith('```json')) {
+        jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // 嘗試解析清理後的 JSON
+      const analysis = JSON.parse(jsonContent);
+
+      // 驗證 slot_state 格式
+      if (analysis.slot_state) {
+        analysis.slot_state = this.validateAndCleanSlotState(analysis.slot_state);
+      }
+
+      return {
+        success: true,
+        analysis,
+        usage: result.usage,
+        model: result.model,
+        enhanced_for_slots: true
+      };
+    } catch (parseError) {
+      // JSON 解析失敗，回傳原始文本和詳細錯誤信息
+      return {
+        success: false,
+        error: 'Failed to parse JSON response',
+        parseError: parseError.message,
+        raw_content: result.content,
+        usage: result.usage,
+        model: result.model,
+        enhanced_for_slots: true
+      };
+    }
+  }
+
+  /**
    * 分析語義意圖（專門用於 SemanticService）
    * @param {string} text - 用戶輸入文本
    * @param {string} userId - 用戶ID（用於上下文）
@@ -427,6 +527,86 @@ class OpenAIService {
     const pricePerToken = pricing[model] || pricing['gpt-3.5-turbo'];
 
     return totalTokens * pricePerToken * usdRate;
+  }
+
+  /**
+   * 驗證和清理 slot_state 對象
+   * @param {Object} slotState - 原始 slot_state
+   * @returns {Object} 清理後的 slot_state
+   */
+  static validateAndCleanSlotState(slotState) {
+    const cleanedState = {};
+    
+    // 定義預期的 slot 結構
+    const expectedSlots = {
+      student: 'string',
+      course: 'string', 
+      date: 'string',
+      time: 'string',
+      location: 'string',
+      teacher: 'string',
+      reminder: 'object',
+      repeat: 'object',
+      note: 'string'
+    };
+    
+    // 驗證和清理每個 slot
+    for (const [slotName, expectedType] of Object.entries(expectedSlots)) {
+      const value = slotState[slotName];
+      
+      if (value === null || value === undefined || value === '') {
+        cleanedState[slotName] = null;
+      } else if (expectedType === 'string' && typeof value === 'string') {
+        cleanedState[slotName] = value.trim();
+      } else if (expectedType === 'object' && typeof value === 'object') {
+        cleanedState[slotName] = value;
+      } else if (expectedType === 'string' && typeof value !== 'string') {
+        // 嘗試轉換為字符串
+        cleanedState[slotName] = String(value).trim();
+      } else {
+        cleanedState[slotName] = null;
+      }
+    }
+    
+    // 特殊驗證：日期格式
+    if (cleanedState.date && !this.isValidDateFormat(cleanedState.date)) {
+      console.warn(`[OpenAIService] 無效的日期格式: ${cleanedState.date}`);
+      cleanedState.date = null;
+    }
+    
+    // 特殊驗證：時間格式
+    if (cleanedState.time && !this.isValidTimeFormat(cleanedState.time)) {
+      console.warn(`[OpenAIService] 無效的時間格式: ${cleanedState.time}`);
+      cleanedState.time = null;
+    }
+    
+    return cleanedState;
+  }
+
+  /**
+   * 驗證日期格式 (YYYY-MM-DD)
+   * @param {string} dateString - 日期字符串
+   * @returns {boolean} 是否為有效格式
+   */
+  static isValidDateFormat(dateString) {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) {
+      return false;
+    }
+    
+    // 驗證是否為有效日期
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date) && date.toISOString().startsWith(dateString);
+  }
+
+  /**
+   * 驗證時間格式 (HH:mm)
+   * @param {string} timeString - 時間字符串
+   * @returns {boolean} 是否為有效格式
+   */
+  static isValidTimeFormat(timeString) {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(timeString);
   }
 }
 

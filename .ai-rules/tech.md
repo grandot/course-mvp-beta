@@ -68,18 +68,6 @@ npm run prettier
 - **ScenarioManager**：場景管理和切換
 - **ScenarioFactory**：場景實例創建工廠
 
-#### 雙車道開發策略
-1. **穩定車道（完整架構）**：
-   ```
-   Controller → TaskService → ScenarioTemplate → EntityService → DataService
-   ```
-   - 適用：核心、複雜、已穩定的功能
-
-2. **高速車道（簡化路徑）**：
-   ```
-   Controller → TaskService → EntityService/DataService
-   ```
-   - 適用：新的、簡單的、需要快速實現的 MVP 功能
 
 ## 資料格式規範
 

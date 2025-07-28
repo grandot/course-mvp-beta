@@ -10,7 +10,41 @@ const DataService = require('./dataService');
 const TimeService = require('./timeService');
 const ConversationContext = require('../utils/conversationContext');
 
+// Slot Template System 整合 (可選功能)
+let SlotTemplateManager = null;
+try {
+  SlotTemplateManager = require('../slot-template/slotTemplateManager');
+} catch (error) {
+  // Slot Template System 尚未啟用或初始化失敗
+  console.log('[SemanticService] Slot Template System 未啟用');
+}
+
 class SemanticService {
+  constructor() {
+    // Slot Template Manager 實例 (延遲初始化)
+    this.slotTemplateManager = null;
+    this.slotTemplateEnabled = false;
+    
+    // 嘗試初始化 Slot Template System
+    this.initializeSlotTemplateSystem();
+  }
+
+  /**
+   * 初始化 Slot Template System
+   */
+  initializeSlotTemplateSystem() {
+    if (SlotTemplateManager) {
+      try {
+        this.slotTemplateManager = new SlotTemplateManager();
+        this.slotTemplateEnabled = true;
+        console.log('[SemanticService] Slot Template System 已啟用');
+      } catch (error) {
+        console.warn('[SemanticService] Slot Template System 初始化失敗:', error.message);
+        this.slotTemplateEnabled = false;
+      }
+    }
+  }
+
   // 🚀 性能優化：條件式調試日誌（生產環境自動關閉）
   static debugLog(...args) {
     if (process.env.NODE_ENV !== 'production') {
@@ -18,7 +52,165 @@ class SemanticService {
     }
   }
   /**
-   * 分析用戶訊息的整體語義
+   * 分析用戶訊息的整體語義 - 支援 Slot Template System
+   * @param {string} text - 用戶輸入文本
+   * @param {string} userId - 用戶ID
+   * @param {Object} context - 上下文信息
+   * @param {Object} options - 選項 { enableSlotTemplate: boolean }
+   * @returns {Promise<Object>} 語義分析結果
+   */
+  async analyzeMessageWithSlotTemplate(text, userId, context = {}, options = {}) {
+    const { enableSlotTemplate = true, useEnhancedExtraction = true } = options;
+    
+    // Step 1: 如果啟用增強提取，使用新的 OpenAI 方法
+    let semanticResult;
+    if (useEnhancedExtraction) {
+      this.debugLog(`[SemanticService] 使用增強版 Slot 提取`);
+      try {
+        const enhancedResult = await OpenAIService.analyzeIntentWithSlots(text, userId, {
+          enableSlotExtraction: true,
+          templateId: 'course_management'
+        });
+        
+        if (enhancedResult.success) {
+          // 轉換增強結果為標準 SemanticService 格式
+          semanticResult = this.convertEnhancedResultToStandardFormat(enhancedResult, text, userId, context);
+        } else {
+          // 回退到標準語意分析
+          console.warn('[SemanticService] 增強版提取失敗，回退到標準方法');
+          semanticResult = await SemanticService.analyzeMessage(text, userId, context);
+        }
+      } catch (error) {
+        console.warn('[SemanticService] 增強版提取出錯，回退到標準方法:', error.message);
+        semanticResult = await SemanticService.analyzeMessage(text, userId, context);
+      }
+    } else {
+      // 使用標準語意分析
+      semanticResult = await SemanticService.analyzeMessage(text, userId, context);
+    }
+    
+    // Step 2: 如果啟用並且可用，使用 Slot Template System 處理
+    if (enableSlotTemplate && this.slotTemplateEnabled && semanticResult.success) {
+      this.debugLog(`[SemanticService] 使用 Slot Template System 處理語意結果`);
+      
+      try {
+        // 添加原始文本到上下文
+        const enhancedContext = {
+          ...context,
+          raw_text: text
+        };
+        
+        // 增強語意結果格式以支援 Slot Template
+        const enhancedSemanticResult = {
+          ...semanticResult,
+          context: enhancedContext
+        };
+        
+        // 使用 Slot Template Manager 處理
+        const slotResult = await this.slotTemplateManager.processSemanticResult(
+          userId, 
+          enhancedSemanticResult
+        );
+        
+        // 合併結果
+        return {
+          ...semanticResult,
+          slotTemplate: slotResult,
+          usedSlotTemplate: true,
+          usedEnhancedExtraction: useEnhancedExtraction,
+          originalSemanticResult: semanticResult
+        };
+        
+      } catch (error) {
+        console.warn('[SemanticService] Slot Template 處理失敗，回退到標準結果:', error.message);
+        
+        // 回退到標準語意分析結果
+        return {
+          ...semanticResult,
+          slotTemplate: null,
+          usedSlotTemplate: false,
+          usedEnhancedExtraction: useEnhancedExtraction,
+          slotTemplateError: error.message
+        };
+      }
+    }
+    
+    // 返回標準語意分析結果
+    return {
+      ...semanticResult,
+      usedSlotTemplate: false,
+      usedEnhancedExtraction: useEnhancedExtraction
+    };
+  }
+
+  /**
+   * 轉換增強結果為標準 SemanticService 格式
+   * @param {Object} enhancedResult - 增強版分析結果
+   * @param {string} text - 原始文本
+   * @param {string} userId - 用戶ID
+   * @param {Object} context - 上下文
+   * @returns {Object} 標準格式結果
+   */
+  convertEnhancedResultToStandardFormat(enhancedResult, text, userId, context) {
+    const { analysis } = enhancedResult;
+    
+    // 將 slot_state 轉換為 entities 格式
+    const entities = {};
+    if (analysis.slot_state) {
+      entities.course_name = analysis.slot_state.course;
+      entities.location = analysis.slot_state.location;
+      entities.teacher = analysis.slot_state.teacher;
+      entities.confirmation = null; // 這個欄位不在 slot_state 中
+      
+      // 處理時間信息
+      if (analysis.slot_state.date || analysis.slot_state.time) {
+        entities.timeInfo = {};
+        if (analysis.slot_state.date) entities.timeInfo.date = analysis.slot_state.date;
+        if (analysis.slot_state.time) entities.timeInfo.time = analysis.slot_state.time;
+        
+        // 創建完整的時間信息對象
+        if (entities.timeInfo.date && entities.timeInfo.time) {
+          entities.timeInfo.start = `${entities.timeInfo.date}T${entities.timeInfo.time}:00Z`;
+          // 假設課程時長為1小時
+          const endTime = this.calculateEndTime(entities.timeInfo.time, 60);
+          entities.timeInfo.end = `${entities.timeInfo.date}T${endTime}:00Z`;
+        }
+      }
+    }
+    
+    return {
+      success: true,
+      method: 'enhanced_openai',
+      intent: analysis.intent,
+      confidence: analysis.confidence,
+      entities,
+      context,
+      reasoning: analysis.reasoning,
+      usage: enhancedResult.usage,
+      analysis_time: Date.now(),
+      slotState: analysis.slot_state, // 保留原始 slot_state 用於 Slot Template System
+      extractionDetails: analysis.extraction_details
+    };
+  }
+
+  /**
+   * 計算結束時間
+   * @param {string} startTime - 開始時間 (HH:mm 格式)
+   * @param {number} durationMinutes - 持續時間(分鐘)
+   * @returns {string} 結束時間 (HH:mm 格式)
+   */
+  calculateEndTime(startTime, durationMinutes) {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes, 0, 0);
+    
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+    
+    return `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * 分析用戶訊息的整體語義 (原有方法，保持向後兼容)
    * @param {string} text - 用戶輸入文本
    * @param {string} userId - 用戶ID
    * @param {Object} context - 上下文信息
@@ -627,6 +819,34 @@ class SemanticService {
     }
 
     return null;
+  }
+
+  /**
+   * 創建支援 Slot Template System 的 SemanticService 實例
+   * @returns {SemanticService} SemanticService 實例
+   */
+  static createWithSlotTemplate() {
+    return new SemanticService();
+  }
+
+  /**
+   * 檢查 Slot Template System 是否可用
+   * @returns {boolean} 是否可用
+   */
+  static isSlotTemplateAvailable() {
+    return SlotTemplateManager !== null;
+  }
+
+  /**
+   * 獲取 Slot Template 系統狀態
+   * @returns {Object} 系統狀態
+   */
+  static getSlotTemplateStatus() {
+    return {
+      available: SlotTemplateManager !== null,
+      version: SlotTemplateManager ? '1.0.0' : null,
+      timestamp: new Date().toISOString()
+    };
   }
 }
 

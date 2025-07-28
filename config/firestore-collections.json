@@ -1,0 +1,403 @@
+{
+  "collections": {
+    "user_slot_states": {
+      "description": "用戶 Slot Template 對話狀態",
+      "document_structure": {
+        "user_id": {
+          "type": "string",
+          "description": "用戶唯一標識符",
+          "required": true,
+          "index": true
+        },
+        "created_at": {
+          "type": "timestamp",
+          "description": "狀態創建時間",
+          "required": true,
+          "index": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "description": "最後更新時間",
+          "required": true,
+          "index": true
+        },
+        "active_task": {
+          "type": "object",
+          "description": "當前活躍任務",
+          "required": false,
+          "schema": {
+            "task_id": {
+              "type": "string",
+              "description": "任務唯一標識符"
+            },
+            "intent": {
+              "type": "string",
+              "description": "任務意圖",
+              "index": true
+            },
+            "template_id": {
+              "type": "string",
+              "description": "使用的模板ID",
+              "index": true
+            },
+            "status": {
+              "type": "string",
+              "description": "任務狀態",
+              "enum": ["incomplete", "complete", "cancelled", "failed"],
+              "index": true
+            },
+            "slot_state": {
+              "type": "object",
+              "description": "Slot 填充狀態",
+              "dynamic_keys": true
+            },
+            "completion_score": {
+              "type": "number",
+              "description": "完成度評分 (0.0-1.0)"
+            },
+            "missing_slots": {
+              "type": "array",
+              "description": "缺失的 slot 列表",
+              "items": "string"
+            },
+            "history": {
+              "type": "array",
+              "description": "對話歷史記錄",
+              "items": {
+                "type": "object",
+                "schema": {
+                  "timestamp": "timestamp",
+                  "user_input": "string",
+                  "extracted_slots": "object",
+                  "system_response": "string",
+                  "confidence_scores": "object"
+                }
+              }
+            },
+            "metadata": {
+              "type": "object",
+              "description": "任務元數據",
+              "schema": {
+                "started_at": "timestamp",
+                "last_activity": "timestamp",
+                "retry_count": "number",
+                "context": "object"
+              }
+            }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "description": "用戶設定",
+          "required": true,
+          "schema": {
+            "language": {
+              "type": "string",
+              "default": "zh-TW"
+            },
+            "timeout_minutes": {
+              "type": "number",
+              "default": 30
+            },
+            "auto_reminder": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null && request.auth.uid == resource.data.user_id",
+        "write": "request.auth != null && request.auth.uid == resource.data.user_id",
+        "create": "request.auth != null && request.auth.uid == request.resource.data.user_id"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "user_id", "order": "ASCENDING"},
+            {"field": "updated_at", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "active_task.status", "order": "ASCENDING"},
+            {"field": "updated_at", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "active_task.intent", "order": "ASCENDING"},
+            {"field": "active_task.status", "order": "ASCENDING"},
+            {"field": "updated_at", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "created_at", "order": "ASCENDING"}
+          ]
+        }
+      ]
+    },
+    "slot_templates": {
+      "description": "Slot Template 配置存儲 (用於動態配置)",
+      "document_structure": {
+        "template_id": {
+          "type": "string",
+          "description": "模板唯一標識符",
+          "required": true,
+          "index": true
+        },
+        "template_name": {
+          "type": "string",
+          "description": "模板顯示名稱",
+          "required": true
+        },
+        "version": {
+          "type": "string",
+          "description": "模板版本號",
+          "required": true,
+          "index": true
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "是否啟用此模板",
+          "required": true,
+          "default": true,
+          "index": true
+        },
+        "template_config": {
+          "type": "object",
+          "description": "完整的模板配置",
+          "required": true
+        },
+        "created_at": {
+          "type": "timestamp",
+          "description": "創建時間",
+          "required": true,
+          "index": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "description": "更新時間",
+          "required": true,
+          "index": true
+        },
+        "created_by": {
+          "type": "string",
+          "description": "創建者",
+          "required": true
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null",
+        "write": "request.auth != null && hasRole('admin')",
+        "create": "request.auth != null && hasRole('admin')"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "enabled", "order": "ASCENDING"},
+            {"field": "updated_at", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "template_id", "order": "ASCENDING"},
+            {"field": "version", "order": "DESCENDING"}
+          ]
+        }
+      ]
+    },
+    "slot_execution_logs": {
+      "description": "Slot Template 執行日誌",
+      "document_structure": {
+        "log_id": {
+          "type": "string",
+          "description": "日誌唯一標識符",
+          "required": true
+        },
+        "user_id": {
+          "type": "string",
+          "description": "用戶ID",
+          "required": true,
+          "index": true
+        },
+        "task_id": {
+          "type": "string",
+          "description": "任務ID",
+          "required": true,
+          "index": true
+        },
+        "execution_time": {
+          "type": "timestamp",
+          "description": "執行時間",
+          "required": true,
+          "index": true
+        },
+        "intent": {
+          "type": "string",
+          "description": "執行的意圖",
+          "required": true,
+          "index": true
+        },
+        "template_id": {
+          "type": "string",
+          "description": "使用的模板ID",
+          "required": true,
+          "index": true
+        },
+        "slot_state": {
+          "type": "object",
+          "description": "執行時的 slot 狀態",
+          "required": true
+        },
+        "execution_result": {
+          "type": "object",
+          "description": "執行結果",
+          "required": true,
+          "schema": {
+            "success": "boolean",
+            "message": "string",
+            "error": "string",
+            "execution_duration_ms": "number"
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "description": "執行指標",
+          "schema": {
+            "completion_score": "number",
+            "slot_extraction_accuracy": "number",
+            "conversation_turns": "number",
+            "user_satisfaction": "number"
+          }
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null && (hasRole('admin') || request.auth.uid == resource.data.user_id)",
+        "write": "request.auth != null && hasRole('system')",
+        "create": "request.auth != null"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "user_id", "order": "ASCENDING"},
+            {"field": "execution_time", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "intent", "order": "ASCENDING"},
+            {"field": "execution_time", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "template_id", "order": "ASCENDING"},
+            {"field": "execution_time", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "execution_result.success", "order": "ASCENDING"},
+            {"field": "execution_time", "order": "DESCENDING"}
+          ]
+        }
+      ],
+      "ttl": {
+        "field": "execution_time",
+        "duration_days": 90,
+        "description": "執行日誌保留90天"
+      }
+    },
+    "slot_metrics": {
+      "description": "Slot Template 系統指標聚合",
+      "document_structure": {
+        "metric_id": {
+          "type": "string",
+          "description": "指標唯一標識符",
+          "required": true
+        },
+        "date": {
+          "type": "string",
+          "description": "統計日期 (YYYY-MM-DD)",
+          "required": true,
+          "index": true
+        },
+        "template_id": {
+          "type": "string",
+          "description": "模板ID",
+          "required": true,
+          "index": true
+        },
+        "intent": {
+          "type": "string",
+          "description": "意圖",
+          "required": true,
+          "index": true
+        },
+        "metrics": {
+          "type": "object",
+          "description": "聚合指標",
+          "required": true,
+          "schema": {
+            "total_executions": "number",
+            "successful_executions": "number",
+            "failed_executions": "number",
+            "average_completion_score": "number",
+            "average_conversation_turns": "number",
+            "average_execution_time_ms": "number",
+            "slot_extraction_accuracy": "number",
+            "user_satisfaction_avg": "number"
+          }
+        },
+        "created_at": {
+          "type": "timestamp",
+          "description": "創建時間",
+          "required": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "description": "更新時間",
+          "required": true
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null && hasRole('admin')",
+        "write": "request.auth != null && hasRole('system')",
+        "create": "request.auth != null && hasRole('system')"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "date", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "template_id", "order": "ASCENDING"},
+            {"field": "date", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "intent", "order": "ASCENDING"},
+            {"field": "date", "order": "DESCENDING"}
+          ]
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created_at": "2025-07-28T00:00:00Z",
+    "description": "Slot Template System Firestore 集合結構定義",
+    "notes": [
+      "所有集合都支援軟刪除 (使用 deleted_at 欄位)",
+      "timestamps 統一使用 UTC 時間",
+      "user_id 使用 Firebase Auth UID",
+      "所有查詢都需要適當的 index 支援",
+      "安全規則需要配合 Firebase Auth 和自定義 claims"
+    ]
+  }
+}
