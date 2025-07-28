@@ -421,10 +421,18 @@ class SemanticService {
     }
 
     // 🚨 架構重構：OpenAI優先，正則fallback
-    console.log(`🔧 [DEBUG] 檢測到混雜內容，嘗試OpenAI完整實體提取: "${text}"`);
+    console.log(`🔧 [DEBUG] 🚨🚨🚨 架構重構 - 開始OpenAI完整實體提取: "${text}"`);
     
     // Step 1: 優先使用 OpenAI 完整實體提取
-    const openaiResult = await OpenAIService.extractAllEntities(text);
+    let openaiResult;
+    try {
+      console.log(`🔧 [DEBUG] 🚨 正在調用 OpenAI.extractAllEntities...`);
+      openaiResult = await OpenAIService.extractAllEntities(text);
+      console.log(`🔧 [DEBUG] 🚨 OpenAI調用完成:`, openaiResult);
+    } catch (error) {
+      console.error(`🔧 [ERROR] 🚨 OpenAI調用失敗:`, error);
+      openaiResult = { success: false, error: error.message };
+    }
     
     if (openaiResult.success && openaiResult.entities) {
       console.log(`🔧 [DEBUG] OpenAI實體提取成功:`, openaiResult.entities);
@@ -461,7 +469,7 @@ class SemanticService {
     }
     
     // Step 2: OpenAI失敗，fallback到正則表達式智能分離
-    console.log(`🔧 [DEBUG] OpenAI提取失敗，fallback到正則表達式分離`);
+    console.log(`🔧 [DEBUG] 🚨 OpenAI提取失敗，fallback到正則表達式分離。原因:`, openaiResult.error || 'Unknown');
     
     return await this.extractEntitiesWithRegex(text, userId, intentHint);
   }
