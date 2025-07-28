@@ -881,7 +881,7 @@ class SlotTemplateManager {
       
       // Step 3: 問題檢測
       const template = await this.templateLoader.getTemplateByIntent(semanticResult.intent);
-      const problems = this.problemDetector.detectProblems(slotResult.slot_state, template);
+      const problems = this.problemDetector.detectProblems(slotResult.userState, template);
       
       // Step 4: 根據問題數量決定處理策略
       return await this.handleProblemsStrategy(userId, slotResult, problems);
@@ -908,7 +908,7 @@ class SlotTemplateManager {
     const mixedProblem = problems.mixedExtraction && problems.mixedExtraction.length > 0 ? problems.mixedExtraction[0] : null;
     if (mixedProblem) {
       console.log(`[SlotTemplateManager] 檢測到混雜提取問題，開始智能分離 - 用戶: ${userId}`);
-      const separatedSlots = this.problemDetector.separateMixedSlots(slotResult.slot_state);
+      const separatedSlots = this.problemDetector.separateMixedSlots(slotResult.userState);
       
       // 重新處理分離後的 slots
       const newSemanticResult = {
@@ -935,7 +935,7 @@ class SlotTemplateManager {
     } else {
       // 多問題，要求重新輸入
       console.log(`[SlotTemplateManager] 多問題，要求重新輸入 - 用戶: ${userId}`);
-      return await this.generateMultiProblemPrompt(problems, slotResult.slot_state);
+      return await this.generateMultiProblemPrompt(problems, slotResult.userState);
     }
   }
 
@@ -1008,14 +1008,14 @@ class SlotTemplateManager {
       // 創建暫存狀態
       const tempState = await this.tempStateManager.createTempState(
         userId,
-        slotResult.slot_state,
+        slotResult.userState,
         allProblems,
         template
       );
       
       // 生成單一問題提示
       const singleProblem = allProblems[0]; // 因為已確認只有一個問題
-      const promptResult = this.promptGenerator.generateSingleProblemPrompt(singleProblem, slotResult.slot_state);
+      const promptResult = this.promptGenerator.generateSingleProblemPrompt(singleProblem, slotResult.userState);
       
       return {
         ...promptResult,
@@ -1028,7 +1028,7 @@ class SlotTemplateManager {
       // 降級處理：直接要求重新輸入
       return this.promptGenerator.generateMultiProblemPrompt(
         this.problemDetector.getAllProblems(problems),
-        slotResult.slot_state
+        slotResult.userState
       );
     }
   }
