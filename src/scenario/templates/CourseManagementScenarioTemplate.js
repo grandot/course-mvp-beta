@@ -875,10 +875,68 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @private
    */
   formatCourseDisplay(course) {
-    const template = this.config.display?.list_item_format || 
-                    "🕒 {schedule_time} - 📚 {course_name}";
+    // 🎯 Multi-child feature: 智能分離子女信息進行顯示
+    const childInfo = this.extractChildFromCourseName(course.course_name);
     
-    return this.formatMessage(template, course);
+    if (childInfo.hasChild) {
+      // 有子女信息的顯示格式
+      let displayText = `👦 ${childInfo.childName}\n`;
+      displayText += `📚 ${childInfo.courseName}\n`;
+      displayText += `🕒 時間：${course.schedule_time}`;
+      
+      // 添加重複標記
+      if (course.recurring_label || course.is_recurring_instance) {
+        displayText += ' 🔄';
+      }
+      
+      return displayText;
+    } else {
+      // 無子女信息的顯示格式（保持原樣）
+      const template = this.config.display?.list_item_format || 
+                      "🕒 {schedule_time} - 📚 {course_name}";
+      
+      return this.formatMessage(template, course);
+    }
+  }
+
+  /**
+   * 🎯 Multi-child feature: 從課程名稱中提取子女信息
+   * @param {string} courseName - 課程名稱
+   * @returns {Object} { hasChild: boolean, childName: string|null, courseName: string }
+   * @private
+   */
+  extractChildFromCourseName(courseName) {
+    if (!courseName || typeof courseName !== 'string') {
+      return {
+        hasChild: false,
+        childName: null,
+        courseName: courseName || ''
+      };
+    }
+    
+    // 更精確的模式 - 匹配子女名稱 + 課程名稱
+    const patterns = [
+      /^(小[一-龯])([一-龯]+課)$/,            // 小明鋼琴課
+      /^(大[一-龯])([一-龯]+課)$/,            // 大寶數學課  
+      /^([一-龯]{2})([一-龯]+課)$/            // 志強游泳課 (只匹配2字名)
+    ];
+    
+    for (const pattern of patterns) {
+      const match = courseName.match(pattern);
+      if (match) {
+        return {
+          hasChild: true,
+          childName: match[1],
+          courseName: match[2] || '課程'
+        };
+      }
+    }
+    
+    return {
+      hasChild: false,
+      childName: null,
+      courseName: courseName
+    };
   }
 
   /**

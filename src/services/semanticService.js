@@ -445,14 +445,25 @@ class SemanticService {
       };
     }
 
+    // 🎯 Multi-child feature: 先提取子女名稱
+    const childInfo = this.extractChildName(text);
+    let processedText = text;
+    let childName = null;
+    
+    if (childInfo) {
+      childName = childInfo.name;
+      processedText = childInfo.remainingText;
+      console.log(`👶 [SemanticService] 識別到子女: ${childName}`);
+    }
+
     // 🚨 架構重構：OpenAI優先，正則fallback
-    console.log(`🔧 [DEBUG] 🚨🚨🚨 架構重構 - 開始OpenAI完整實體提取: "${text}"`);
+    console.log(`🔧 [DEBUG] 🚨🚨🚨 架構重構 - 開始OpenAI完整實體提取: "${processedText}"`);
     
     // Step 1: 優先使用 OpenAI 完整實體提取
     let openaiResult;
     try {
       console.log(`🔧 [DEBUG] 🚨 正在調用 OpenAI.extractAllEntities...`);
-      openaiResult = await OpenAIService.extractAllEntities(text);
+      openaiResult = await OpenAIService.extractAllEntities(processedText);
       console.log(`🔧 [DEBUG] 🚨 OpenAI調用完成:`, openaiResult);
     } catch (error) {
       console.error(`🔧 [ERROR] 🚨 OpenAI調用失敗:`, error);
@@ -482,7 +493,7 @@ class SemanticService {
       
       // 🚨 關鍵：用提取的日期時間替換原始文本進行時間處理
       if (extractedDateTime) {
-        text = extractedDateTime; // 例如: "明天早上十點"
+        processedText = extractedDateTime; // 例如: "明天早上十點"
       }
       
       // 執行模糊匹配（如果需要）
@@ -490,13 +501,74 @@ class SemanticService {
         courseName = await this.performFuzzyMatching(courseName, userId);
       }
       
-      return await this.buildEntityResult(text, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
+      // 🎯 Multi-child: 如果有子女名稱，嵌入到課程名稱中
+      if (childName && courseName) {
+        courseName = `${childName}${courseName}`;
+      }
+      
+      return await this.buildEntityResult(processedText, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
     }
     
     // Step 2: OpenAI失敗，fallback到正則表達式智能分離
     console.log(`🔧 [DEBUG] 🚨 OpenAI提取失敗，fallback到正則表達式分離。原因:`, openaiResult.error || 'Unknown');
     
-    return await this.extractEntitiesWithRegex(text, userId, intentHint);
+    const result = await this.extractEntitiesWithRegex(processedText, userId, intentHint);
+    
+    // 🎯 Multi-child: 如果有子女名稱，嵌入到課程名稱中
+    if (childName && result.course_name) {
+      result.course_name = `${childName}${result.course_name}`;
+      result.courseName = result.course_name;
+    }
+    
+    return result;
+  }
+
+  /**
+   * 🎯 Multi-child feature: 提取子女名稱
+   * @param {string} text - 用戶輸入文本
+   * @returns {Object|null} { name: 子女名稱, remainingText: 剩餘文本 }
+   */
+  static extractChildName(text) {
+    if (!text || typeof text !== 'string') return null;
+    
+    // 子女名稱模式定義
+    const CHILD_NAME_PATTERNS = [
+      {
+        pattern: /^([小大][一-龯]{1,2})(?:\s|的|今天|明天|後天|下週|每|有|要|的)/,
+        description: '小/大 + 1-2個中文字符',
+        examples: ['小明', '小美', '大寶']
+      },
+      {
+        pattern: /^([一-龯]{2,3})(?:\s|的|今天|明天|後天|下週|每|有|要)/,
+        description: '2-3個中文字符',
+        examples: ['明明', '志強', '美美']
+      }
+    ];
+    
+    // 驗證是否為有效的子女名稱
+    const isValidChildName = (name) => {
+      // 排除明顯的非人名詞彙
+      const excludeWords = ['今天', '明天', '後天', '下週', '每週', '每天', '週一', '週二', '週三', '週四', '週五', '週六', '週日', '上午', '下午', '晚上', '早上', '中午'];
+      if (excludeWords.includes(name)) return false;
+      
+      // 長度檢查
+      if (name.length < 2 || name.length > 4) return false;
+      
+      // 只包含中文字符
+      return /^[一-龯]+$/.test(name);
+    };
+    
+    for (const { pattern } of CHILD_NAME_PATTERNS) {
+      const match = text.match(pattern);
+      if (match && isValidChildName(match[1])) {
+        return {
+          name: match[1],
+          remainingText: text.substring(match.index + match[1].length).trim()
+        };
+      }
+    }
+    
+    return null;
   }
 
   /**
