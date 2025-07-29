@@ -183,6 +183,67 @@ class TaskService {
   }
 
   /**
+   * 計算查詢日期範圍
+   * @param {Object} entities - 實體信息（包含 timeInfo）
+   * @returns {Object} 日期範圍選項 { startDate, endDate }
+   */
+  _calculateDateRange(entities) {
+    const TimeService = require('./timeService');
+    
+    // 如果有具體的時間信息，使用該時間信息計算範圍
+    if (entities.timeInfo && entities.timeInfo.date) {
+      const targetDate = new Date(entities.timeInfo.date);
+      
+      // 檢查是否為週查詢（這週、下週、下下週等）
+      const originalText = entities.timeInfo.raw || '';
+      
+      if (originalText.includes('這週') || originalText.includes('這周') ||
+          originalText.includes('本週') || originalText.includes('本周')) {
+        // 返回這週的範圍
+        const startOfWeek = TimeService.getStartOfWeek(targetDate);
+        const endOfWeek = TimeService.getEndOfWeek(targetDate);
+        return {
+          startDate: TimeService.formatForStorage(startOfWeek),
+          endDate: TimeService.formatForStorage(endOfWeek)
+        };
+      } else if (originalText.includes('下週') || originalText.includes('下周')) {
+        // 返回下週的範圍
+        const nextWeek = new Date(targetDate);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const startOfWeek = TimeService.getStartOfWeek(nextWeek);
+        const endOfWeek = TimeService.getEndOfWeek(nextWeek);
+        return {
+          startDate: TimeService.formatForStorage(startOfWeek),
+          endDate: TimeService.formatForStorage(endOfWeek)
+        };
+      } else if (originalText.includes('下下週') || originalText.includes('下下周')) {
+        // 返回下下週的範圍
+        const nextNextWeek = new Date(targetDate);
+        nextNextWeek.setDate(nextNextWeek.getDate() + 14);
+        const startOfWeek = TimeService.getStartOfWeek(nextNextWeek);
+        const endOfWeek = TimeService.getEndOfWeek(nextNextWeek);
+        return {
+          startDate: TimeService.formatForStorage(startOfWeek),
+          endDate: TimeService.formatForStorage(endOfWeek)
+        };
+      } else {
+        // 返回指定日期的範圍（當天）
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        return {
+          startDate: TimeService.formatForStorage(startOfDay),
+          endDate: TimeService.formatForStorage(endOfDay)
+        };
+      }
+    }
+    
+    // 默認返回空（不限制範圍，使用場景模板的默認範圍）
+    return {};
+  }
+
+  /**
    * 靜態工廠方法 - 創建TaskService實例
    * @param {string} scenarioType - 場景類型（可選，默認從環境變數讀取）
    * @returns {TaskService} TaskService實例
