@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.2.3] - 2025-07-29
+
+### Fixed
+- **🎯 查詢課表學童信息顯示修復**: 修復查詢課表時學童信息不顯示的問題
+  - **問題**: 雖然創建課程時學童信息顯示正常，但查詢課表時學童信息遺失
+  - **根因**: `formatCourseForDisplay` 方法未保留 `child_name` 字段，導致查詢結果中學童信息丟失
+  - **解決方案**: 在 `formatCourseForDisplay` 方法中明確保留 `child_name` 字段
+  - **第一性原則**: 確保查詢和創建功能的學童信息顯示一致性
+  - **影響範圍**: 所有查詢操作（課表查詢、週課表查詢、月課表查詢等）
+
+---
+
 ## [v10.2.2] - 2025-07-29
 
 ### Fixed

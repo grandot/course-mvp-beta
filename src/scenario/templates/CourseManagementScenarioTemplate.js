@@ -915,6 +915,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     return {
       id: course.id,
       course_name: course.course_name,
+      child_name: course.child_name, // 🎯 確保學童信息被保留
       schedule_time: course.schedule_time,
       course_date: course.course_date || course.date,
       location: course.location,
