@@ -300,8 +300,8 @@ class SemanticService {
       this.debugLog(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities);
       this.debugLog(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo);
 
-      // Step 3: 檢查信心度和意圖，低於 0.8 或 unknown 則調用 OpenAI
-      if (ruleResult.confidence >= 0.8 && finalIntent !== 'unknown') {
+      // Step 3: 二進制判斷 - 規則匹配就用規則，不匹配就用 AI
+      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
         // 高信心度：使用規則引擎結果
         this.debugLog(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`);
         const result = {
