@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.0.1] - 2025-07-29
+
+### Fixed
+- **生產環境修復**: 修復模組導入大小寫敏感問題，解決 Linux 伺服器上 `RecurringCourseCalculator` 模組找不到的錯誤。
+
+---
+
 ## [v10.0.0] - 2025-07-29
 
 ### Added

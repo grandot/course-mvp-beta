@@ -343,7 +343,7 @@ class EntityService {
       ]);
 
       // 檢查重複課程在指定日期的衝突
-      const RecurringCourseCalculator = require('../utils/RecurringCourseCalculator');
+      const RecurringCourseCalculator = require('../utils/recurringCourseCalculator');
       const recurringConflicts = RecurringCourseCalculator.checkDateConflicts(
         userId, 
         date, 
