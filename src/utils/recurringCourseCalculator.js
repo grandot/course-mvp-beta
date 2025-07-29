@@ -208,7 +208,7 @@ class RecurringCourseCalculator {
       const days = course.recurrence_details?.days_of_week?.map(d => 
         TimeService.formatWeekdayToText(d)
       ).join('、') || '未指定';
-      return days;
+      return `每${days}`;
     }
     
     if (course.monthly_recurring) {
