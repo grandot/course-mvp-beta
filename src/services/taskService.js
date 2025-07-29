@@ -194,16 +194,22 @@ class TaskService {
     const today = TimeService.getCurrentUserTime();
     
     // 檢查是否為週查詢（無論是否有 timeInfo）
-    // 優先檢查 course_name 中的關鍵詞（因為用戶輸入的"這週課表"可能被提取為 course_name）
+    // 🔧 修復：優先檢查原始用戶輸入，這是最準確的來源
     let checkText = '';
     
-    // 嘗試從多個來源獲取原始文本或關鍵詞
-    if (entities.course_name) {
+    // 嘗試從多個來源獲取原始文本或關鍵詞（按優先級排序）
+    if (entities.originalUserInput) {
+      checkText = entities.originalUserInput;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 使用原始用戶輸入: "${checkText}"`);
+    } else if (entities.course_name) {
       checkText = entities.course_name;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 使用 course_name: "${checkText}"`);
     } else if (entities.raw_text) {
       checkText = entities.raw_text;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 使用 raw_text: "${checkText}"`);
     } else if (entities.timeInfo && entities.timeInfo.raw) {
       checkText = entities.timeInfo.raw;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 使用 timeInfo.raw: "${checkText}"`);
     }
     
     // 檢查文本中的週查詢關鍵詞

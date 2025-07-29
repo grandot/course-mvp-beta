@@ -518,6 +518,9 @@ class LineController {
       // ✅ 使用 TaskService 統一處理所有業務邏輯
       console.log(`🔧 [DEBUG] 開始執行任務 - Intent: ${intent}, UserId: ${userId}`);
       
+      // 🔧 修復：將原始用戶輸入添加到 entities，供 _calculateDateRange 使用
+      entities.originalUserInput = userMessage;
+      
       // 初始化TaskService實例
       const taskService = LineController.initializeTaskService();
       const result = await taskService.executeIntent(intent, entities, userId);
