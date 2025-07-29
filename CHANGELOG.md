@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.1.3] - 2025-07-29
+
+### Fixed
+- **週課表查詢根本修復**: 修復用戶輸入「這週課表」「下週課表」仍返回4週課程的核心問題。
+  - **智能文本源檢測**: 擴展 `_calculateDateRange` 檢查範圍，優先從 `entities.course_name` 識別週查詢關鍵詞
+  - **多來源關鍵詞匹配**: 支持從 `course_name`、`raw_text`、`timeInfo.raw` 等多個來源檢測時間範圍意圖
+  - **精確週範圍計算**: 使用當前時間作為基準，確保「這週」「下週」「下下週」返回正確的週一到週日範圍
+  - **調試日誌增強**: 添加詳細的範圍計算日誌，便於追蹤和調試週查詢邏輯
+  - 解決 OpenAI 將「課表」提取為 `course_name` 但 `timeInfo` 為 null 的語義分析問題
+
+---
+
 ## [v10.1.2] - 2025-07-29
 
 ### Fixed  

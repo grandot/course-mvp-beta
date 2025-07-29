@@ -190,56 +190,77 @@ class TaskService {
   _calculateDateRange(entities) {
     const TimeService = require('./timeService');
     
-    // 如果有具體的時間信息，使用該時間信息計算範圍
-    if (entities.timeInfo && entities.timeInfo.date) {
-      const targetDate = new Date(entities.timeInfo.date);
-      
-      // 檢查是否為週查詢（這週、下週、下下週等）
-      const originalText = entities.timeInfo.raw || '';
-      
-      if (originalText.includes('這週') || originalText.includes('這周') ||
-          originalText.includes('本週') || originalText.includes('本周')) {
+    // 獲取當前時間作為基準
+    const today = TimeService.getCurrentUserTime();
+    
+    // 檢查是否為週查詢（無論是否有 timeInfo）
+    // 優先檢查 course_name 中的關鍵詞（因為用戶輸入的"這週課表"可能被提取為 course_name）
+    let checkText = '';
+    
+    // 嘗試從多個來源獲取原始文本或關鍵詞
+    if (entities.course_name) {
+      checkText = entities.course_name;
+    } else if (entities.raw_text) {
+      checkText = entities.raw_text;
+    } else if (entities.timeInfo && entities.timeInfo.raw) {
+      checkText = entities.timeInfo.raw;
+    }
+    
+    // 檢查文本中的週查詢關鍵詞
+    if (checkText) {
+      if (checkText.includes('這週') || checkText.includes('這周') ||
+          checkText.includes('本週') || checkText.includes('本周')) {
         // 返回這週的範圍
-        const startOfWeek = TimeService.getStartOfWeek(targetDate);
-        const endOfWeek = TimeService.getEndOfWeek(targetDate);
+        const startOfWeek = TimeService.getStartOfWeek(today);
+        const endOfWeek = TimeService.getEndOfWeek(today);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「這週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
         return {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
         };
-      } else if (originalText.includes('下週') || originalText.includes('下周')) {
+      } else if (checkText.includes('下週') || checkText.includes('下周')) {
         // 返回下週的範圍
-        const nextWeek = new Date(targetDate);
+        const nextWeek = new Date(today);
         nextWeek.setDate(nextWeek.getDate() + 7);
         const startOfWeek = TimeService.getStartOfWeek(nextWeek);
         const endOfWeek = TimeService.getEndOfWeek(nextWeek);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
         return {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
         };
-      } else if (originalText.includes('下下週') || originalText.includes('下下周')) {
+      } else if (checkText.includes('下下週') || checkText.includes('下下周')) {
         // 返回下下週的範圍
-        const nextNextWeek = new Date(targetDate);
+        const nextNextWeek = new Date(today);
         nextNextWeek.setDate(nextNextWeek.getDate() + 14);
         const startOfWeek = TimeService.getStartOfWeek(nextNextWeek);
         const endOfWeek = TimeService.getEndOfWeek(nextNextWeek);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
         return {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
-        };
-      } else {
-        // 返回指定日期的範圍（當天）
-        const startOfDay = new Date(targetDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(targetDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        return {
-          startDate: TimeService.formatForStorage(startOfDay),
-          endDate: TimeService.formatForStorage(endOfDay)
         };
       }
     }
     
+    // 如果有具體的時間信息，使用該時間信息計算範圍
+    if (entities.timeInfo && entities.timeInfo.date) {
+      const targetDate = new Date(entities.timeInfo.date);
+      
+      // 返回指定日期的範圍（當天）
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      console.log(`🔧 [DEBUG] _calculateDateRange - 使用具體日期，範圍: ${TimeService.formatForStorage(startOfDay)} 到 ${TimeService.formatForStorage(endOfDay)}`);
+      return {
+        startDate: TimeService.formatForStorage(startOfDay),
+        endDate: TimeService.formatForStorage(endOfDay)
+      };
+    }
+    
     // 默認返回空（不限制範圍，使用場景模板的默認範圍）
+    console.log(`🔧 [DEBUG] _calculateDateRange - 無法識別特定時間範圍，使用默認4週範圍`);
     return {};
   }
 

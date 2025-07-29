@@ -1,60 +1,5 @@
 # IntentOS Course MVP - 三層語義架構系統
 
-## 🐛 Bug 調試流程
-
-### 當用戶報告 chatbot bug 時，立即執行以下調試步驟：
-
-#### 1. **查詢應用程序日誌**
-```bash
-# 基本查詢（最近50條）
-./scripts/get-app-logs.sh 50
-
-# 搜索特定關鍵詞
-./scripts/get-app-logs.sh 30 "用戶輸入內容"
-
-# 查找錯誤日誌
-./scripts/get-app-logs.sh 50 "ERROR"
-
-# 查找特定功能
-./scripts/get-app-logs.sh 30 "課表"
-```
-
-#### 2. **Render CLI 配置信息**
-- **已安裝**: `brew install render`
-- **已登錄**: 工作空間 `tea-d1otdn7fte5s73bnf3k0`
-- **服務ID**: `srv-d21f9u15pdvs73frvns0`
-- **配置文件**: `~/.render/cli.yaml`
-
-#### 3. **常見調試場景**
-```bash
-# 語義解析問題
-./scripts/get-app-logs.sh 50 "SemanticService"
-
-# 時間處理問題  
-./scripts/get-app-logs.sh 30 "TimeService"
-
-# 課程操作問題
-./scripts/get-app-logs.sh 40 "CourseManagement"
-
-# API調用問題
-./scripts/get-app-logs.sh 50 "POST"
-```
-
-#### 4. **用戶報告模板**
-用戶可以這樣報告bug：
-```
-我剛輸入"XXX"但返回結果不對，查render日誌分析問題
-```
-
-#### 5. **調試後續流程**
-1. 分析日誌找出問題根源
-2. 定位相關代碼文件  
-3. 修復代碼邏輯
-4. 更新 CHANGELOG.md
-5. 推送到 git
-
----
-
 ## 🎯 核心理念
 
 **分離式架構設計** - Single Source of Truth + Forced Boundaries
@@ -138,7 +83,60 @@ class DataService {
   }
 }
 ```
+## 🐛 Bug 調試流程
 
+### 當用戶報告 chatbot bug 時，立即執行以下調試步驟：
+
+#### 1. **查詢應用程序日誌**
+```bash
+# 基本查詢（最近50條）
+./scripts/get-app-logs.sh 50
+
+# 搜索特定關鍵詞
+./scripts/get-app-logs.sh 30 "用戶輸入內容"
+
+# 查找錯誤日誌
+./scripts/get-app-logs.sh 50 "ERROR"
+
+# 查找特定功能
+./scripts/get-app-logs.sh 30 "課表"
+```
+
+#### 2. **Render CLI 配置信息**
+- **已安裝**: `brew install render`
+- **已登錄**: 工作空間 `tea-d1otdn7fte5s73bnf3k0`
+- **服務ID**: `srv-d21f9u15pdvs73frvns0`
+- **配置文件**: `~/.render/cli.yaml`
+
+#### 3. **常見調試場景**
+```bash
+# 語義解析問題
+./scripts/get-app-logs.sh 50 "SemanticService"
+
+# 時間處理問題  
+./scripts/get-app-logs.sh 30 "TimeService"
+
+# 課程操作問題
+./scripts/get-app-logs.sh 40 "CourseManagement"
+
+# API調用問題
+./scripts/get-app-logs.sh 50 "POST"
+```
+
+#### 4. **用戶報告模板**
+用戶可以這樣報告bug：
+```
+我剛輸入"XXX"但返回結果不對，查render日誌分析問題
+```
+
+#### 5. **調試後續流程**
+1. 分析日誌找出問題根源
+2. 定位相關代碼文件  
+3. 修復代碼邏輯
+4. 更新 CHANGELOG.md
+5. 推送到 git (必須先更新changelog.md)
+
+---
 ### 🧠 Ultra-Hard 設計原則
 
 **第一性原則**：確定性問題用規則，複雜性問題用AI
@@ -164,13 +162,47 @@ cancel_course:
 if (message.includes('取消')) return 'cancel_course'
 ```
 
-### 🔄 用戶輸入處理流程 (User Input Processing Flow)
+### 用戶輸入處理流程 (User Input Processing Flow)
 
-**智能分層處理架構** - 規則引擎優先，AI後備的高效能設計
+1.  **接收用戶輸入 (Receive User Input)**: `lineController` 接收來自 Line Platform 的 Webhook 事件。
+2.  **上下文加載 (Load Context)**: `conversationContext` 模組負責從 Firestore 加載或初始化用戶的對話上下文。
+3.  **場景路由 (Scenario Routing)**: `ScenarioManager` 根據意圖規則 (`intent-rules.yaml`) 和對話歷史，決定當前的對話場景 (Scenario)。
+4.  **語義適配 (Semantic Adaptation)**: `semanticAdapter` 對用戶輸入進行預處理，提取潛在的實體，並將其轉換為標準化的數據結構，以便進行槽位填充。
+5.  **槽位狀態管理 (Slot State Management)**: `slotStateManager` 接收 `semanticAdapter` 的輸出，更新當前場景的槽位狀態 (Slot State)。這包括填充新槽位、確認已有槽位或標記需要澄清的槽位。
+6.  **問題檢測 (Problem Detection)**: `slotProblemDetector` 檢查當前槽位是否存在問題，例如信息模糊、衝突或缺失。如果檢測到問題，會生成一個需要用戶澄清的內部狀態。
+7.  **任務觸發 (Task Triggering)**: `taskTrigger` 根據 `slot-templates` 中定義的規則，檢查槽位是否滿足觸發後端任務的條件。
+8.  **任務執行 (Task Execution)**: 如果觸發條件滿足，`taskService` 會調用相應的後端服務 (例如 `courseService` 或 `dataService`) 來執行業務邏輯。
+9.  **人類提示生成 (Human Prompt Generation)**: `humanPromptGenerator` 根據 `slotStateManager` 的當前狀態、`slotProblemDetector` 的檢測結果以及 `taskService` 的執行結果，生成一個自然、易於理解的文字回應給用戶。
+10. **回應發送 (Send Response)**: `lineService` 將生成的回應通過 Line Messaging API 發送給用戶。
 
-```
-用戶輸入 → Step 0: 純時間檢測 → Step 1: 規則引擎打分 → Step 2: 實體提取 → Step 3: 信心度測試 → OpenAI/規則引擎返回
-```
+### 🚨 多輪對話增強 (Multi-Turn Dialog Enhancement)
+
+**新增處理步驟**：
+
+11. **補充信息檢測 (Supplement Intent Detection)**: `tempSlotStateManager` 檢測用戶輸入是否為對之前未完成任務的補充信息。
+12. **暫存狀態管理 (Temporary State Management)**: 當檢測到單一問題時，創建暫存狀態等待用戶補充信息。
+13. **智能分離處理 (Intelligent Separation)**: `slotProblemDetector` 檢測並分離混雜的槽位內容，重新處理分離後的結果。
+14. **問題策略處理 (Problem Strategy Handling)**: 根據問題數量（0個、1個、多個）採用不同的處理策略：
+    - **0個問題**: 直接執行任務
+    - **1個問題**: 創建暫存狀態並生成單一問題提示
+    - **多個問題**: 要求用戶重新輸入完整信息
+
+### 🔄 處理流程優化
+
+**第一性原則處理**：
+- **純時間輸入攔截**: 拒絕處理無意義的純時間輸入（如「明天下午四點」），避免系統資源浪費
+- **規則引擎優先**: 高信心度意圖使用規則引擎處理（60-70%案例，毫秒級響應）
+- **AI後備機制**: 低信心度意圖調用OpenAI進行深度理解（30-40%案例）
+- **統一狀態管理**: 不管單一還是多個問題，都使用相同的暫存機制
+
+**效能統計**：
+| 處理層級 | 案例比例 | 響應時間 | 準確率 | 成本 |
+|---------|---------|----------|--------|------|
+| **純時間攔截** | ~5% | <1ms | 100% | 免費 |
+| **規則引擎** | ~60-70% | <10ms | 100% | 免費 |
+| **OpenAI處理** | ~30-40% | 200-500ms | 95%+ | 付費 |
+
+### 核心概念 (Core Concepts)
 
 #### 📋 詳細處理步驟
 
@@ -208,6 +240,16 @@ if (ruleResult.confidence >= 0.8 && intent !== 'unknown') {
 }
 ```
 
+**Step 4: Slot Template 處理 (可選)**
+```javascript
+// 如果啟用 Slot Template System
+if (enableSlotTemplate) {
+  return await SlotTemplateManager.processWithProblemDetection(userId, semanticResult);
+} else {
+  return semanticResult; // 標準處理
+}
+```
+
 #### 🎯 處理效率統計
 
 | 處理層級 | 案例比例 | 響應時間 | 準確率 | 成本 |
@@ -215,6 +257,7 @@ if (ruleResult.confidence >= 0.8 && intent !== 'unknown') {
 | **純時間攔截** | ~5% | <1ms | 100% | 免費 |
 | **規則引擎** | ~60-70% | <10ms | 100% | 免費 |
 | **OpenAI處理** | ~30-40% | 200-500ms | 95%+ | 付費 |
+| **Slot Template** | ~20-30% | 100-300ms | 98%+ | 中等 |
 
 #### 💡 設計優勢
 
@@ -222,16 +265,19 @@ if (ruleResult.confidence >= 0.8 && intent !== 'unknown') {
 - ✅ 70%請求毫秒級響應（規則引擎處理）
 - ✅ AI調用量減少70%，大幅降低成本
 - ✅ 系統資源使用最小化
+- ✅ 多輪對話智能補全，減少用戶重複輸入
 
 **準確性保證**：
 - ✅ 確定性意圖100%準確識別
 - ✅ 複雜語義交由AI深度理解
 - ✅ 分層fallback確保穩定性
+- ✅ 智能問題檢測和分離處理
 
 **可維護性**：
 - ✅ 規則配置化，易於調整優化
 - ✅ 清晰的處理邊界和職責分離
 - ✅ 完整的日誌追蹤和性能監控
+- ✅ 模組化Slot Template系統，支援場景擴展
 
 ---
 
