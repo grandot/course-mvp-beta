@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.0.4] - 2025-07-29
+
+### Fixed
+- **重複課程回覆修復**: 添加缺失的重複課程意圖處理，解決「正在處理中」fallback 問題。
+  - 添加 `create_recurring_course` case：正確顯示重複課程創建成功訊息
+  - 添加 `modify_recurring_course` case：處理重複課程修改回覆
+  - 添加 `stop_recurring_course` case：處理重複課程停止回覆
+
+---
+
 ## [v10.0.3] - 2025-07-29
 
 ### Fixed
