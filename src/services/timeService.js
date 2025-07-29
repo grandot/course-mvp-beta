@@ -635,6 +635,34 @@ class TimeService {
     const weekdayTexts = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
     return weekdayTexts[dayNumber] || '未知';
   }
+
+  /**
+   * 獲取一週的開始日期 (週一)
+   * @param {Date} date - 參考日期
+   * @returns {Date} 一週的開始日期
+   */
+  static getStartOfWeek(date) {
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // 調整為週一
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+    return startOfWeek;
+  }
+
+  /**
+   * 獲取一週的結束日期 (週日)
+   * @param {Date} date - 參考日期
+   * @returns {Date} 一週的結束日期
+   */
+  static getEndOfWeek(date) {
+    const endOfWeek = new Date(date);
+    const day = endOfWeek.getDay();
+    const diff = endOfWeek.getDate() - day + (day === 0 ? 0 : 7); // 調整為週日
+    endOfWeek.setDate(diff);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return endOfWeek;
+  }
 }
 
 module.exports = TimeService;

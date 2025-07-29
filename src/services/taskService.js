@@ -66,8 +66,10 @@ class TaskService {
         case 'stop_recurring_course':
           return await this.scenarioTemplate.stopRecurringEntity(entities, userId);
 
-        case 'query_schedule':
-          return await this.scenarioTemplate.queryEntities(userId);
+        case 'query_schedule': {
+          const options = this._calculateDateRange(entities);
+          return await this.scenarioTemplate.queryEntities(userId, options);
+        }
 
         case 'clear_schedule':
           return await this.scenarioTemplate.clearAllEntities(entities, userId);

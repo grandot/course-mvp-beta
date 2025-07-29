@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.1.1] - 2025-07-29
+
+### Fixed
+- **週課表查詢精準修復**: 修復「下下週課表」、「下週課表」、「這週課表」返回多週而非指定週的問題。
+  - **TaskService 邏輯修復**: 恢復 `_calculateDateRange` 方法調用，確保傳遞正確日期範圍
+  - **TimeService 增強**: 新增 `getStartOfWeek` 和 `getEndOfWeek` 方法，正確計算週的開始/結束日期
+  - **範圍控制優化**: 用戶查詢特定週時只返回該週課程，避免顯示4週內容
+  - 解決課表查詢返回過多無關課程的用戶體驗問題
+
+---
+
+## [v10.1.0] - 2025-07-29
+
+### Added
+- **Render 日誌獲取工具**: 新增本地命令行工具，無需登入 Dashboard 即可查看服務事件。
+  - 支援事件過濾：可按關鍵詞過濾部署、建置狀態
+  - 靈活數量控制：可指定獲取的事件數量
+  - 友好格式化：自動格式化時間戳和事件類型
+  - 命令：`npm run logs [--limit N] [--filter keyword]`
+
+---
+
 ## [v10.0.5] - 2025-07-29
 
 ### Fixed  

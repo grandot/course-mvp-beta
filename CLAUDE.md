@@ -180,7 +180,7 @@ if (ruleResult.confidence >= 0.8 && intent !== 'unknown') {
 
 ---
 
-## 🏗️ 技術架構
+## 🏗️ 未來技術架構
 
 ### 核心技術棧
 ```

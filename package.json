@@ -17,7 +17,8 @@
     "migrate:slot-template:rollback": "node scripts/migrations/001_slot_template_setup.js rollback",
     "deploy:indexes": "node scripts/deploy-firestore-indexes.js deploy",
     "check:indexes": "node scripts/deploy-firestore-indexes.js check",
-    "validate:indexes": "node scripts/deploy-firestore-indexes.js validate"
+    "validate:indexes": "node scripts/deploy-firestore-indexes.js validate",
+    "logs": "node scripts/get-render-logs.js"
   },
   "keywords": [
     "line-bot",
