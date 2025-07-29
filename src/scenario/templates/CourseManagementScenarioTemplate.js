@@ -940,6 +940,9 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
   buildRecurringCourseData(userId, courseName, timeInfo, location, teacher, recurrencePattern, startDate) {
     const defaults = this.config.course_specific?.defaults || {};
     
+    // 解析重複模式並設置布林欄位
+    const recurrenceInfo = this.parseRecurrencePattern(recurrencePattern, timeInfo);
+    
     return {
       student_id: userId,
       course_name: courseName,
@@ -951,8 +954,137 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       is_recurring: true,
       recurrence_pattern: recurrencePattern,
       start_date: startDate,
+      
+      // 必要的布林欄位
+      daily_recurring: recurrenceInfo.daily_recurring,
+      weekly_recurring: recurrenceInfo.weekly_recurring,
+      monthly_recurring: recurrenceInfo.monthly_recurring,
+      
+      // 重複詳細資訊
+      recurrence_details: recurrenceInfo.recurrence_details,
+      
       created_at: TimeService.formatForStorage(TimeService.getCurrentUserTime())
     };
+  }
+
+  /**
+   * 解析重複模式並生成布林欄位和詳細資訊
+   * @param {string} recurrencePattern - 重複模式（如 "每週"）
+   * @param {Object} timeInfo - 時間信息
+   * @returns {Object} 解析結果
+   * @private
+   */
+  parseRecurrencePattern(recurrencePattern, timeInfo) {
+    const result = {
+      daily_recurring: false,
+      weekly_recurring: false,
+      monthly_recurring: false,
+      recurrence_details: {}
+    };
+
+    if (!recurrencePattern) {
+      return result;
+    }
+
+    const pattern = recurrencePattern.toLowerCase();
+
+    if (pattern.includes('每天') || pattern.includes('每日')) {
+      result.daily_recurring = true;
+      result.recurrence_details = {
+        type: 'daily',
+        time_of_day: this.extractTimeOfDay(timeInfo)
+      };
+    } else if (pattern.includes('每週') || pattern.includes('每周')) {
+      result.weekly_recurring = true;
+      result.recurrence_details = {
+        type: 'weekly',
+        days_of_week: this.extractDaysOfWeek(recurrencePattern, timeInfo),
+        time_of_day: this.extractTimeOfDay(timeInfo)
+      };
+    } else if (pattern.includes('每月')) {
+      result.monthly_recurring = true;
+      result.recurrence_details = {
+        type: 'monthly',
+        day_of_month: this.extractDayOfMonth(recurrencePattern, timeInfo),
+        time_of_day: this.extractTimeOfDay(timeInfo)
+      };
+    }
+
+    return result;
+  }
+
+  /**
+   * 從時間信息中提取時間部分
+   * @param {Object} timeInfo - 時間信息
+   * @returns {string} 時間字符串
+   * @private
+   */
+  extractTimeOfDay(timeInfo) {
+    if (!timeInfo || !timeInfo.raw) {
+      return '00:00';
+    }
+    
+    const date = new Date(timeInfo.raw);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * 從重複模式中提取星期幾
+   * @param {string} recurrencePattern - 重複模式
+   * @param {Object} timeInfo - 時間信息
+   * @returns {Array} 星期幾數組 (0=週日, 1=週一, ..., 6=週六)
+   * @private
+   */
+  extractDaysOfWeek(recurrencePattern, timeInfo) {
+    // 從模式中檢測星期幾
+    const dayMap = {
+      '週一': 1, '周一': 1, '一': 1,
+      '週二': 2, '周二': 2, '二': 2,
+      '週三': 3, '周三': 3, '三': 3,
+      '週四': 4, '周四': 4, '四': 4,
+      '週五': 5, '周五': 5, '五': 5,
+      '週六': 6, '周六': 6, '六': 6,
+      '週日': 0, '周日': 0, '日': 0
+    };
+
+    for (const [dayName, dayNum] of Object.entries(dayMap)) {
+      if (recurrencePattern.includes(dayName)) {
+        return [dayNum];
+      }
+    }
+
+    // 如果沒有明確指定，從 timeInfo 的日期推斷
+    if (timeInfo && timeInfo.raw) {
+      const date = new Date(timeInfo.raw);
+      return [date.getDay()];
+    }
+
+    // 預設週一
+    return [1];
+  }
+
+  /**
+   * 從重複模式中提取月份的第幾天
+   * @param {string} recurrencePattern - 重複模式
+   * @param {Object} timeInfo - 時間信息
+   * @returns {number} 月份的第幾天
+   * @private
+   */
+  extractDayOfMonth(recurrencePattern, timeInfo) {
+    // 從模式中找數字
+    const match = recurrencePattern.match(/(\d+)號/);
+    if (match) {
+      return parseInt(match[1]);
+    }
+
+    // 從 timeInfo 的日期推斷
+    if (timeInfo && timeInfo.raw) {
+      const date = new Date(timeInfo.raw);
+      return date.getDate();
+    }
+
+    // 預設1號
+    return 1;
   }
 
   /**

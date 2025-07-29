@@ -665,12 +665,19 @@ class SemanticService {
 
     for (const pattern of recurrencePatterns) {
       if (pattern.test(textForRecurrencePattern)) {
-        if (/每週|weekly/.test(textForRecurrencePattern)) {
+        // 保留完整的重複模式信息，不要簡化
+        if (/每週.*[一二三四五六日]|每周.*[一二三四五六日]/.test(textForRecurrencePattern)) {
+          // 提取完整的週重複模式，如 "每週二"
+          const weekMatch = textForRecurrencePattern.match(/(每週.*[一二三四五六日]|每周.*[一二三四五六日])/);
+          recurrence_pattern = weekMatch ? weekMatch[1] : '每週';
+        } else if (/每週|每周|weekly/.test(textForRecurrencePattern)) {
           recurrence_pattern = '每週';
-        } else if (/每天|daily/.test(textForRecurrencePattern)) {
+        } else if (/每天|每日|daily/.test(textForRecurrencePattern)) {
           recurrence_pattern = '每天';
-        } else if (/每月|monthly/.test(textForRecurrencePattern)) {
-          recurrence_pattern = '每月';
+        } else if (/每月.*\d+號|每月/.test(textForRecurrencePattern)) {
+          // 提取完整的月重複模式，如 "每月15號"
+          const monthMatch = textForRecurrencePattern.match(/(每月.*\d+號|每月)/);
+          recurrence_pattern = monthMatch ? monthMatch[1] : '每月';
         } else {
           recurrence_pattern = '每週'; // 預設為每週
         }
