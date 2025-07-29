@@ -8,6 +8,7 @@
 const ScenarioTemplate = require('../ScenarioTemplate');
 const EntityService = require('../../services/entityService');
 const TimeService = require('../../services/timeService');
+const RecurringCourseCalculator = require('../../utils/recurringCourseCalculator');
 
 class CourseManagementScenarioTemplate extends ScenarioTemplate {
   constructor(config) {
@@ -543,7 +544,8 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         startDate
       });
 
-      const recurrenceDescription = this.formatRecurrenceDescription(recurrence_pattern);
+      // 🎯 修復：使用統一的課程標記格式，基於第一性原則
+      const recurrenceLabel = this.getRecurrenceLabel(recurrence_pattern);
       
       // 🎯 Multi-child: 構建完整的成功回覆（包含學童信息）
       let successMessage = `✅ 重複課程「${course_name}」已創建！\n\n`;
@@ -552,7 +554,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         successMessage += `👶 學童: ${childName}\n`;
       }
       
-      successMessage += `📚 課程：${course_name} (${recurrenceDescription})\n`;
+      successMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
       successMessage += `🕒 時間：${timeInfo.display}\n`;
       successMessage += `📅 開始日期：${TimeService.formatForDisplay(startDate)}`;
       
@@ -731,7 +733,8 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         futureInstancesAffected: futureInstances.length
       });
 
-      const recurrenceDescription = this.formatRecurrenceDescription(courseToStop.recurrence_pattern);
+      // 🎯 修復：使用統一的課程標記格式，基於第一性原則
+      const recurrenceLabel = this.getRecurrenceLabel(courseToStop.recurrence_pattern);
       
       // 🎯 Multi-child: 構建包含學童信息的成功回覆
       let successMessage = `✅ 重複課程「${course_name}」已停止！\n\n`;
@@ -741,7 +744,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         successMessage += `👶 學童: ${displayChildName}\n`;
       }
       
-      successMessage += `📚 課程：${course_name} (${recurrenceDescription})\n`;
+      successMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
       successMessage += `📊 影響的未來課程：約 ${futureInstances.length} 堂\n`;
       successMessage += `⏰ 停止時間：${TimeService.formatForDisplay(today)}`;
       
@@ -1202,7 +1205,78 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @returns {string} 重複模式的友好描述
    * @private
    */
+  /**
+   * 🎯 統一的重複課程標記獲取（基於第一性原則與查詢顯示格式一致）
+   * @param {string} recurrencePattern - 重複模式
+   * @returns {string} 統一格式的重複標記（如 "每週六"）
+   * @private
+   */
+  getRecurrenceLabel(recurrencePattern) {
+    if (!recurrencePattern) return '';
+    
+    // 創建模擬的課程對象以使用 RecurringCourseCalculator
+    const mockCourse = this.buildMockCourseFromPattern(recurrencePattern);
+    
+    if (mockCourse) {
+      return RecurringCourseCalculator.getRecurrenceLabel(mockCourse);
+    }
+    
+    // 🎯 回退：直接處理簡單模式
+    if (recurrencePattern === '每天') return '每天';
+    if (recurrencePattern === '每週') return '每週';
+    if (recurrencePattern === '每月') return '每月';
+    
+    // 🎯 提取純淨模式
+    const weekMatch = recurrencePattern.match(/(每週|每周)([一二三四五六日])/);
+    if (weekMatch) {
+      return `每${weekMatch[2]}`;
+    }
+    
+    return recurrencePattern.split(' ')[0];
+  }
+
+  /**
+   * 🎯 根據重複模式構建模擬課程對象
+   * @param {string} recurrencePattern - 重複模式
+   * @returns {Object|null} 模擬課程對象
+   * @private
+   */
+  buildMockCourseFromPattern(recurrencePattern) {
+    // 提取星期幾信息
+    const weekMatch = recurrencePattern.match(/(每週|每周)([一二三四五六日])/);
+    if (weekMatch) {
+      const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
+      const dayOfWeek = dayMap[weekMatch[2]];
+      
+      return {
+        weekly_recurring: true,
+        recurrence_details: {
+          type: 'weekly',
+          days_of_week: [dayOfWeek]
+        }
+      };
+    }
+    
+    if (recurrencePattern.includes('每天') || recurrencePattern.includes('每日')) {
+      return {
+        daily_recurring: true,
+        recurrence_details: { type: 'daily' }
+      };
+    }
+    
+    if (recurrencePattern.includes('每月')) {
+      return {
+        monthly_recurring: true,
+        recurrence_details: { type: 'monthly', day_of_month: 1 }
+      };
+    }
+    
+    return null;
+  }
+
   formatRecurrenceDescription(recurrencePattern) {
+    if (!recurrencePattern) return '未知重複';
+    
     const descriptions = {
       'daily': '每天重複',
       '每天': '每天重複',
@@ -1212,7 +1286,32 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       '每月': '每月重複'
     };
     
-    return descriptions[recurrencePattern] || `${recurrencePattern} 重複`;
+    // 🎯 修復：檢查是否有直接匹配
+    if (descriptions[recurrencePattern]) {
+      return descriptions[recurrencePattern];
+    }
+    
+    // 🎯 修復：智能提取純淨的重複模式（處理污染的模式）
+    if (recurrencePattern.includes('每週') || recurrencePattern.includes('每周')) {
+      // 提取星期幾信息
+      const weekMatch = recurrencePattern.match(/(每週|每周)([一二三四五六日])/);
+      if (weekMatch) {
+        return `每週${weekMatch[2]}重複`;
+      }
+      return '每週重複';
+    }
+    
+    if (recurrencePattern.includes('每天') || recurrencePattern.includes('每日')) {
+      return '每天重複';
+    }
+    
+    if (recurrencePattern.includes('每月')) {
+      return '每月重複';
+    }
+    
+    // 🎯 回退：只返回前面的純淨部分
+    const cleanPattern = recurrencePattern.split(' ')[0];
+    return `${cleanPattern}重複`;
   }
 
   /**
@@ -1281,7 +1380,8 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       modifiedFields 
     });
 
-    const recurrenceDescription = this.formatRecurrenceDescription(
+    // 🎯 修復：使用統一的課程標記格式，基於第一性原則
+    const recurrenceLabel = this.getRecurrenceLabel(
       recurrence_pattern || courseTemplate.recurrence_pattern
     );
 
@@ -1293,7 +1393,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       successMessage += `👶 學童: ${displayChildName}\n`;
     }
     
-    successMessage += `📚 課程：${courseTemplate.course_name} (${recurrenceDescription})\n`;
+    successMessage += `📚 課程：${courseTemplate.course_name} (${recurrenceLabel})\n`;
     successMessage += `📝 修改內容：${modifiedFields.join('、')}\n`;
     successMessage += `🕒 新時間：${updateData.schedule_time || courseTemplate.schedule_time}`;
     

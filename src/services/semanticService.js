@@ -744,9 +744,13 @@ class SemanticService {
       if (pattern.test(textForRecurrencePattern)) {
         // 保留完整的重複模式信息，不要簡化
         if (/每週.*[一二三四五六日]|每周.*[一二三四五六日]/.test(textForRecurrencePattern)) {
-          // 提取完整的週重複模式，如 "每週二"
-          const weekMatch = textForRecurrencePattern.match(/(每週.*[一二三四五六日]|每周.*[一二三四五六日])/);
-          recurrence_pattern = weekMatch ? weekMatch[1] : '每週';
+          // 🎯 修復：只提取純淨的週重複模式，不包含學童信息和時間信息
+          const weekMatch = textForRecurrencePattern.match(/(每週|每周)([一二三四五六日])/);
+          if (weekMatch) {
+            recurrence_pattern = `${weekMatch[1]}${weekMatch[2]}`; // 例如: "每週二"
+          } else {
+            recurrence_pattern = '每週';
+          }
         } else if (/每週|每周|weekly/.test(textForRecurrencePattern)) {
           recurrence_pattern = '每週';
         } else if (/每天|每日|daily/.test(textForRecurrencePattern)) {

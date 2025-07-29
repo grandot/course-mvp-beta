@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.2.11] - 2025-07-29
+
+### Fixed
+- **🚨 重複課程模式提取根本修復**: 基於第一性原則徹底修復重複課程模式提取和顯示的學童信息污染問題
+  - **問題**: "📚 課程：魔術 (每週六小光下午六 重複)" - 學童信息污染重複模式，違反第一性原則
+  - **根本問題**: 
+    - 語義提取: recurrence_pattern 包含學童信息 "每週六小光下午六"
+    - 顯示格式: formatRecurrenceDescription 添加 "重複" 後綴造成冗餘
+  - **修復內容**:
+    - **SemanticService.buildEntityResult**: 修復週重複模式提取邏輯，只提取純淨的 "每週X" 格式
+    - **CourseManagementScenarioTemplate**: 新增 getRecurrenceLabel 方法，統一使用 RecurringCourseCalculator 格式
+    - **統一顯示格式**: 所有重複課程回覆改為 "(每週六)" 格式，與查詢顯示一致
+  - **修復效果**: 
+    - 舊格式: "📚 課程：魔術 (每週六小光下午六 重複)"
+    - 新格式: "📚 課程：魔術 (每週六)"
+  - **第一性原則**: 重複模式應該純淨無污染，課程顯示格式應該全系統一致
+  - **影響範圍**: 重複課程創建、修改、停止回覆，確保與查詢顯示格式統一
+
+---
+
 ## [v10.2.10] - 2025-07-29
 
 ### Fixed
