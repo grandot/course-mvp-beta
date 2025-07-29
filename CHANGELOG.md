@@ -5,13 +5,16 @@ All notable changes to this project will be documented in this file.
 ## [v10.1.3] - 2025-07-29
 
 ### Fixed
-- **週課表查詢終極修復**: 徹底解決用戶輸入「這週課表」「下週課表」仍返回4週課程的核心問題。
+- **時間範圍查詢完整修復**: 徹底解決週課表和月課表查詢的所有問題。
   - **原始文本保留**: 將用戶原始輸入 `originalUserInput` 傳遞給 TaskService，避免語義分析丟失時間信息
   - **優先級檢測邏輯**: `_calculateDateRange` 按優先級檢查：`originalUserInput` > `course_name` > `raw_text` > `timeInfo.raw`
   - **根因問題解決**: OpenAI 將「下週課表」分解為 course_name="課表" + timeInfo=null，導致時間信息丟失
-  - **精確週範圍計算**: 基於原始輸入直接檢測「這週」「下週」「下下週」關鍵詞
-  - **詳細調試追蹤**: 新增完整的文本源檢測和範圍計算日誌，便於問題排查
   - **🚨 關鍵字匹配順序修復**: 修復「下下週課表」被錯誤識別為「下週」的字符串包含匹配問題，將最具體的條件放在前面
+  - **🆕 月查詢功能**: 新增完整的月查詢支持，修復「本月課表」錯誤返回8月課程的問題
+    - 支持「本月課表」→ 返回當月1日到最後一天
+    - 支持「下月課表」→ 返回下月1日到最後一天  
+    - 支持「下下月課表」→ 返回下下月完整範圍
+  - **TimeService 增強**: 新增 `getStartOfMonth` 和 `getEndOfMonth` 方法，確保精確的月範圍計算
 
 ---
 

@@ -663,6 +663,31 @@ class TimeService {
     endOfWeek.setHours(23, 59, 59, 999);
     return endOfWeek;
   }
+
+  /**
+   * 獲取一個月的開始日期 (第1天)
+   * @param {Date} date - 參考日期
+   * @returns {Date} 一個月的開始日期
+   */
+  static getStartOfMonth(date) {
+    const startOfMonth = new Date(date);
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    return startOfMonth;
+  }
+
+  /**
+   * 獲取一個月的結束日期 (最後一天)
+   * @param {Date} date - 參考日期
+   * @returns {Date} 一個月的結束日期
+   */
+  static getEndOfMonth(date) {
+    const endOfMonth = new Date(date);
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    endOfMonth.setDate(0); // 設為上個月的最後一天
+    endOfMonth.setHours(23, 59, 59, 999);
+    return endOfMonth;
+  }
 }
 
 module.exports = TimeService;

@@ -212,10 +212,44 @@ class TaskService {
       console.log(`🔧 [DEBUG] _calculateDateRange - 使用 timeInfo.raw: "${checkText}"`);
     }
     
-    // 檢查文本中的週查詢關鍵詞
+    // 檢查文本中的時間範圍關鍵詞
     // 🚨 關鍵修復：最具體的匹配條件必須放在前面，避免被包含匹配
     if (checkText) {
-      if (checkText.includes('下下週') || checkText.includes('下下周')) {
+      // 🆕 月查詢處理 - 最高優先級
+      if (checkText.includes('下下月')) {
+        // 返回下下月的範圍
+        const nextNextMonth = new Date(today);
+        nextNextMonth.setMonth(nextNextMonth.getMonth() + 2);
+        const startOfMonth = TimeService.getStartOfMonth(nextNextMonth);
+        const endOfMonth = TimeService.getEndOfMonth(nextNextMonth);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
+        return {
+          startDate: TimeService.formatForStorage(startOfMonth),
+          endDate: TimeService.formatForStorage(endOfMonth)
+        };
+      } else if (checkText.includes('下月')) {
+        // 返回下月的範圍
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        const startOfMonth = TimeService.getStartOfMonth(nextMonth);
+        const endOfMonth = TimeService.getEndOfMonth(nextMonth);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
+        return {
+          startDate: TimeService.formatForStorage(startOfMonth),
+          endDate: TimeService.formatForStorage(endOfMonth)
+        };
+      } else if (checkText.includes('本月') || checkText.includes('這個月') || checkText.includes('這月')) {
+        // 返回本月的範圍
+        const startOfMonth = TimeService.getStartOfMonth(today);
+        const endOfMonth = TimeService.getEndOfMonth(today);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「本月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
+        return {
+          startDate: TimeService.formatForStorage(startOfMonth),
+          endDate: TimeService.formatForStorage(endOfMonth)
+        };
+      }
+      // 週查詢處理 - 次要優先級
+      else if (checkText.includes('下下週') || checkText.includes('下下周')) {
         // 返回下下週的範圍 - 最具體的條件放在最前面
         const nextNextWeek = new Date(today);
         nextNextWeek.setDate(nextNextWeek.getDate() + 14);
