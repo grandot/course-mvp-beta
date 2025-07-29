@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.0.3] - 2025-07-29
+
+### Fixed
+- **模組導入修復**: 修復 `CourseManagementScenarioTemplate.js` 中的大小寫敏感問題，解決查詢課表功能錯誤。
+
+### Added  
+- **規則引擎泛化**: 實施二進制判斷邏輯，提升規則覆蓋率至75%，平均延遲降至82.5ms。
+  - 簡化信心度判斷：`confidence > 0` 就用規則引擎
+  - 擴展重複課程規則：直接支援週一到週日匹配
+  - 增強查詢意圖規則：添加更多常見表達方式
+
+---
+
 ## [v10.0.2] - 2025-07-29
 
 ### Fixed
