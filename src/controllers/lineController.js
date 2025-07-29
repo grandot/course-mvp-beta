@@ -685,6 +685,31 @@ class LineController {
               }
               break;
             }
+            case 'create_recurring_course': {
+              if (result.success) {
+                // 使用 TaskService 返回的完整消息
+                replyMessage = result.message + debugInfo;
+              } else {
+                replyMessage = (result.message || '創建重複課程失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'modify_recurring_course': {
+              if (result.success) {
+                replyMessage = result.message + debugInfo;
+              } else {
+                replyMessage = (result.message || '修改重複課程失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'stop_recurring_course': {
+              if (result.success) {
+                replyMessage = result.message + debugInfo;
+              } else {
+                replyMessage = (result.message || '停止重複課程失敗') + debugInfo;
+              }
+              break;
+            }
             default:
               replyMessage = '✅ 已收到您的訊息，正在處理中...';
           }
