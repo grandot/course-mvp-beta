@@ -1,5 +1,60 @@
 # IntentOS Course MVP - 三層語義架構系統
 
+## 🐛 Bug 調試流程
+
+### 當用戶報告 chatbot bug 時，立即執行以下調試步驟：
+
+#### 1. **查詢應用程序日誌**
+```bash
+# 基本查詢（最近50條）
+./scripts/get-app-logs.sh 50
+
+# 搜索特定關鍵詞
+./scripts/get-app-logs.sh 30 "用戶輸入內容"
+
+# 查找錯誤日誌
+./scripts/get-app-logs.sh 50 "ERROR"
+
+# 查找特定功能
+./scripts/get-app-logs.sh 30 "課表"
+```
+
+#### 2. **Render CLI 配置信息**
+- **已安裝**: `brew install render`
+- **已登錄**: 工作空間 `tea-d1otdn7fte5s73bnf3k0`
+- **服務ID**: `srv-d21f9u15pdvs73frvns0`
+- **配置文件**: `~/.render/cli.yaml`
+
+#### 3. **常見調試場景**
+```bash
+# 語義解析問題
+./scripts/get-app-logs.sh 50 "SemanticService"
+
+# 時間處理問題  
+./scripts/get-app-logs.sh 30 "TimeService"
+
+# 課程操作問題
+./scripts/get-app-logs.sh 40 "CourseManagement"
+
+# API調用問題
+./scripts/get-app-logs.sh 50 "POST"
+```
+
+#### 4. **用戶報告模板**
+用戶可以這樣報告bug：
+```
+我剛輸入"XXX"但返回結果不對，查render日誌分析問題
+```
+
+#### 5. **調試後續流程**
+1. 分析日誌找出問題根源
+2. 定位相關代碼文件  
+3. 修復代碼邏輯
+4. 更新 CHANGELOG.md
+5. 推送到 git
+
+---
+
 ## 🎯 核心理念
 
 **分離式架構設計** - Single Source of Truth + Forced Boundaries
