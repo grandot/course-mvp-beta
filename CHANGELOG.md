@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
   - **根因問題解決**: OpenAI 將「下週課表」分解為 course_name="課表" + timeInfo=null，導致時間信息丟失
   - **精確週範圍計算**: 基於原始輸入直接檢測「這週」「下週」「下下週」關鍵詞
   - **詳細調試追蹤**: 新增完整的文本源檢測和範圍計算日誌，便於問題排查
+  - **🚨 關鍵字匹配順序修復**: 修復「下下週課表」被錯誤識別為「下週」的字符串包含匹配問題，將最具體的條件放在前面
 
 ---
 

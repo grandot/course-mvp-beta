@@ -213,19 +213,21 @@ class TaskService {
     }
     
     // 檢查文本中的週查詢關鍵詞
+    // 🚨 關鍵修復：最具體的匹配條件必須放在前面，避免被包含匹配
     if (checkText) {
-      if (checkText.includes('這週') || checkText.includes('這周') ||
-          checkText.includes('本週') || checkText.includes('本周')) {
-        // 返回這週的範圍
-        const startOfWeek = TimeService.getStartOfWeek(today);
-        const endOfWeek = TimeService.getEndOfWeek(today);
-        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「這週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
+      if (checkText.includes('下下週') || checkText.includes('下下周')) {
+        // 返回下下週的範圍 - 最具體的條件放在最前面
+        const nextNextWeek = new Date(today);
+        nextNextWeek.setDate(nextNextWeek.getDate() + 14);
+        const startOfWeek = TimeService.getStartOfWeek(nextNextWeek);
+        const endOfWeek = TimeService.getEndOfWeek(nextNextWeek);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
         return {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
         };
       } else if (checkText.includes('下週') || checkText.includes('下周')) {
-        // 返回下週的範圍
+        // 返回下週的範圍 - 放在下下週之後
         const nextWeek = new Date(today);
         nextWeek.setDate(nextWeek.getDate() + 7);
         const startOfWeek = TimeService.getStartOfWeek(nextWeek);
@@ -235,13 +237,12 @@ class TaskService {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
         };
-      } else if (checkText.includes('下下週') || checkText.includes('下下周')) {
-        // 返回下下週的範圍
-        const nextNextWeek = new Date(today);
-        nextNextWeek.setDate(nextNextWeek.getDate() + 14);
-        const startOfWeek = TimeService.getStartOfWeek(nextNextWeek);
-        const endOfWeek = TimeService.getEndOfWeek(nextNextWeek);
-        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
+      } else if (checkText.includes('這週') || checkText.includes('這周') ||
+          checkText.includes('本週') || checkText.includes('本周')) {
+        // 返回這週的範圍
+        const startOfWeek = TimeService.getStartOfWeek(today);
+        const endOfWeek = TimeService.getEndOfWeek(today);
+        console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「這週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
         return {
           startDate: TimeService.formatForStorage(startOfWeek),
           endDate: TimeService.formatForStorage(endOfWeek)
