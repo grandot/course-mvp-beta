@@ -564,7 +564,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
           course: result.data,
           recurrence_pattern,
           start_date: startDate,
-          recurrence_description: recurrenceDescription
+          recurrence_description: recurrenceLabel
         }
       );
 
