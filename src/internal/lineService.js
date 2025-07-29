@@ -137,15 +137,21 @@ class LineService {
 
         let message = '📅 您的課程安排：\n\n';
         courses.forEach((course, index) => {
-          message += `${index + 1}. ${course.course_name}\n`;
-          message += `🕒 ${course.schedule_time}\n`;
-          if (course.location) {
-            message += `📍 ${course.location}\n`;
+          // 🎯 使用正確的 display_text 而不是硬編碼格式
+          if (course.display_text) {
+            message += `${index + 1}. ${course.display_text}\n\n`;
+          } else {
+            // fallback 到舊格式
+            message += `${index + 1}. ${course.course_name}\n`;
+            message += `🕒 ${course.schedule_time}\n`;
+            if (course.location) {
+              message += `📍 ${course.location}\n`;
+            }
+            if (course.teacher) {
+              message += `👨‍🏫 ${course.teacher}\n`;
+            }
+            message += '\n';
           }
-          if (course.teacher) {
-            message += `👨‍🏫 ${course.teacher}\n`;
-          }
-          message += '\n';
         });
         return message.trim();
       }

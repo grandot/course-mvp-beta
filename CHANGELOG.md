@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.2.5] - 2025-07-29
+
+### Fixed
+- **🎯 學童信息顯示全場景修復**: 基於第一性原則的系統性修復，確保所有功能場景的學童信息顯示一致性
+  - **全面檢查發現的問題**:
+    - ✅ 創建課程回覆 - 已正確
+    - ❌ 查詢課表回覆 - lineService.js 硬編碼格式
+    - ❌ 修改課程回覆 - lineController.js 未檢查 child_name
+    - ❌ 取消課程回覆 - lineController.js 未檢查 child_name
+    - ❌ 重複課程實例 - RecurringCourseCalculator 完全遺漏 child_name
+  - **解決方案**:
+    - 修復查詢課表格式邏輯：優先使用 `course.display_text`
+    - 修復修改課程回覆：添加學童信息檢查和顯示
+    - 修復取消課程回覆：添加學童信息檢查和顯示  
+    - 修復重複課程實例：在 `calculateFutureOccurrences` 中保留 `child_name`
+  - **第一性原則**: 所有課程操作回覆必須一致地顯示學童信息
+  - **影響範圍**: 課程創建、查詢、修改、取消、重複課程等所有場景
+
+---
+
+## [v10.2.4] - 2025-07-29
+
+### Fixed
+- **🎯 查詢課表顯示格式根本修復**: 徹底解決查詢課表時學童信息不顯示的問題
+  - **問題**: 雖然數據正確且 `display_text` 包含學童信息，但最終用戶看到的課表沒有學童信息
+  - **根因**: `lineService.js` 中 `formatCourseResponse` 使用硬編碼格式，忽略了正確的 `display_text`
+  - **解決方案**: 修改課表格式化邏輯，優先使用 `course.display_text` 而不是硬編碼格式
+  - **第一性原則**: 統一使用 CourseManagementScenarioTemplate 的標準格式化結果
+  - **修復效果**: 現在查詢課表將正確顯示 `👶 學童: 小明\n📚 足球\n🕒 時間：07/31 10:30 AM`
+
+---
+
 ## [v10.2.3] - 2025-07-29
 
 ### Fixed

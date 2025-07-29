@@ -607,6 +607,12 @@ class LineController {
                 // 如果有被取消的課程信息，添加詳細信息
                 if (result.cancelledCourse) {
                   const details = [];
+                  
+                  // 🎯 Multi-child: 如果有學童信息，優先顯示
+                  if (result.cancelledCourse.child_name) {
+                    details.push(`👶 學童: ${result.cancelledCourse.child_name}`);
+                  }
+                  
                   details.push(`📚 課程：${result.cancelledCourse.course_name}`);
                   
                   if (result.cancelledCourse.schedule_time) {
@@ -656,6 +662,15 @@ class LineController {
                 // 如果有更新的課程信息，添加詳細信息
                 if (result.updatedCourse && result.originalCourse) {
                   const details = [];
+                  
+                  // 🎯 Multi-child: 如果有學童信息，優先顯示
+                  if (result.updatedCourse.child_name || result.originalCourse.child_name) {
+                    const childName = result.updatedCourse.child_name || result.originalCourse.child_name;
+                    details.push(`👶 學童: ${childName}`);
+                  }
+                  
+                  details.push(`📚 課程：${result.updatedCourse.course_name || result.originalCourse.course_name}`);
+                  
                   if (result.modifiedFields.includes('schedule_time') || result.modifiedFields.includes('course_date')) {
                     details.push(`🕒 新時間：${result.updatedCourse.schedule_time}`);
                   }
