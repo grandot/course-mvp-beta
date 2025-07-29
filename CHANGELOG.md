@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.1.2] - 2025-07-29
+
+### Fixed  
+- **生產環境關鍵錯誤修復**: 修復 TaskService 中缺失的 `_calculateDateRange` 方法導致的運行時錯誤。
+  - **方法實現完成**: 新增完整的 `_calculateDateRange` 方法實現，支持精確的週範圍計算
+  - **智能時間範圍檢測**: 根據用戶輸入自動識別「這週」、「下週」、「下下週」等時間範圍意圖
+  - **統一時間處理**: 使用 TimeService 的標準方法確保時間計算的一致性和準確性
+  - **生產部署驗證**: 解決 "'_calculateDateRange' is not a function" 和模組載入錯誤
+  - **調試工具增強**: 新增 Render 日誌監控腳本，便於快速定位和解決生產問題
+
+### Added
+- **調試工具集**: 新增完整的 Render 平台調試工具鏈
+  - `scripts/get-app-logs.sh`: 應用程序日誌快速獲取腳本
+  - `scripts/render-events.sh`: 服務事件查詢工具
+  - `scripts/test-render-log-endpoints.js`: API 端點測試工具
+
+---
+
 ## [v10.1.1] - 2025-07-29
 
 ### Fixed
