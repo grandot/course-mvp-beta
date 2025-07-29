@@ -94,7 +94,12 @@ class TimeService {
 
     if (Number.isNaN(date.getTime())) return null;
 
-    return date.toISOString().split('T')[0];
+    // 使用本地日期避免時區轉換問題
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -469,6 +474,166 @@ class TimeService {
     }
 
     return date;
+  }
+
+  /**
+   * 計算重複課程的智能起始日期
+   * @param {string} recurrenceType - 重複類型 ('daily', 'weekly', 'monthly')
+   * @param {string} timeOfDay - 時間 (HH:MM 格式)
+   * @param {Date} currentTime - 當前時間
+   * @param {Array} daysOfWeek - 星期幾陣列 (0=週日, 1=週一, ..., 6=週六)
+   * @param {number} dayOfMonth - 每月第幾天 (1-31)
+   * @returns {string} 起始日期 (YYYY-MM-DD 格式)
+   */
+  static calculateSmartStartDate(recurrenceType, timeOfDay, currentTime = null, daysOfWeek = [], dayOfMonth = 1) {
+    const now = currentTime || this.getCurrentUserTime();
+    const [hour, minute] = timeOfDay.split(':').map(Number);
+
+    switch (recurrenceType) {
+      case 'daily':
+        return this.calculateDailyStartDate(now, hour, minute);
+      case 'weekly':
+        return this.calculateWeeklyStartDate(now, hour, minute, daysOfWeek);
+      case 'monthly':
+        return this.calculateMonthlyStartDate(now, hour, minute, dayOfMonth);
+      default:
+        throw new Error(`Unsupported recurrence type: ${recurrenceType}`);
+    }
+  }
+
+  /**
+   * 計算每日重複課程的起始日期
+   * @param {Date} now - 當前時間
+   * @param {number} hour - 小時
+   * @param {number} minute - 分鐘
+   * @returns {string} 起始日期 (YYYY-MM-DD 格式)
+   */
+  static calculateDailyStartDate(now, hour, minute) {
+    const today = new Date(now);
+    today.setHours(hour, minute, 0, 0);
+
+    // 如果今天的時間已過，從明天開始
+    if (now > today) {
+      today.setDate(today.getDate() + 1);
+    }
+
+    return this.formatForStorage(today);
+  }
+
+  /**
+   * 計算每週重複課程的起始日期
+   * @param {Date} now - 當前時間
+   * @param {number} hour - 小時
+   * @param {number} minute - 分鐘
+   * @param {Array} daysOfWeek - 星期幾陣列
+   * @returns {string} 起始日期 (YYYY-MM-DD 格式)
+   */
+  static calculateWeeklyStartDate(now, hour, minute, daysOfWeek) {
+    if (!daysOfWeek || daysOfWeek.length === 0) {
+      throw new Error('daysOfWeek must be provided for weekly recurrence');
+    }
+
+    const targetDay = daysOfWeek[0]; // 取第一個星期幾
+    const currentDay = now.getDay();
+
+    let daysUntilTarget = targetDay - currentDay;
+    if (daysUntilTarget < 0) daysUntilTarget += 7;
+
+    const targetDate = new Date(now);
+    targetDate.setDate(now.getDate() + daysUntilTarget);
+    targetDate.setHours(hour, minute, 0, 0);
+
+    // 如果是同一天但時間已過，移到下週
+    if (daysUntilTarget === 0 && now > targetDate) {
+      targetDate.setDate(targetDate.getDate() + 7);
+    }
+
+    return this.formatForStorage(targetDate);
+  }
+
+  /**
+   * 計算每月重複課程的起始日期
+   * @param {Date} now - 當前時間
+   * @param {number} hour - 小時
+   * @param {number} minute - 分鐘
+   * @param {number} dayOfMonth - 每月第幾天
+   * @returns {string} 起始日期 (YYYY-MM-DD 格式)
+   */
+  static calculateMonthlyStartDate(now, hour, minute, dayOfMonth) {
+    const targetDate = new Date(now);
+    targetDate.setDate(dayOfMonth);
+    targetDate.setHours(hour, minute, 0, 0);
+
+    // 如果本月的日期已過，移到下個月
+    if (now > targetDate) {
+      targetDate.setMonth(targetDate.getMonth() + 1);
+      targetDate.setDate(dayOfMonth);
+    }
+
+    return this.formatForStorage(targetDate);
+  }
+
+  /**
+   * 獲取下一個指定星期幾的日期
+   * @param {Date} fromDate - 起始日期
+   * @param {number} targetDay - 目標星期幾 (0=週日, 1=週一, ..., 6=週六)
+   * @returns {Date} 下一個指定星期幾的日期
+   */
+  static getNextWeekday(fromDate, targetDay) {
+    const date = new Date(fromDate);
+    const currentDay = date.getDay();
+
+    let daysUntilTarget = targetDay - currentDay;
+    if (daysUntilTarget <= 0) daysUntilTarget += 7;
+
+    date.setDate(date.getDate() + daysUntilTarget);
+    return date;
+  }
+
+  /**
+   * 獲取下一個指定月份日期
+   * @param {Date} fromDate - 起始日期
+   * @param {number} dayOfMonth - 月份中的第幾天
+   * @returns {Date} 下一個指定月份日期
+   */
+  static getNextMonthDay(fromDate, dayOfMonth) {
+    const date = new Date(fromDate);
+    
+    // 設定為當月指定日期
+    date.setDate(dayOfMonth);
+    
+    // 如果已經過了，移到下個月
+    if (date <= fromDate) {
+      date.setMonth(date.getMonth() + 1);
+      date.setDate(dayOfMonth);
+    }
+
+    return date;
+  }
+
+  /**
+   * 解析星期幾文字為數字
+   * @param {string} dayText - 星期幾文字 (週一、週二等)
+   * @returns {number} 星期幾數字 (0=週日, 1=週一, ..., 6=週六)
+   */
+  static parseWeekdayToNumber(dayText) {
+    const weekdayMap = {
+      '週日': 0, '週一': 1, '週二': 2, '週三': 3, '週四': 4, '週五': 5, '週六': 6,
+      '星期日': 0, '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6,
+      '禮拜日': 0, '禮拜一': 1, '禮拜二': 2, '禮拜三': 3, '禮拜四': 4, '禮拜五': 5, '禮拜六': 6
+    };
+
+    return weekdayMap[dayText] !== undefined ? weekdayMap[dayText] : null;
+  }
+
+  /**
+   * 將星期幾數字轉換為中文文字
+   * @param {number} dayNumber - 星期幾數字 (0=週日, 1=週一, ..., 6=週六)
+   * @returns {string} 星期幾文字
+   */
+  static formatWeekdayToText(dayNumber) {
+    const weekdayTexts = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+    return weekdayTexts[dayNumber] || '未知';
   }
 }
 

@@ -40,6 +40,9 @@ class DataService {
       throw new Error('DataService: courseData is required');
     }
 
+    // 驗證重複課程類型一致性
+    this.validateRecurrenceType(courseData);
+
     let timestamp;
     try {
       timestamp = TimeService.getCurrentUserTime().toISOString();
@@ -54,8 +57,19 @@ class DataService {
       course_name: courseData.course_name,
       schedule_time: courseData.schedule_time,
       course_date: courseData.course_date,
+      
+      // 保留舊的重複課程欄位以維持向後相容性
       is_recurring: courseData.is_recurring || false,
       recurrence_pattern: courseData.recurrence_pattern || null,
+      
+      // 新增：三個布林欄位標註重複類型
+      daily_recurring: courseData.daily_recurring || false,
+      weekly_recurring: courseData.weekly_recurring || false,
+      monthly_recurring: courseData.monthly_recurring || false,
+      
+      // 新增：重複詳細資訊
+      recurrence_details: courseData.recurrence_details || null,
+      
       location: courseData.location || null,
       teacher: courseData.teacher || null,
       status: courseData.status || 'scheduled',
@@ -65,6 +79,8 @@ class DataService {
 
     // 直接使用 Firebase
     const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSES, course);
+    
+    console.log(`📝 Course created: ${courseData.course_name} (Recurring: ${this.getRecurrenceLabel(course)})`);
     
     return {
       success: true,
@@ -488,6 +504,97 @@ class DataService {
       default:
         throw new Error(`DataService: Unknown schema: ${schema}`);
     }
+  }
+
+  /**
+   * 驗證重複課程類型一致性
+   * @param {Object} courseData - 課程數據
+   * @throws {Error} 如果重複類型不一致
+   */
+  static validateRecurrenceType(courseData) {
+    const types = [
+      courseData.daily_recurring,
+      courseData.weekly_recurring,
+      courseData.monthly_recurring
+    ].filter(Boolean);
+
+    if (types.length > 1) {
+      throw new Error('課程只能有一種重複類型');
+    }
+
+    const hasRecurrence = types.length === 1;
+    const hasDetails = courseData.recurrence_details != null;
+
+    // 如果有重複類型但沒有詳細資訊，拋出錯誤
+    if (hasRecurrence && !hasDetails) {
+      throw new Error('重複課程必須提供詳細資訊');
+    }
+
+    // 如果沒有重複類型但有詳細資訊，這是允許的（可能是從現有重複課程更新）
+    return true;
+  }
+
+  /**
+   * 獲取重複課程類型標籤
+   * @param {Object} courseData - 課程數據
+   * @returns {string} 重複類型標籤
+   */
+  static getRecurrenceLabel(courseData) {
+    if (courseData.daily_recurring) return 'Daily';
+    if (courseData.weekly_recurring) return 'Weekly';
+    if (courseData.monthly_recurring) return 'Monthly';
+    return 'None';
+  }
+
+  /**
+   * 檢查課程是否為重複課程
+   * @param {Object} course - 課程對象
+   * @returns {boolean} 是否為重複課程
+   */
+  static isRecurringCourse(course) {
+    return !!(course.daily_recurring || course.weekly_recurring || course.monthly_recurring);
+  }
+
+  /**
+   * 查詢重複課程
+   * @param {string} userId - 用戶ID
+   * @param {string} recurrenceType - 重複類型 ('daily', 'weekly', 'monthly')
+   * @returns {Promise<Array>} 重複課程列表
+   */
+  static async getRecurringCourses(userId, recurrenceType = null) {
+    if (!userId) {
+      throw new Error('DataService: userId is required');
+    }
+
+    let criteria = { student_id: userId };
+
+    if (recurrenceType) {
+      switch (recurrenceType) {
+        case 'daily':
+          criteria.daily_recurring = true;
+          break;
+        case 'weekly':
+          criteria.weekly_recurring = true;
+          break;
+        case 'monthly':
+          criteria.monthly_recurring = true;
+          break;
+        default:
+          throw new Error(`Invalid recurrence type: ${recurrenceType}`);
+      }
+    } else {
+      // 查詢所有重複課程
+      criteria = {
+        student_id: userId,
+        $or: [
+          { daily_recurring: true },
+          { weekly_recurring: true },
+          { monthly_recurring: true }
+        ]
+      };
+    }
+
+    return await this.queryCourses(criteria);
   }
 
 }

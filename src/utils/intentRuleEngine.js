@@ -79,11 +79,23 @@ class IntentRuleEngine {
   static matchRule(text, rule) {
     const {
       keywords = [], exclusions = [], patterns = [], priority = 1,
+      required_keywords = [] // Phase 3: 支援必需關鍵詞
     } = rule;
 
     // 檢查排除詞
     if (exclusions.some((exclusion) => text.includes(exclusion))) {
       return { confidence: 0, priority };
+    }
+
+    // Phase 3: 檢查必需關鍵詞（至少有一個必需關鍵詞存在）
+    if (required_keywords.length > 0) {
+      const hasAnyRequiredKeyword = required_keywords.some(requiredKeyword => 
+        text.includes(requiredKeyword)
+      );
+      
+      if (!hasAnyRequiredKeyword) {
+        return { confidence: 0, priority };
+      }
     }
 
     let matchScore = 0;

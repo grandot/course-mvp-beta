@@ -324,23 +324,61 @@ class EntityService {
     }
 
     try {
-      // 查詢同一天同一時間的實體
-      const conflicts = await this.queryEntities(entityType, {
-        student_id: userId,
-        course_date: date,        // 保持與現有資料庫欄位兼容
-        schedule_time: time,      // 保持與現有資料庫欄位兼容
-        status: 'scheduled'
-      });
+      // 並行查詢一般課程和重複課程
+      const [regularConflicts, recurringCourses] = await Promise.all([
+        // 查詢同一天同一時間的一般課程
+        this.queryEntities(entityType, {
+          student_id: userId,
+          course_date: date,
+          schedule_time: time,
+          status: 'scheduled',
+          is_recurring: false
+        }),
+        // 查詢所有用戶的重複課程模板
+        this.queryEntities(entityType, {
+          student_id: userId,
+          status: 'scheduled',
+          is_recurring: true
+        })
+      ]);
+
+      // 檢查重複課程在指定日期的衝突
+      const RecurringCourseCalculator = require('../utils/RecurringCourseCalculator');
+      const recurringConflicts = RecurringCourseCalculator.checkDateConflicts(
+        userId, 
+        date, 
+        time, 
+        recurringCourses
+      );
+
+      // 合併所有衝突
+      let allConflicts = [...regularConflicts];
+      
+      // 轉換重複課程衝突格式以保持一致性
+      for (const recurringConflict of recurringConflicts) {
+        allConflicts.push({
+          id: recurringConflict.course_id,
+          course_name: recurringConflict.course_name,
+          course_date: recurringConflict.date,
+          schedule_time: recurringConflict.time,
+          conflict_type: 'recurring',
+          conflict_source: 'recurring_pattern'
+        });
+      }
 
       // 排除指定的實體（用於修改場景）
       const filteredConflicts = excludeId 
-        ? conflicts.filter(entity => entity.id !== excludeId)
-        : conflicts;
+        ? allConflicts.filter(entity => entity.id !== excludeId)
+        : allConflicts;
 
-      // 🎯 優化：只在找到衝突時記錄日誌
+      // 日誌記錄
       if (filteredConflicts.length > 0) {
-        this._log('info', 'conflict', entityType, `Found ${filteredConflicts.length} time conflicts`);
+        const regularCount = filteredConflicts.filter(c => c.conflict_type !== 'recurring').length;
+        const recurringCount = filteredConflicts.filter(c => c.conflict_type === 'recurring').length;
+        this._log('warn', 'conflict', entityType, 
+          `Found ${filteredConflicts.length} conflicts on ${date} at ${time} (${regularCount} regular, ${recurringCount} recurring)`);
       }
+      
       return filteredConflicts;
 
     } catch (error) {

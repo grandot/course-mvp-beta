@@ -315,6 +315,7 @@ class SemanticService {
             teacher: entities.teacher,
             student: entities.student, // 🚨 新增學生信息
             confirmation: entities.confirmation,
+            recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
             timeInfo: processedTimeInfo,
           },
           context,
@@ -387,7 +388,9 @@ class SemanticService {
           course_name: entities.course_name,
           location: entities.location,
           teacher: entities.teacher,
+          student: entities.student, // 🚨 新增學生信息
           confirmation: entities.confirmation,
+          recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
           // ✅ 使用統一處理的時間信息
           timeInfo: processedTimeInfo,
         },
@@ -487,7 +490,7 @@ class SemanticService {
         courseName = await this.performFuzzyMatching(courseName, userId);
       }
       
-      return await this.buildEntityResult(text, courseName, location, student);
+      return await this.buildEntityResult(text, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
     }
     
     // Step 2: OpenAI失敗，fallback到正則表達式智能分離
@@ -564,7 +567,7 @@ class SemanticService {
       }
     }
     
-    return await this.buildEntityResult(text, courseName, location, student);
+    return await this.buildEntityResult(text, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
   }
 
   /**
@@ -597,7 +600,9 @@ class SemanticService {
   /**
    * 🚨 新增：構建最終的實體結果
    */
-  static async buildEntityResult(text, courseName, location, student) {
+  static async buildEntityResult(text, courseName, location, student, originalText = null) {
+    // 使用原始文本進行重複模式提取（如果提供）
+    const textForRecurrencePattern = originalText || text;
     
     // 如果智能分離未成功，使用傳統模式提取地點
     if (!location) {
@@ -651,6 +656,28 @@ class SemanticService {
       confirmation = '確認清空';
     }
 
+    // 🔧 Phase 3: 添加重複模式提取
+    let recurrence_pattern = null;
+    const recurrencePatterns = [
+      /每週/, /weekly/, /每天/, /daily/, /每月/, /monthly/,
+      /重複/, /定期/, /固定/, /循環/, /週期性/
+    ];
+
+    for (const pattern of recurrencePatterns) {
+      if (pattern.test(textForRecurrencePattern)) {
+        if (/每週|weekly/.test(textForRecurrencePattern)) {
+          recurrence_pattern = '每週';
+        } else if (/每天|daily/.test(textForRecurrencePattern)) {
+          recurrence_pattern = '每天';
+        } else if (/每月|monthly/.test(textForRecurrencePattern)) {
+          recurrence_pattern = '每月';
+        } else {
+          recurrence_pattern = '每週'; // 預設為每週
+        }
+        break;
+      }
+    }
+
     // 🔧 修復：添加時間信息處理
     const timeInfo = await this.processTimeInfo(text);
 
@@ -661,6 +688,7 @@ class SemanticService {
       teacher,
       student, // 🚨 新增學生信息
       confirmation,
+      recurrence_pattern, // 🔧 Phase 3: 新增重複模式
       timeInfo, // 新增時間信息
     };
   }
@@ -1070,6 +1098,327 @@ class SemanticService {
       version: SlotTemplateManager ? '1.0.0' : null,
       timestamp: new Date().toISOString()
     };
+  }
+
+  /**
+   * 分析重複課程語義 (Phase 1.3 - 重複課程功能)
+   * @param {string} text - 用戶輸入文本
+   * @param {Object} context - 上下文信息
+   * @returns {Promise<Object>} 重複課程分析結果
+   */
+  static async analyzeRecurringCourse(text, context = {}) {
+    this.debugLog(`🔧 [DEBUG] SemanticService.analyzeRecurringCourse - 分析重複課程: "${text}"`);
+
+    if (!text || typeof text !== 'string') {
+      throw new Error('SemanticService: text must be a non-empty string');
+    }
+
+    try {
+      // 檢測重複模式關鍵詞
+      const recurringPatterns = {
+        daily: ['每天', '每日', '天天'],
+        weekly: ['每週', '每星期', '週一', '週二', '週三', '週四', '週五', '週六', '週日'],
+        monthly: ['每月', '每個月', '月初', '月中', '月底']
+      };
+
+      let recurrenceType = null;
+      let daysOfWeek = [];
+      let dayOfMonth = null;
+
+      // 識別重複類型
+      for (const [type, keywords] of Object.entries(recurringPatterns)) {
+        if (keywords.some(keyword => text.includes(keyword))) {
+          recurrenceType = type;
+
+          if (type === 'weekly') {
+            daysOfWeek = this.extractDaysOfWeek(text);
+          } else if (type === 'monthly') {
+            dayOfMonth = this.extractDayOfMonth(text);
+          }
+
+          break;
+        }
+      }
+
+      if (!recurrenceType) {
+        return {
+          success: false,
+          isRecurring: false,
+          reason: 'No recurring pattern detected'
+        };
+      }
+
+      // 提取課程名稱
+      const courseName = await this.extractCourseName(text);
+      if (!courseName) {
+        return {
+          success: false,
+          isRecurring: true,
+          recurrenceType,
+          reason: 'Course name not found'
+        };
+      }
+
+      // 提取時間資訊
+      const timeInfo = await this.extractTimeInfo(text);
+      if (!timeInfo.parsed_time) {
+        return {
+          success: false,
+          isRecurring: true,
+          recurrenceType,
+          courseName,
+          reason: 'Time information not found'
+        };
+      }
+
+      // 將時間轉換為 HH:MM 格式
+      const timeOfDay = this.formatTimeToHHMM(timeInfo.parsed_time);
+
+      // 計算智能起始日期
+      const startDate = TimeService.calculateSmartStartDate(
+        recurrenceType,
+        timeOfDay,
+        TimeService.getCurrentUserTime(),
+        daysOfWeek,
+        dayOfMonth
+      );
+
+      return {
+        success: true,
+        intent: 'create_recurring_course',
+        isRecurring: true,
+        recurrenceType, // 新增：將重複類型放在根層級
+        entities: {
+          course_name: courseName,
+          recurrenceType,
+          timeInfo: {
+            ...TimeService.createTimeInfo(timeInfo.parsed_time),
+            recurring: {
+              type: recurrenceType,
+              days_of_week: daysOfWeek,
+              day_of_month: dayOfMonth,
+              start_date: startDate,
+              time_of_day: timeOfDay
+            }
+          }
+        },
+        recurrence_details: {
+          type: recurrenceType,
+          days_of_week: daysOfWeek,
+          day_of_month: dayOfMonth,
+          start_date: startDate,
+          time_of_day: timeOfDay
+        },
+        analysis_time: Date.now()
+      };
+
+    } catch (error) {
+      this.debugLog(`❌ SemanticService.analyzeRecurringCourse - 錯誤: ${error.message}`);
+      return {
+        success: false,
+        error: error.message,
+        isRecurring: false,
+        analysis_time: Date.now()
+      };
+    }
+  }
+
+  /**
+   * 提取星期幾信息
+   * @param {string} text - 用戶輸入文本
+   * @returns {Array} 星期幾數字陣列 (0=週日, 1=週一, ..., 6=週六)
+   */
+  static extractDaysOfWeek(text) {
+    const dayMap = {
+      '週一': 1, '週二': 2, '週三': 3, '週四': 4, 
+      '週五': 5, '週六': 6, '週日': 0,
+      '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, 
+      '星期五': 5, '星期六': 6, '星期日': 0,
+      '禮拜一': 1, '禮拜二': 2, '禮拜三': 3, '禮拜四': 4, 
+      '禮拜五': 5, '禮拜六': 6, '禮拜日': 0
+    };
+
+    const days = [];
+    for (const [day, num] of Object.entries(dayMap)) {
+      if (text.includes(day)) {
+        days.push(num);
+      }
+    }
+
+    // 去重並排序
+    const uniqueDays = [...new Set(days)].sort((a, b) => a - b);
+
+    // 如果沒有具體指定星期幾，但使用了"每週"，默認週一
+    if (uniqueDays.length === 0 && (text.includes('每週') || text.includes('每星期'))) {
+      uniqueDays.push(1); // 預設週一
+    }
+
+    return uniqueDays;
+  }
+
+  /**
+   * 提取月份中的日期
+   * @param {string} text - 用戶輸入文本
+   * @returns {number} 日期數字 (1-31)
+   */
+  static extractDayOfMonth(text) {
+    // 提取月份中的日期（如：5號、15號）
+    const match = text.match(/(\d{1,2})號/);
+    if (match) {
+      const day = parseInt(match[1]);
+      return (day >= 1 && day <= 31) ? day : 1;
+    }
+
+    // 檢查特殊情況
+    if (text.includes('月初')) return 1;
+    if (text.includes('月中')) return 15;
+    if (text.includes('月底')) return 30;
+
+    return 1; // 預設1號
+  }
+
+  /**
+   * 提取課程名稱 (簡化版本，可以調用現有方法)
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<string|null>} 課程名稱
+   */
+  static async extractCourseName(text) {
+    // 先嘗試正則表達式快速提取
+    let courseName = this.extractCourseNameByRegex(text);
+    
+    // 如果正則失敗，嘗試 OpenAI 提取
+    if (!courseName) {
+      try {
+        courseName = await OpenAIService.extractCourseName(text);
+      } catch (error) {
+        this.debugLog(`OpenAI course name extraction failed: ${error.message}`);
+      }
+    }
+
+    // 標準化課程名稱
+    if (courseName) {
+      courseName = this.normalizeCourseNameForConsistency(courseName);
+    }
+
+    return courseName;
+  }
+
+  /**
+   * 標準化課程名稱以確保一致性
+   * 解決創建時 "數學" vs 查詢時 "數學課" 的不一致問題
+   * @param {string} courseName - 原始課程名稱
+   * @returns {string} 標準化後的課程名稱
+   */
+  static normalizeCourseNameForConsistency(courseName) {
+    if (!courseName || typeof courseName !== 'string') {
+      return courseName;
+    }
+
+    // 去除前後空白
+    let normalized = courseName.trim();
+
+    // 如果課程名稱沒有以 "課" 結尾，自動添加
+    // 除非是某些特殊詞彙（如：學習、班級、訓練等）
+    const specialSuffixes = ['學習', '班', '訓練', '培訓', '輔導', '指導', '課程', '課堂'];
+    const hasSpecialSuffix = specialSuffixes.some(suffix => normalized.endsWith(suffix));
+    
+    if (!normalized.endsWith('課') && !hasSpecialSuffix) {
+      normalized = normalized + '課';
+    }
+
+    // 移除重複的 "課" 後綴
+    normalized = normalized.replace(/課課+$/, '課');
+
+    // 標準化常見課程名稱別名
+    const aliases = {
+      '英語課': '英文課',
+      '中文課': '國文課',
+      '數學課程': '數學課',
+      '英文課程': '英文課',
+      '物理課程': '物理課',
+      '化學課程': '化學課',
+      '生物課程': '生物課',
+      '歷史課程': '歷史課',
+      '地理課程': '地理課'
+    };
+
+    if (aliases[normalized]) {
+      normalized = aliases[normalized];
+    }
+
+    return normalized;
+  }
+
+  /**
+   * 將 Date 對象轉換為 HH:MM 格式
+   * @param {Date} dateTime - 時間對象
+   * @returns {string} HH:MM 格式的時間字符串
+   */
+  static formatTimeToHHMM(dateTime) {
+    if (!dateTime || !(dateTime instanceof Date)) {
+      return '00:00';
+    }
+
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  /**
+   * 檢查輸入是否包含重複課程關鍵詞
+   * @param {string} text - 用戶輸入文本
+   * @returns {boolean} 是否包含重複課程關鍵詞
+   */
+  static hasRecurringKeywords(text) {
+    if (!text || typeof text !== 'string') return false;
+
+    const recurringKeywords = [
+      '每天', '每日', '天天',
+      '每週', '每星期', 
+      '週一', '週二', '週三', '週四', '週五', '週六', '週日',
+      '星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日',
+      '每月', '每個月', '月初', '月中', '月底',
+      '定期', '固定', '例行'
+    ];
+
+    return recurringKeywords.some(keyword => text.includes(keyword));
+  }
+
+  /**
+   * 生成重複課程描述
+   * @param {Object} recurrenceDetails - 重複詳細資訊
+   * @returns {string} 重複課程描述
+   */
+  static generateRecurrenceDescription(recurrenceDetails) {
+    const { type, days_of_week, day_of_month, time_of_day } = recurrenceDetails;
+
+    switch (type) {
+      case 'daily':
+        return `每天${this.formatTimeDisplay(time_of_day)}`;
+      case 'weekly':
+        const days = days_of_week?.map(d => TimeService.formatWeekdayToText(d)).join('、') || '未指定';
+        return `${days}${this.formatTimeDisplay(time_of_day)}`;
+      case 'monthly':
+        return `每月${day_of_month}號${this.formatTimeDisplay(time_of_day)}`;
+      default:
+        return '重複課程';
+    }
+  }
+
+  /**
+   * 格式化時間顯示
+   * @param {string} timeOfDay - HH:MM 格式時間
+   * @returns {string} 格式化後的時間顯示
+   */
+  static formatTimeDisplay(timeOfDay) {
+    if (!timeOfDay) return '';
+
+    const [hours, minutes] = timeOfDay.split(':').map(Number);
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes > 0 ? `:${String(minutes).padStart(2, '0')}` : '';
+
+    return ` ${displayHours}${displayMinutes} ${ampm}`;
   }
 }
 

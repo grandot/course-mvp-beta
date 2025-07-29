@@ -51,11 +51,20 @@ class TaskService {
         case 'record_course':
           return await this.scenarioTemplate.createEntity(entities, userId);
 
+        case 'create_recurring_course':
+          return await this.scenarioTemplate.createRecurringEntity(entities, userId);
+
         case 'modify_course':
           return await this.scenarioTemplate.modifyEntity(entities, userId);
 
+        case 'modify_recurring_course':
+          return await this.scenarioTemplate.modifyRecurringEntity(entities, userId);
+
         case 'cancel_course':
           return await this.scenarioTemplate.cancelEntity(entities, userId);
+
+        case 'stop_recurring_course':
+          return await this.scenarioTemplate.stopRecurringEntity(entities, userId);
 
         case 'query_schedule':
           return await this.scenarioTemplate.queryEntities(userId);
