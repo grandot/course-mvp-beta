@@ -560,6 +560,12 @@ class LineController {
                 // 如果有創建的課程信息，添加詳細信息
                 if (result.course) {
                   const details = [];
+                  
+                  // 🎯 Multi-child: 如果有學童信息，優先顯示
+                  if (result.course.child_name) {
+                    details.push(`👶 學童: ${result.course.child_name}`);
+                  }
+                  
                   details.push(`📚 課程：${result.course.course_name}`);
                   
                   if (result.course.schedule_time) {

@@ -185,7 +185,7 @@ describe('CourseManagementScenarioTemplate - 正確顯示測試', () => {
     
     // 如果有學童信息，優先顯示
     if (course.child_name) {
-      displayText += `學童: ${course.child_name}\n`;
+      displayText += `👶 學童: ${course.child_name}\n`;
     }
     
     // 顯示課程名稱
@@ -202,7 +202,7 @@ describe('CourseManagementScenarioTemplate - 正確顯示測試', () => {
       const courseWithChild = mockCourseData[0];
       const result = mockFormatDisplay(courseWithChild);
       
-      expect(result).toContain('學童: 小明');
+      expect(result).toContain('👶 學童: 小明');
       expect(result).toContain('📚 足球');
       expect(result).toContain('🕒 時間：07/31 10:30 AM');
     });
@@ -211,7 +211,7 @@ describe('CourseManagementScenarioTemplate - 正確顯示測試', () => {
       const courseWithoutChild = mockCourseData[2];
       const result = mockFormatDisplay(courseWithoutChild);
       
-      expect(result).not.toContain('學童:');
+      expect(result).not.toContain('👶 學童:');
       expect(result).toContain('📚 數學課');
       expect(result).toContain('🕒 時間：08/01 9:00 AM');
     });
@@ -241,7 +241,7 @@ describe('集成測試', () => {
           childExtracted: '小明',
           courseNamePure: '足球課',  // 課程名稱保持純淨
           childNameSeparate: '小明', // 學童信息單獨處理
-          displayFormat: '學童: 小明\n📚 足球課\n🕒 時間：時間信息'
+          displayFormat: '👶 學童: 小明\n📚 足球課\n🕒 時間：時間信息'
         }
       },
       {
@@ -284,7 +284,7 @@ describe('集成測試', () => {
       const mockFormatDisplay = (course) => {
         let displayText = '';
         if (course.child_name) {
-          displayText += `學童: ${course.child_name}\n`;
+          displayText += `👶 學童: ${course.child_name}\n`;
         }
         displayText += `📚 ${course.course_name}\n`;
         displayText += `🕒 時間：${course.schedule_time}`;

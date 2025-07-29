@@ -887,7 +887,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     
     // 如果有學童信息，優先顯示
     if (course.child_name) {
-      displayText += `學童: ${course.child_name}\n`;
+      displayText += `👶 學童: ${course.child_name}\n`;
     }
     
     // 顯示課程名稱
