@@ -456,7 +456,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Creating recurring course entity', { userId, entities });
 
     try {
-      const { course_name, timeInfo, location, teacher, recurrence_pattern } = entities;
+      const { course_name, timeInfo, location, teacher, recurrence_pattern, child_name, student } = entities;
+      
+      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
+      const childName = child_name || student;
 
       // 驗證必要欄位
       const validation = this.validateRequiredFields(entities);
@@ -519,7 +522,8 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         location, 
         teacher, 
         recurrence_pattern,
-        startDate
+        startDate,
+        childName  // 🎯 Multi-child: 傳遞學童信息
       );
       
       // 使用EntityService創建重複課程模板
@@ -540,8 +544,20 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       });
 
       const recurrenceDescription = this.formatRecurrenceDescription(recurrence_pattern);
+      
+      // 🎯 Multi-child: 構建完整的成功回覆（包含學童信息）
+      let successMessage = `✅ 重複課程「${course_name}」已創建！\n\n`;
+      
+      if (childName) {
+        successMessage += `👶 學童: ${childName}\n`;
+      }
+      
+      successMessage += `📚 課程：${course_name} (${recurrenceDescription})\n`;
+      successMessage += `🕒 時間：${timeInfo.display}\n`;
+      successMessage += `📅 開始日期：${TimeService.formatForDisplay(startDate)}`;
+      
       return this.createSuccessResponse(
-        `✅ 重複課程「${course_name}」已創建！\n🔄 ${recurrenceDescription}\n🕒 時間：${timeInfo.display}\n📅 開始日期：${TimeService.formatForDisplay(startDate)}`,
+        successMessage,
         { 
           course: result.data,
           recurrence_pattern,
@@ -569,7 +585,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Modifying recurring course entity', { userId, entities });
 
     try {
-      const { course_name, timeInfo, location, teacher, recurrence_pattern, modification_scope } = entities;
+      const { course_name, timeInfo, location, teacher, recurrence_pattern, modification_scope, child_name, student } = entities;
+      
+      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）  
+      const childName = child_name || student;
       
       // 驗證必要的課程名稱
       if (!course_name) {
@@ -650,7 +669,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Stopping recurring course entity', { userId, entities });
 
     try {
-      const { course_name } = entities;
+      const { course_name, child_name, student } = entities;
+      
+      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
+      const childName = child_name || student;
       
       if (!course_name) {
         return this.createErrorResponse(
@@ -710,8 +732,21 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       });
 
       const recurrenceDescription = this.formatRecurrenceDescription(courseToStop.recurrence_pattern);
+      
+      // 🎯 Multi-child: 構建包含學童信息的成功回覆
+      let successMessage = `✅ 重複課程「${course_name}」已停止！\n\n`;
+      
+      if (childName || courseToStop.child_name) {
+        const displayChildName = childName || courseToStop.child_name;
+        successMessage += `👶 學童: ${displayChildName}\n`;
+      }
+      
+      successMessage += `📚 課程：${course_name} (${recurrenceDescription})\n`;
+      successMessage += `📊 影響的未來課程：約 ${futureInstances.length} 堂\n`;
+      successMessage += `⏰ 停止時間：${TimeService.formatForDisplay(today)}`;
+      
       return this.createSuccessResponse(
-        `✅ 重複課程「${course_name}」已停止\n🔄 原設定：${recurrenceDescription}\n📊 影響的未來課程：約 ${futureInstances.length} 堂\n⏰ 停止時間：${TimeService.formatForDisplay(today)}`,
+        successMessage,
         { 
           stoppedCourse: courseToStop,
           futureInstancesAffected: futureInstances.length,
@@ -890,16 +925,18 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       displayText += `👶 學童: ${course.child_name}\n`;
     }
     
-    // 顯示課程名稱
-    displayText += `📚 ${course.course_name}\n`;
-    
-    // 顯示時間
-    displayText += `🕒 時間：${course.schedule_time}`;
-    
-    // 添加重複標記
+    // 顯示課程名稱 + 重複標記（第一性原則：重複信息屬於課程本身）
+    let courseName = course.course_name;
     if (course.recurring_label || course.is_recurring_instance) {
-      displayText += ' 🔄';
+      const label = course.recurring_label || '';
+      if (label) {
+        courseName += ` (${label})`;
+      }
     }
+    displayText += `📚 ${courseName}\n`;
+    
+    // 顯示時間（純淨，不含重複標記）
+    displayText += `🕒 時間：${course.schedule_time}`;
     
     return displayText;
   }
@@ -962,7 +999,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @returns {Object} 重複課程數據
    * @private
    */
-  buildRecurringCourseData(userId, courseName, timeInfo, location, teacher, recurrencePattern, startDate) {
+  buildRecurringCourseData(userId, courseName, timeInfo, location, teacher, recurrencePattern, startDate, childName = null) {
     const defaults = this.config.course_specific?.defaults || {};
     
     // 解析重複模式並設置布林欄位
@@ -971,6 +1008,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     return {
       student_id: userId,
       course_name: courseName,
+      child_name: childName, // 🎯 Multi-child: 加入學童信息
       schedule_time: timeInfo?.display || 'TBD',
       course_date: startDate,
       location: location || defaults.location || null,
@@ -1186,7 +1224,11 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @private
    */
   async modifyEntireRecurringSeries(courseTemplate, entities, userId) {
-    const { timeInfo, location, teacher, recurrence_pattern } = entities;
+    const { timeInfo, location, teacher, recurrence_pattern, child_name, student } = entities;
+    
+    // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
+    const childName = child_name || student;
+    
     const updateData = {};
     const modifiedFields = [];
 
@@ -1243,8 +1285,20 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       recurrence_pattern || courseTemplate.recurrence_pattern
     );
 
+    // 🎯 Multi-child: 構建包含學童信息的成功回覆
+    let successMessage = `✅ 重複課程「${courseTemplate.course_name}」整體安排已修改！\n\n`;
+    
+    if (childName || courseTemplate.child_name) {
+      const displayChildName = childName || courseTemplate.child_name;
+      successMessage += `👶 學童: ${displayChildName}\n`;
+    }
+    
+    successMessage += `📚 課程：${courseTemplate.course_name} (${recurrenceDescription})\n`;
+    successMessage += `📝 修改內容：${modifiedFields.join('、')}\n`;
+    successMessage += `🕒 新時間：${updateData.schedule_time || courseTemplate.schedule_time}`;
+    
     return this.createSuccessResponse(
-      `✅ 重複課程「${courseTemplate.course_name}」整體安排已修改\n🔄 ${recurrenceDescription}\n📝 修改內容：${modifiedFields.join('、')}\n🕒 新時間：${updateData.schedule_time || courseTemplate.schedule_time}`,
+      successMessage,
       {
         modifiedFields,
         originalCourse: courseTemplate,
@@ -1263,7 +1317,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    */
   async modifySingleRecurringInstance(courseTemplate, entities, userId) {
     // 創建一個例外課程記錄，覆蓋特定日期的重複課程
-    const { timeInfo, location, teacher, target_date } = entities;
+    const { timeInfo, location, teacher, target_date, child_name, student } = entities;
+    
+    // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
+    const childName = child_name || student;
 
     if (!target_date && (!timeInfo || !timeInfo.date)) {
       return this.createErrorResponse(
@@ -1278,6 +1335,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     const exceptionData = {
       student_id: userId,
       course_name: courseTemplate.course_name,
+      child_name: childName || courseTemplate.child_name, // 🎯 Multi-child: 保留學童信息
       schedule_time: timeInfo?.display || courseTemplate.schedule_time,
       course_date: targetDate,
       location: location || courseTemplate.location,

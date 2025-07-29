@@ -199,21 +199,21 @@ class RecurringCourseCalculator {
   /**
    * 獲取重複課程的顯示標籤
    * @param {Object} course - 重複課程對象
-   * @returns {string} 重複標籤
+   * @returns {string} 重複標籤（純文字，用於課程名稱後的括號）
    */
   static getRecurrenceLabel(course) {
-    if (course.daily_recurring) return '🔄 每天';
+    if (course.daily_recurring) return '每天';
     
     if (course.weekly_recurring) {
       const days = course.recurrence_details?.days_of_week?.map(d => 
         TimeService.formatWeekdayToText(d)
       ).join('、') || '未指定';
-      return `🔄 ${days}`;
+      return days;
     }
     
     if (course.monthly_recurring) {
       const dayOfMonth = course.recurrence_details?.day_of_month || '未指定';
-      return `🔄 每月${dayOfMonth}號`;
+      return `每月${dayOfMonth}號`;
     }
     
     return '';
