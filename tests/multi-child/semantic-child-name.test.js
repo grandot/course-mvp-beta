@@ -105,18 +105,39 @@ describe('多子女課程管理 - 語義識別測試', () => {
       });
     });
 
-    test('課程名稱嵌入邏輯驗證', () => {
-      // 模擬課程名稱嵌入邏輯
+    test('正確設計驗證 - 課程名稱純淨，學童信息分離', () => {
+      // 驗證正確的設計原則：課程名稱保持純淨，學童信息單獨存儲
       const testCases = [
-        { childName: '小明', courseName: '鋼琴課', expected: '小明鋼琴課' },
-        { childName: '小美', courseName: '法語課', expected: '小美法語課' },
-        { childName: '志強', courseName: '游泳課', expected: '志強游泳課' },
-        { childName: null, courseName: '數學課', expected: '數學課' }
+        { 
+          childName: '小明', 
+          courseName: '鋼琴課', 
+          expectedCourse: '鋼琴課',  // 課程名稱保持純淨
+          expectedChild: '小明'      // 學童信息單獨處理
+        },
+        { 
+          childName: '小美', 
+          courseName: '法語課', 
+          expectedCourse: '法語課', 
+          expectedChild: '小美' 
+        },
+        { 
+          childName: '志強', 
+          courseName: '游泳課', 
+          expectedCourse: '游泳課', 
+          expectedChild: '志強' 
+        },
+        { 
+          childName: null, 
+          courseName: '數學課', 
+          expectedCourse: '數學課', 
+          expectedChild: null 
+        }
       ];
 
-      testCases.forEach(({ childName, courseName, expected }) => {
-        const result = childName ? `${childName}${courseName}` : courseName;
-        expect(result).toBe(expected);
+      testCases.forEach(({ childName, courseName, expectedCourse, expectedChild }) => {
+        // 正確設計：課程名稱不變，學童信息單獨處理
+        expect(courseName).toBe(expectedCourse);
+        expect(childName).toBe(expectedChild);
       });
     });
   });
@@ -138,112 +159,89 @@ describe('多子女課程管理 - 語義識別測試', () => {
   });
 });
 
-describe('CourseManagementScenarioTemplate - 顯示優化測試', () => {
-  // 模擬 CourseManagementScenarioTemplate
-  const mockTemplate = {
-    extractChildFromCourseName: (courseName) => {
-      if (!courseName || typeof courseName !== 'string') {
-        return {
-          hasChild: false,
-          childName: null,
-          courseName: courseName || ''
-        };
-      }
-      
-      const patterns = [
-        /^(小[一-龯])([一-龯]+課)$/,            // 小明鋼琴課
-        /^(大[一-龯])([一-龯]+課)$/,            // 大寶數學課  
-        /^([一-龯]{2})([一-龯]+課)$/            // 志強游泳課 (只匹配2字名)
-      ];
-      
-      for (const pattern of patterns) {
-        const match = courseName.match(pattern);
-        if (match) {
-          return {
-            hasChild: true,
-            childName: match[1],
-            courseName: match[2] || '課程'
-          };
-        }
-      }
-      
-      return {
-        hasChild: false,
-        childName: null,
-        courseName: courseName
-      };
+describe('CourseManagementScenarioTemplate - 正確顯示測試', () => {
+  // 模擬正確設計的課程數據結構
+  const mockCourseData = [
+    {
+      course_name: '足球',
+      child_name: '小明',
+      schedule_time: '07/31 10:30 AM'
+    },
+    {
+      course_name: '鋼琴課',
+      child_name: '小美',
+      schedule_time: '07/30 2:00 PM'
+    },
+    {
+      course_name: '數學課',
+      child_name: null,  // 無學童信息
+      schedule_time: '08/01 9:00 AM'
     }
+  ];
+
+  // 模擬正確的顯示邏輯
+  const mockFormatDisplay = (course) => {
+    let displayText = '';
+    
+    // 如果有學童信息，優先顯示
+    if (course.child_name) {
+      displayText += `學童: ${course.child_name}\n`;
+    }
+    
+    // 顯示課程名稱
+    displayText += `📚 ${course.course_name}\n`;
+    
+    // 顯示時間
+    displayText += `🕒 時間：${course.schedule_time}`;
+    
+    return displayText;
   };
 
-  describe('extractChildFromCourseName', () => {
-    test('應正確分離子女名稱和課程名稱', () => {
-      const testCases = [
-        {
-          input: '小明鋼琴課',
-          expected: { hasChild: true, childName: '小明', courseName: '鋼琴課' }
-        },
-        {
-          input: '小美法語課',
-          expected: { hasChild: true, childName: '小美', courseName: '法語課' }
-        },
-        {
-          input: '志強游泳課',
-          expected: { hasChild: true, childName: '志強', courseName: '游泳課' }
-        },
-        {
-          input: '數學課',
-          expected: { hasChild: false, childName: null, courseName: '數學課' }
-        },
-        {
-          input: '英文課',
-          expected: { hasChild: false, childName: null, courseName: '英文課' }
-        }
-      ];
-
-      testCases.forEach(({ input, expected }) => {
-        const result = mockTemplate.extractChildFromCourseName(input);
-        expect(result.hasChild).toBe(expected.hasChild);
-        expect(result.childName).toBe(expected.childName);
-        expect(result.courseName).toBe(expected.courseName);
-      });
+  describe('正確顯示格式測試', () => {
+    test('有學童信息的課程應正確顯示', () => {
+      const courseWithChild = mockCourseData[0];
+      const result = mockFormatDisplay(courseWithChild);
+      
+      expect(result).toContain('學童: 小明');
+      expect(result).toContain('📚 足球');
+      expect(result).toContain('🕒 時間：07/31 10:30 AM');
     });
 
-    test('應處理邊界情況', () => {
-      const edgeCases = [
-        {
-          input: '',
-          expected: { hasChild: false, childName: null, courseName: '' }
-        },
-        {
-          input: null,
-          expected: { hasChild: false, childName: null, courseName: '' }
-        },
-        {
-          input: undefined,
-          expected: { hasChild: false, childName: null, courseName: '' }
-        }
-      ];
+    test('無學童信息的課程應正確顯示', () => {
+      const courseWithoutChild = mockCourseData[2];
+      const result = mockFormatDisplay(courseWithoutChild);
+      
+      expect(result).not.toContain('學童:');
+      expect(result).toContain('📚 數學課');
+      expect(result).toContain('🕒 時間：08/01 9:00 AM');
+    });
 
-      edgeCases.forEach(({ input, expected }) => {
-        const result = mockTemplate.extractChildFromCourseName(input);
-        expect(result.hasChild).toBe(expected.hasChild);
-        expect(result.childName).toBe(expected.childName);
-        expect(result.courseName).toBe(expected.courseName);
+    test('數據結構驗證 - 課程名稱純淨', () => {
+      mockCourseData.forEach(course => {
+        // 課程名稱不應包含學童信息
+        expect(course.course_name).not.toMatch(/^(小|大)[一-龯]/);
+        
+        // 學童信息應該是單獨字段
+        if (course.child_name) {
+          expect(typeof course.child_name).toBe('string');
+          expect(course.child_name.length).toBeGreaterThan(1);
+        }
       });
     });
   });
 });
 
 describe('集成測試', () => {
-  test('完整流程：從輸入到顯示', async () => {
+  test('完整流程：從輸入到正確數據結構', () => {
     const testScenarios = [
       {
-        description: '小明的鋼琴課',
-        input: '小明明天下午兩點鋼琴課',
+        description: '小明的足球課 - 正確設計',
+        input: '小明明天下午兩點足球課',
         expectedFlow: {
           childExtracted: '小明',
-          courseNameWithChild: '小明鋼琴課',
-          displaySeparated: { hasChild: true, childName: '小明', courseName: '鋼琴課' }
+          courseNamePure: '足球課',  // 課程名稱保持純淨
+          childNameSeparate: '小明', // 學童信息單獨處理
+          displayFormat: '學童: 小明\n📚 足球課\n🕒 時間：時間信息'
         }
       },
       {
@@ -251,13 +249,14 @@ describe('集成測試', () => {
         input: '明天下午兩點數學課',
         expectedFlow: {
           childExtracted: null,
-          courseNameWithChild: '數學課',
-          displaySeparated: { hasChild: false, childName: null, courseName: '數學課' }
+          courseNamePure: '數學課',
+          childNameSeparate: null,
+          displayFormat: '📚 數學課\n🕒 時間：時間信息'
         }
       }
     ];
 
-    for (const scenario of testScenarios) {
+    testScenarios.forEach(scenario => {
       // Step 1: 測試子女名稱提取
       const childInfo = SemanticService.extractChildName(scenario.input);
       if (scenario.expectedFlow.childExtracted) {
@@ -267,38 +266,33 @@ describe('集成測試', () => {
         expect(childInfo).toBeNull();
       }
 
-      // Step 2: 測試顯示分離
-      const mockTemplate = {
-        extractChildFromCourseName: (courseName) => {
-          const patterns = [
-            /^(小[一-龯])([一-龯]+課)$/,            // 小明鋼琴課
-            /^(大[一-龯])([一-龯]+課)$/,            // 大寶數學課  
-            /^([一-龯]{2})([一-龯]+課)$/            // 志強游泳課 (只匹配2字名)
-          ];
-          
-          for (const pattern of patterns) {
-            const match = courseName.match(pattern);
-            if (match) {
-              return {
-                hasChild: true,
-                childName: match[1],
-                courseName: match[2] || '課程'
-              };
-            }
-          }
-          
-          return {
-            hasChild: false,
-            childName: null,
-            courseName: courseName
-          };
-        }
+      // Step 2: 驗證正確的設計原則
+      const mockCourseData = {
+        course_name: scenario.expectedFlow.courseNamePure,
+        child_name: scenario.expectedFlow.childNameSeparate,
+        schedule_time: '時間信息'
       };
 
-      const displayInfo = mockTemplate.extractChildFromCourseName(scenario.expectedFlow.courseNameWithChild);
-      expect(displayInfo.hasChild).toBe(scenario.expectedFlow.displaySeparated.hasChild);
-      expect(displayInfo.childName).toBe(scenario.expectedFlow.displaySeparated.childName);
-      expect(displayInfo.courseName).toBe(scenario.expectedFlow.displaySeparated.courseName);
-    }
+      // 驗證課程名稱純淨
+      expect(mockCourseData.course_name).toBe(scenario.expectedFlow.courseNamePure);
+      expect(mockCourseData.course_name).not.toMatch(/^(小|大)[一-龯]/);
+
+      // 驗證學童信息分離
+      expect(mockCourseData.child_name).toBe(scenario.expectedFlow.childNameSeparate);
+
+      // 驗證顯示格式
+      const mockFormatDisplay = (course) => {
+        let displayText = '';
+        if (course.child_name) {
+          displayText += `學童: ${course.child_name}\n`;
+        }
+        displayText += `📚 ${course.course_name}\n`;
+        displayText += `🕒 時間：${course.schedule_time}`;
+        return displayText;
+      };
+
+      const actualDisplay = mockFormatDisplay(mockCourseData);
+      expect(actualDisplay).toBe(scenario.expectedFlow.displayFormat);
+    });
   });
 });

@@ -316,6 +316,7 @@ class SemanticService {
             student: entities.student, // 🚨 新增學生信息
             confirmation: entities.confirmation,
             recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
+            child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
             timeInfo: processedTimeInfo,
           },
           context,
@@ -364,6 +365,7 @@ class SemanticService {
             teacher: analysis.entities.teacher,
             student: analysis.entities.student || entities.student, // 🚨 優先使用 OpenAI 提取的學生信息
             confirmation: entities.confirmation,
+            child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
             // ✅ 使用統一處理的時間信息
             timeInfo: processedTimeInfo,
           },
@@ -391,6 +393,7 @@ class SemanticService {
           student: entities.student, // 🚨 新增學生信息
           confirmation: entities.confirmation,
           recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
+          child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
           // ✅ 使用統一處理的時間信息
           timeInfo: processedTimeInfo,
         },
@@ -501,12 +504,15 @@ class SemanticService {
         courseName = await this.performFuzzyMatching(courseName, userId);
       }
       
-      // 🎯 Multi-child: 如果有子女名稱，嵌入到課程名稱中
-      if (childName && courseName) {
-        courseName = `${childName}${courseName}`;
+      // 🎯 Multi-child: 保持課程名稱純淨，學童信息單獨存儲
+      const result = await this.buildEntityResult(processedText, courseName, location, student, arguments[0]);
+      
+      // 如果有子女名稱，添加為單獨字段
+      if (childName) {
+        result.child_name = childName;
       }
       
-      return await this.buildEntityResult(processedText, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
+      return result;
     }
     
     // Step 2: OpenAI失敗，fallback到正則表達式智能分離
@@ -514,10 +520,9 @@ class SemanticService {
     
     const result = await this.extractEntitiesWithRegex(processedText, userId, intentHint);
     
-    // 🎯 Multi-child: 如果有子女名稱，嵌入到課程名稱中
-    if (childName && result.course_name) {
-      result.course_name = `${childName}${result.course_name}`;
-      result.courseName = result.course_name;
+    // 🎯 Multi-child: 保持課程名稱純淨，學童信息單獨存儲
+    if (childName) {
+      result.child_name = childName;
     }
     
     return result;
