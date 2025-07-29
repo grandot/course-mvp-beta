@@ -335,7 +335,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
 
     try {
       // 引入重複課程計算器
-      const RecurringCourseCalculator = require('../../utils/RecurringCourseCalculator');
+      const RecurringCourseCalculator = require('../../utils/recurringCourseCalculator');
       
       // 設定查詢範圍（預設4週）
       const today = TimeService.getCurrentUserTime();
@@ -677,7 +677,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       const courseToStop = recurringCourses[0];
 
       // 檢查是否有未來的課程實例
-      const RecurringCourseCalculator = require('../../utils/RecurringCourseCalculator');
+      const RecurringCourseCalculator = require('../../utils/recurringCourseCalculator');
       const today = TimeService.getCurrentUserTime();
       const futureInstances = RecurringCourseCalculator.calculateFutureOccurrences(
         courseToStop,
