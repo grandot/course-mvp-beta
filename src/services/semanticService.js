@@ -530,9 +530,13 @@ class SemanticService {
       // 🎯 Multi-child: 保持課程名稱純淨，學童信息單獨存儲
       const result = await this.buildEntityResult(processedText, courseName, location, student, arguments[0]);
       
-      // 如果有子女名稱，添加為單獨字段
+      // 🎯 修復：統一學童名稱字段映射
       if (childName) {
         result.child_name = childName;
+      } else if (student) {
+        // 如果 extractChildName 失敗但 OpenAI 識別了學童名稱，映射到 child_name
+        result.child_name = student;
+        console.log(`👶 [SemanticService] 使用 OpenAI 識別的學童名稱: ${student}`);
       }
       
       return result;
@@ -543,9 +547,13 @@ class SemanticService {
     
     const result = await this.extractEntitiesWithRegex(processedText, userId, intentHint);
     
-    // 🎯 Multi-child: 保持課程名稱純淨，學童信息單獨存儲
+    // 🎯 Multi-child: 統一學童名稱字段映射（regex fallback 路径）
     if (childName) {
       result.child_name = childName;
+    } else if (result.student) {
+      // 如果 extractChildName 失敗但 regex 或其他方式識別了學童名稱，映射到 child_name
+      result.child_name = result.student;
+      console.log(`👶 [SemanticService] Regex fallback - 使用識別的學童名稱: ${result.student}`);
     }
     
     return result;
@@ -593,8 +601,8 @@ class SemanticService {
       {
         name: 'sentence_start',
         patterns: [
-          /^([小大][一-龯]{1,2})([^一-龯]|$)/,  // 小美xxx 或 小美(結尾)
-          /^([一-龯]{2,3})([^一-龯]|$)/        // 明明xxx 或 明明(結尾)
+          /^([小大][一-龯]{1,2})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/,  // 小美+特定詞彙邊界
+          /^([一-龯]{2,3})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/        // 明明+特定詞彙邊界
         ]
       },
       // 策略2：句中學童名稱
