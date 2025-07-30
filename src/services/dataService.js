@@ -10,9 +10,9 @@ const FirebaseService = require('../internal/firebaseService');
 class DataService {
   // Firebase 集合名稱
   static COLLECTIONS = {
-    COURSES: 'courses',
-    COURSE_CONTENTS: 'course_contents',
+    COURSES: 'courses',          // 🎯 正式統一課程集合
     TOKEN_USAGE: 'token_usage'
+    // course_contents 已合併到 courses，不再需要
   };
 
 
@@ -32,7 +32,7 @@ class DataService {
 
 
   /**
-   * 創建課程記錄
+   * 創建課程記錄（統一架構）
    * @param {Object} courseData - 課程數據
    * @returns {Promise<Object>} 創建結果
    */
@@ -41,47 +41,37 @@ class DataService {
       throw new Error('DataService: courseData is required');
     }
 
-    // 驗證重複課程類型一致性
-    this.validateRecurrenceType(courseData);
-
-    let timestamp;
-    try {
-      timestamp = TimeService.getCurrentUserTime().toISOString();
-    } catch (error) {
-      // 如果 TimeService 失敗，使用系統時間作為後備
-      console.warn('TimeService failed, using system time:', error.message);
-      timestamp = TimeService.getCurrentUserTime().toISOString();
-    }
-
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+    
+    // 🎯 統一課程結構：datetime + 簡化設計
     const course = {
       student_id: courseData.student_id,
       course_name: courseData.course_name,
-      schedule_time: courseData.schedule_time,
-      course_date: courseData.course_date,
+      datetime: courseData.datetime || `${courseData.course_date}T${courseData.schedule_time || '00:00'}:00Z`,
+      location: courseData.location || null,
+      teacher_id: courseData.teacher_id || courseData.teacher || null,
       
-      // 保留舊的重複課程欄位以維持向後相容性
+      // 軟刪除狀態
+      status: courseData.status || 'active',
+      deleted_at: null,
+      
+      // 課程內容
+      notes: courseData.notes || null,
+      media_urls: courseData.media_urls || [],
+      
+      // 重複課程（簡化）
       is_recurring: courseData.is_recurring || false,
-      recurrence_pattern: courseData.recurrence_pattern || null,
-      
-      // 新增：三個布林欄位標註重複類型
-      daily_recurring: courseData.daily_recurring || false,
-      weekly_recurring: courseData.weekly_recurring || false,
-      monthly_recurring: courseData.monthly_recurring || false,
-      
-      // 新增：重複詳細資訊
+      recurrence_type: courseData.recurrence_type || null,  // 'daily', 'weekly', 'monthly'
       recurrence_details: courseData.recurrence_details || null,
       
-      location: courseData.location || null,
-      teacher: courseData.teacher || null,
-      status: courseData.status || 'scheduled',
+      // 元數據
       created_at: timestamp,
-      updated_at: timestamp,
+      updated_at: timestamp
     };
 
-    // 直接使用 Firebase
     const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSES, course);
     
-    console.log(`📝 Course created: ${courseData.course_name} (Recurring: ${this.getRecurrenceLabel(course)})`);
+    console.log(`📝 Course created: ${courseData.course_name} at ${course.datetime}`);
     
     return {
       success: true,
@@ -91,7 +81,7 @@ class DataService {
   }
 
   /**
-   * 獲取用戶課程列表
+   * 獲取用戶課程列表（統一架構 + 軟刪除）
    * @param {string} userId - 用戶ID
    * @param {Object} filters - 篩選條件
    * @returns {Promise<Array>} 課程列表
@@ -101,15 +91,23 @@ class DataService {
       throw new Error('DataService: userId is required');
     }
 
-    // 直接使用 Firebase
-    const queryFilters = { student_id: userId, ...filters };
+    // 🎯 預設只查詢活躍課程（軟刪除過濾）
+    const queryFilters = { 
+      student_id: userId, 
+      status: filters.include_deleted ? undefined : 'active',  // 預設排除已刪除
+      ...filters 
+    };
+    
+    // 移除 include_deleted 避免傳給 Firebase
+    delete queryFilters.include_deleted;
+    
     const courses = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSES, queryFilters);
     
     return this.applyFilters(courses, filters);
   }
 
   /**
-   * 應用篩選條件到課程列表
+   * 應用篩選條件到課程列表（統一架構適配）
    * @param {Array} courses - 課程列表
    * @param {Object} filters - 篩選條件
    * @returns {Array} 篩選後的課程列表
@@ -128,13 +126,22 @@ class DataService {
       );
     }
 
+    // 🎯 使用統一的 datetime 字段進行日期篩選
     if (filters.date_from || filters.date_to) {
       filteredCourses = filteredCourses.filter((course) => {
-        const courseDate = course.course_date;
+        const courseDate = course.datetime ? course.datetime.split('T')[0] : course.course_date;
         if (filters.date_from && courseDate < filters.date_from) return false;
         if (filters.date_to && courseDate > filters.date_to) return false;
         return true;
       });
+    }
+
+    // 學生名稱篩選（支援模糊匹配）
+    if (filters.student_name) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.student_id && course.student_id.toLowerCase()
+          .includes(filters.student_name.toLowerCase())
+      );
     }
 
     return filteredCourses;
@@ -192,7 +199,7 @@ class DataService {
   }
 
   /**
-   * 刪除課程記錄
+   * 刪除課程記錄（軟刪除）
    * @param {string} courseId - 課程ID
    * @returns {Promise<boolean>} 刪除是否成功
    */
@@ -201,7 +208,15 @@ class DataService {
       throw new Error('DataService: courseId is required');
     }
 
-    await FirebaseService.deleteDocument(this.COLLECTIONS.COURSES, courseId);
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+    
+    // 🎯 軟刪除：更新狀態而非物理刪除
+    await FirebaseService.updateDocument(this.COLLECTIONS.COURSES, courseId, {
+      status: 'deleted',
+      deleted_at: timestamp,
+      updated_at: timestamp
+    });
+    
     return true;
   }
 
@@ -319,7 +334,7 @@ class DataService {
   }
 
   /**
-   * 清空用戶所有課程記錄（批量刪除）
+   * 清空用戶所有課程記錄（軟刪除）
    * @param {string} userId - 用戶ID
    * @returns {Promise<Object>} 刪除結果
    */
@@ -328,24 +343,29 @@ class DataService {
       throw new Error('DataService: userId is required');
     }
 
-    // 先獲取用戶所有課程
-    const userCourses = await this.getUserCourses(userId);
+    // 先獲取用戶所有活躍課程
+    const activeCourses = await this.getUserCourses(userId, { status: 'active' });
     
-    if (userCourses.length === 0) {
+    if (activeCourses.length === 0) {
       return {
         success: true,
         deletedCount: 0,
-        message: 'No courses found for user',
+        message: 'No active courses found for user',
       };
     }
 
     let deletedCount = 0;
     const errors = [];
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
 
-    // 批量刪除每個課程
-    for (const course of userCourses) {
+    // 🎯 軟刪除：更新狀態而非物理刪除
+    for (const course of activeCourses) {
       try {
-        await FirebaseService.deleteDocument(this.COLLECTIONS.COURSES, course.id);
+        await FirebaseService.updateDocument(this.COLLECTIONS.COURSES, course.id, {
+          status: 'deleted',
+          deleted_at: timestamp,
+          updated_at: timestamp
+        });
         deletedCount++;
       } catch (error) {
         errors.push({
@@ -359,9 +379,9 @@ class DataService {
     return {
       success: errors.length === 0,
       deletedCount,
-      totalCourses: userCourses.length,
+      totalCourses: activeCourses.length,
       errors: errors.length > 0 ? errors : undefined,
-      message: `Successfully deleted ${deletedCount} out of ${userCourses.length} courses`,
+      message: `Successfully soft-deleted ${deletedCount} out of ${activeCourses.length} courses`,
     };
   }
 
@@ -508,56 +528,16 @@ class DataService {
   }
 
   /**
-   * 驗證重複課程類型一致性
-   * @param {Object} courseData - 課程數據
-   * @throws {Error} 如果重複類型不一致
-   */
-  static validateRecurrenceType(courseData) {
-    const types = [
-      courseData.daily_recurring,
-      courseData.weekly_recurring,
-      courseData.monthly_recurring
-    ].filter(Boolean);
-
-    if (types.length > 1) {
-      throw new Error('課程只能有一種重複類型');
-    }
-
-    const hasRecurrence = types.length === 1;
-    const hasDetails = courseData.recurrence_details != null;
-
-    // 如果有重複類型但沒有詳細資訊，拋出錯誤
-    if (hasRecurrence && !hasDetails) {
-      throw new Error('重複課程必須提供詳細資訊');
-    }
-
-    // 如果沒有重複類型但有詳細資訊，這是允許的（可能是從現有重複課程更新）
-    return true;
-  }
-
-  /**
-   * 獲取重複課程類型標籤
-   * @param {Object} courseData - 課程數據
-   * @returns {string} 重複類型標籤
-   */
-  static getRecurrenceLabel(courseData) {
-    if (courseData.daily_recurring) return 'Daily';
-    if (courseData.weekly_recurring) return 'Weekly';
-    if (courseData.monthly_recurring) return 'Monthly';
-    return 'None';
-  }
-
-  /**
-   * 檢查課程是否為重複課程
+   * 檢查課程是否為重複課程（統一架構）
    * @param {Object} course - 課程對象
    * @returns {boolean} 是否為重複課程
    */
   static isRecurringCourse(course) {
-    return !!(course.daily_recurring || course.weekly_recurring || course.monthly_recurring);
+    return !!(course.is_recurring && course.recurrence_type);
   }
 
   /**
-   * 查詢重複課程
+   * 查詢重複課程（統一架構）
    * @param {string} userId - 用戶ID
    * @param {string} recurrenceType - 重複類型 ('daily', 'weekly', 'monthly')
    * @returns {Promise<Array>} 重複課程列表
@@ -567,423 +547,23 @@ class DataService {
       throw new Error('DataService: userId is required');
     }
 
-    let criteria = { student_id: userId };
+    let criteria = { 
+      student_id: userId, 
+      is_recurring: true,
+      status: 'active'  // 只查詢活躍的重複課程
+    };
 
     if (recurrenceType) {
-      switch (recurrenceType) {
-        case 'daily':
-          criteria.daily_recurring = true;
-          break;
-        case 'weekly':
-          criteria.weekly_recurring = true;
-          break;
-        case 'monthly':
-          criteria.monthly_recurring = true;
-          break;
-        default:
-          throw new Error(`Invalid recurrence type: ${recurrenceType}`);
-      }
-    } else {
-      // 查詢所有重複課程
-      criteria = {
-        student_id: userId,
-        $or: [
-          { daily_recurring: true },
-          { weekly_recurring: true },
-          { monthly_recurring: true }
-        ]
-      };
+      criteria.recurrence_type = recurrenceType;
     }
 
     return await this.queryCourses(criteria);
   }
 
   // ===============================
-  // 課程內容管理 (Course Content)
+  // 課程內容管理已整合到統一課程結構中
+  // 不再需要獨立的 course_contents 集合
   // ===============================
-
-  /**
-   * 創建課程內容記錄
-   * @param {Object} contentData - 課程內容數據
-   * @returns {Promise<Object>} 創建結果
-   */
-  static async createCourseContent(contentData) {
-    if (!contentData) {
-      throw new Error('DataService: contentData is required');
-    }
-
-    if (!contentData.course_id) {
-      throw new Error('DataService: course_id is required');
-    }
-
-    if (!contentData.student_id) {
-      throw new Error('DataService: student_id is required');
-    }
-
-    const timestamp = TimeService.getCurrentUserTime().toISOString();
-
-    const courseContent = {
-      course_id: contentData.course_id,
-      student_id: contentData.student_id,
-      content_date: contentData.content_date || new Date().toISOString().split('T')[0],
-      
-      // 課程內容
-      lesson_content: contentData.lesson_content || null,
-      
-      // 作業任務
-      homework_assignments: contentData.homework_assignments || [],
-      
-      // 課堂媒體
-      class_media: contentData.class_media || [],
-      
-      // 元數據
-      created_at: timestamp,
-      updated_at: timestamp,
-      created_by: contentData.created_by || 'parent',
-      source: contentData.source || 'manual',
-      
-      // 原始輸入
-      raw_input: contentData.raw_input || null,
-      
-      // 狀態管理
-      status: contentData.status || 'published',
-      visibility: contentData.visibility || 'private'
-    };
-
-    const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSE_CONTENTS, courseContent);
-    
-    console.log(`📝 Course content created: ${contentData.course_id}`);
-    
-    // 更新關聯課程的內容統計
-    await this.updateCourseContentStats(contentData.course_id);
-    
-    return {
-      success: true,
-      contentId: result.id,
-      content: result.data,
-    };
-  }
-
-  /**
-   * 根據ID獲取課程內容
-   * @param {string} contentId - 內容ID
-   * @returns {Promise<Object|null>} 課程內容記錄
-   */
-  static async getCourseContent(contentId) {
-    if (!contentId) {
-      throw new Error('DataService: contentId is required');
-    }
-
-    try {
-      const result = await FirebaseService.getDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId);
-      
-      if (!result || !result.exists) {
-        return null;
-      }
-
-      return {
-        id: result.id,
-        ...result.data,
-      };
-    } catch (error) {
-      console.error('❌ DataService.getCourseContent failed:', {
-        contentId,
-        error: error.message
-      });
-      
-      throw new Error(`Failed to get course content: ${error.message}`);
-    }
-  }
-
-  /**
-   * 獲取特定課程的所有內容記錄
-   * @param {string} courseId - 課程ID
-   * @param {Object} filters - 篩選條件
-   * @returns {Promise<Array>} 內容記錄列表
-   */
-  static async getCourseContentsByCourse(courseId, filters = {}) {
-    if (!courseId) {
-      throw new Error('DataService: courseId is required');
-    }
-
-    try {
-      const queryFilters = { course_id: courseId, ...filters };
-      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, queryFilters);
-      
-      // 按日期排序（最新的在前）
-      return contents.sort((a, b) => new Date(b.content_date) - new Date(a.content_date));
-    } catch (error) {
-      console.error('❌ DataService.getCourseContentsByCourse failed:', {
-        courseId,
-        error: error.message
-      });
-      
-      throw new Error(`Failed to get course contents: ${error.message}`);
-    }
-  }
-
-  /**
-   * 獲取學生的所有課程內容
-   * @param {string} studentId - 學生ID
-   * @param {Object} filters - 篩選條件
-   * @returns {Promise<Array>} 內容記錄列表
-   */
-  static async getCourseContentsByStudent(studentId, filters = {}) {
-    if (!studentId) {
-      throw new Error('DataService: studentId is required');
-    }
-
-    try {
-      const queryFilters = { student_id: studentId, ...filters };
-      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, queryFilters);
-      
-      // 按日期排序（最新的在前）
-      return contents.sort((a, b) => new Date(b.content_date) - new Date(a.content_date));
-    } catch (error) {
-      console.error('❌ DataService.getCourseContentsByStudent failed:', {
-        studentId,
-        error: error.message
-      });
-      
-      throw new Error(`Failed to get student course contents: ${error.message}`);
-    }
-  }
-
-  /**
-   * 更新課程內容
-   * @param {string} contentId - 內容ID
-   * @param {Object} updateData - 更新數據
-   * @returns {Promise<Object>} 更新結果
-   */
-  static async updateCourseContent(contentId, updateData) {
-    if (!contentId) {
-      throw new Error('DataService: contentId is required');
-    }
-
-    if (!updateData || Object.keys(updateData).length === 0) {
-      throw new Error('DataService: updateData is required and cannot be empty');
-    }
-
-    try {
-      const updatedData = {
-        ...updateData,
-        updated_at: TimeService.getCurrentUserTime().toISOString(),
-      };
-
-      const result = await FirebaseService.updateDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId, updatedData);
-
-      return {
-        success: true,
-        contentId: result.id,
-        content: result.data,
-      };
-    } catch (error) {
-      console.error('❌ DataService.updateCourseContent failed:', {
-        contentId,
-        updateData,
-        error: error.message
-      });
-
-      return {
-        success: false,
-        error: error.message,
-        contentId,
-        details: `Course content update failed: ${error.message}`
-      };
-    }
-  }
-
-  /**
-   * 刪除課程內容
-   * @param {string} contentId - 內容ID
-   * @returns {Promise<boolean>} 刪除是否成功
-   */
-  static async deleteCourseContent(contentId) {
-    if (!contentId) {
-      throw new Error('DataService: contentId is required');
-    }
-
-    try {
-      // 先獲取內容信息以便更新課程統計
-      const content = await this.getCourseContent(contentId);
-      
-      await FirebaseService.deleteDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId);
-      
-      // 更新關聯課程的內容統計
-      if (content && content.course_id) {
-        await this.updateCourseContentStats(content.course_id);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('❌ DataService.deleteCourseContent failed:', {
-        contentId,
-        error: error.message
-      });
-      
-      throw new Error(`Failed to delete course content: ${error.message}`);
-    }
-  }
-
-  /**
-   * 搜索課程內容
-   * @param {Object} criteria - 搜索條件
-   * @returns {Promise<Array>} 搜索結果
-   */
-  static async searchCourseContents(criteria) {
-    if (!criteria || Object.keys(criteria).length === 0) {
-      throw new Error('DataService: search criteria is required');
-    }
-
-    try {
-      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, criteria);
-      
-      // 按相關性和日期排序
-      return contents.sort((a, b) => {
-        // 首先按更新時間排序
-        const timeA = new Date(a.updated_at);
-        const timeB = new Date(b.updated_at);
-        return timeB - timeA;
-      });
-    } catch (error) {
-      console.error('❌ DataService.searchCourseContents failed:', {
-        criteria,
-        error: error.message
-      });
-      
-      throw new Error(`Course content search failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * 上傳課堂媒體文件
-   * @param {Object} mediaData - 媒體數據
-   * @returns {Promise<Object>} 上傳結果
-   */
-  static async uploadClassMedia(mediaData) {
-    if (!mediaData) {
-      throw new Error('DataService: mediaData is required');
-    }
-
-    if (!mediaData.file && !mediaData.url) {
-      throw new Error('DataService: file or url is required');
-    }
-
-    const timestamp = TimeService.getCurrentUserTime().toISOString();
-
-    const mediaRecord = {
-      id: this.generateUUID(),
-      type: mediaData.type || 'photo',
-      url: mediaData.url,
-      caption: mediaData.caption || '',
-      upload_time: timestamp,
-      tags: mediaData.tags || [],
-      file_size: mediaData.file_size || 0,
-      created_by: mediaData.created_by || 'parent'
-    };
-
-    return {
-      success: true,
-      media: mediaRecord
-    };
-  }
-
-  /**
-   * 刪除課堂媒體文件
-   * @param {string} mediaId - 媒體ID
-   * @returns {Promise<boolean>} 刪除是否成功
-   */
-  static async deleteClassMedia(mediaId) {
-    if (!mediaId) {
-      throw new Error('DataService: mediaId is required');
-    }
-
-    // TODO: 實現從 Firebase Storage 刪除文件的邏輯
-    console.log(`Media file ${mediaId} deletion requested`);
-    
-    return true;
-  }
-
-  /**
-   * 更新課程的內容統計
-   * @param {string} courseId - 課程ID
-   * @returns {Promise<void>}
-   */
-  static async updateCourseContentStats(courseId) {
-    if (!courseId) {
-      return;
-    }
-
-    try {
-      // 獲取該課程的所有內容
-      const contents = await this.getCourseContentsByCourse(courseId);
-      
-      let totalLessons = 0;
-      let pendingHomework = 0;
-      let completedHomework = 0;
-      let totalMedia = 0;
-      
-      contents.forEach(content => {
-        if (content.lesson_content) {
-          totalLessons++;
-        }
-        
-        if (content.homework_assignments && Array.isArray(content.homework_assignments)) {
-          content.homework_assignments.forEach(hw => {
-            if (hw.status === 'pending' || hw.status === 'in_progress') {
-              pendingHomework++;
-            } else if (hw.status === 'completed') {
-              completedHomework++;
-            }
-          });
-        }
-        
-        if (content.class_media && Array.isArray(content.class_media)) {
-          totalMedia += content.class_media.length;
-        }
-      });
-
-      // 更新課程記錄
-      await this.updateCourse(courseId, {
-        has_content: contents.length > 0,
-        content_count: contents.length,
-        last_content_update: contents.length > 0 ? contents[0].updated_at : null,
-        content_summary: {
-          total_lessons: totalLessons,
-          pending_homework: pendingHomework,
-          completed_homework: completedHomework,
-          total_media: totalMedia
-        }
-      });
-      
-    } catch (error) {
-      console.warn('Failed to update course content stats:', error.message);
-      // 不拋出錯誤，避免影響主要操作
-    }
-  }
-
-  /**
-   * 驗證課程內容數據格式
-   * @param {Object} contentData - 課程內容數據
-   * @returns {boolean} 驗證結果
-   */
-  static validateCourseContentData(contentData) {
-    if (!contentData || typeof contentData !== 'object') {
-      return false;
-    }
-
-    // 檢查必要字段
-    if (!contentData.course_id || !contentData.student_id) {
-      return false;
-    }
-
-    // 驗證日期格式
-    if (contentData.content_date && !/^\d{4}-\d{2}-\d{2}$/.test(contentData.content_date)) {
-      return false;
-    }
-
-    return true;
-  }
 
 }
 
