@@ -548,6 +548,60 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         }
       }
 
+      // 🚨 修復：檢查重複課程模板，避免重複創建
+      const existingRecurringCourses = await EntityService.queryEntities(this.entityType, {
+        student_id: userId,
+        course_name,
+        is_recurring: true,
+        status: 'scheduled'
+      });
+
+      // 檢查是否已有相同的重複課程模板（課程名稱 + 學童名稱 + 重複模式）
+      const duplicateTemplate = existingRecurringCourses.find(existing => {
+        const sameChild = (existing.child_name || null) === (childName || null);
+        const samePattern = existing.recurrence_pattern === recurrence_pattern;
+        return sameChild && samePattern;
+      });
+
+      if (duplicateTemplate) {
+        this.log('info', 'Existing recurring course template found - returning confirmation', {
+          existingId: duplicateTemplate.id,
+          courseName: course_name,
+          childName: childName,
+          recurrencePattern: recurrence_pattern
+        });
+        
+        // 🎯 第一性原則：重新定義為"創建或獲取"語義，而非拒絕重複
+        // 用戶意圖是確保課程存在，而非重複創建
+        const recurrenceLabel = this.getRecurrenceLabel(duplicateTemplate.recurrence_pattern || recurrence_pattern);
+        
+        let confirmationMessage = `✅ 重複課程「${course_name}」已確認存在！\n\n`;
+        
+        if (childName) {
+          confirmationMessage += `👶 學童: ${childName}\n`;
+        }
+        
+        confirmationMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
+        
+        if (duplicateTemplate.schedule_time) {
+          confirmationMessage += `🕒 時間：${duplicateTemplate.schedule_time}\n`;
+        }
+        
+        if (duplicateTemplate.course_date) {
+          confirmationMessage += `📅 開始日期：${TimeService.formatForDisplay(duplicateTemplate.course_date)}`;
+        }
+        
+        return this.createSuccessResponse(
+          confirmationMessage,
+          { 
+            course: duplicateTemplate,
+            recurrence_pattern: duplicateTemplate.recurrence_pattern || recurrence_pattern,
+            existing: true,
+            recurrence_description: recurrenceLabel
+          }
+        );
+      }
+
       // 構建重複課程數據
       const recurringCourseData = this.buildRecurringCourseData(
         userId, 

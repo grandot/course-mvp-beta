@@ -14,6 +14,16 @@
 | `DataService` | 所有數據操作 | ❌ 直接調用 Firebase |
 | `TaskService` | 業務邏輯協調 | ❌ 硬編碼邏輯 |
 
+### ⚡ 智能分流機制（已實現）
+```javascript
+// SemanticService 智能分流：規則引擎 → OpenAI 後備
+if (ruleResult.confidence > 0 && intent !== 'unknown') {
+  return 規則引擎結果;  // 60-70% 案例，<10ms，免費
+} else {
+  return await OpenAI.analyzeIntent();  // 30-40% 案例，200-500ms，付費
+}
+```
+
 ## ⚡ 必要工作流程
 1. **Bug 報告**: 必須先執行 `./scripts/get-app-logs.sh 50`
 2. **代碼修改**: 必須在提交前更新 `CHANGELOG.md`
