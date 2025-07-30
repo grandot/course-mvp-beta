@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.2.12] - 2025-07-30
+
+### Fixed
+- **🚨 重複課程查詢邏輯根本修復**: 基於第一性原則修復查詢課表時跳過正確日期的問題
+  - **問題**: 查詢課表時，魔術課程（每週六）第一堂顯示8/9而非8/2
+  - **根本問題分析**:
+    - 8/2是週六(6)，8/3是週日(0)，8/9是週六(6)
+    - 重複課程的 start_date 被錯誤設置為8/3（週日），但模式是每週六
+    - RecurringCourseCalculator 查詢時從 `Math.max(start, courseStartDate)` 開始
+    - 這導致查詢被錯誤的 courseStartDate 限制，跳過了查詢範圍內的正確實例
+  - **修復內容**:
+    - **TimeService.parseDateOffset**: 修正條件為 `offset < 0`，允許今天是目標日
+    - **RecurringCourseCalculator.calculateFutureOccurrences**: 查詢從查詢起始日期開始，不受錯誤 start_date 影響
+  - **修復效果**: 
+    - 舊邏輯: 查詢課表 → 魔術課程第一堂8/9（被錯誤start_date限制）
+    - 新邏輯: 查詢課表 → 魔術課程第一堂8/2（查詢範圍內的正確實例）
+  - **第一性原則**: 查詢應該顯示查詢範圍內所有符合重複規則的實例，不受存儲的 start_date 錯誤影響
+  - **影響範圍**: 所有重複課程的查詢和顯示
+
+---
+
 ## [v10.2.11] - 2025-07-29
 
 ### Fixed

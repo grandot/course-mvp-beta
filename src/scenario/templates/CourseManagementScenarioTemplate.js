@@ -1168,35 +1168,41 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       return timeInfo.date;
     }
 
-    // 根據重複模式智能判斷起始日期
-    switch (recurrencePattern) {
-      case 'daily':
-      case '每天':
-        // 每天重複，從明天開始
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return TimeService.formatForStorage(tomorrow);
-        
-      case 'weekly':
-      case '每週':
-        // 每週重複，從下週同一天開始
-        const nextWeek = new Date(today);
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        return TimeService.formatForStorage(nextWeek);
-        
-      case 'monthly':
-      case '每月':
-        // 每月重複，從下個月同一天開始
-        const nextMonth = new Date(today);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        return TimeService.formatForStorage(nextMonth);
-        
-      default:
-        // 預設從明天開始
-        const defaultStart = new Date(today);
-        defaultStart.setDate(defaultStart.getDate() + 1);
-        return TimeService.formatForStorage(defaultStart);
+    // 🎯 修復：使用 TimeService 的智能起始日期計算
+    if (!timeInfo || !timeInfo.parsed_time) {
+      // 如果沒有時間信息，使用預設時間 18:00
+      const defaultTime = '18:00';
+      const [hour, minute] = defaultTime.split(':').map(Number);
+      
+      // 根據重複模式計算起始日期
+      if (recurrencePattern.includes('每週') || recurrencePattern.includes('每周')) {
+        const daysOfWeek = this.extractDaysOfWeek(recurrencePattern, timeInfo);
+        return TimeService.calculateWeeklyStartDate(today, hour, minute, daysOfWeek);
+      } else if (recurrencePattern.includes('每天') || recurrencePattern.includes('每日')) {
+        return TimeService.calculateDailyStartDate(today, hour, minute);
+      } else if (recurrencePattern.includes('每月')) {
+        const dayOfMonth = this.extractDayOfMonth(recurrencePattern);
+        return TimeService.calculateMonthlyStartDate(today, hour, minute, dayOfMonth);
+      }
+    } else {
+      // 有完整時間信息，使用智能起始日期計算
+      const [hour, minute] = timeInfo.parsed_time.split(':').map(Number);
+      
+      if (recurrencePattern.includes('每週') || recurrencePattern.includes('每周')) {
+        const daysOfWeek = this.extractDaysOfWeek(recurrencePattern, timeInfo);
+        return TimeService.calculateWeeklyStartDate(today, hour, minute, daysOfWeek);
+      } else if (recurrencePattern.includes('每天') || recurrencePattern.includes('每日')) {
+        return TimeService.calculateDailyStartDate(today, hour, minute);
+      } else if (recurrencePattern.includes('每月')) {
+        const dayOfMonth = this.extractDayOfMonth(recurrencePattern);
+        return TimeService.calculateMonthlyStartDate(today, hour, minute, dayOfMonth);
+      }
     }
+
+    // 預設從明天開始
+    const defaultStart = new Date(today);
+    defaultStart.setDate(defaultStart.getDate() + 1);
+    return TimeService.formatForStorage(defaultStart);
   }
 
   /**

@@ -35,8 +35,9 @@ class RecurringCourseCalculator {
       courseStartDate = start;
     }
 
-    // 從查詢起始日期或課程開始日期中選擇較晚的那個
-    let current = new Date(Math.max(start.getTime(), courseStartDate.getTime()));
+    // 🚨 修復：查詢應該從查詢起始日期開始，不受錯誤 start_date 影響
+    // 根據第一性原則：查詢範圍內的所有符合規則的實例都應該被找到
+    let current = new Date(start.getTime());
     let iterationCount = 0;
     
     // 智能計算最大迭代次數，根據重複類型調整
