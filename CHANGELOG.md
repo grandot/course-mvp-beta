@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.2.13] - 2025-07-30
+
+### Added
+- **🎯 獨立學童課表查詢功能**: 基於第一性原則實現按學童名稱過濾課表查詢
+  - **功能**: 支持「查詢小美課表」等自然語言，只顯示指定學童的課程
+  - **實現原理**:
+    - TaskService._calculateDateRange: 從entities中提取child_name並傳遞給查詢選項
+    - CourseManagementScenarioTemplate.queryEntities: 添加child_name過濾條件到基礎查詢
+    - 重複課程實例雙重過濾: 模板過濾 + 實例生成後二次過濾確保準確性
+  - **第一性原則**: 學童是課程的屬性維度，應作為獨立的過濾條件處理
+  - **影響範圍**: 
+    - 一般課程查詢: 支持child_name過濾
+    - 重複課程查詢: 模板和實例都支持child_name過濾
+    - 統計信息: 包含child_name過濾狀態
+  - **使用示例**: 
+    - 「查詢小美課表」→ 只顯示小美的所有課程
+    - 「小明下週課表」→ 只顯示小明下週的課程
+    - 「課表」→ 顯示所有學童課程（保持向後兼容）
+
+---
+
 ## [v10.2.12] - 2025-07-30
 
 ### Fixed

@@ -190,6 +190,16 @@ class TaskService {
   _calculateDateRange(entities) {
     const TimeService = require('./timeService');
     
+    // 🎯 輔助函數：統一創建返回對象（包含child_name支持）
+    const createResult = (startDate, endDate) => {
+      const result = { startDate, endDate };
+      if (entities.child_name) {
+        result.child_name = entities.child_name;
+        console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學童過濾: ${entities.child_name}`);
+      }
+      return result;
+    };
+    
     // 獲取當前時間作為基準
     const today = TimeService.getCurrentUserTime();
     
@@ -223,10 +233,10 @@ class TaskService {
         const startOfMonth = TimeService.getStartOfMonth(nextNextMonth);
         const endOfMonth = TimeService.getEndOfMonth(nextNextMonth);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfMonth),
-          endDate: TimeService.formatForStorage(endOfMonth)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfMonth),
+          TimeService.formatForStorage(endOfMonth)
+        );
       } else if (checkText.includes('下月')) {
         // 返回下月的範圍
         const nextMonth = new Date(today);
@@ -234,19 +244,19 @@ class TaskService {
         const startOfMonth = TimeService.getStartOfMonth(nextMonth);
         const endOfMonth = TimeService.getEndOfMonth(nextMonth);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfMonth),
-          endDate: TimeService.formatForStorage(endOfMonth)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfMonth),
+          TimeService.formatForStorage(endOfMonth)
+        );
       } else if (checkText.includes('本月') || checkText.includes('這個月') || checkText.includes('這月')) {
         // 返回本月的範圍
         const startOfMonth = TimeService.getStartOfMonth(today);
         const endOfMonth = TimeService.getEndOfMonth(today);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「本月」查詢，範圍: ${TimeService.formatForStorage(startOfMonth)} 到 ${TimeService.formatForStorage(endOfMonth)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfMonth),
-          endDate: TimeService.formatForStorage(endOfMonth)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfMonth),
+          TimeService.formatForStorage(endOfMonth)
+        );
       }
       // 週查詢處理 - 次要優先級
       else if (checkText.includes('下下週') || checkText.includes('下下周')) {
@@ -256,10 +266,10 @@ class TaskService {
         const startOfWeek = TimeService.getStartOfWeek(nextNextWeek);
         const endOfWeek = TimeService.getEndOfWeek(nextNextWeek);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfWeek),
-          endDate: TimeService.formatForStorage(endOfWeek)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfWeek),
+          TimeService.formatForStorage(endOfWeek)
+        );
       } else if (checkText.includes('下週') || checkText.includes('下周')) {
         // 返回下週的範圍 - 放在下下週之後
         const nextWeek = new Date(today);
@@ -267,20 +277,20 @@ class TaskService {
         const startOfWeek = TimeService.getStartOfWeek(nextWeek);
         const endOfWeek = TimeService.getEndOfWeek(nextWeek);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「下週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfWeek),
-          endDate: TimeService.formatForStorage(endOfWeek)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfWeek),
+          TimeService.formatForStorage(endOfWeek)
+        );
       } else if (checkText.includes('這週') || checkText.includes('這周') ||
           checkText.includes('本週') || checkText.includes('本周')) {
         // 返回這週的範圍
         const startOfWeek = TimeService.getStartOfWeek(today);
         const endOfWeek = TimeService.getEndOfWeek(today);
         console.log(`🔧 [DEBUG] _calculateDateRange - 識別為「這週」查詢，範圍: ${TimeService.formatForStorage(startOfWeek)} 到 ${TimeService.formatForStorage(endOfWeek)}`);
-        return {
-          startDate: TimeService.formatForStorage(startOfWeek),
-          endDate: TimeService.formatForStorage(endOfWeek)
-        };
+        return createResult(
+          TimeService.formatForStorage(startOfWeek),
+          TimeService.formatForStorage(endOfWeek)
+        );
       }
     }
     
@@ -294,15 +304,24 @@ class TaskService {
       const endOfDay = new Date(targetDate);
       endOfDay.setHours(23, 59, 59, 999);
       console.log(`🔧 [DEBUG] _calculateDateRange - 使用具體日期，範圍: ${TimeService.formatForStorage(startOfDay)} 到 ${TimeService.formatForStorage(endOfDay)}`);
-      return {
-        startDate: TimeService.formatForStorage(startOfDay),
-        endDate: TimeService.formatForStorage(endOfDay)
-      };
+      return createResult(
+        TimeService.formatForStorage(startOfDay),
+        TimeService.formatForStorage(endOfDay)
+      );
     }
     
-    // 默認返回空（不限制範圍，使用場景模板的默認範圍）
-    console.log(`🔧 [DEBUG] _calculateDateRange - 無法識別特定時間範圍，使用默認4週範圍`);
-    return {};
+    // 🎯 第一性原則：添加child_name過濾支持
+    const result = {};
+    
+    // 從entities中提取child_name（如果存在）
+    if (entities.child_name) {
+      result.child_name = entities.child_name;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學童過濾: ${entities.child_name}`);
+    }
+    
+    // 默認返回（可能包含child_name，不限制時間範圍，使用場景模板的默認範圍）
+    console.log(`🔧 [DEBUG] _calculateDateRange - 無法識別特定時間範圍，使用預設4週範圍`);
+    return result;
   }
 
   /**

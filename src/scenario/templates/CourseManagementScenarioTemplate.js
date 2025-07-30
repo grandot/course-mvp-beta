@@ -345,18 +345,28 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         new Date(today.getTime() + (4 * 7 * 24 * 60 * 60 * 1000)) // 4週後
       );
 
+      // 🎯 第一性原則：構建查詢條件（包含child_name過濾）
+      const baseQueryConditions = {
+        student_id: userId,
+        status: 'scheduled'
+      };
+      
+      // 如果指定了學童名稱，添加過濾條件
+      if (options.child_name) {
+        baseQueryConditions.child_name = options.child_name;
+        this.log('info', 'Adding child_name filter', { child_name: options.child_name });
+      }
+
       // 同時查詢一般課程和重複課程
       const [regularCourses, recurringCourses] = await Promise.all([
         // 一般課程
         EntityService.queryEntities(this.entityType, {
-          student_id: userId,
-          status: 'scheduled',
+          ...baseQueryConditions,
           is_recurring: false
         }),
         // 重複課程（只查模板）
         EntityService.queryEntities(this.entityType, {
-          student_id: userId,
-          status: 'scheduled',
+          ...baseQueryConditions,
           is_recurring: true
         })
       ]);
@@ -392,8 +402,30 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         return course.course_date >= startDate && course.course_date <= endDate;
       });
 
+      // 🎯 第一性原則：重複課程實例child_name過濾（雙重保險）
+      // 雖然重複課程模板已經被過濾，但實例生成後再次確保過濾正確性
+      let filteredRecurringInstances = recurringInstances;
+      if (options.child_name) {
+        filteredRecurringInstances = recurringInstances.filter(instance => {
+          const matches = instance.child_name === options.child_name;
+          if (!matches) {
+            this.log('debug', 'Filtering out recurring instance', { 
+              instanceChildName: instance.child_name, 
+              targetChildName: options.child_name,
+              courseName: instance.course_name 
+            });
+          }
+          return matches;
+        });
+        this.log('info', 'Recurring instances after child_name filter', { 
+          beforeFilter: recurringInstances.length,
+          afterFilter: filteredRecurringInstances.length,
+          childName: options.child_name
+        });
+      }
+
       // 合併並排序所有課程
-      const allCourses = [...filteredRegularCourses, ...recurringInstances];
+      const allCourses = [...filteredRegularCourses, ...filteredRecurringInstances];
       
       // 按日期和時間排序
       allCourses.sort((a, b) => {
@@ -414,9 +446,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       const stats = {
         totalCourses: allCourses.length,
         regularCourses: filteredRegularCourses.length,
-        recurringInstances: recurringInstances.length,
+        recurringInstances: filteredRecurringInstances.length,
         recurringTemplates: recurringCourses.length,
-        queryRange: { startDate, endDate }
+        queryRange: { startDate, endDate },
+        childNameFilter: options.child_name || null
       };
 
       this.log('info', 'Courses queried successfully', stats);
