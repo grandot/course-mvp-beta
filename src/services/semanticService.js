@@ -481,6 +481,29 @@ class SemanticService {
       let student = entities.student;
       let location = entities.location;
       
+      // 🎯 Fallback策略：如果extractChildName失敗，但OpenAI將學童名稱誤識別為course_name
+      if (!childName && courseName) {
+        // 檢查course_name是否實際上是學童名稱
+        const isValidChildName = (name) => {
+          if (!name || typeof name !== 'string') return false;
+          if (name.length < 2 || name.length > 4) return false;
+          if (!/^[一-龯]+$/.test(name)) return false;
+          
+          // 排除明顯課程詞彙
+          const courseKeywords = ['課', '班', '教', '學', '習', '程', '術', '藝', '運動', '語言'];
+          if (courseKeywords.some(keyword => name.includes(keyword))) return false;
+          
+          return true;
+        };
+        
+        if (isValidChildName(courseName) && (text.includes('課表') || text.includes('課程') || text.includes('安排'))) {
+          console.log(`👶 [SemanticService] Fallback策略：將OpenAI誤識別的course_name "${courseName}" 糾正為學童名稱`);
+          childName = courseName;
+          courseName = null; // 清空課程名稱，因為實際上是查詢課表
+          student = childName; // 同時設置student字段
+        }
+      }
+      
       // 🚨 重要：處理OpenAI提取的時間和日期信息
       let extractedDateTime = '';
       
@@ -536,43 +559,78 @@ class SemanticService {
   static extractChildName(text) {
     if (!text || typeof text !== 'string') return null;
     
-    // 子女名稱模式定義
-    const CHILD_NAME_PATTERNS = [
-      {
-        pattern: /^([小大][一-龯]{1,2})(?:\s|的|今天|明天|後天|下週|每|有|要|課表|課程)/,
-        description: '小/大 + 1-2個中文字符',
-        examples: ['小明', '小美', '大寶']
-      },
-      {
-        pattern: /^([一-龯]{2,3})(?:\s|的|今天|明天|後天|下週|每|有|要|課表|課程)/,
-        description: '2-3個中文字符',
-        examples: ['明明', '志強', '美美']
-      }
-    ];
+    // 🎯 第一性原則：學童名稱是獨立實體，應可在任何位置被識別
+    // 使用多層次匹配策略，而非僵化的詞彙列表
     
     // 驗證是否為有效的子女名稱
     const isValidChildName = (name) => {
-      // 排除明顯的非人名詞彙
-      const excludeWords = ['今天', '明天', '後天', '下週', '每週', '每天', '週一', '週二', '週三', '週四', '週五', '週六', '週日', '上午', '下午', '晚上', '早上', '中午'];
+      // 排除明顯的非人名詞彙（排除法而非包含法）
+      const excludeWords = [
+        // 時間詞彙
+        '今天', '明天', '後天', '下週', '每週', '每天', '本週', '這週', '上週',
+        '週一', '週二', '週三', '週四', '週五', '週六', '週日',
+        '星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日',
+        '上午', '下午', '晚上', '早上', '中午', '傍晚',
+        // 功能詞彙
+        '課表', '課程', '安排', '時間', '查詢', '修改', '取消', '新增',
+        '老師', '教室', '地點', '學校', '補習', '才藝'
+      ];
+      
       if (excludeWords.includes(name)) return false;
       
-      // 長度檢查
+      // 長度檢查：一般中文姓名2-4字
       if (name.length < 2 || name.length > 4) return false;
       
       // 只包含中文字符
-      return /^[一-龯]+$/.test(name);
+      if (!/^[一-龯]+$/.test(name)) return false;
+      
+      return true;
     };
-    
-    for (const { pattern } of CHILD_NAME_PATTERNS) {
-      const match = text.match(pattern);
-      if (match && isValidChildName(match[1])) {
-        return {
-          name: match[1],
-          remainingText: text.substring(match.index + match[1].length).trim()
-        };
+
+    // 多層次匹配策略
+    const extractionStrategies = [
+      // 策略1：句首學童名稱（最常見）
+      {
+        name: 'sentence_start',
+        patterns: [
+          /^([小大][一-龯]{1,2})([^一-龯]|$)/,  // 小美xxx 或 小美(結尾)
+          /^([一-龯]{2,3})([^一-龯]|$)/        // 明明xxx 或 明明(結尾)
+        ]
+      },
+      // 策略2：句中學童名稱
+      {
+        name: 'sentence_middle', 
+        patterns: [
+          /(?:查詢|看看|檢查)([小大][一-龯]{1,2})([^一-龯]|$)/, // 查詢小美xxx
+          /(?:查詢|看看|檢查)([一-龯]{2,3})([^一-龯]|$)/,    // 查詢明明xxx
+          /([小大][一-龯]{1,2})(?:的|有什麼|怎麼|狀況)/,      // 小美的xxx, 小美有什麼
+          /([一-龯]{2,3})(?:的|有什麼|怎麼|狀況)/             // 明明的xxx, 明明有什麼
+        ]
+      }
+    ];
+
+    // 執行多策略匹配
+    for (const strategy of extractionStrategies) {
+      for (const pattern of strategy.patterns) {
+        const match = text.match(pattern);
+        if (match && match[1] && isValidChildName(match[1])) {
+          const childName = match[1];
+          // 從原文本中移除學童名稱，得到剩餘文本
+          const remainingText = text.replace(childName, '').replace(/^[的\s]+|[的\s]+$/g, '').trim();
+          
+          console.log(`👶 [SemanticService] 使用策略 "${strategy.name}" 識別到子女: ${childName}`);
+          console.log(`👶 [SemanticService] 剩餘文本: "${remainingText}"`);
+          
+          return {
+            name: childName,
+            remainingText: remainingText || '課表' // 如果剩餘文本為空，默認為查詢課表
+          };
+        }
       }
     }
     
+    // 如果所有策略都失敗，返回 null
+    console.log(`👶 [SemanticService] 未識別到有效的子女名稱: "${text}"`);
     return null;
   }
 
