@@ -214,7 +214,7 @@ class OpenAIService {
 
 請以 JSON 格式回應，包含：
 {
-  "intent": "意圖類型 (record_course, cancel_course, query_schedule, modify_course, set_reminder)",
+  "intent": "意圖類型 (record_course, cancel_course, query_schedule, modify_course, set_reminder, clear_schedule)",
   "confidence": "信心度 (0.0-1.0)",
   "entities": {
     "course_name": "課程名稱",
@@ -225,6 +225,8 @@ class OpenAIService {
   },
   "reasoning": "分析理由"
 }
+
+注意：clear_schedule 是清空所有課程的意圖，需要包含"清空"、"刪除所有"等關鍵詞。
 
 只回應 JSON，不要其他文字。
 `;
@@ -257,16 +259,123 @@ class OpenAIService {
         model: result.model,
       };
     } catch (parseError) {
-      // JSON 解析失敗，回傳原始文本和詳細錯誤信息
+      // 🎯 JSON 解析失敗時，嘗試基礎關鍵詞 fallback
+      console.warn('[OpenAIService] JSON 解析失敗，啟用關鍵詞 fallback:', parseError.message);
+      
+      const fallbackResult = this.fallbackIntentAnalysis(text);
+      
       return {
-        success: false,
-        error: 'Failed to parse JSON response',
-        parseError: parseError.message,
-        raw_content: result.content,
+        success: true,
+        analysis: fallbackResult,
         usage: result.usage,
-        model: result.model,
+        model: `${result.model}-fallback`,
+        fallback: true,
+        parseError: parseError.message,
+        raw_content: result.content
       };
     }
+  }
+
+  /**
+   * 🎯 基礎關鍵詞意圖分析 fallback
+   * @param {string} text - 用戶輸入文本
+   * @returns {Object} 意圖分析結果
+   */
+  static fallbackIntentAnalysis(text) {
+    const lowerText = text.toLowerCase();
+    
+    // 🎯 核心意圖關鍵詞映射
+    const intentPatterns = {
+      clear_schedule: {
+        keywords: ['清空', '全部刪除', '刪除所有', '清除所有', '重置'],
+        requiredContext: ['課表', '課程', '所有'],
+        confidence: 0.7
+      },
+      cancel_course: {
+        keywords: ['取消', '刪除', '移除', '不上了', '不要'],
+        confidence: 0.6
+      },
+      modify_course: {
+        keywords: ['修改', '更改', '調整', '改成', '改到', '換成', '換到'],
+        confidence: 0.6
+      },
+      record_course: {
+        keywords: ['新增', '安排', '預約', '上課', '報名', '加入'],
+        timeWords: ['今天', '明天', '後天', '下週', '點', '時'],
+        confidence: 0.6
+      },
+      query_schedule: {
+        keywords: ['查詢', '看看', '顯示', '課表', '什麼課', '有什麼', '安排'],
+        confidence: 0.6
+      },
+      set_reminder: {
+        keywords: ['提醒', '通知', '叫我', '記得'],
+        confidence: 0.6
+      }
+    };
+
+    let detectedIntent = 'unknown';
+    let maxConfidence = 0;
+    let entities = {
+      course_name: null,
+      time: null,
+      date: null,
+      location: null,
+      teacher: null
+    };
+
+    // 意圖檢測
+    for (const [intent, pattern] of Object.entries(intentPatterns)) {
+      let matched = false;
+      
+      // 檢查主要關鍵詞
+      if (pattern.keywords.some(keyword => text.includes(keyword))) {
+        // 特殊處理 clear_schedule - 需要額外上下文
+        if (intent === 'clear_schedule') {
+          matched = pattern.requiredContext.some(context => text.includes(context));
+        } else if (intent === 'record_course') {
+          // record_course 需要時間詞彙
+          matched = pattern.timeWords && pattern.timeWords.some(word => text.includes(word));
+          if (!matched) {
+            // 或者有明確的課程名稱
+            matched = text.includes('課') || text.includes('班');
+          }
+        } else {
+          matched = true;
+        }
+      }
+
+      if (matched && pattern.confidence > maxConfidence) {
+        detectedIntent = intent;
+        maxConfidence = pattern.confidence;
+      }
+    }
+
+    // 基礎實體提取
+    // 課程名稱
+    const courseMatch = text.match(/([一-龯A-Za-z]+)(?:課|班)/);
+    if (courseMatch) {
+      entities.course_name = courseMatch[1];
+    }
+
+    // 時間提取
+    const timeMatch = text.match(/(\d{1,2}[:：]\d{2}|[上下]午\d{1,2}[點点]|\d{1,2}[點点])/);
+    if (timeMatch) {
+      entities.time = timeMatch[0];
+    }
+
+    // 日期提取
+    const dateMatch = text.match(/(今天|明天|後天|週[一二三四五六日]|星期[一二三四五六日])/);
+    if (dateMatch) {
+      entities.date = dateMatch[0];
+    }
+
+    return {
+      intent: detectedIntent,
+      confidence: maxConfidence,
+      entities,
+      reasoning: `基於關鍵詞匹配的 fallback 分析`
+    };
   }
 
   /**
@@ -433,13 +542,112 @@ class OpenAIService {
         throw new Error('無法解析實體提取結果');
       }
     } catch (error) {
-      console.error('OpenAI實體提取失敗:', error.message);
+      console.error('OpenAI實體提取失敗，啟用結構化 fallback:', error.message);
+      
+      // 🎯 結構化 fallback：基於正則的實體提取
+      const fallbackEntities = this.fallbackExtractEntities(text);
+      
       return {
-        success: false,
-        error: error.message,
-        entities: null
+        success: true,
+        entities: fallbackEntities,
+        usage: null,
+        fallback: true,
+        error: error.message
       };
     }
+  }
+
+  /**
+   * 🎯 結構化實體提取 fallback
+   * @param {string} text - 用戶輸入文本
+   * @returns {Object} 提取的實體
+   */
+  static fallbackExtractEntities(text) {
+    const entities = {
+      course_name: null,
+      student: null,
+      location: null,
+      time_phrase: null,
+      date_phrase: null
+    };
+
+    // 1. 提取學生名稱
+    // 支持 "LUMI課表"、"小美的課程"、"查詢小光" 等模式
+    const studentPatterns = [
+      /^([一-龯A-Za-z]{2,10})(?:課表|的課程|的安排)/,
+      /查詢([一-龯A-Za-z]{2,10})(?:的)?/,
+      /([一-龯A-Za-z]{2,10})(?:早上|下午|晚上|點)/,
+      /^([一-龯A-Za-z]{2,10})(?:[一-龯]+課)/
+    ];
+
+    for (const pattern of studentPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        // 驗證是否為有效名稱（排除課程名稱）
+        const name = match[1];
+        if (!/課|班|教|學|習|程|術|藝/.test(name)) {
+          entities.student = name;
+          break;
+        }
+      }
+    }
+
+    // 2. 提取課程名稱
+    const courseMatch = text.match(/([一-龯A-Za-z]+)(?:課|班)(?!表)/);
+    if (courseMatch && courseMatch[1] !== entities.student) {
+      entities.course_name = courseMatch[1];
+    }
+
+    // 3. 提取地點
+    const locationPatterns = [
+      /(前台|後台|教室|線上|家裡|學校|公園|體育館|游泳池)/,
+      /在([一-龯]+)(?:上課|學習)/,
+      /(\d+樓|\d+F)/
+    ];
+
+    for (const pattern of locationPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        entities.location = match[1];
+        break;
+      }
+    }
+
+    // 4. 提取時間短語
+    const timePatterns = [
+      /(早上|上午|中午|下午|晚上)\s*(\d{1,2}[:：]\d{2}|\d{1,2}[點点](?:\d{1,2})?)/,
+      /(\d{1,2}[:：]\d{2})/,
+      /(\d{1,2}[點点](?:\d{1,2}分?)?)/,
+      /(早上|上午|中午|下午|晚上)/
+    ];
+
+    for (const pattern of timePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        entities.time_phrase = match[0];
+        break;
+      }
+    }
+
+    // 5. 提取日期短語
+    const datePatterns = [
+      /(今天|明天|後天|大後天)/,
+      /(週[一二三四五六日]|星期[一二三四五六日])/,
+      /(下週|本週|這週|上週)/,
+      /(\d{1,2}月\d{1,2}[日號])/,
+      /(\d{4}-\d{2}-\d{2})/
+    ];
+
+    for (const pattern of datePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        entities.date_phrase = match[0];
+        break;
+      }
+    }
+
+    console.log('[OpenAIService] Fallback 實體提取結果:', entities);
+    return entities;
   }
 
   static async extractCourseName(text) {

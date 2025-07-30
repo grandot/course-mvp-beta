@@ -48,7 +48,9 @@ class IntentRuleEngine {
     // 遍歷所有意圖規則
     const ruleEntries = Object.entries(rules);
     ruleEntries.forEach(([intentName, rule]) => {
-      const matchResult = this.matchRule(normalizedText, rule);
+      // 🎯 修復：傳遞 intent_name 給 matchRule
+      const ruleWithIntent = { ...rule, intent_name: intentName };
+      const matchResult = this.matchRule(normalizedText, ruleWithIntent);
 
       // 如果找到更好的匹配（優先級更高或置信度更高）
       if (matchResult.confidence > 0 && (
@@ -112,6 +114,16 @@ class IntentRuleEngine {
       if (cancelWords.some(word => text.includes(word))) {
         fallbackConfidence = 0.3;
         console.log(`[IntentRuleEngine] 基礎 Fallback - 取消課程: "${text}"`);
+      }
+    } else if (intent_name === 'clear_schedule') {
+      // 🎯 清空課表：高風險操作，需要明確關鍵詞
+      const clearWords = ['清空', '全部刪除', '刪除所有', '清除所有', '重置'];
+      const scheduleWords = ['課表', '課程', '所有'];
+      // 需要同時包含清空動作詞和對象詞
+      if (clearWords.some(word => text.includes(word)) && 
+          (text.includes('課表') || text.includes('課程') || scheduleWords.some(word => text.includes(word)))) {
+        fallbackConfidence = 0.3;
+        console.log(`[IntentRuleEngine] 基礎 Fallback - 清空課表: "${text}"`);
       }
     }
     
