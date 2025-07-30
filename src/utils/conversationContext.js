@@ -221,6 +221,68 @@ class ConversationContext {
   }
 
   /**
+   * 設置待處理圖片上下文
+   * @param {string} userId - 用戶ID
+   * @param {Object} imageContext - 圖片上下文信息
+   */
+  static setPendingImageContext(userId, imageContext) {
+    if (!userId) {
+      console.warn('ConversationContext: userId is required');
+      return;
+    }
+
+    const pendingKey = `pending_image_${userId}`;
+    this.contexts.set(pendingKey, {
+      userId,
+      type: 'pending_image',
+      ...imageContext,
+      timestamp: Date.now()
+    });
+
+    console.log(`📸 [ConversationContext] 設置待處理圖片上下文: ${userId}`);
+  }
+
+  /**
+   * 獲取待處理圖片上下文
+   * @param {string} userId - 用戶ID
+   * @returns {Object|null} 圖片上下文信息
+   */
+  static getPendingImageContext(userId) {
+    if (!userId) return null;
+
+    const pendingKey = `pending_image_${userId}`;
+    const context = this.contexts.get(pendingKey);
+    
+    if (context && context.expiresAt > Date.now()) {
+      return context;
+    }
+    
+    // 過期自動清理
+    if (context) {
+      this.contexts.delete(pendingKey);
+      console.log(`📸 [ConversationContext] 自動清理過期圖片上下文: ${userId}`);
+    }
+    
+    return null;
+  }
+
+  /**
+   * 清除待處理圖片上下文
+   * @param {string} userId - 用戶ID
+   */
+  static clearPendingImageContext(userId) {
+    if (!userId) return;
+
+    const pendingKey = `pending_image_${userId}`;
+    const existed = this.contexts.has(pendingKey);
+    this.contexts.delete(pendingKey);
+    
+    if (existed) {
+      console.log(`📸 [ConversationContext] 清除待處理圖片上下文: ${userId}`);
+    }
+  }
+
+  /**
    * 重置所有會話上下文（主要用於測試）
    */
   static reset() {

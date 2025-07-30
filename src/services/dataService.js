@@ -11,6 +11,7 @@ class DataService {
   // Firebase 集合名稱
   static COLLECTIONS = {
     COURSES: 'courses',
+    COURSE_CONTENTS: 'course_contents',
     TOKEN_USAGE: 'token_usage'
   };
 
@@ -595,6 +596,393 @@ class DataService {
     }
 
     return await this.queryCourses(criteria);
+  }
+
+  // ===============================
+  // 課程內容管理 (Course Content)
+  // ===============================
+
+  /**
+   * 創建課程內容記錄
+   * @param {Object} contentData - 課程內容數據
+   * @returns {Promise<Object>} 創建結果
+   */
+  static async createCourseContent(contentData) {
+    if (!contentData) {
+      throw new Error('DataService: contentData is required');
+    }
+
+    if (!contentData.course_id) {
+      throw new Error('DataService: course_id is required');
+    }
+
+    if (!contentData.student_id) {
+      throw new Error('DataService: student_id is required');
+    }
+
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+
+    const courseContent = {
+      course_id: contentData.course_id,
+      student_id: contentData.student_id,
+      content_date: contentData.content_date || new Date().toISOString().split('T')[0],
+      
+      // 課程內容
+      lesson_content: contentData.lesson_content || null,
+      
+      // 作業任務
+      homework_assignments: contentData.homework_assignments || [],
+      
+      // 課堂媒體
+      class_media: contentData.class_media || [],
+      
+      // 元數據
+      created_at: timestamp,
+      updated_at: timestamp,
+      created_by: contentData.created_by || 'parent',
+      source: contentData.source || 'manual',
+      
+      // 原始輸入
+      raw_input: contentData.raw_input || null,
+      
+      // 狀態管理
+      status: contentData.status || 'published',
+      visibility: contentData.visibility || 'private'
+    };
+
+    const result = await FirebaseService.createDocument(this.COLLECTIONS.COURSE_CONTENTS, courseContent);
+    
+    console.log(`📝 Course content created: ${contentData.course_id}`);
+    
+    // 更新關聯課程的內容統計
+    await this.updateCourseContentStats(contentData.course_id);
+    
+    return {
+      success: true,
+      contentId: result.id,
+      content: result.data,
+    };
+  }
+
+  /**
+   * 根據ID獲取課程內容
+   * @param {string} contentId - 內容ID
+   * @returns {Promise<Object|null>} 課程內容記錄
+   */
+  static async getCourseContent(contentId) {
+    if (!contentId) {
+      throw new Error('DataService: contentId is required');
+    }
+
+    try {
+      const result = await FirebaseService.getDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId);
+      
+      if (!result || !result.exists) {
+        return null;
+      }
+
+      return {
+        id: result.id,
+        ...result.data,
+      };
+    } catch (error) {
+      console.error('❌ DataService.getCourseContent failed:', {
+        contentId,
+        error: error.message
+      });
+      
+      throw new Error(`Failed to get course content: ${error.message}`);
+    }
+  }
+
+  /**
+   * 獲取特定課程的所有內容記錄
+   * @param {string} courseId - 課程ID
+   * @param {Object} filters - 篩選條件
+   * @returns {Promise<Array>} 內容記錄列表
+   */
+  static async getCourseContentsByCourse(courseId, filters = {}) {
+    if (!courseId) {
+      throw new Error('DataService: courseId is required');
+    }
+
+    try {
+      const queryFilters = { course_id: courseId, ...filters };
+      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, queryFilters);
+      
+      // 按日期排序（最新的在前）
+      return contents.sort((a, b) => new Date(b.content_date) - new Date(a.content_date));
+    } catch (error) {
+      console.error('❌ DataService.getCourseContentsByCourse failed:', {
+        courseId,
+        error: error.message
+      });
+      
+      throw new Error(`Failed to get course contents: ${error.message}`);
+    }
+  }
+
+  /**
+   * 獲取學生的所有課程內容
+   * @param {string} studentId - 學生ID
+   * @param {Object} filters - 篩選條件
+   * @returns {Promise<Array>} 內容記錄列表
+   */
+  static async getCourseContentsByStudent(studentId, filters = {}) {
+    if (!studentId) {
+      throw new Error('DataService: studentId is required');
+    }
+
+    try {
+      const queryFilters = { student_id: studentId, ...filters };
+      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, queryFilters);
+      
+      // 按日期排序（最新的在前）
+      return contents.sort((a, b) => new Date(b.content_date) - new Date(a.content_date));
+    } catch (error) {
+      console.error('❌ DataService.getCourseContentsByStudent failed:', {
+        studentId,
+        error: error.message
+      });
+      
+      throw new Error(`Failed to get student course contents: ${error.message}`);
+    }
+  }
+
+  /**
+   * 更新課程內容
+   * @param {string} contentId - 內容ID
+   * @param {Object} updateData - 更新數據
+   * @returns {Promise<Object>} 更新結果
+   */
+  static async updateCourseContent(contentId, updateData) {
+    if (!contentId) {
+      throw new Error('DataService: contentId is required');
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      throw new Error('DataService: updateData is required and cannot be empty');
+    }
+
+    try {
+      const updatedData = {
+        ...updateData,
+        updated_at: TimeService.getCurrentUserTime().toISOString(),
+      };
+
+      const result = await FirebaseService.updateDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId, updatedData);
+
+      return {
+        success: true,
+        contentId: result.id,
+        content: result.data,
+      };
+    } catch (error) {
+      console.error('❌ DataService.updateCourseContent failed:', {
+        contentId,
+        updateData,
+        error: error.message
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        contentId,
+        details: `Course content update failed: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * 刪除課程內容
+   * @param {string} contentId - 內容ID
+   * @returns {Promise<boolean>} 刪除是否成功
+   */
+  static async deleteCourseContent(contentId) {
+    if (!contentId) {
+      throw new Error('DataService: contentId is required');
+    }
+
+    try {
+      // 先獲取內容信息以便更新課程統計
+      const content = await this.getCourseContent(contentId);
+      
+      await FirebaseService.deleteDocument(this.COLLECTIONS.COURSE_CONTENTS, contentId);
+      
+      // 更新關聯課程的內容統計
+      if (content && content.course_id) {
+        await this.updateCourseContentStats(content.course_id);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ DataService.deleteCourseContent failed:', {
+        contentId,
+        error: error.message
+      });
+      
+      throw new Error(`Failed to delete course content: ${error.message}`);
+    }
+  }
+
+  /**
+   * 搜索課程內容
+   * @param {Object} criteria - 搜索條件
+   * @returns {Promise<Array>} 搜索結果
+   */
+  static async searchCourseContents(criteria) {
+    if (!criteria || Object.keys(criteria).length === 0) {
+      throw new Error('DataService: search criteria is required');
+    }
+
+    try {
+      const contents = await FirebaseService.queryDocuments(this.COLLECTIONS.COURSE_CONTENTS, criteria);
+      
+      // 按相關性和日期排序
+      return contents.sort((a, b) => {
+        // 首先按更新時間排序
+        const timeA = new Date(a.updated_at);
+        const timeB = new Date(b.updated_at);
+        return timeB - timeA;
+      });
+    } catch (error) {
+      console.error('❌ DataService.searchCourseContents failed:', {
+        criteria,
+        error: error.message
+      });
+      
+      throw new Error(`Course content search failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * 上傳課堂媒體文件
+   * @param {Object} mediaData - 媒體數據
+   * @returns {Promise<Object>} 上傳結果
+   */
+  static async uploadClassMedia(mediaData) {
+    if (!mediaData) {
+      throw new Error('DataService: mediaData is required');
+    }
+
+    if (!mediaData.file && !mediaData.url) {
+      throw new Error('DataService: file or url is required');
+    }
+
+    const timestamp = TimeService.getCurrentUserTime().toISOString();
+
+    const mediaRecord = {
+      id: this.generateUUID(),
+      type: mediaData.type || 'photo',
+      url: mediaData.url,
+      caption: mediaData.caption || '',
+      upload_time: timestamp,
+      tags: mediaData.tags || [],
+      file_size: mediaData.file_size || 0,
+      created_by: mediaData.created_by || 'parent'
+    };
+
+    return {
+      success: true,
+      media: mediaRecord
+    };
+  }
+
+  /**
+   * 刪除課堂媒體文件
+   * @param {string} mediaId - 媒體ID
+   * @returns {Promise<boolean>} 刪除是否成功
+   */
+  static async deleteClassMedia(mediaId) {
+    if (!mediaId) {
+      throw new Error('DataService: mediaId is required');
+    }
+
+    // TODO: 實現從 Firebase Storage 刪除文件的邏輯
+    console.log(`Media file ${mediaId} deletion requested`);
+    
+    return true;
+  }
+
+  /**
+   * 更新課程的內容統計
+   * @param {string} courseId - 課程ID
+   * @returns {Promise<void>}
+   */
+  static async updateCourseContentStats(courseId) {
+    if (!courseId) {
+      return;
+    }
+
+    try {
+      // 獲取該課程的所有內容
+      const contents = await this.getCourseContentsByCourse(courseId);
+      
+      let totalLessons = 0;
+      let pendingHomework = 0;
+      let completedHomework = 0;
+      let totalMedia = 0;
+      
+      contents.forEach(content => {
+        if (content.lesson_content) {
+          totalLessons++;
+        }
+        
+        if (content.homework_assignments && Array.isArray(content.homework_assignments)) {
+          content.homework_assignments.forEach(hw => {
+            if (hw.status === 'pending' || hw.status === 'in_progress') {
+              pendingHomework++;
+            } else if (hw.status === 'completed') {
+              completedHomework++;
+            }
+          });
+        }
+        
+        if (content.class_media && Array.isArray(content.class_media)) {
+          totalMedia += content.class_media.length;
+        }
+      });
+
+      // 更新課程記錄
+      await this.updateCourse(courseId, {
+        has_content: contents.length > 0,
+        content_count: contents.length,
+        last_content_update: contents.length > 0 ? contents[0].updated_at : null,
+        content_summary: {
+          total_lessons: totalLessons,
+          pending_homework: pendingHomework,
+          completed_homework: completedHomework,
+          total_media: totalMedia
+        }
+      });
+      
+    } catch (error) {
+      console.warn('Failed to update course content stats:', error.message);
+      // 不拋出錯誤，避免影響主要操作
+    }
+  }
+
+  /**
+   * 驗證課程內容數據格式
+   * @param {Object} contentData - 課程內容數據
+   * @returns {boolean} 驗證結果
+   */
+  static validateCourseContentData(contentData) {
+    if (!contentData || typeof contentData !== 'object') {
+      return false;
+    }
+
+    // 檢查必要字段
+    if (!contentData.course_id || !contentData.student_id) {
+      return false;
+    }
+
+    // 驗證日期格式
+    if (contentData.content_date && !/^\d{4}-\d{2}-\d{2}$/.test(contentData.content_date)) {
+      return false;
+    }
+
+    return true;
   }
 
 }

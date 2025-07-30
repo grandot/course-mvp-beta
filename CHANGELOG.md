@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.3.0] - 2025-07-30
+
+### Added
+- **📸 課程內容模組 (Course Content Module)**: 完整實現家長記錄課程內容、作業和照片功能
+  - **核心功能**: 
+    - 支持文字記錄課程內容和作業提醒
+    - 照片上傳與課程關聯
+    - Quick Reply按鈕選擇課程（包含學生角色信息如"小明的數學課"）
+    - 30秒超時自動清理機制
+  - **用戶流程**:
+    - 方式1: 用戶發送課程文字 → 系統記錄 → 詢問是否有照片 → Quick Reply選擇
+    - 方式2: 用戶上傳照片 → 系統生成課程按鈕 → 用戶選擇課程 → 自動保存
+  - **技術實現**:
+    - `SemanticService`: 新增課程內容語義識別（record_lesson_content, record_homework, upload_class_photo）
+    - `TaskService`: 完整的課程內容業務邏輯處理
+    - `DataService`: 課程內容CRUD操作和數據模型擴展
+    - `LineController`: Quick Reply按鈕響應和圖片處理流程
+    - `LineService`: Quick Reply消息格式完整支援
+  - **第一性原則設計**:
+    - 簡化pending狀態管理，移除複雜的混合內容處理
+    - 使用Occam's razor原則，內容丟失沒關係，降低複雜度
+    - 5分鐘課程數據緩存，提升Quick Reply按鈕生成性能
+  - **完整流程**: 文字/照片輸入 → 語義識別 → 任務執行 → 數據存儲 → 用戶反饋
+
 ## [v10.2.15] - 2025-07-30
 
 ### Fixed  

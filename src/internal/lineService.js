@@ -35,6 +35,29 @@ class LineService {
             text: msg,
           };
         }
+        
+        // 🚀 Quick Reply 支援：驗證和處理 Quick Reply 格式
+        if (msg && typeof msg === 'object') {
+          // 驗證基本消息格式
+          if (!msg.type) {
+            console.warn('⚠️ [LINE Service] 消息缺少 type 字段:', msg);
+            msg.type = 'text'; // 默認為文字消息
+          }
+          
+          // 🎯 Quick Reply 格式驗證
+          if (msg.quickReply) {
+            if (!msg.quickReply.items || !Array.isArray(msg.quickReply.items)) {
+              console.error('❌ [LINE Service] Quick Reply 格式錯誤: items 必須是陣列');
+              delete msg.quickReply; // 移除無效的 Quick Reply
+            } else if (msg.quickReply.items.length > 13) {
+              console.warn('⚠️ [LINE Service] Quick Reply 按鈕數量超過限制，截取前13個');
+              msg.quickReply.items = msg.quickReply.items.slice(0, 13);
+            } else {
+              console.log(`📱 [LINE Service] 發送 Quick Reply，按鈕數量: ${msg.quickReply.items.length}`);
+            }
+          }
+        }
+        
         return msg;
       }),
     };
@@ -120,6 +143,143 @@ class LineService {
       req.write(postData);
       req.end();
     });
+  }
+
+  /**
+   * 獲取消息內容（圖片、音頻等）
+   * @param {string} messageId - 消息ID
+   * @returns {Promise<Object>} 消息內容
+   */
+  static async getMessageContent(messageId) {
+    const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      throw new Error('LINE_CHANNEL_ACCESS_TOKEN not configured');
+    }
+
+    if (!messageId) {
+      throw new Error('messageId is required');
+    }
+
+    try {
+      const response = await this.makeLineContentRequest(
+        'GET',
+        `/v2/bot/message/${messageId}/content`,
+        accessToken
+      );
+
+      return {
+        success: true,
+        data: response.data,
+        contentType: response.contentType
+      };
+    } catch (error) {
+      console.error('Failed to get message content:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 發送 LINE Content API 請求（用於下載媒體內容）
+   * @param {string} method - HTTP 方法
+   * @param {string} path - API 路徑
+   * @param {string} accessToken - Access Token
+   * @returns {Promise<Object>} API 響應
+   */
+  static makeLineContentRequest(method, path, accessToken) {
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'api-data.line.me',
+        port: 443,
+        path,
+        method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+
+      const req = https.request(options, (res) => {
+        const chunks = [];
+        let contentType = res.headers['content-type'];
+
+        res.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            const buffer = Buffer.concat(chunks);
+            resolve({
+              statusCode: res.statusCode,
+              data: buffer,
+              contentType
+            });
+          } else {
+            reject(new Error(`LINE Content API error: ${res.statusCode}`));
+          }
+        });
+      });
+
+      req.on('error', (error) => {
+        reject(new Error(`LINE Content API request failed: ${error.message}`));
+      });
+
+      req.end();
+    });
+  }
+
+  /**
+   * 創建帶 Quick Reply 的文字消息
+   * @param {string} text - 消息文字
+   * @param {Array} quickReplyItems - Quick Reply 按鈕陣列
+   * @returns {Object} LINE 消息對象
+   */
+  static createQuickReplyMessage(text, quickReplyItems) {
+    if (!text) {
+      throw new Error('Message text is required');
+    }
+
+    const message = {
+      type: 'text',
+      text: text
+    };
+
+    if (quickReplyItems && Array.isArray(quickReplyItems) && quickReplyItems.length > 0) {
+      // 限制按鈕數量
+      const limitedItems = quickReplyItems.slice(0, 13);
+      
+      message.quickReply = {
+        items: limitedItems
+      };
+
+      console.log(`📱 [LINE Service] 創建 Quick Reply 消息，按鈕數量: ${limitedItems.length}`);
+    }
+
+    return message;
+  }
+
+  /**
+   * 創建 Quick Reply 按鈕
+   * @param {string} label - 按鈕標籤
+   * @param {string} text - 點擊後發送的文字
+   * @returns {Object} Quick Reply 按鈕對象
+   */
+  static createQuickReplyButton(label, text) {
+    if (!label || !text) {
+      throw new Error('Button label and text are required');
+    }
+
+    return {
+      type: "action",
+      action: {
+        type: "message",
+        label: label,
+        text: text
+      }
+    };
   }
 
   /**

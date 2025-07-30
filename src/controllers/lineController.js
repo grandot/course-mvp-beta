@@ -19,6 +19,10 @@ class LineController {
   // 靜態初始化TaskService實例
   static taskService = null;
   
+  // 🚀 課程數據緩存 - 提高 Quick Reply 按鈕生成性能
+  static courseCache = new Map();
+  static CACHE_EXPIRE_TIME = 5 * 60 * 1000; // 5分鐘
+  
   /**
    * 初始化TaskService實例（單例模式）
    */
@@ -417,6 +421,11 @@ class LineController {
     console.log(`Reply token: ${replyToken}`);
 
     try {
+      // 🎯 檢查是否為 Quick Reply 按鈕點擊
+      if (userMessage.startsWith('course:')) {
+        return await this.handleQuickReplyButtonClick(userMessage, userId, replyToken);
+      }
+
       // 🔧 獲取用戶會話上下文
       const conversationContext = ConversationContext.getContext(userId);
       console.log(`🔧 [DEBUG] 會話上下文:`, conversationContext ? 
@@ -594,6 +603,9 @@ class LineController {
                 ConversationContext.clearContext(userId);
                 console.log(`🔧 [DEBUG] 課程創建成功，已清空用戶會話上下文 - UserId: ${userId}`);
                 
+                // 🚀 清除課程緩存，確保 Quick Reply 按鈕顯示最新課程
+                this.clearUserCoursesCache(userId);
+                
                 replyMessage = successMessage + debugInfo;
               } else {
                 replyMessage = (result.message || '新增課程失敗') + debugInfo;
@@ -601,6 +613,9 @@ class LineController {
               break;
             case 'cancel_course':
               if (result.success) {
+                // 🚀 清除課程緩存，確保 Quick Reply 按鈕顯示最新課程
+                this.clearUserCoursesCache(userId);
+                
                 // 構建詳細的取消成功消息
                 let successMessage = '✅ 課程已成功取消！';
                 
@@ -656,6 +671,9 @@ class LineController {
             case 'modify_course': {
               // 處理修改課程的各種回應情況
               if (result.success) {
+                // 🚀 清除課程緩存，確保 Quick Reply 按鈕顯示最新課程
+                this.clearUserCoursesCache(userId);
+                
                 // 修改成功
                 let successMessage = result.message;
 
@@ -731,6 +749,159 @@ class LineController {
                 replyMessage = result.message + debugInfo;
               } else {
                 replyMessage = (result.message || '停止重複課程失敗') + debugInfo;
+              }
+              break;
+            }
+            // ===============================
+            // 課程內容管理意圖處理 (Course Content)
+            // ===============================
+            case 'record_lesson_content': {
+              if (result.success) {
+                // 成功記錄後詢問是否有照片
+                const baseMessage = result.message;
+                
+                // 生成 Quick Reply 按鈕詢問是否有照片
+                const photoQuickReply = {
+                  items: [
+                    {
+                      type: "action",
+                      action: {
+                        type: "message",
+                        label: "📸 上傳照片",
+                        text: "上傳課堂照片"
+                      }
+                    },
+                    {
+                      type: "action", 
+                      action: {
+                        type: "message",
+                        label: "✅ 沒有照片",
+                        text: "沒有照片"
+                      }
+                    }
+                  ]
+                };
+
+                // 發送帶 Quick Reply 的消息
+                const messageWithQuickReply = {
+                  type: 'text',
+                  text: `${baseMessage}\n\n📸 需要上傳課堂照片嗎？`,
+                  quickReply: photoQuickReply
+                };
+
+                const replyResult = await lineService.replyMessage(event.replyToken, messageWithQuickReply);
+                console.log('Course content reply with photo option result:', replyResult);
+
+                return {
+                  success: true,
+                  intent,
+                  confidence,
+                  result,
+                  reply: replyResult,
+                  photoOptionSent: true
+                };
+              } else {
+                replyMessage = (result.message || '記錄課程內容失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'record_homework': {
+              if (result.success) {
+                // 成功記錄後詢問是否有照片
+                const baseMessage = result.message;
+                
+                // 生成 Quick Reply 按鈕詢問是否有照片
+                const photoQuickReply = {
+                  items: [
+                    {
+                      type: "action",
+                      action: {
+                        type: "message",
+                        label: "📸 上傳照片",
+                        text: "上傳作業照片"
+                      }
+                    },
+                    {
+                      type: "action",
+                      action: {
+                        type: "message", 
+                        label: "✅ 沒有照片",
+                        text: "沒有照片"
+                      }
+                    }
+                  ]
+                };
+
+                // 發送帶 Quick Reply 的消息
+                const messageWithQuickReply = {
+                  type: 'text',
+                  text: `${baseMessage}\n\n📸 需要上傳作業相關照片嗎？`,
+                  quickReply: photoQuickReply
+                };
+
+                const replyResult = await lineService.replyMessage(event.replyToken, messageWithQuickReply);
+                console.log('Homework reply with photo option result:', replyResult);
+
+                return {
+                  success: true,
+                  intent,
+                  confidence,
+                  result,
+                  reply: replyResult,
+                  photoOptionSent: true
+                };
+              } else {
+                replyMessage = (result.message || '記錄作業失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'upload_class_photo': {
+              if (result.success) {
+                replyMessage = result.message + debugInfo;
+              } else {
+                replyMessage = (result.message || '上傳課堂照片失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'query_course_content': {
+              if (result.success) {
+                // 格式化課程內容查詢結果
+                let contentMessage = result.message;
+                
+                if (result.contents && result.contents.length > 0) {
+                  contentMessage += '\n\n📋 最近記錄：';
+                  result.contents.slice(0, 3).forEach((content, index) => {
+                    contentMessage += `\n${index + 1}. `;
+                    if (content.lesson_content) {
+                      contentMessage += `📖 ${content.lesson_content.title || '課程內容'}`;
+                    }
+                    if (content.homework_assignments?.length > 0) {
+                      contentMessage += ` 📝 ${content.homework_assignments.length}項作業`;
+                    }
+                    if (content.class_media?.length > 0) {
+                      contentMessage += ` 📸 ${content.class_media.length}張照片`;
+                    }
+                    if (content.content_date) {
+                      contentMessage += ` (${content.content_date})`;
+                    }
+                  });
+                  
+                  if (result.summary) {
+                    contentMessage += `\n\n📊 統計：課程記錄${result.summary.lesson_records}筆、作業${result.summary.homework_assignments}項、照片${result.summary.media_files}張`;
+                  }
+                }
+                
+                replyMessage = contentMessage + debugInfo;
+              } else {
+                replyMessage = (result.message || '查詢課程內容失敗') + debugInfo;
+              }
+              break;
+            }
+            case 'modify_course_content': {
+              if (result.success) {
+                replyMessage = result.message + debugInfo;
+              } else {
+                replyMessage = (result.message || '修改課程內容失敗') + debugInfo;
               }
               break;
             }
@@ -815,9 +986,23 @@ class LineController {
 
       // eslint-disable-next-line no-restricted-syntax
       for (const event of events || []) {
-        if (event.type === 'message' && event.message.type === 'text') {
-          // eslint-disable-next-line no-await-in-loop
-          const result = await LineController.handleTextMessage(event);
+        if (event.type === 'message') {
+          let result;
+          
+          if (event.message.type === 'text') {
+            // eslint-disable-next-line no-await-in-loop
+            result = await LineController.handleTextMessage(event);
+          } else if (event.message.type === 'image') {
+            // eslint-disable-next-line no-await-in-loop
+            result = await LineController.handleImageMessage(event);
+          } else {
+            console.log(`Unsupported message type: ${event.message.type}`);
+            result = {
+              success: true,
+              message: 'Message type not supported',
+            };
+          }
+          
           results.push(result);
         } else {
           console.log(`Ignored event type: ${event.type}`);
@@ -847,6 +1032,556 @@ class LineController {
         error: 'Internal server error',
       });
     }
+  }
+
+  /**
+   * 處理圖片消息 - 使用Quick Reply選擇課程
+   * @param {Object} event - LINE事件對象
+   * @returns {Promise<Object>} 處理結果
+   */
+  static async handleImageMessage(event) {
+    const { message, source, replyToken } = event;
+    const { userId } = source;
+
+    console.log(`Received image message from ${userId}: ${message.id}`);
+    console.log(`Reply token: ${replyToken}`);
+
+    try {
+      // 下載並上傳圖片
+      const imageContent = await lineService.getMessageContent(message.id);
+      
+      if (!imageContent || !imageContent.success) {
+        console.error('Failed to download image content');
+        const errorReply = '抱歉，無法下載您的圖片，請稍後再試';
+        await lineService.replyMessage(replyToken, errorReply);
+        return { success: false, error: 'Failed to download image', replyToken };
+      }
+
+      const uploadResult = await this.uploadImageToStorage(imageContent.data, {
+        userId,
+        messageId: message.id,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!uploadResult.success) {
+        console.error('Failed to upload image to storage');
+        const errorReply = '抱歉，圖片上傳失敗，請稍後再試';
+        await lineService.replyMessage(replyToken, errorReply);
+        return { success: false, error: 'Failed to upload image', replyToken };
+      }
+
+      // 🎯 簡化：清除任何舊的待處理狀態，專注於當前圖片處理
+      // 根據用戶反饋：內容丟失沒關係，使用簡單的Occam's razor原則
+      ConversationContext.clearContext(userId);
+
+      // 🎯 核心邏輯：生成課程選擇按鈕
+      const quickReply = await this.buildCourseSelectionButtons(userId);
+      
+      // 暫存圖片信息，等待用戶選擇課程
+      ConversationContext.setPendingImageContext(userId, {
+        uploadResult,
+        messageId: message.id,
+        timestamp: new Date().toISOString(),
+        expiresAt: Date.now() + 30000 // 30秒超時
+      });
+
+      // 發送帶Quick Reply的回覆
+      const replyMessage = {
+        type: 'text',
+        text: '📸 收到課堂照片！這是哪門課的照片？',
+        quickReply
+      };
+
+      await lineService.replyMessage(replyToken, replyMessage);
+
+      // 🎯 簡化：移除冗余的setTimeout，getPendingImageContext已有自動過期清理機制
+
+      return {
+        success: true,
+        action: 'waiting_for_course_selection',
+        replyToken,
+        userId,
+        mediaId: uploadResult.mediaId,
+        message: 'Waiting for course selection'
+      };
+
+    } catch (error) {
+      console.error('Error handling image message:', error);
+      
+      try {
+        const errorReply = '抱歉，處理您的圖片時發生錯誤，請稍後再試';
+        await lineService.replyMessage(replyToken, errorReply);
+      } catch (replyError) {
+        console.error('Failed to send error reply:', replyError);
+      }
+
+      return {
+        success: false,
+        error: error.message,
+        replyToken,
+        userId,
+      };
+    }
+  }
+
+
+  /**
+   * 上傳圖片到存儲服務
+   * @param {Buffer} imageData - 圖片數據
+   * @param {Object} metadata - 元數據
+   * @returns {Promise<Object>} 上傳結果
+   */
+  static async uploadImageToStorage(imageData, metadata) {
+    try {
+      const DataService = require('../services/dataService');
+      
+      // 生成唯一的文件名
+      const fileExtension = 'jpg'; // LINE 圖片通常是 JPEG 格式
+      const fileName = `course_photo_${metadata.userId}_${Date.now()}.${fileExtension}`;
+      
+      // 這裡應該上傳到 Firebase Storage 或其他雲存儲服務
+      // TODO: 實現實際的文件上傳邏輯
+      
+      // 暫時模擬上傳結果
+      const mockUploadResult = {
+        success: true,
+        mediaId: DataService.generateUUID(),
+        url: `https://storage.example.com/course-photos/${fileName}`,
+        fileName,
+        fileSize: imageData.length,
+        uploadTime: new Date().toISOString()
+      };
+
+      console.log(`📸 Image uploaded: ${fileName} (${imageData.length} bytes)`);
+      
+      return mockUploadResult;
+
+    } catch (error) {
+      console.error('Error uploading image to storage:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * 獲取用戶課程緩存
+   * @param {string} userId - 用戶ID
+   * @returns {Object|null} 緩存的課程數據
+   */
+  static getCachedUserCourses(userId) {
+    const cacheKey = `courses_${userId}`;
+    const cached = this.courseCache.get(cacheKey);
+    
+    if (cached && Date.now() < cached.expires) {
+      console.log(`💾 [Cache] 使用緩存的課程數據: ${userId}`);
+      return cached.data;
+    }
+    
+    // 過期清理
+    if (cached) {
+      this.courseCache.delete(cacheKey);
+      console.log(`🗑️ [Cache] 清除過期的課程緩存: ${userId}`);
+    }
+    
+    return null;
+  }
+
+  /**
+   * 設置用戶課程緩存
+   * @param {string} userId - 用戶ID
+   * @param {Array} courses - 課程數據
+   */
+  static setCachedUserCourses(userId, courses) {
+    const cacheKey = `courses_${userId}`;
+    this.courseCache.set(cacheKey, {
+      data: courses,
+      expires: Date.now() + this.CACHE_EXPIRE_TIME,
+      timestamp: Date.now()
+    });
+    
+    console.log(`💾 [Cache] 緩存課程數據: ${userId} (${courses.length} 項)`);
+    
+    // 定期清理過期緩存
+    this.cleanExpiredCache();
+  }
+
+  /**
+   * 清理過期的緩存項目
+   */
+  static cleanExpiredCache() {
+    const now = Date.now();
+    let cleanedCount = 0;
+    
+    for (const [key, value] of this.courseCache.entries()) {
+      if (now >= value.expires) {
+        this.courseCache.delete(key);
+        cleanedCount++;
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      console.log(`🗑️ [Cache] 清理過期緩存項目: ${cleanedCount} 個`);
+    }
+  }
+
+  /**
+   * 清除特定用戶的課程緩存（在課程發生變化時使用）
+   * @param {string} userId - 用戶ID
+   */
+  static clearUserCoursesCache(userId) {
+    const cacheKey = `courses_${userId}`;
+    const existed = this.courseCache.delete(cacheKey);
+    
+    if (existed) {
+      console.log(`🗑️ [Cache] 手動清除用戶課程緩存: ${userId}`);
+    }
+  }
+
+  /**
+   * 生成課程選擇按鈕（包含角色信息和緩存）
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} Quick Reply按鈕配置
+   */
+  static async buildCourseSelectionButtons(userId) {
+    try {
+      // 🚀 嘗試從緩存獲取課程數據
+      let recentCourses = this.getCachedUserCourses(userId);
+      
+      if (!recentCourses) {
+        // 緩存未命中，從數據庫查詢
+        const DataService = require('../services/dataService');
+        console.log(`🔍 [Cache] 緩存未命中，查詢數據庫: ${userId}`);
+        
+        recentCourses = await DataService.getUserCourses(userId, { 
+          status: 'scheduled' 
+        });
+        
+        // 將結果存入緩存
+        this.setCachedUserCourses(userId, recentCourses);
+      }
+      
+      // 提取唯一課程名稱和對應的學生信息
+      const courseMap = new Map();
+      recentCourses.forEach(course => {
+        const key = course.course_name;
+        if (!courseMap.has(key)) {
+          courseMap.set(key, []);
+        }
+        courseMap.get(key).push({
+          student_id: course.student_id,
+          student_name: course.student_name || this.extractStudentName(course.student_id)
+        });
+      });
+      
+      // 生成按鈕
+      const buttons = [];
+      let buttonCount = 0;
+      const maxButtons = 10; // LINE Quick Reply最多11個按鈕，留一個給"其他課程"
+      
+      for (const [courseName, students] of courseMap) {
+        if (buttonCount >= maxButtons) break;
+        
+        if (students.length === 1) {
+          // 單一學生：顯示學生名稱+課程
+          const student = students[0];
+          const buttonText = student.student_name ? 
+            `${student.student_name}的${courseName}` : 
+            courseName;
+          
+          buttons.push({
+            type: "action",
+            action: {
+              type: "message",
+              label: buttonText,
+              text: `course:${courseName}:${student.student_id}`
+            }
+          });
+          buttonCount++;
+        } else {
+          // 多個學生：為每個學生生成按鈕
+          for (const student of students) {
+            if (buttonCount >= maxButtons) break;
+            
+            const buttonText = student.student_name ? 
+              `${student.student_name}的${courseName}` : 
+              `${courseName}(${student.student_id})`;
+            
+            buttons.push({
+              type: "action", 
+              action: {
+                type: "message",
+                label: buttonText,
+                text: `course:${courseName}:${student.student_id}`
+              }
+            });
+            buttonCount++;
+          }
+        }
+      }
+      
+      // 添加"其他課程"按鈕
+      buttons.push({
+        type: "action",
+        action: {
+          type: "message", 
+          label: "其他課程",
+          text: "course:other"
+        }
+      });
+      
+      return {
+        items: buttons.slice(0, 11) // LINE限制最多11個按鈕
+      };
+      
+    } catch (error) {
+      console.error('Error building course selection buttons:', error);
+      
+      // 返回默認按鈕
+      return {
+        items: [
+          {
+            type: "action",
+            action: {
+              type: "message",
+              label: "數學課", 
+              text: "course:數學課"
+            }
+          },
+          {
+            type: "action",
+            action: {
+              type: "message",
+              label: "英文課",
+              text: "course:英文課"
+            }
+          },
+          {
+            type: "action",
+            action: {
+              type: "message",
+              label: "其他課程",
+              text: "course:other"
+            }
+          }
+        ]
+      };
+    }
+  }
+
+  /**
+   * 處理 Quick Reply 按鈕點擊
+   * @param {string} buttonMessage - 按鈕發送的訊息
+   * @param {string} userId - 用戶ID
+   * @param {string} replyToken - 回覆令牌
+   * @returns {Promise<Object>} 處理結果
+   */
+  static async handleQuickReplyButtonClick(buttonMessage, userId, replyToken) {
+    console.log(`📱 [QuickReply] 收到按鈕點擊: ${buttonMessage}`);
+
+    try {
+      // 解析按鈕消息格式
+      if (buttonMessage.startsWith('course:')) {
+        const parts = buttonMessage.split(':');
+        
+        if (parts.length >= 2) {
+          const courseAction = parts[1];
+          const studentId = parts[2] || null;
+          
+          if (courseAction === 'other') {
+            // 處理"其他課程"按鈕
+            return await this.handleOtherCourseSelection(userId, replyToken);
+          } else {
+            // 處理特定課程選擇
+            return await this.handleCourseSelection(courseAction, studentId, userId, replyToken);
+          }
+        }
+      }
+      
+      // 處理其他按鈕類型
+      if (buttonMessage === '上傳課堂照片' || buttonMessage === '上傳作業照片') {
+        // 設置等待照片上傳的狀態
+        ConversationContext.updateContext(userId, 'waiting_for_photo', {
+          photo_type: buttonMessage.includes('作業') ? 'homework' : 'lesson'
+        });
+        
+        const replyMessage = '📸 請上傳您的照片';
+        await lineService.replyMessage(replyToken, replyMessage);
+        
+        return {
+          success: true,
+          action: 'waiting_for_photo',
+          message: '等待用戶上傳照片'
+        };
+      }
+      
+      if (buttonMessage === '沒有照片') {
+        // 清除任何等待狀態，完成流程
+        ConversationContext.clearContext(userId);
+        
+        const replyMessage = '✅ 記錄完成！';
+        await lineService.replyMessage(replyToken, replyMessage);
+        
+        return {
+          success: true,
+          action: 'completed_without_photo',
+          message: '流程完成'
+        };
+      }
+      
+      // 未知的按鈕類型
+      console.warn(`⚠️ [QuickReply] 未知的按鈕消息格式: ${buttonMessage}`);
+      const replyMessage = '抱歉，無法識別您的選擇，請重新操作';
+      await lineService.replyMessage(replyToken, replyMessage);
+      
+      return {
+        success: false,
+        error: 'Unknown button format',
+        message: '未知的按鈕格式'
+      };
+
+    } catch (error) {
+      console.error('❌ [QuickReply] 處理按鈕點擊失敗:', error);
+      
+      try {
+        const errorReply = '抱歉，處理您的選擇時發生錯誤，請稍後再試';
+        await lineService.replyMessage(replyToken, errorReply);
+      } catch (replyError) {
+        console.error('Failed to send error reply:', replyError);
+      }
+      
+      return {
+        success: false,
+        error: error.message,
+        message: '處理按鈕點擊失敗'
+      };
+    }
+  }
+
+  /**
+   * 處理"其他課程"選擇
+   * @param {string} userId - 用戶ID
+   * @param {string} replyToken - 回覆令牌
+   * @returns {Promise<Object>} 處理結果
+   */
+  static async handleOtherCourseSelection(userId, replyToken) {
+    // 清除待處理的圖片上下文，因為用戶選擇了其他課程
+    ConversationContext.clearPendingImageContext(userId);
+    
+    const replyMessage = '🆕 請直接輸入課程名稱，例如："物理課"、"小明的鋼琴課"';
+    await lineService.replyMessage(replyToken, replyMessage);
+    
+    return {
+      success: true,
+      action: 'other_course_prompt',
+      message: '提示用戶輸入課程名稱'
+    };
+  }
+
+  /**
+   * 處理特定課程選擇
+   * @param {string} courseName - 課程名稱
+   * @param {string} studentId - 學生ID（可選）
+   * @param {string} userId - 用戶ID
+   * @param {string} replyToken - 回覆令牌
+   * @returns {Promise<Object>} 處理結果
+   */
+  static async handleCourseSelection(courseName, studentId, userId, replyToken) {
+    try {
+      // 獲取待處理的圖片上下文
+      const pendingImageContext = ConversationContext.getPendingImageContext(userId);
+      
+      if (!pendingImageContext) {
+        // 沒有待處理的圖片，提示錯誤
+        const replyMessage = '⚠️ 沒有找到待處理的照片，請重新上傳照片';
+        await lineService.replyMessage(replyToken, replyMessage);
+        
+        return {
+          success: false,
+          error: 'No pending image context',
+          message: '沒有待處理的照片'
+        };
+      }
+
+      // 執行課程內容保存
+      const taskService = this.initializeTaskService();
+      
+      const entities = {
+        content_entities: {
+          course_name: courseName,
+          student_id: studentId,
+          content_date: new Date().toISOString().split('T')[0],
+          class_media: [{
+            id: pendingImageContext.uploadResult.mediaId,
+            type: 'photo',
+            url: pendingImageContext.uploadResult.url,
+            caption: `${courseName}課程照片`,
+            upload_time: pendingImageContext.timestamp,
+            tags: ['課程照片'],
+            file_size: pendingImageContext.uploadResult.fileSize || 0
+          }],
+          raw_text: `${courseName}課程照片上傳`
+        }
+      };
+
+      const result = await taskService.executeIntent('upload_class_photo', entities, userId);
+      
+      // 清除待處理的圖片上下文
+      ConversationContext.clearPendingImageContext(userId);
+      
+      if (result.success) {
+        const successMessage = `✅ 已保存「${courseName}」的課程照片！`;
+        await lineService.replyMessage(replyToken, successMessage);
+        
+        return {
+          success: true,
+          action: 'photo_saved',
+          courseName,
+          studentId,
+          message: successMessage
+        };
+      } else {
+        const errorMessage = result.message || '保存課程照片失敗，請稍後再試';
+        await lineService.replyMessage(replyToken, errorMessage);
+        
+        return {
+          success: false,
+          error: result.error,
+          message: errorMessage
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ [QuickReply] 處理課程選擇失敗:', error);
+      
+      // 清除待處理的圖片上下文
+      ConversationContext.clearPendingImageContext(userId);
+      
+      try {
+        const errorReply = '抱歉，保存課程照片時發生錯誤，請稍後再試';
+        await lineService.replyMessage(replyToken, errorReply);
+      } catch (replyError) {
+        console.error('Failed to send error reply:', replyError);
+      }
+      
+      return {
+        success: false,
+        error: error.message,
+        message: '處理課程選擇失敗'
+      };
+    }
+  }
+
+  /**
+   * 從用戶ID提取學生名稱（簡化版）
+   * @param {string} studentId - 學生ID
+   * @returns {string|null} 學生名稱
+   */
+  static extractStudentName(studentId) {
+    // 這裡可以實現更複雜的學生名稱解析邏輯
+    // 暫時返回null，讓系統使用課程名稱
+    return null;
   }
 }
 

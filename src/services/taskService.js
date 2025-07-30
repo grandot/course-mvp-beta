@@ -81,6 +81,25 @@ class TaskService {
             message: '此功能將在後續版本中實現',
           };
 
+        // ===============================
+        // 課程內容管理意圖 (Course Content)
+        // ===============================
+
+        case 'record_lesson_content':
+          return await this.recordLessonContent(entities, userId);
+
+        case 'record_homework':
+          return await this.recordHomework(entities, userId);
+
+        case 'upload_class_photo':
+          return await this.uploadClassPhoto(entities, userId);
+
+        case 'query_course_content':
+          return await this.queryCourseContent(entities, userId);
+
+        case 'modify_course_content':
+          return await this.modifyCourseContent(entities, userId);
+
         default:
           return {
             success: false,
@@ -322,6 +341,404 @@ class TaskService {
     // 默認返回（可能包含child_name，不限制時間範圍，使用場景模板的默認範圍）
     console.log(`🔧 [DEBUG] _calculateDateRange - 無法識別特定時間範圍，使用預設4週範圍`);
     return result;
+  }
+
+  // ===============================
+  // 課程內容業務邏輯 (Course Content Business Logic)
+  // ===============================
+
+  /**
+   * 記錄課程內容
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  async recordLessonContent(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      // 驗證必要參數
+      if (!entities.content_entities) {
+        return {
+          success: false,
+          error: 'Missing course content entities',
+          message: '缺少課程內容信息',
+        };
+      }
+
+      const { content_entities } = entities;
+      
+      // 查找或創建關聯的課程
+      let courseId = await this.findOrCreateCourse(entities, userId);
+      if (!courseId) {
+        return {
+          success: false,
+          error: 'Failed to find or create course',
+          message: '無法找到或創建關聯的課程',
+        };
+      }
+
+      // 創建課程內容記錄
+      const contentData = {
+        course_id: courseId,
+        student_id: userId,
+        content_date: content_entities.content_date,
+        lesson_content: content_entities.lesson_content,
+        raw_input: {
+          text: content_entities.raw_text,
+          extraction_metadata: {
+            timestamp: new Date().toISOString(),
+            method: 'TaskService'
+          }
+        },
+        created_by: 'parent',
+        source: 'line_bot'
+      };
+
+      const result = await DataService.createCourseContent(contentData);
+      
+      if (result.success) {
+        return {
+          success: true,
+          action: 'record_lesson_content',
+          message: `✅ 已記錄「${content_entities.course_name || '課程'}」的上課內容`,
+          contentId: result.contentId,
+          course_name: content_entities.course_name,
+          content_summary: content_entities.lesson_content?.title || '課程內容記錄'
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error,
+          message: '記錄課程內容時發生錯誤',
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ [TaskService] recordLessonContent failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: '記錄課程內容時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 記錄作業
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  async recordHomework(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      if (!entities.content_entities) {
+        return {
+          success: false,
+          error: 'Missing homework entities',
+          message: '缺少作業信息',
+        };
+      }
+
+      const { content_entities } = entities;
+      
+      // 查找或創建關聯的課程
+      let courseId = await this.findOrCreateCourse(entities, userId);
+      if (!courseId) {
+        return {
+          success: false,
+          error: 'Failed to find or create course',
+          message: '無法找到或創建關聯的課程',
+        };
+      }
+
+      // 創建作業記錄
+      const contentData = {
+        course_id: courseId,
+        student_id: userId,
+        content_date: content_entities.content_date,
+        homework_assignments: content_entities.homework_assignments,
+        raw_input: {
+          text: content_entities.raw_text,
+          extraction_metadata: {
+            timestamp: new Date().toISOString(),
+            method: 'TaskService'
+          }
+        },
+        created_by: 'parent',
+        source: 'line_bot'
+      };
+
+      const result = await DataService.createCourseContent(contentData);
+      
+      if (result.success) {
+        const homeworkCount = content_entities.homework_assignments?.length || 0;
+        return {
+          success: true,
+          action: 'record_homework',
+          message: `✅ 已記錄「${content_entities.course_name || '課程'}」的 ${homeworkCount} 項作業`,
+          contentId: result.contentId,
+          course_name: content_entities.course_name,
+          homework_count: homeworkCount
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error,
+          message: '記錄作業時發生錯誤',
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ [TaskService] recordHomework failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: '記錄作業時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 上傳課堂照片
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  async uploadClassPhoto(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      if (!entities.content_entities) {
+        return {
+          success: false,
+          error: 'Missing media entities',
+          message: '缺少媒體信息',
+        };
+      }
+
+      const { content_entities } = entities;
+      
+      // 查找或創建關聯的課程
+      let courseId = await this.findOrCreateCourse(entities, userId);
+      if (!courseId) {
+        return {
+          success: false,
+          error: 'Failed to find or create course',
+          message: '無法找到或創建關聯的課程',
+        };
+      }
+
+      // 創建媒體記錄
+      const contentData = {
+        course_id: courseId,
+        student_id: userId,
+        content_date: content_entities.content_date,
+        class_media: content_entities.class_media,
+        raw_input: {
+          text: content_entities.raw_text,
+          extraction_metadata: {
+            timestamp: new Date().toISOString(),
+            method: 'TaskService'
+          }
+        },
+        created_by: 'parent',
+        source: 'line_bot'
+      };
+
+      const result = await DataService.createCourseContent(contentData);
+      
+      if (result.success) {
+        const mediaCount = content_entities.class_media?.length || 0;
+        return {
+          success: true,
+          action: 'upload_class_photo',
+          message: `✅ 已上傳「${content_entities.course_name || '課程'}」的 ${mediaCount} 張照片`,
+          contentId: result.contentId,
+          course_name: content_entities.course_name,
+          media_count: mediaCount
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error,
+          message: '上傳課堂照片時發生錯誤',
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ [TaskService] uploadClassPhoto failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: '上傳課堂照片時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 查詢課程內容
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  async queryCourseContent(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      let contents = [];
+      
+      if (entities.course_name) {
+        // 先查找課程
+        const courses = await DataService.getUserCourses(userId, {
+          course_name: entities.course_name
+        });
+        
+        if (courses.length > 0) {
+          // 獲取特定課程的內容
+          for (const course of courses) {
+            const courseContents = await DataService.getCourseContentsByCourse(course.id);
+            contents = contents.concat(courseContents);
+          }
+        }
+      } else {
+        // 查詢所有學生的課程內容
+        contents = await DataService.getCourseContentsByStudent(userId);
+      }
+
+      if (contents.length === 0) {
+        return {
+          success: true,
+          action: 'query_course_content',
+          message: entities.course_name ? 
+            `目前沒有「${entities.course_name}」的內容記錄` : 
+            '目前沒有任何課程內容記錄',
+          contents: [],
+          total_count: 0
+        };
+      }
+
+      // 統計信息
+      let lessonCount = 0;
+      let homeworkCount = 0;
+      let mediaCount = 0;
+      
+      contents.forEach(content => {
+        if (content.lesson_content) lessonCount++;
+        if (content.homework_assignments?.length > 0) {
+          homeworkCount += content.homework_assignments.length;
+        }
+        if (content.class_media?.length > 0) {
+          mediaCount += content.class_media.length;
+        }
+      });
+
+      return {
+        success: true,
+        action: 'query_course_content',
+        message: entities.course_name ? 
+          `找到「${entities.course_name}」的 ${contents.length} 項記錄` : 
+          `找到 ${contents.length} 項課程內容記錄`,
+        contents: contents.slice(0, 10), // 限制返回數量
+        total_count: contents.length,
+        summary: {
+          lesson_records: lessonCount,
+          homework_assignments: homeworkCount,
+          media_files: mediaCount
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ [TaskService] queryCourseContent failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: '查詢課程內容時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 修改課程內容
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 執行結果
+   */
+  async modifyCourseContent(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      // TODO: 實現課程內容修改邏輯
+      // 這需要更複雜的實體識別來確定要修改的具體內容
+      
+      return {
+        success: false,
+        error: 'Feature not fully implemented',
+        message: '課程內容修改功能將在後續版本中完善',
+      };
+
+    } catch (error) {
+      console.error('❌ [TaskService] modifyCourseContent failed:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: '修改課程內容時發生錯誤，請稍後再試',
+      };
+    }
+  }
+
+  /**
+   * 查找或創建關聯的課程
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<string|null>} 課程ID
+   */
+  async findOrCreateCourse(entities, userId) {
+    const DataService = require('./dataService');
+    
+    try {
+      const courseName = entities.content_entities?.course_name || entities.course_name;
+      
+      if (!courseName) {
+        console.warn('[TaskService] No course name provided for content record');
+        return null;
+      }
+
+      // 先嘗試查找現有課程
+      const existingCourses = await DataService.getUserCourses(userId, {
+        course_name: courseName
+      });
+
+      if (existingCourses.length > 0) {
+        // 返回最新的課程ID
+        return existingCourses[0].id;
+      }
+
+      // 如果沒有找到，創建新課程
+      const courseData = {
+        student_id: userId,
+        course_name: courseName,
+        schedule_time: 'TBD',
+        course_date: entities.content_entities?.content_date || new Date().toISOString().split('T')[0],
+        status: 'scheduled',
+        created_by: 'system_for_content'
+      };
+
+      const createResult = await DataService.createCourse(courseData);
+      
+      if (createResult.success) {
+        console.log(`📝 [TaskService] Created course for content: ${courseName}`);
+        return createResult.courseId;
+      }
+
+      return null;
+
+    } catch (error) {
+      console.error('❌ [TaskService] findOrCreateCourse failed:', error.message);
+      return null;
+    }
   }
 
   /**

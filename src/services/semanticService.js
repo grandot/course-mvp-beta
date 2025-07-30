@@ -1067,6 +1067,11 @@ class SemanticService {
       'set_reminder',
       'clear_schedule',
       'correction_intent',
+      'record_lesson_content',
+      'record_homework',
+      'upload_class_photo',
+      'query_course_content',
+      'modify_course_content',
       'unknown',
     ];
 
@@ -1567,6 +1572,386 @@ class SemanticService {
     const displayMinutes = minutes > 0 ? `:${String(minutes).padStart(2, '0')}` : '';
 
     return ` ${displayHours}${displayMinutes} ${ampm}`;
+  }
+
+  // ===============================
+  // 課程內容語義識別 (Course Content Semantic)
+  // ===============================
+
+  /**
+   * 提取課程內容實體信息
+   * @param {string} text - 用戶輸入文本
+   * @param {string} userId - 用戶ID
+   * @param {string} intent - 意圖類型
+   * @returns {Promise<Object>} 課程內容實體信息
+   */
+  static async extractCourseContentEntities(text, userId, intent) {
+    if (!text) {
+      return {
+        lesson_content: null,
+        homework_assignments: [],
+        class_media: [],
+        course_name: null,
+        content_date: null,
+        raw_text: text
+      };
+    }
+
+    let lessonContent = null;
+    let homeworkAssignments = [];
+    let classMedia = [];
+    let courseName = null;
+    let contentDate = null;
+
+    // 提取課程名稱
+    courseName = await this.extractCourseName(text);
+
+    // 提取日期信息
+    const timeInfo = await this.extractTimeInfo(text);
+    if (timeInfo && timeInfo.parsed_time) {
+      contentDate = timeInfo.parsed_time.toISOString().split('T')[0];
+    } else {
+      contentDate = new Date().toISOString().split('T')[0]; // 默認今天
+    }
+
+    // 根據意圖提取相應內容
+    switch (intent) {
+      case 'record_lesson_content':
+        lessonContent = await this.extractLessonContentDetails(text);
+        break;
+      case 'record_homework':
+        homeworkAssignments = await this.extractHomeworkDetails(text);
+        break;
+      case 'upload_class_photo':
+        classMedia = await this.extractMediaDetails(text);
+        break;
+      default:
+        // 嘗試提取所有類型的內容
+        lessonContent = await this.extractLessonContentDetails(text);
+        homeworkAssignments = await this.extractHomeworkDetails(text);
+        classMedia = await this.extractMediaDetails(text);
+    }
+
+    return {
+      lesson_content: lessonContent,
+      homework_assignments: homeworkAssignments,
+      class_media: classMedia,
+      course_name: courseName,
+      content_date: contentDate,
+      raw_text: text
+    };
+  }
+
+  /**
+   * 提取課程內容詳細信息
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Object|null>} 課程內容詳細信息
+   */
+  static async extractLessonContentDetails(text) {
+    const contentKeywords = ['教了', '學了', '學到', '講解', '說明', '內容', '重點', '筆記'];
+    
+    if (!contentKeywords.some(keyword => text.includes(keyword))) {
+      return null;
+    }
+
+    // 嘗試使用OpenAI提取結構化內容
+    try {
+      const aiResult = await this.extractLessonContentWithAI(text);
+      if (aiResult) {
+        return aiResult;
+      }
+    } catch (error) {
+      console.warn('AI lesson content extraction failed:', error.message);
+    }
+
+    // 使用規則提取
+    return this.extractLessonContentWithRules(text);
+  }
+
+  /**
+   * 使用AI提取課程內容
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Object|null>} AI提取結果
+   */
+  static async extractLessonContentWithAI(text) {
+    const OpenAIService = require('../internal/openaiService');
+    
+    try {
+      // 使用OpenAI提取結構化課程內容
+      const prompt = `請從以下文本中提取課程內容信息，以JSON格式返回：
+      文本："${text}"
+      
+      請提取：
+      1. title: 課程標題
+      2. description: 課程描述  
+      3. topics_covered: 涵蓋主題（數組）
+      4. learning_objectives: 學習目標（數組）
+      5. teacher_notes: 老師備註
+      6. difficulty_level: 難度等級 (beginner/intermediate/advanced)
+      
+      如果某些信息不存在，請設為null或空數組。`;
+
+      const result = await OpenAIService.generateResponse(prompt, 'user_id');
+      
+      if (result.success && result.response) {
+        try {
+          return JSON.parse(result.response);
+        } catch (parseError) {
+          console.warn('Failed to parse AI lesson content response:', parseError.message);
+          return null;
+        }
+      }
+    } catch (error) {
+      console.warn('OpenAI lesson content extraction failed:', error.message);
+    }
+    
+    return null;
+  }
+
+  /**
+   * 使用規則提取課程內容
+   * @param {string} text - 用戶輸入文本
+   * @returns {Object} 規則提取結果
+   */
+  static extractLessonContentWithRules(text) {
+    let title = null;
+    let description = text;
+    const topicsCovered = [];
+    const learningObjectives = [];
+    let teacherNotes = null;
+
+    // 提取標題
+    const titlePatterns = [
+      /今天.*課.*教了(.+)/,
+      /今天.*課.*學了(.+)/,
+      /課程.*內容.*[:：](.+)/,
+      /學習.*重點.*[:：](.+)/
+    ];
+
+    for (const pattern of titlePatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        title = match[1].trim();
+        break;
+      }
+    }
+
+    // 提取主題
+    const topicPatterns = [
+      /教了(.+?)(?:，|。|$)/g,
+      /學了(.+?)(?:，|。|$)/g,
+      /內容包括(.+?)(?:，|。|$)/g
+    ];
+
+    topicPatterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const topic = match[1].trim();
+        if (topic && !topicsCovered.includes(topic)) {
+          topicsCovered.push(topic);
+        }
+      }
+    });
+
+    // 簡單的難度判斷
+    let difficultyLevel = 'beginner';
+    if (text.includes('進階') || text.includes('複雜') || text.includes('高難度')) {
+      difficultyLevel = 'advanced';
+    } else if (text.includes('中等') || text.includes('中級')) {
+      difficultyLevel = 'intermediate';
+    }
+
+    return {
+      title: title || '課程內容記錄',
+      description: description,
+      topics_covered: topicsCovered,
+      learning_objectives: learningObjectives,
+      teacher_notes: teacherNotes,
+      difficulty_level: difficultyLevel
+    };
+  }
+
+  /**
+   * 提取作業詳細信息
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Array>} 作業列表
+   */
+  static async extractHomeworkDetails(text) {
+    const homeworkKeywords = ['作業', '功課', '練習', '習題', '要做', '需要完成'];
+    
+    if (!homeworkKeywords.some(keyword => text.includes(keyword))) {
+      return [];
+    }
+
+    const assignments = [];
+
+    // 提取作業標題和描述
+    let title = null;
+    let description = text;
+
+    const titlePatterns = [
+      /(?:作業|功課|練習)[:：](.+)/,
+      /(?:今天|回家)(?:作業|功課)(.+)/,
+      /需要完成(.+)/,
+      /要做(.+)(?:作業|功課|練習)/
+    ];
+
+    for (const pattern of titlePatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        title = match[1].trim();
+        break;
+      }
+    }
+
+    // 提取截止日期
+    let dueDate = null;
+    const datePatterns = [
+      /明天.*交/,
+      /後天.*交/,
+      /下週.*交/,
+      /(\d+)號.*交/
+    ];
+
+    for (const pattern of datePatterns) {
+      if (pattern.test(text)) {
+        // 簡化處理，實際應該用TimeService解析
+        if (text.includes('明天')) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          dueDate = tomorrow.toISOString().split('T')[0];
+        } else if (text.includes('後天')) {
+          const dayAfterTomorrow = new Date();
+          dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+          dueDate = dayAfterTomorrow.toISOString().split('T')[0];
+        }
+        break;
+      }
+    }
+
+    assignments.push({
+      id: this.generateUUID(),
+      title: title || '作業',
+      description: description,
+      due_date: dueDate,
+      priority: 'medium',
+      status: 'pending',
+      estimated_duration: 30, // 默認30分鐘
+      instructions: []
+    });
+
+    return assignments;
+  }
+
+  /**
+   * 提取媒體詳細信息
+   * @param {string} text - 用戶輸入文本
+   * @returns {Promise<Array>} 媒體列表
+   */
+  static async extractMediaDetails(text) {
+    const mediaKeywords = ['照片', '圖片', '拍照', '板書', '黑板', '白板'];
+    
+    if (!mediaKeywords.some(keyword => text.includes(keyword))) {
+      return [];
+    }
+
+    const media = [];
+
+    // 提取媒體描述和標籤
+    let caption = text;
+    const tags = [];
+
+    if (text.includes('板書')) tags.push('板書');
+    if (text.includes('黑板')) tags.push('黑板');
+    if (text.includes('白板')) tags.push('白板');
+    if (text.includes('課本')) tags.push('課本');
+    if (text.includes('筆記')) tags.push('筆記');
+    if (text.includes('教材')) tags.push('教材');
+
+    media.push({
+      id: this.generateUUID(),
+      type: 'photo',
+      url: null, // 將由上傳處理設置
+      caption: caption,
+      upload_time: new Date().toISOString(),
+      tags: tags,
+      file_size: 0
+    });
+
+    return media;
+  }
+
+  /**
+   * 生成UUID
+   * @returns {string} UUID字符串
+   */
+  static generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : ((r & 0x3) | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * 分析課程內容相關消息
+   * @param {string} text - 用戶輸入文本
+   * @param {string} userId - 用戶ID
+   * @param {Object} context - 上下文信息
+   * @returns {Promise<Object>} 分析結果
+   */
+  static async analyzeCourseContentMessage(text, userId, context = {}) {
+    if (!text || typeof text !== 'string') {
+      throw new Error('SemanticService: text must be a non-empty string');
+    }
+
+    if (!userId) {
+      throw new Error('SemanticService: userId is required');
+    }
+
+    try {
+      // 使用標準語義分析流程
+      const semanticResult = await this.analyzeMessage(text, userId, context);
+      
+      // 如果是課程內容相關意圖，提取詳細實體
+      const contentIntents = [
+        'record_lesson_content',
+        'record_homework', 
+        'upload_class_photo',
+        'query_course_content',
+        'modify_course_content'
+      ];
+
+      if (contentIntents.includes(semanticResult.intent)) {
+        const contentEntities = await this.extractCourseContentEntities(
+          text, 
+          userId, 
+          semanticResult.intent
+        );
+
+        return {
+          ...semanticResult,
+          content_entities: contentEntities,
+          is_content_related: true
+        };
+      }
+
+      return {
+        ...semanticResult,
+        is_content_related: false
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        method: 'error',
+        intent: 'unknown',
+        confidence: 0.0,
+        is_content_related: false,
+        analysis_time: Date.now(),
+      };
+    }
   }
 }
 

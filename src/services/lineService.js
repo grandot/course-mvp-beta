@@ -17,6 +17,35 @@ class LineService {
   }
 
   /**
+   * 獲取消息內容（圖片、音頻等）
+   * @param {string} messageId - 消息ID
+   * @returns {Promise<Object>} 消息內容
+   */
+  static async getMessageContent(messageId) {
+    return InternalLineService.getMessageContent(messageId);
+  }
+
+  /**
+   * 創建帶 Quick Reply 的文字消息
+   * @param {string} text - 消息文字
+   * @param {Array} quickReplyItems - Quick Reply 按鈕陣列
+   * @returns {Object} LINE 消息對象
+   */
+  static createQuickReplyMessage(text, quickReplyItems) {
+    return InternalLineService.createQuickReplyMessage(text, quickReplyItems);
+  }
+
+  /**
+   * 創建 Quick Reply 按鈕
+   * @param {string} label - 按鈕標籤
+   * @param {string} text - 點擊後發送的文字
+   * @returns {Object} Quick Reply 按鈕對象
+   */
+  static createQuickReplyButton(label, text) {
+    return InternalLineService.createQuickReplyButton(label, text);
+  }
+
+  /**
    * 格式化課程查詢結果為 LINE 訊息
    * @param {Array} courses - 課程陣列
    * @param {string} intent - 意圖類型
