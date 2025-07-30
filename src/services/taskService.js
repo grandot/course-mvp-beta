@@ -209,12 +209,12 @@ class TaskService {
   _calculateDateRange(entities) {
     const TimeService = require('./timeService');
     
-    // 🎯 輔助函數：統一創建返回對象（包含child_name支持）
+    // 🎯 輔助函數：統一創建返回對象（包含student_name支持）
     const createResult = (startDate, endDate) => {
       const result = { startDate, endDate };
-      if (entities.child_name) {
-        result.child_name = entities.child_name;
-        console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學童過濾: ${entities.child_name}`);
+      if (entities.student_name) {
+        result.student_name = entities.student_name;
+        console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學生過濾: ${entities.student_name}`);
       }
       return result;
     };
@@ -329,16 +329,16 @@ class TaskService {
       );
     }
     
-    // 🎯 第一性原則：添加child_name過濾支持
+    // 🎯 第一性原則：添加student_name過濾支持
     const result = {};
     
-    // 從entities中提取child_name（如果存在）
-    if (entities.child_name) {
-      result.child_name = entities.child_name;
-      console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學童過濾: ${entities.child_name}`);
+    // 從entities中提取student_name（如果存在）
+    if (entities.student_name) {
+      result.student_name = entities.student_name;
+      console.log(`🔧 [DEBUG] _calculateDateRange - 檢測到學生過濾: ${entities.student_name}`);
     }
     
-    // 默認返回（可能包含child_name，不限制時間範圍，使用場景模板的默認範圍）
+    // 默認返回（可能包含student_name，不限制時間範圍，使用場景模板的默認範圍）
     console.log(`🔧 [DEBUG] _calculateDateRange - 無法識別特定時間範圍，使用預設4週範圍`);
     return result;
   }

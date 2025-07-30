@@ -71,7 +71,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       }
 
       // 構建課程數據
-      const courseData = this.buildCourseData(userId, course_name, timeInfo, location, teacher, entities.child_name);
+      const courseData = this.buildCourseData(userId, course_name, timeInfo, location, teacher, entities.student_name);
       
       // 使用EntityService創建課程
       const result = await EntityService.createEntity(this.entityType, courseData);
@@ -345,16 +345,16 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         new Date(today.getTime() + (4 * 7 * 24 * 60 * 60 * 1000)) // 4週後
       );
 
-      // 🎯 第一性原則：構建查詢條件（包含child_name過濾）
+      // 🎯 第一性原則：構建查詢條件（包含student_name過濾）
       const baseQueryConditions = {
         student_id: userId,
         status: 'scheduled'
       };
       
-      // 如果指定了學童名稱，添加過濾條件
-      if (options.child_name) {
-        baseQueryConditions.child_name = options.child_name;
-        this.log('info', 'Adding child_name filter', { child_name: options.child_name });
+      // 如果指定了學生名稱，添加過濾條件
+      if (options.student_name) {
+        baseQueryConditions.student_name = options.student_name;
+        this.log('info', 'Adding student_name filter', { student_name: options.student_name });
       }
 
       // 同時查詢一般課程和重複課程
@@ -402,25 +402,25 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         return course.course_date >= startDate && course.course_date <= endDate;
       });
 
-      // 🎯 第一性原則：重複課程實例child_name過濾（雙重保險）
+      // 🎯 第一性原則：重複課程實例student_name過濾（雙重保險）
       // 雖然重複課程模板已經被過濾，但實例生成後再次確保過濾正確性
       let filteredRecurringInstances = recurringInstances;
-      if (options.child_name) {
+      if (options.student_name) {
         filteredRecurringInstances = recurringInstances.filter(instance => {
-          const matches = instance.child_name === options.child_name;
+          const matches = instance.student_name === options.student_name;
           if (!matches) {
             this.log('debug', 'Filtering out recurring instance', { 
-              instanceChildName: instance.child_name, 
-              targetChildName: options.child_name,
+              instanceChildName: instance.student_name, 
+              targetChildName: options.student_name,
               courseName: instance.course_name 
             });
           }
           return matches;
         });
-        this.log('info', 'Recurring instances after child_name filter', { 
+        this.log('info', 'Recurring instances after student_name filter', { 
           beforeFilter: recurringInstances.length,
           afterFilter: filteredRecurringInstances.length,
-          childName: options.child_name
+          studentName: options.student_name
         });
       }
 
@@ -449,7 +449,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         recurringInstances: filteredRecurringInstances.length,
         recurringTemplates: recurringCourses.length,
         queryRange: { startDate, endDate },
-        childNameFilter: options.child_name || null
+        studentNameFilter: options.student_name || null
       };
 
       this.log('info', 'Courses queried successfully', stats);
@@ -490,10 +490,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Creating recurring course entity', { userId, entities });
 
     try {
-      const { course_name, timeInfo, location, teacher, recurrence_pattern, child_name, student } = entities;
+      const { course_name, timeInfo, location, teacher, recurrence_pattern, student_name, student } = entities;
       
-      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
-      const childName = child_name || student;
+      // 🎯 Multi-student: 統一使用 student_name（向後兼容 student 字段）
+      const studentName = student_name || student;
 
       // 驗證必要欄位
       const validation = this.validateRequiredFields(entities);
@@ -556,9 +556,9 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         status: 'scheduled'
       });
 
-      // 檢查是否已有相同的重複課程模板（課程名稱 + 學童名稱 + 重複模式）
+      // 檢查是否已有相同的重複課程模板（課程名稱 + 學生名稱 + 重複模式）
       const duplicateTemplate = existingRecurringCourses.find(existing => {
-        const sameChild = (existing.child_name || null) === (childName || null);
+        const sameChild = (existing.student_name || null) === (studentName || null);
         const samePattern = existing.recurrence_pattern === recurrence_pattern;
         return sameChild && samePattern;
       });
@@ -567,7 +567,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         this.log('info', 'Existing recurring course template found - returning confirmation', {
           existingId: duplicateTemplate.id,
           courseName: course_name,
-          childName: childName,
+          studentName: studentName,
           recurrencePattern: recurrence_pattern
         });
         
@@ -577,8 +577,8 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         
         let confirmationMessage = `✅ 重複課程「${course_name}」已確認存在！\n\n`;
         
-        if (childName) {
-          confirmationMessage += `👶 學童: ${childName}\n`;
+        if (studentName) {
+          confirmationMessage += `👶 學生: ${studentName}\n`;
         }
         
         confirmationMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
@@ -611,7 +611,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
         teacher, 
         recurrence_pattern,
         startDate,
-        childName  // 🎯 Multi-child: 傳遞學童信息
+        studentName  // 🎯 Multi-student: 傳遞學生信息
       );
       
       // 使用EntityService創建重複課程模板
@@ -634,11 +634,11 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       // 🎯 修復：使用統一的課程標記格式，基於第一性原則
       const recurrenceLabel = this.getRecurrenceLabel(recurrence_pattern);
       
-      // 🎯 Multi-child: 構建完整的成功回覆（包含學童信息）
+      // 🎯 Multi-student: 構建完整的成功回覆（包含學生信息）
       let successMessage = `✅ 重複課程「${course_name}」已創建！\n\n`;
       
-      if (childName) {
-        successMessage += `👶 學童: ${childName}\n`;
+      if (studentName) {
+        successMessage += `👶 學生: ${studentName}\n`;
       }
       
       successMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
@@ -674,10 +674,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Modifying recurring course entity', { userId, entities });
 
     try {
-      const { course_name, timeInfo, location, teacher, recurrence_pattern, modification_scope, child_name, student } = entities;
+      const { course_name, timeInfo, location, teacher, recurrence_pattern, modification_scope, student_name, student } = entities;
       
-      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）  
-      const childName = child_name || student;
+      // 🎯 Multi-student: 統一使用 student_name（向後兼容 student 字段）  
+      const studentName = student_name || student;
       
       // 驗證必要的課程名稱
       if (!course_name) {
@@ -758,10 +758,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Stopping recurring course entity', { userId, entities });
 
     try {
-      const { course_name, child_name, student } = entities;
+      const { course_name, student_name, student } = entities;
       
-      // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
-      const childName = child_name || student;
+      // 🎯 Multi-student: 統一使用 student_name（向後兼容 student 字段）
+      const studentName = student_name || student;
       
       if (!course_name) {
         return this.createErrorResponse(
@@ -823,12 +823,12 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       // 🎯 修復：使用統一的課程標記格式，基於第一性原則
       const recurrenceLabel = this.getRecurrenceLabel(courseToStop.recurrence_pattern);
       
-      // 🎯 Multi-child: 構建包含學童信息的成功回覆
+      // 🎯 Multi-student: 構建包含學生信息的成功回覆
       let successMessage = `✅ 重複課程「${course_name}」已停止！\n\n`;
       
-      if (childName || courseToStop.child_name) {
-        const displayChildName = childName || courseToStop.child_name;
-        successMessage += `👶 學童: ${displayChildName}\n`;
+      if (studentName || courseToStop.student_name) {
+        const displayChildName = studentName || courseToStop.student_name;
+        successMessage += `👶 學生: ${displayChildName}\n`;
       }
       
       successMessage += `📚 課程：${course_name} (${recurrenceLabel})\n`;
@@ -936,7 +936,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @returns {Object} 課程數據
    * @private
    */
-  buildCourseData(userId, courseName, timeInfo, location, teacher, childName = null) {
+  buildCourseData(userId, courseName, timeInfo, location, teacher, studentName = null) {
     const defaults = this.config.course_specific?.defaults || {};
     
     const courseData = {
@@ -951,9 +951,9 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       recurrence_pattern: null
     };
     
-    // 🎯 Multi-child: 如果有學童信息，添加為單獨字段
-    if (childName) {
-      courseData.child_name = childName;
+    // 🎯 Multi-student: 如果有學生信息，添加為單獨字段
+    if (studentName) {
+      courseData.student_name = studentName;
     }
     
     return courseData;
@@ -1007,12 +1007,12 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @private
    */
   formatCourseDisplay(course) {
-    // 🎯 Multi-child feature: 正確的學童信息顯示
+    // 🎯 Multi-student feature: 正確的學生信息顯示
     let displayText = '';
     
-    // 如果有學童信息，優先顯示
-    if (course.child_name) {
-      displayText += `👶 學童: ${course.child_name}\n`;
+    // 如果有學生信息，優先顯示
+    if (course.student_name) {
+      displayText += `👶 學生: ${course.student_name}\n`;
     }
     
     // 顯示課程名稱 + 重複標記（第一性原則：重複信息屬於課程本身）
@@ -1042,7 +1042,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     return {
       id: course.id,
       course_name: course.course_name,
-      child_name: course.child_name, // 🎯 確保學童信息被保留
+      student_name: course.student_name, // 🎯 確保學生信息被保留
       schedule_time: course.schedule_time,
       course_date: course.course_date || course.date,
       location: course.location,
@@ -1089,7 +1089,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @returns {Object} 重複課程數據
    * @private
    */
-  buildRecurringCourseData(userId, courseName, timeInfo, location, teacher, recurrencePattern, startDate, childName = null) {
+  buildRecurringCourseData(userId, courseName, timeInfo, location, teacher, recurrencePattern, startDate, studentName = null) {
     const defaults = this.config.course_specific?.defaults || {};
     
     // 解析重複模式並設置布林欄位
@@ -1098,7 +1098,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     return {
       student_id: userId,
       course_name: courseName,
-      child_name: childName, // 🎯 Multi-child: 加入學童信息
+      student_name: studentName, // 🎯 Multi-student: 加入學生信息
       schedule_time: timeInfo?.display || 'TBD',
       course_date: startDate,
       location: location || defaults.location || null,
@@ -1416,10 +1416,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    * @private
    */
   async modifyEntireRecurringSeries(courseTemplate, entities, userId) {
-    const { timeInfo, location, teacher, recurrence_pattern, child_name, student } = entities;
+    const { timeInfo, location, teacher, recurrence_pattern, student_name, student } = entities;
     
-    // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
-    const childName = child_name || student;
+    // 🎯 Multi-student: 統一使用 student_name（向後兼容 student 字段）
+    const studentName = student_name || student;
     
     const updateData = {};
     const modifiedFields = [];
@@ -1478,12 +1478,12 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       recurrence_pattern || courseTemplate.recurrence_pattern
     );
 
-    // 🎯 Multi-child: 構建包含學童信息的成功回覆
+    // 🎯 Multi-student: 構建包含學生信息的成功回覆
     let successMessage = `✅ 重複課程「${courseTemplate.course_name}」整體安排已修改！\n\n`;
     
-    if (childName || courseTemplate.child_name) {
-      const displayChildName = childName || courseTemplate.child_name;
-      successMessage += `👶 學童: ${displayChildName}\n`;
+    if (studentName || courseTemplate.student_name) {
+      const displayChildName = studentName || courseTemplate.student_name;
+      successMessage += `👶 學生: ${displayChildName}\n`;
     }
     
     successMessage += `📚 課程：${courseTemplate.course_name} (${recurrenceLabel})\n`;
@@ -1510,10 +1510,10 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
    */
   async modifySingleRecurringInstance(courseTemplate, entities, userId) {
     // 創建一個例外課程記錄，覆蓋特定日期的重複課程
-    const { timeInfo, location, teacher, target_date, child_name, student } = entities;
+    const { timeInfo, location, teacher, target_date, student_name, student } = entities;
     
-    // 🎯 Multi-child: 統一使用 child_name（向後兼容 student 字段）
-    const childName = child_name || student;
+    // 🎯 Multi-student: 統一使用 student_name（向後兼容 student 字段）
+    const studentName = student_name || student;
 
     if (!target_date && (!timeInfo || !timeInfo.date)) {
       return this.createErrorResponse(
@@ -1528,7 +1528,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     const exceptionData = {
       student_id: userId,
       course_name: courseTemplate.course_name,
-      child_name: childName || courseTemplate.child_name, // 🎯 Multi-child: 保留學童信息
+      student_name: studentName || courseTemplate.student_name, // 🎯 Multi-student: 保留學生信息
       schedule_time: timeInfo?.display || courseTemplate.schedule_time,
       course_date: targetDate,
       location: location || courseTemplate.location,

@@ -394,7 +394,10 @@ class OpenAIService {
 範例：
 - "LUMI早上十點乒乓球課" → {"course_name": "乒乓球", "student": "LUMI", "location": null, "time_phrase": "早上十點", "date_phrase": null}
 - "後台下午兩點小美直排輪課" → {"course_name": "直排輪", "student": "小美", "location": "後台", "time_phrase": "下午兩點", "date_phrase": null}
-- "明天晚上七點鋼琴課" → {"course_name": "鋼琴", "student": null, "location": null, "time_phrase": "晚上七點", "date_phrase": "明天"}`;
+- "明天晚上七點鋼琴課" → {"course_name": "鋼琴", "student": null, "location": null, "time_phrase": "晚上七點", "date_phrase": "明天"}
+- "LUMI課表" → {"course_name": null, "student": "LUMI", "location": null, "time_phrase": null, "date_phrase": null}
+- "小美課表" → {"course_name": null, "student": "小美", "location": null, "time_phrase": null, "date_phrase": null}
+- "查詢小光的課程安排" → {"course_name": null, "student": "小光", "location": null, "time_phrase": null, "date_phrase": null}`;
 
       const response = await this.complete({
         prompt,

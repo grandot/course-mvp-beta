@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v10.5.0] - 2025-07-30
+
+### Fixed
+- **🎯 修復學生課表查詢核心問題**: "LUMI課表" 返回所有課表而非 LUMI 專屬課表
+  - **根本原因分析**: OpenAI prompt 缺少課表查詢範例，學生名稱驗證不支持英文，字段命名不統一
+  - **三層問題修復**:
+    1. **OpenAI prompt 優化**: 新增 "LUMI課表"、"小美課表"、"查詢小光的課程安排" 範例
+    2. **多語言學生名稱支持**: `isValidStudentName` 支持中文和英文名稱 (小美、LUMI、John)
+    3. **字段命名統一**: 全系統 `child_name` → `student_name` 統一重構
+  - **修復範圍**: 5個核心文件完整重構
+    - `SemanticService.js`: 學生名稱提取與驗證邏輯
+    - `TaskService.js`: 日期範圍計算中的學生過濾
+    - `CourseManagementScenarioTemplate.js`: 課程查詢與學生信息處理
+    - `LineController.js`: LINE bot 回復格式化
+    - `RecurringCourseCalculator.js`: 重複課程學生信息保留
+
+### Added
+- **🏗️ 智能語義分析架構升級**: OpenAI → 正則 Fallback
+  - **架構演進**: 從 "正則→OpenAI" 到 "純OpenAI" 最終到 "OpenAI→正則Fallback"
+  - **第一性原則**: AI 負責語義理解，正則負責容錯保底
+  - **三層智能 Fallback**:
+    1. **IntentRuleEngine**: 基礎關鍵詞 Fallback (課表查詢、記錄課程、取消課程)
+    2. **學生名稱糾錯**: 智能從 "LUMI課" 提取 "LUMI"，支持中英文
+    3. **課程名稱提取**: 意圖導向正則 Fallback，簡化複雜度
+  - **系統可靠性**: 確保核心功能永不失效，OpenAI 失敗時無縫降級
+
+### Changed
+- **📝 架構文檔全面更新**: `docs/Regexp-block-test.md`
+  - 重命名為 "智能語義分析架構演進記錄"
+  - 詳細的三階段演進歷史
+  - 完整的 Fallback 實現細節
+  - 生產環境監控指標
+
 ## [v10.4.0] - 2025-01-30
 
 ### Changed

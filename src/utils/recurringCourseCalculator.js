@@ -77,7 +77,7 @@ class RecurringCourseCalculator {
           id: `${course.id}_${instanceDate}`, // 唯一ID
           date: instanceDate,
           course_name: course.course_name,
-          child_name: course.child_name, // 🎯 確保學童信息被保留
+          student_name: course.student_name, // 🎯 確保學生信息被保留
           schedule_time: timeDisplay,
           recurring_label: this.getRecurrenceLabel(course),
           is_recurring_instance: true,

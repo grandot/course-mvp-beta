@@ -77,10 +77,51 @@ class IntentRuleEngine {
    * @returns {Object} 匹配結果 {confidence, priority}
    */
   static matchRule(text, rule) {
-    // 🚨 暫時禁用所有正則過濾 - 強制 OpenAI 接管語義理解
-    // 原因：正則泛化能力差，頻繁出現邊界條件錯誤
-    console.log(`[IntentRuleEngine] 正則過濾已禁用，將交由 OpenAI 處理: "${text}"`);
-    return { confidence: 0, priority: rule.priority || 1 };
+    // 🎯 混合策略：OpenAI 優先 + 基礎關鍵詞 Fallback
+    // 大部分情況交由 OpenAI，但保留核心意圖的基礎識別能力
+    
+    const { keywords = [], exclusions = [], priority = 1, intent_name } = rule;
+    
+    // 檢查排除詞（如果有排除詞且匹配，直接排除）
+    if (exclusions.length > 0 && exclusions.some(exclusion => text.includes(exclusion))) {
+      console.log(`[IntentRuleEngine] 排除詞匹配，跳過: "${text}"`);
+      return { confidence: 0, priority };
+    }
+    
+    // 🎯 基礎關鍵詞 Fallback：只處理最核心、最明確的意圖
+    let fallbackConfidence = 0;
+    
+    if (intent_name === 'query_schedule') {
+      // 課表查詢：包含課表、課程、安排等明確詞彙
+      const scheduleKeywords = ['課表', '課程', '安排', '課程安排', '上課時間'];
+      if (scheduleKeywords.some(keyword => text.includes(keyword))) {
+        fallbackConfidence = 0.3; // 低置信度，確保 OpenAI 優先
+        console.log(`[IntentRuleEngine] 基礎 Fallback - 課表查詢: "${text}"`);
+      }
+    } else if (intent_name === 'record_course') {
+      // 記錄課程：包含時間詞彙 + 課程詞彙
+      const timeWords = ['今天', '明天', '後天', '下週', '本週', '這週', '點', '時', '分'];
+      const courseWords = ['課', '班', '上課', '學習'];
+      if (timeWords.some(word => text.includes(word)) && courseWords.some(word => text.includes(word))) {
+        fallbackConfidence = 0.3;
+        console.log(`[IntentRuleEngine] 基礎 Fallback - 記錄課程: "${text}"`);
+      }
+    } else if (intent_name === 'cancel_course') {
+      // 取消課程：包含取消、刪除等明確動作詞
+      const cancelWords = ['取消', '刪除', '移除', '不上了'];
+      if (cancelWords.some(word => text.includes(word))) {
+        fallbackConfidence = 0.3;
+        console.log(`[IntentRuleEngine] 基礎 Fallback - 取消課程: "${text}"`);
+      }
+    }
+    
+    if (fallbackConfidence > 0) {
+      console.log(`[IntentRuleEngine] 基礎 Fallback 成功 (${intent_name}): confidence=${fallbackConfidence}`);
+      return { confidence: fallbackConfidence, priority };
+    } else {
+      console.log(`[IntentRuleEngine] 無基礎 Fallback 匹配，交由 OpenAI 處理: "${text}"`);
+      return { confidence: 0, priority };
+    }
     
     /*
     // === 原始正則邏輯（已禁用）===

@@ -570,9 +570,9 @@ class LineController {
                 if (result.course) {
                   const details = [];
                   
-                  // 🎯 Multi-child: 如果有學童信息，優先顯示
-                  if (result.course.child_name) {
-                    details.push(`👶 學童: ${result.course.child_name}`);
+                  // 🎯 Multi-student: 如果有學生信息，優先顯示
+                  if (result.course.student_name) {
+                    details.push(`👶 學生: ${result.course.student_name}`);
                   }
                   
                   details.push(`📚 課程：${result.course.course_name}`);
@@ -623,9 +623,9 @@ class LineController {
                 if (result.cancelledCourse) {
                   const details = [];
                   
-                  // 🎯 Multi-child: 如果有學童信息，優先顯示
-                  if (result.cancelledCourse.child_name) {
-                    details.push(`👶 學童: ${result.cancelledCourse.child_name}`);
+                  // 🎯 Multi-student: 如果有學生信息，優先顯示
+                  if (result.cancelledCourse.student_name) {
+                    details.push(`👶 學生: ${result.cancelledCourse.student_name}`);
                   }
                   
                   details.push(`📚 課程：${result.cancelledCourse.course_name}`);
@@ -681,10 +681,10 @@ class LineController {
                 if (result.updatedCourse && result.originalCourse) {
                   const details = [];
                   
-                  // 🎯 Multi-child: 如果有學童信息，優先顯示
-                  if (result.updatedCourse.child_name || result.originalCourse.child_name) {
-                    const childName = result.updatedCourse.child_name || result.originalCourse.child_name;
-                    details.push(`👶 學童: ${childName}`);
+                  // 🎯 Multi-student: 如果有學生信息，優先顯示
+                  if (result.updatedCourse.student_name || result.originalCourse.student_name) {
+                    const studentName = result.updatedCourse.student_name || result.originalCourse.student_name;
+                    details.push(`👶 學生: ${studentName}`);
                   }
                   
                   details.push(`📚 課程：${result.updatedCourse.course_name || result.originalCourse.course_name}`);

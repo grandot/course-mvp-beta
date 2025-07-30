@@ -316,7 +316,7 @@ class SemanticService {
             student: entities.student, // 🚨 新增學生信息
             confirmation: entities.confirmation,
             recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
-            child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
+            student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
             timeInfo: processedTimeInfo,
           },
           context,
@@ -365,7 +365,7 @@ class SemanticService {
             teacher: analysis.entities.teacher,
             student: analysis.entities.student || entities.student, // 🚨 優先使用 OpenAI 提取的學生信息
             confirmation: entities.confirmation,
-            child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
+            student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
             // ✅ 使用統一處理的時間信息
             timeInfo: processedTimeInfo,
           },
@@ -393,7 +393,7 @@ class SemanticService {
           student: entities.student, // 🚨 新增學生信息
           confirmation: entities.confirmation,
           recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
-          child_name: entities.child_name, // 🎯 Multi-child: 新增學童信息
+          student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
           // ✅ 使用統一處理的時間信息
           timeInfo: processedTimeInfo,
         },
@@ -448,15 +448,15 @@ class SemanticService {
       };
     }
 
-    // 🎯 Multi-child feature: 先提取子女名稱
-    const childInfo = this.extractChildName(text);
+    // 🎯 Multi-student feature: 先提取學生名稱
+    const studentInfo = this.extractStudentName(text);
     let processedText = text;
-    let childName = null;
+    let studentName = null;
     
-    if (childInfo) {
-      childName = childInfo.name;
-      processedText = childInfo.remainingText;
-      console.log(`👶 [SemanticService] 識別到子女: ${childName}`);
+    if (studentInfo) {
+      studentName = studentInfo.name;
+      processedText = studentInfo.remainingText;
+      console.log(`👶 [SemanticService] 識別到學生: ${studentName}`);
     }
 
     // 🚨 架構重構：OpenAI優先，正則fallback
@@ -481,26 +481,46 @@ class SemanticService {
       let student = entities.student;
       let location = entities.location;
       
-      // 🎯 Fallback策略：如果extractChildName失敗，但OpenAI將學童名稱誤識別為course_name
-      if (!childName && courseName) {
-        // 檢查course_name是否實際上是學童名稱
-        const isValidChildName = (name) => {
+      // 🎯 Fallback策略：如果extractStudentName失敗，但OpenAI將學生名稱誤識別為course_name
+      if (!studentName && courseName) {
+        // 檢查course_name是否實際上是學生名稱
+        const isValidStudentName = (name) => {
           if (!name || typeof name !== 'string') return false;
-          if (name.length < 2 || name.length > 4) return false;
-          if (!/^[一-龯]+$/.test(name)) return false;
+          if (name.length < 2 || name.length > 10) return false; // 擴展長度支持英文名稱
+          
+          // 🎯 支持中文和英文學生名稱
+          const isChineseName = /^[一-龯]+$/.test(name);
+          const isEnglishName = /^[A-Za-z]+$/.test(name);
+          
+          if (!isChineseName && !isEnglishName) return false;
           
           // 排除明顯課程詞彙
-          const courseKeywords = ['課', '班', '教', '學', '習', '程', '術', '藝', '運動', '語言'];
-          if (courseKeywords.some(keyword => name.includes(keyword))) return false;
+          const courseKeywords = ['課', '班', '教', '學', '習', '程', '術', '藝', '運動', '語言', 'class', 'course', 'lesson'];
+          if (courseKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) return false;
           
           return true;
         };
         
-        if (isValidChildName(courseName) && (text.includes('課表') || text.includes('課程') || text.includes('安排'))) {
-          console.log(`👶 [SemanticService] Fallback策略：將OpenAI誤識別的course_name "${courseName}" 糾正為學童名稱`);
-          childName = courseName;
+        // 🎯 增強的 Fallback 策略：處理 "LUMI課" → "LUMI" 的情況
+        let potentialStudentName = courseName;
+        
+        // 嘗試從 courseName 中提取潛在的學生名稱（去除常見後綴）
+        const studentQuerySuffixes = ['課表', '課程', '的課程', '的課', '課', '班', '的安排', '安排'];
+        for (const suffix of studentQuerySuffixes) {
+          if (courseName.endsWith(suffix)) {
+            potentialStudentName = courseName.slice(0, -suffix.length);
+            break;
+          }
+        }
+        
+        // 檢查是否為課表查詢上下文
+        const isScheduleQuery = text.includes('課表') || text.includes('課程') || text.includes('安排');
+        
+        if (isValidStudentName(potentialStudentName) && isScheduleQuery) {
+          console.log(`👶 [SemanticService] 增強Fallback策略：從 "${courseName}" 提取學生名稱 "${potentialStudentName}"`);
+          studentName = potentialStudentName;
           courseName = null; // 清空課程名稱，因為實際上是查詢課表
-          student = childName; // 同時設置student字段
+          student = studentName; // 同時設置student字段
         }
       }
       
@@ -527,16 +547,16 @@ class SemanticService {
         courseName = await this.performFuzzyMatching(courseName, userId);
       }
       
-      // 🎯 Multi-child: 保持課程名稱純淨，學童信息單獨存儲
+      // 🎯 Multi-student: 保持課程名稱純淨，學生信息單獨存儲
       const result = await this.buildEntityResult(processedText, courseName, location, student, arguments[0]);
       
-      // 🎯 修復：統一學童名稱字段映射
-      if (childName) {
-        result.child_name = childName;
+      // 🎯 修復：統一學生名稱字段映射
+      if (studentName) {
+        result.student_name = studentName;
       } else if (student) {
-        // 如果 extractChildName 失敗但 OpenAI 識別了學童名稱，映射到 child_name
-        result.child_name = student;
-        console.log(`👶 [SemanticService] 使用 OpenAI 識別的學童名稱: ${student}`);
+        // 如果 extractStudentName 失敗但 OpenAI 識別了學生名稱，映射到 student_name
+        result.student_name = student;
+        console.log(`👶 [SemanticService] 使用 OpenAI 識別的學生名稱: ${student}`);
       }
       
       return result;
@@ -547,38 +567,79 @@ class SemanticService {
     
     const result = await this.extractEntitiesWithRegex(processedText, userId, intentHint);
     
-    // 🎯 Multi-child: 統一學童名稱字段映射（regex fallback 路径）
-    if (childName) {
-      result.child_name = childName;
+    // 🎯 Multi-student: 統一學生名稱字段映射（regex fallback 路径）
+    if (studentName) {
+      result.student_name = studentName;
     } else if (result.student) {
-      // 如果 extractChildName 失敗但 regex 或其他方式識別了學童名稱，映射到 child_name
-      result.child_name = result.student;
-      console.log(`👶 [SemanticService] Regex fallback - 使用識別的學童名稱: ${result.student}`);
+      // 如果 extractStudentName 失敗但 regex 或其他方式識別了學生名稱，映射到 student_name
+      result.student_name = result.student;
+      console.log(`👶 [SemanticService] Regex fallback - 使用識別的學生名稱: ${result.student}`);
+    }
+    
+    // 🎯 增強的 Regex Fallback 策略：處理正則表達式誤識別的情況
+    if (!result.student_name && result.course_name) {
+      // 檢查course_name是否實際上是學生名稱
+      const isValidStudentName = (name) => {
+        if (!name || typeof name !== 'string') return false;
+        if (name.length < 2 || name.length > 10) return false;
+        
+        // 🎯 支持中文和英文學生名稱
+        const isChineseName = /^[一-龯]+$/.test(name);
+        const isEnglishName = /^[A-Za-z]+$/.test(name);
+        
+        if (!isChineseName && !isEnglishName) return false;
+        
+        // 排除明顯課程詞彙
+        const courseKeywords = ['課', '班', '教', '學', '習', '程', '術', '藝', '運動', '語言', 'class', 'course', 'lesson'];
+        if (courseKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) return false;
+        
+        return true;
+      };
+      
+      // 嘗試從 course_name 中提取潛在的學生名稱（去除常見後綴）
+      let potentialStudentName = result.course_name;
+      const studentQuerySuffixes = ['課表', '課程', '的課程', '的課', '課', '班', '的安排', '安排'];
+      for (const suffix of studentQuerySuffixes) {
+        if (result.course_name.endsWith(suffix)) {
+          potentialStudentName = result.course_name.slice(0, -suffix.length);
+          break;
+        }
+      }
+      
+      // 檢查是否為課表查詢上下文
+      const isScheduleQuery = text.includes('課表') || text.includes('課程') || text.includes('安排');
+      
+      if (isValidStudentName(potentialStudentName) && isScheduleQuery) {
+        console.log(`👶 [SemanticService] Regex增強Fallback策略：從 "${result.course_name}" 提取學生名稱 "${potentialStudentName}"`);
+        result.student_name = potentialStudentName;
+        result.course_name = null; // 清空課程名稱，因為實際上是查詢課表
+        result.student = potentialStudentName; // 同時設置student字段
+      }
     }
     
     return result;
   }
 
   /**
-   * 🎯 Multi-child feature: 提取子女名稱
+   * 🎯 Multi-student feature: 提取學生名稱
    * @param {string} text - 用戶輸入文本
-   * @returns {Object|null} { name: 子女名稱, remainingText: 剩餘文本 }
+   * @returns {Object|null} { name: 學生名稱, remainingText: 剩餘文本 }
    */
-  static extractChildName(text) {
+  static extractStudentName(text) {
     if (!text || typeof text !== 'string') return null;
     
-    // 🚨 暫時禁用學童名稱正則提取 - 強制 OpenAI 接管
+    // 🚨 暫時禁用學生名稱正則提取 - 強制 OpenAI 接管
     // 原因：正則邊界條件處理困難，如"小美"需要特定詞彙邊界才能識別
-    console.log(`[SemanticService] 學童名稱正則提取已禁用，將交由 OpenAI 處理: "${text}"`);
+    console.log(`[SemanticService] 學生名稱正則提取已禁用，將交由 OpenAI 處理: "${text}"`);
     return null;
     
     /*
     // === 原始正則邏輯（已禁用）===
-    // 🎯 第一性原則：學童名稱是獨立實體，應可在任何位置被識別
+    // 🎯 第一性原則：學生名稱是獨立實體，應可在任何位置被識別
     // 使用多層次匹配策略，而非僵化的詞彙列表
     
-    // 驗證是否為有效的子女名稱
-    const isValidChildName = (name) => {
+    // 驗證是否為有效的學生名稱
+    const isValidStudentName = (name) => {
       // 排除明顯的非人名詞彙（排除法而非包含法）
       const excludeWords = [
         // 時間詞彙
@@ -604,7 +665,7 @@ class SemanticService {
 
     // 多層次匹配策略
     const extractionStrategies = [
-      // 策略1：句首學童名稱（最常見）
+      // 策略1：句首學生名稱（最常見）
       {
         name: 'sentence_start',
         patterns: [
@@ -612,7 +673,7 @@ class SemanticService {
           /^([一-龯]{2,3})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/        // 明明+特定詞彙邊界
         ]
       },
-      // 策略2：句中學童名稱
+      // 策略2：句中學生名稱
       {
         name: 'sentence_middle', 
         patterns: [
@@ -628,16 +689,16 @@ class SemanticService {
     for (const strategy of extractionStrategies) {
       for (const pattern of strategy.patterns) {
         const match = text.match(pattern);
-        if (match && match[1] && isValidChildName(match[1])) {
-          const childName = match[1];
-          // 從原文本中移除學童名稱，得到剩餘文本
-          const remainingText = text.replace(childName, '').replace(/^[的\s]+|[的\s]+$/g, '').trim();
+        if (match && match[1] && isValidStudentName(match[1])) {
+          const studentName = match[1];
+          // 從原文本中移除學生名稱，得到剩餘文本
+          const remainingText = text.replace(studentName, '').replace(/^[的\s]+|[的\s]+$/g, '').trim();
           
-          console.log(`👶 [SemanticService] 使用策略 "${strategy.name}" 識別到子女: ${childName}`);
+          console.log(`👶 [SemanticService] 使用策略 "${strategy.name}" 識別到學生: ${studentName}`);
           console.log(`👶 [SemanticService] 剩餘文本: "${remainingText}"`);
           
           return {
-            name: childName,
+            name: studentName,
             remainingText: remainingText || '課表' // 如果剩餘文本為空，默認為查詢課表
           };
         }
@@ -645,7 +706,7 @@ class SemanticService {
     }
     
     // 如果所有策略都失敗，返回 null
-    console.log(`👶 [SemanticService] 未識別到有效的子女名稱: "${text}"`);
+    console.log(`👶 [SemanticService] 未識別到有效的學生名稱: "${text}"`);
     return null;
     */
   }
@@ -952,10 +1013,94 @@ class SemanticService {
    * @returns {Promise<string|null>} 提取的課程名稱
    */
   static async intelligentCourseExtraction(text, intent, userId) {
-    // 🚨 暫時禁用課程名稱正則提取 - 強制 OpenAI 接管
-    // 原因：硬編碼模式無法處理多樣化表達，如意圖相關的複雜模式匹配
-    console.log(`[SemanticService] 課程名稱正則提取已禁用，將交由 OpenAI 處理: "${text}" (intent: ${intent})`);
-    return null;
+    // 🎯 智能課程名稱提取：OpenAI -> 正則 Fallback
+    console.log(`[SemanticService] 課程名稱提取：優先使用 OpenAI，失敗時 fallback 到正則: "${text}" (intent: ${intent})`);
+    
+    // 🎯 增強的 Regex Fallback 策略：基於意圖的簡化正則提取
+    let candidateName = null;
+    
+    try {
+      switch (intent) {
+        case 'modify_course':
+        case 'cancel_course': {
+          // 修改/取消意圖：提取動作前的主要名詞
+          const modifyPatterns = [
+            /^([^修改取消刪除調整更改變更改成改到換成換到\s]+)(?=修改|取消|刪除|調整|更改|變更|改成|改到|換成|換到)/,
+            /^([^改\s]+)改成/,
+            /^([^換\s]+)換成/,
+          ];
+          
+          for (const pattern of modifyPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1] && match[1].trim().length > 1) {
+              candidateName = match[1].trim();
+              console.log(`📚 [智能課程提取] ${intent} 模式匹配: "${candidateName}"`);
+              break;
+            }
+          }
+          break;
+        }
+        
+        case 'record_course': {
+          // 記錄課程：提取時間前的主要名詞
+          const recordPatterns = [
+            /^([^今明後下週月日年時點分\d\s]+)(?=課|班|時間|在|上)/,
+            /([^今明後下週月日年時點分\d\s]+)課/,
+            /([^今明後下週月日年時點分\d\s]+)班/,
+          ];
+          
+          for (const pattern of recordPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1] && match[1].trim().length > 1) {
+              candidateName = match[1].trim();
+              console.log(`📚 [智能課程提取] ${intent} 模式匹配: "${candidateName}"`);
+              break;
+            }
+          }
+          break;
+        }
+        
+        default: {
+          // 通用模式：提取可能的課程名稱
+          const generalPatterns = [
+            /([一-龯A-Za-z]+)課/,
+            /([一-龯A-Za-z]+)班/,
+          ];
+          
+          for (const pattern of generalPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1] && match[1].trim().length > 1) {
+              candidateName = match[1].trim();
+              console.log(`📚 [智能課程提取] 通用模式匹配: "${candidateName}"`);
+              break;
+            }
+          }
+          break;
+        }
+      }
+      
+      // 驗證提取的課程名稱是否合理
+      if (candidateName) {
+        // 排除明顯的非課程詞彙
+        const excludeWords = ['今天', '明天', '後天', '下週', '本週', '這週', '時間', '分鐘', '小時'];
+        if (excludeWords.includes(candidateName)) {
+          console.log(`📚 [智能課程提取] 排除無效課程名稱: "${candidateName}"`);
+          candidateName = null;
+        }
+      }
+      
+      if (candidateName) {
+        console.log(`✅ [智能課程提取] Fallback 成功提取課程名稱: "${candidateName}"`);
+      } else {
+        console.log(`❌ [智能課程提取] Fallback 未能提取課程名稱`);
+      }
+      
+      return candidateName;
+      
+    } catch (error) {
+      console.error(`❌ [智能課程提取] Fallback 發生錯誤:`, error.message);
+      return null;
+    }
     
     /*
     // === 原始正則邏輯（已禁用）===
