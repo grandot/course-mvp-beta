@@ -565,6 +565,132 @@ class DataService {
   // 不再需要獨立的 course_contents 集合
   // ===============================
 
+  // ===============================
+  // 媒體文件管理（Firebase Storage）
+  // ===============================
+
+  /**
+   * 上傳媒體文件（統一API）
+   * @param {Buffer} buffer - 文件數據
+   * @param {Object} metadata - 文件元數據
+   * @param {Object} metadata.userId - 用戶ID
+   * @param {Object} metadata.courseId - 課程ID（可選）
+   * @param {Object} metadata.type - 文件類型 ('course_photo', 'homework_photo', etc.)
+   * @returns {Promise<Object>} 上傳結果
+   */
+  static async uploadMedia(buffer, metadata) {
+    if (!buffer) {
+      throw new Error('DataService: buffer is required');
+    }
+    
+    if (!metadata || !metadata.userId) {
+      throw new Error('DataService: metadata.userId is required');
+    }
+
+    try {
+      // 生成文件路徑
+      const filePath = this._generateMediaFilePath(metadata);
+      
+      // 準備Firebase Storage元數據
+      const storageMetadata = {
+        userId: metadata.userId,
+        courseId: metadata.courseId || null,
+        type: metadata.type || 'course_photo',
+        originalName: metadata.originalName || 'photo.jpg',
+        contentType: metadata.contentType || 'image/jpeg'
+      };
+
+      // 調用FirebaseService上傳
+      const uploadResult = await FirebaseService.uploadFile(buffer, filePath, storageMetadata);
+
+      // 返回統一格式結果
+      return {
+        success: true,
+        mediaId: this.generateUUID(),
+        url: uploadResult.downloadURL,
+        filePath: uploadResult.filePath,
+        fileSize: uploadResult.fileSize,
+        uploadTime: new Date().toISOString(),
+        metadata: storageMetadata
+      };
+
+    } catch (error) {
+      console.error('❌ DataService.uploadMedia failed:', {
+        error: error.message,
+        metadata
+      });
+      
+      return {
+        success: false,
+        error: error.message,
+        details: `Media upload failed: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * 生成媒體文件存儲路徑
+   * @param {Object} metadata - 文件元數據
+   * @returns {string} 文件路徑
+   * @private
+   */
+  static _generateMediaFilePath(metadata) {
+    const { userId, courseId, type } = metadata;
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(7);
+    
+    // 路徑結構: media/{type}/{userId}/{timestamp}_{randomSuffix}.jpg
+    const fileName = `${timestamp}_${randomSuffix}.jpg`;
+    
+    if (courseId) {
+      return `media/${type}/${userId}/${courseId}/${fileName}`;
+    } else {
+      return `media/${type}/${userId}/${fileName}`;
+    }
+  }
+
+  /**
+   * 獲取媒體文件下載URL
+   * @param {string} filePath - 文件路徑
+   * @returns {Promise<string>} 下載URL
+   */
+  static async getMediaDownloadURL(filePath) {
+    if (!filePath) {
+      throw new Error('DataService: filePath is required');
+    }
+
+    try {
+      return await FirebaseService.getDownloadURL(filePath);
+    } catch (error) {
+      console.error('❌ DataService.getMediaDownloadURL failed:', {
+        filePath,
+        error: error.message
+      });
+      throw new Error(`Get media download URL failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * 刪除媒體文件
+   * @param {string} filePath - 文件路徑
+   * @returns {Promise<boolean>} 刪除結果
+   */
+  static async deleteMedia(filePath) {
+    if (!filePath) {
+      throw new Error('DataService: filePath is required');
+    }
+
+    try {
+      return await FirebaseService.deleteFile(filePath);
+    } catch (error) {
+      console.error('❌ DataService.deleteMedia failed:', {
+        filePath,
+        error: error.message
+      });
+      throw new Error(`Delete media failed: ${error.message}`);
+    }
+  }
+
 }
 
 module.exports = DataService;

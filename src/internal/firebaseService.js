@@ -9,6 +9,7 @@ const admin = require('firebase-admin');
 class FirebaseService {
   static isInitialized = false;
   static db = null;
+  static storage = null;
 
   /**
    * 初始化 Firebase Admin SDK
@@ -43,11 +44,13 @@ class FirebaseService {
       if (!admin.apps.length) {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
-          databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
+          databaseURL: `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`,
+          storageBucket: `${process.env.FIREBASE_PROJECT_ID}.appspot.com`
         });
       }
 
       this.db = admin.firestore();
+      this.storage = admin.storage();
       this.isInitialized = true;
 
       console.log('✅ Firebase initialized successfully');
@@ -199,17 +202,142 @@ class FirebaseService {
   }
 
   /**
-   * 健康檢查
+   * 健康檢查（包含 Storage）
    */
   static async healthCheck() {
+    const results = {
+      timestamp: new Date().toISOString(),
+      firestore: { status: 'unknown' },
+      storage: { status: 'unknown' }
+    };
+
+    // 檢查 Firestore
     try {
       const db = this.getDb();
-      // 嘗試讀取一個小的集合來測試連接
       await db.collection('_health').limit(1).get();
-      return { status: 'healthy', timestamp: new Date().toISOString() };
+      results.firestore = { status: 'healthy' };
     } catch (error) {
-      console.error('❌ Firebase health check failed:', error);
-      return { status: 'unhealthy', error: error.message, timestamp: new Date().toISOString() };
+      console.error('❌ Firestore health check failed:', error);
+      results.firestore = { status: 'unhealthy', error: error.message };
+    }
+
+    // 檢查 Storage
+    try {
+      const storage = this.getStorage();
+      const bucket = storage.bucket();
+      await bucket.exists();
+      results.storage = { status: 'healthy' };
+    } catch (error) {
+      console.error('❌ Storage health check failed:', error);
+      results.storage = { 
+        status: 'unhealthy', 
+        error: error.message,
+        suggestion: 'Please enable Firebase Storage and create default bucket'
+      };
+    }
+
+    const overallHealthy = results.firestore.status === 'healthy' && results.storage.status === 'healthy';
+    return {
+      status: overallHealthy ? 'healthy' : 'partial',
+      ...results
+    };
+  }
+
+  /**
+   * 獲取 Storage 實例
+   */
+  static getStorage() {
+    if (!this.isInitialized) {
+      this.initialize();
+    }
+    return this.storage;
+  }
+
+  /**
+   * 上傳文件到 Firebase Storage
+   * @param {Buffer} buffer - 文件數據
+   * @param {string} filePath - 存儲路徑
+   * @param {Object} metadata - 文件元數據
+   * @returns {Promise<Object>} 上傳結果
+   */
+  static async uploadFile(buffer, filePath, metadata = {}) {
+    try {
+      const storage = this.getStorage();
+      const bucket = storage.bucket();
+      const file = bucket.file(filePath);
+
+      // 設置元數據
+      const fileMetadata = {
+        metadata: {
+          ...metadata,
+          uploadTime: new Date().toISOString()
+        },
+        // 設置內容類型
+        contentType: metadata.contentType || 'image/jpeg'
+      };
+
+      // 上傳文件
+      await file.save(buffer, fileMetadata);
+
+      // 獲取下載URL
+      const [downloadURL] = await file.getSignedUrl({
+        action: 'read',
+        expires: '03-09-2491' // 長期有效URL
+      });
+
+      return {
+        success: true,
+        filePath,
+        downloadURL,
+        fileSize: buffer.length,
+        metadata: fileMetadata.metadata
+      };
+
+    } catch (error) {
+      console.error(`❌ File upload failed to ${filePath}:`, error);
+      throw new Error(`Storage upload failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * 獲取文件下載URL
+   * @param {string} filePath - 文件路徑
+   * @returns {Promise<string>} 下載URL
+   */
+  static async getDownloadURL(filePath) {
+    try {
+      const storage = this.getStorage();
+      const bucket = storage.bucket();
+      const file = bucket.file(filePath);
+
+      const [downloadURL] = await file.getSignedUrl({
+        action: 'read',
+        expires: '03-09-2491'
+      });
+
+      return downloadURL;
+    } catch (error) {
+      console.error(`❌ Get download URL failed for ${filePath}:`, error);
+      throw new Error(`Get download URL failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * 刪除文件
+   * @param {string} filePath - 文件路徑
+   * @returns {Promise<boolean>} 刪除結果
+   */
+  static async deleteFile(filePath) {
+    try {
+      const storage = this.getStorage();
+      const bucket = storage.bucket();
+      const file = bucket.file(filePath);
+
+      await file.delete();
+      return true;
+    } catch (error) {
+      console.error(`❌ File delete failed for ${filePath}:`, error);
+      throw new Error(`File delete failed: ${error.message}`);
     }
   }
 }

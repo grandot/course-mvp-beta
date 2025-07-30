@@ -1126,7 +1126,7 @@ class LineController {
 
 
   /**
-   * 上傳圖片到存儲服務
+   * 上傳圖片到存儲服務（Firebase Storage）
    * @param {Buffer} imageData - 圖片數據
    * @param {Object} metadata - 元數據
    * @returns {Promise<Object>} 上傳結果
@@ -1135,29 +1135,40 @@ class LineController {
     try {
       const DataService = require('../services/dataService');
       
-      // 生成唯一的文件名
-      const fileExtension = 'jpg'; // LINE 圖片通常是 JPEG 格式
-      const fileName = `course_photo_${metadata.userId}_${Date.now()}.${fileExtension}`;
-      
-      // 這裡應該上傳到 Firebase Storage 或其他雲存儲服務
-      // TODO: 實現實際的文件上傳邏輯
-      
-      // 暫時模擬上傳結果
-      const mockUploadResult = {
-        success: true,
-        mediaId: DataService.generateUUID(),
-        url: `https://storage.example.com/course-photos/${fileName}`,
-        fileName,
-        fileSize: imageData.length,
-        uploadTime: new Date().toISOString()
+      // 🎯 使用真實的Firebase Storage上傳
+      const uploadMetadata = {
+        userId: metadata.userId,
+        courseId: metadata.courseId || null,
+        type: 'course_photo',
+        originalName: `photo_${metadata.messageId}.jpg`,
+        contentType: 'image/jpeg'
       };
 
-      console.log(`📸 Image uploaded: ${fileName} (${imageData.length} bytes)`);
-      
-      return mockUploadResult;
+      const uploadResult = await DataService.uploadMedia(imageData, uploadMetadata);
+
+      if (uploadResult.success) {
+        console.log(`📸 Image uploaded to Firebase Storage: ${uploadResult.filePath} (${uploadResult.fileSize} bytes)`);
+        
+        // 返回與原始格式兼容的結果
+        return {
+          success: true,
+          mediaId: uploadResult.mediaId,
+          url: uploadResult.url,
+          filePath: uploadResult.filePath,
+          fileName: uploadResult.filePath.split('/').pop(),
+          fileSize: uploadResult.fileSize,
+          uploadTime: uploadResult.uploadTime
+        };
+      } else {
+        console.error('❌ Firebase Storage upload failed:', uploadResult.error);
+        return {
+          success: false,
+          error: uploadResult.error
+        };
+      }
 
     } catch (error) {
-      console.error('Error uploading image to storage:', error);
+      console.error('❌ Error uploading image to storage:', error);
       return {
         success: false,
         error: error.message

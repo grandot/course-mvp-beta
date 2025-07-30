@@ -2,6 +2,66 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v11.1.0] - 2025-07-30 🎯 第一性原則實現：真實圖片存儲
+
+### Added - Firebase Storage 圖片存儲功能
+- **🏗️ 完整Firebase Storage集成**: 基於第一性原則解決MVP核心需求
+  - **根本問題**: Mock存儲違背MVP承諾「圖片存進該堂課中，可下載」
+  - **MVP價值**: 家長可真實保存和下載課程照片，實現週報功能
+  - **技術實現**: 遵循服務層邊界的三層架構設計
+
+### Service Layer Architecture
+- **FirebaseService擴展**: 添加Storage操作能力
+  - `uploadFile(buffer, filePath, metadata)` - Firebase Storage上傳
+  - `getDownloadURL(filePath)` - 獲取公開訪問URL
+  - `deleteFile(filePath)` - 文件刪除管理
+  - Storage健康檢查和錯誤診斷
+
+- **DataService統一API**: 媒體管理統一入口
+  - `uploadMedia(buffer, metadata)` - 統一媒體上傳接口
+  - 智能文件路徑生成: `media/{type}/{userId}/{courseId}/{timestamp}.jpg`
+  - 完整元數據管理和錯誤處理
+
+- **LineController適配**: 移除Mock實現
+  - 真實Firebase Storage調用替代假URL生成
+  - 保持API兼容性，無破壞性變更
+  - 統一課程架構整合: 圖片URL存入`media_urls[]`
+
+### Data Flow (Final)
+```javascript
+LINE圖片 → LineController → DataService.uploadMedia() 
+         → FirebaseService.uploadFile() → Firebase Storage
+         → 真實下載URL → 統一課程架構 media_urls[]
+```
+
+### File Structure
+```
+media/
+├── course_photo/
+│   └── {userId}/
+│       └── {courseId}/
+│           └── {timestamp}_{random}.jpg
+└── homework_photo/
+    └── {userId}/
+        └── {timestamp}_{random}.jpg
+```
+
+### Technical Achievements
+- **🎯 第一性原則**: 圖片是MVP核心功能，不是可選裝飾
+- **💪 服務邊界**: 嚴格遵循架構約束，無跨層調用
+- **🔒 數據完整性**: 真實存儲確保下載和週報功能
+- **⚡ 統一架構**: 與課程記錄無縫整合
+- **📈 擴展性**: 支持多種媒體類型和用戶組織
+
+### Configuration Required
+- Firebase Storage需要在Console中啟用並創建默認bucket
+- Bucket名稱: `{FIREBASE_PROJECT_ID}.appspot.com`
+- 開發環境建議使用測試模式安全規則
+
+### Next Steps
+- 用戶需在Firebase Console創建Storage bucket以啟用功能
+- 完整功能驗證需要bucket配置完成
+
 ## [v11.0.0] - 2025-07-30 🎯 第一性原則重構：統一課程架構
 
 ### Breaking Changes - 資料庫架構重大重構
