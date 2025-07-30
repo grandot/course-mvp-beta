@@ -23,6 +23,7 @@ if (ruleResult.confidence > 0 && intent !== 'unknown') {
   return await OpenAI.analyzeIntent();  // 30-40% 案例，200-500ms，付費
 }
 ```
+!!目前版本暫時block了所有使用正則表達式進行語義過濾，直接使用openai，詳細block部分參考 `docs/Regexp-block-test.md`
 
 ## ⚡ 必要工作流程
 1. **Bug 報告**: 必須先執行 `./scripts/get-app-logs.sh 50`

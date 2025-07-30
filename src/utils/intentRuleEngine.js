@@ -77,6 +77,13 @@ class IntentRuleEngine {
    * @returns {Object} 匹配結果 {confidence, priority}
    */
   static matchRule(text, rule) {
+    // 🚨 暫時禁用所有正則過濾 - 強制 OpenAI 接管語義理解
+    // 原因：正則泛化能力差，頻繁出現邊界條件錯誤
+    console.log(`[IntentRuleEngine] 正則過濾已禁用，將交由 OpenAI 處理: "${text}"`);
+    return { confidence: 0, priority: rule.priority || 1 };
+    
+    /*
+    // === 原始正則邏輯（已禁用）===
     const {
       keywords = [], exclusions = [], patterns = [], priority = 1,
       required_keywords = [] // Phase 3: 支援必需關鍵詞
@@ -144,6 +151,7 @@ class IntentRuleEngine {
     }
 
     return { confidence, priority };
+    */
   }
 
   /**

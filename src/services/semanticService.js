@@ -567,6 +567,13 @@ class SemanticService {
   static extractChildName(text) {
     if (!text || typeof text !== 'string') return null;
     
+    // 🚨 暫時禁用學童名稱正則提取 - 強制 OpenAI 接管
+    // 原因：正則邊界條件處理困難，如"小美"需要特定詞彙邊界才能識別
+    console.log(`[SemanticService] 學童名稱正則提取已禁用，將交由 OpenAI 處理: "${text}"`);
+    return null;
+    
+    /*
+    // === 原始正則邏輯（已禁用）===
     // 🎯 第一性原則：學童名稱是獨立實體，應可在任何位置被識別
     // 使用多層次匹配策略，而非僵化的詞彙列表
     
@@ -640,6 +647,7 @@ class SemanticService {
     // 如果所有策略都失敗，返回 null
     console.log(`👶 [SemanticService] 未識別到有效的子女名稱: "${text}"`);
     return null;
+    */
   }
 
   /**
@@ -944,6 +952,13 @@ class SemanticService {
    * @returns {Promise<string|null>} 提取的課程名稱
    */
   static async intelligentCourseExtraction(text, intent, userId) {
+    // 🚨 暫時禁用課程名稱正則提取 - 強制 OpenAI 接管
+    // 原因：硬編碼模式無法處理多樣化表達，如意圖相關的複雜模式匹配
+    console.log(`[SemanticService] 課程名稱正則提取已禁用，將交由 OpenAI 處理: "${text}" (intent: ${intent})`);
+    return null;
+    
+    /*
+    // === 原始正則邏輯（已禁用）===
     try {
       // 1. 根據意圖分析語義模式
       let candidateNames = [];
@@ -1040,6 +1055,7 @@ class SemanticService {
       console.warn('Intelligent course extraction failed:', error.message);
       return null;
     }
+    */
   }
 
   /**
