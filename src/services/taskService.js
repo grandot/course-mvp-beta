@@ -592,23 +592,67 @@ class TaskService {
     
     try {
       let contents = [];
+      let targetDate = null;
       
-      if (entities.course_name) {
-        // 先查找課程
-        const courses = await DataService.getUserCourses(userId, {
-          course_name: entities.course_name
+      // 🎯 解析時間信息（如：昨天、前天、上週）
+      if (entities.timeInfo) {
+        targetDate = entities.timeInfo.date;
+      }
+      
+      // 查詢課程
+      const queryParams = {
+        course_name: entities.course_name || entities.content_entities?.course_name
+      };
+      
+      // 如果有特定日期，添加日期篩選
+      if (targetDate) {
+        queryParams.course_date = targetDate;
+      }
+      
+      const courses = await DataService.getUserCourses(userId, queryParams);
+      
+      if (courses.length === 0) {
+        // 沒有找到課程，嘗試查詢近期課程
+        const recentCourses = await DataService.getUserCourses(userId, {
+          course_name: queryParams.course_name
         });
         
-        if (courses.length > 0) {
-          // 獲取特定課程的內容
-          for (const course of courses) {
-            const courseContents = await DataService.getCourseContentsByCourse(course.id);
-            contents = contents.concat(courseContents);
+        // 從最近的課程中查找
+        for (const course of recentCourses.slice(0, 5)) {
+          if (course.notes && Array.isArray(course.notes)) {
+            // 從 notes 中提取內容記錄
+            for (const note of course.notes) {
+              if (targetDate && note.date !== targetDate) continue;
+              
+              contents.push({
+                course_id: course.id,
+                course_name: course.course_name,
+                content_date: note.date || course.course_date,
+                content: note.content || note,
+                raw_text: note.raw_text,
+                created_at: note.created_at,
+                student_name: entities.student_name || course.student_name
+              });
+            }
           }
         }
       } else {
-        // 查詢所有學生的課程內容
-        contents = await DataService.getCourseContentsByStudent(userId);
+        // 從找到的課程中提取內容
+        for (const course of courses) {
+          if (course.notes && Array.isArray(course.notes)) {
+            for (const note of course.notes) {
+              contents.push({
+                course_id: course.id,
+                course_name: course.course_name,
+                content_date: note.date || course.course_date,
+                content: note.content || note,
+                raw_text: note.raw_text,
+                created_at: note.created_at,
+                student_name: entities.student_name || course.student_name
+              });
+            }
+          }
+        }
       }
 
       if (contents.length === 0) {
@@ -638,12 +682,50 @@ class TaskService {
         }
       });
 
+      // 🎯 生成友好的查詢結果消息
+      let message = '';
+      
+      if (contents.length === 1) {
+        // 單一記錄，顯示詳細內容
+        const content = contents[0];
+        const dateStr = content.content_date || '未知日期';
+        
+        message = `📚 ${content.course_name} (${dateStr})\n`;
+        
+        if (content.raw_text) {
+          message += `\n💬 課程記錄：${content.raw_text}`;
+        } else if (content.content) {
+          message += `\n📝 內容：${JSON.stringify(content.content)}`;
+        }
+        
+        if (content.student_name) {
+          message += `\n👶 學生：${content.student_name}`;
+        }
+      } else {
+        // 多條記錄，顯示摘要
+        message = entities.course_name ? 
+          `找到「${entities.course_name}」的 ${contents.length} 項記錄：\n` : 
+          `找到 ${contents.length} 項課程內容記錄：\n`;
+          
+        // 顯示最近3條記錄
+        contents.slice(0, 3).forEach((content, index) => {
+          const dateStr = content.content_date || '未知日期';
+          message += `\n${index + 1}. ${content.course_name} (${dateStr})`;
+          if (content.raw_text) {
+            const preview = content.raw_text.substring(0, 50);
+            message += `\n   ${preview}${content.raw_text.length > 50 ? '...' : ''}`;
+          }
+        });
+        
+        if (contents.length > 3) {
+          message += `\n\n...還有 ${contents.length - 3} 項記錄`;
+        }
+      }
+      
       return {
         success: true,
         action: 'query_course_content',
-        message: entities.course_name ? 
-          `找到「${entities.course_name}」的 ${contents.length} 項記錄` : 
-          `找到 ${contents.length} 項課程內容記錄`,
+        message: message,
         contents: contents.slice(0, 10), // 限制返回數量
         total_count: contents.length,
         summary: {
