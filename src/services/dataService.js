@@ -565,6 +565,104 @@ class DataService {
   // 不再需要獨立的 course_contents 集合
   // ===============================
 
+  /**
+   * 創建課程內容記錄（通過更新課程的notes字段）
+   * @param {Object} contentData - 課程內容數據
+   * @param {string} contentData.course_id - 課程ID
+   * @param {string} contentData.student_id - 學生ID
+   * @param {string} contentData.content_date - 內容日期
+   * @param {Object} contentData.lesson_content - 課程內容
+   * @param {Object} contentData.raw_input - 原始輸入
+   * @param {string} contentData.created_by - 創建者
+   * @param {string} contentData.source - 來源
+   * @returns {Promise<Object>} 創建結果
+   */
+  static async createCourseContent(contentData) {
+    if (!contentData || !contentData.course_id) {
+      throw new Error('DataService: contentData and course_id are required');
+    }
+
+    try {
+      const { course_id, lesson_content, raw_input, content_date, created_by, source } = contentData;
+      
+      // 🎯 第一性原則：將課程內容以結構化方式添加到課程的notes字段
+      const contentRecord = {
+        date: content_date,
+        content: lesson_content,
+        raw_text: raw_input?.text,
+        created_at: TimeService.getCurrentUserTime().toISOString(),
+        created_by: created_by || 'parent',
+        source: source || 'line_bot'
+      };
+
+      // 獲取現有課程信息
+      const existingCourse = await FirebaseService.getDocument(this.COLLECTIONS.COURSES, course_id);
+      
+      if (!existingCourse) {
+        return {
+          success: false,
+          error: 'Course not found',
+          message: '找不到指定的課程'
+        };
+      }
+
+      // 更新課程的notes字段，將新內容追加到現有內容中
+      let updatedNotes = existingCourse.notes || [];
+      
+      // 如果notes是字符串，轉換為數組格式
+      if (typeof updatedNotes === 'string') {
+        updatedNotes = [{ 
+          date: existingCourse.updated_at, 
+          content: updatedNotes, 
+          legacy: true 
+        }];
+      }
+      
+      // 確保notes是數組
+      if (!Array.isArray(updatedNotes)) {
+        updatedNotes = [];
+      }
+
+      // 添加新的內容記錄
+      updatedNotes.push(contentRecord);
+
+      // 更新課程
+      const updateResult = await this.updateCourse(course_id, {
+        notes: updatedNotes,
+        updated_at: TimeService.getCurrentUserTime().toISOString()
+      });
+
+      if (updateResult.success) {
+        console.log(`✅ [DataService] Course content added to course ${course_id}`);
+        return {
+          success: true,
+          contentId: `${course_id}_content_${Date.now()}`, // 生成內容ID
+          course_id: course_id,
+          message: '課程內容記錄成功'
+        };
+      } else {
+        return {
+          success: false,
+          error: updateResult.error,
+          message: '更新課程內容失敗'
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ DataService.createCourseContent failed:', {
+        contentData,
+        error: error.message,
+        stack: error.stack
+      });
+      
+      return {
+        success: false,
+        error: error.message,
+        message: '創建課程內容時發生錯誤'
+      };
+    }
+  }
+
   // ===============================
   // 媒體文件管理（Firebase Storage）
   // ===============================

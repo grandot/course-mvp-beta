@@ -293,7 +293,16 @@ class SemanticService {
       } else {
         // Step 2: 💡 利用意圖上下文進行語義理解的實體提取（非糾錯意圖）
         this.debugLog(`🔧 [DEBUG] SemanticService - 開始實體提取`);
-        entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
+        
+        // 🎯 性能優化：規則引擎高信心度時優先使用規則提取，避免OpenAI調用
+        if (ruleResult.confidence >= 0.8) {
+          this.debugLog(`🚀 [DEBUG] SemanticService - 規則引擎高信心度 (${ruleResult.confidence})，使用純規則提取`);
+          entities = await this.extractEntitiesWithRegex(text, userId, ruleResult.intent);
+        } else {
+          this.debugLog(`🔧 [DEBUG] SemanticService - 規則引擎信心度一般 (${ruleResult.confidence})，使用OpenAI增強實體提取`);
+          entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
+        }
+        
         processedTimeInfo = await this.processTimeInfo(text);
       }
       
