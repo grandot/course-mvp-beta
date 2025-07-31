@@ -82,11 +82,23 @@ class IntentRuleEngine {
     // 🎯 混合策略：OpenAI 優先 + 基礎關鍵詞 Fallback
     // 大部分情況交由 OpenAI，但保留核心意圖的基礎識別能力
     
-    const { keywords = [], exclusions = [], priority = 1, intent_name } = rule;
+    const { keywords = [], exclusions = [], priority = 1, intent_name, required_keywords = [] } = rule;
+    
+    // 🎯 檢查必需關鍵詞（Phase 3: 重複課程強制要求）
+    if (required_keywords.length > 0) {
+      const hasAnyRequiredKeyword = required_keywords.some(requiredKeyword => 
+        text.includes(requiredKeyword)
+      );
+      
+      if (!hasAnyRequiredKeyword) {
+        console.log(`[IntentRuleEngine] 缺少必需關鍵詞，跳過 ${intent_name}: "${text}"`);
+        return { confidence: 0, priority };
+      }
+    }
     
     // 檢查排除詞（如果有排除詞且匹配，直接排除）
     if (exclusions.length > 0 && exclusions.some(exclusion => text.includes(exclusion))) {
-      console.log(`[IntentRuleEngine] 排除詞匹配，跳過: "${text}"`);
+      console.log(`[IntentRuleEngine] 排除詞匹配，跳過 ${intent_name}: "${text}"`);
       return { confidence: 0, priority };
     }
     
@@ -124,6 +136,13 @@ class IntentRuleEngine {
           (text.includes('課表') || text.includes('課程') || scheduleWords.some(word => text.includes(word)))) {
         fallbackConfidence = 0.3;
         console.log(`[IntentRuleEngine] 基礎 Fallback - 清空課表: "${text}"`);
+      }
+    } else if (intent_name === 'create_recurring_course') {
+      // 🎯 重複課程：必須包含重複關鍵詞
+      const recurringWords = ['每週', '每周', '每天', '每日', '每月', '重複', '定期'];
+      if (recurringWords.some(word => text.includes(word))) {
+        fallbackConfidence = 0.4; // 稍高置信度，優先識別重複課程
+        console.log(`[IntentRuleEngine] 基礎 Fallback - 重複課程: "${text}"`);
       }
     }
     

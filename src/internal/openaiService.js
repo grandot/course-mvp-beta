@@ -214,19 +214,32 @@ class OpenAIService {
 
 請以 JSON 格式回應，包含：
 {
-  "intent": "意圖類型 (record_course, cancel_course, query_schedule, modify_course, set_reminder, clear_schedule)",
+  "intent": "意圖類型 (record_course, cancel_course, query_schedule, modify_course, set_reminder, clear_schedule, create_recurring_course, modify_recurring_course, stop_recurring_course)",
   "confidence": "信心度 (0.0-1.0)",
   "entities": {
     "course_name": "課程名稱",
-    "time": "時間信息",
+    "time": "時間信息", 
     "date": "日期信息",
     "location": "地點",
-    "teacher": "老師"
+    "teacher": "老師",
+    "recurrence_pattern": "重複模式 (如: 每週一, 每天, 每月)"
   },
   "reasoning": "分析理由"
 }
 
-注意：clear_schedule 是清空所有課程的意圖，需要包含"清空"、"刪除所有"等關鍵詞。
+🎯 意圖識別指南：
+- **create_recurring_course**: 包含重複關鍵詞的新課程 (每週、每天、每月、週一到週日)
+- **record_course**: 一次性課程 (明天、後天、特定日期)  
+- **cancel_course**: 取消課程 (取消、刪除、移除)
+- **query_schedule**: 查詢課表 (查詢、看、顯示、課表)
+- **modify_course**: 修改課程 (修改、更改、調整)
+- **stop_recurring_course**: 停止重複課程 (停止+重複關鍵詞)
+- **clear_schedule**: 清空所有課程 (清空、刪除所有)
+
+🎯 重複課程範例：
+- "LUMI每週三下午三點有科學實驗課" → create_recurring_course
+- "數學課每週一下午2點" → create_recurring_course  
+- "每天早上8點晨練" → create_recurring_course
 
 只回應 JSON，不要其他文字。
 `;
@@ -239,7 +252,7 @@ class OpenAIService {
     });
 
     try {
-      // 🔧 修復：處理 markdown 格式的 JSON 回應
+      // 🎯 第一性原則修復：強化JSON解析容錯性
       let jsonContent = result.content.trim();
       
       // 移除 markdown 代碼塊標記
@@ -249,15 +262,66 @@ class OpenAIService {
         jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
       
-      // 嘗試解析清理後的 JSON
-      const analysis = JSON.parse(jsonContent);
-
-      return {
-        success: true,
-        analysis,
-        usage: result.usage,
-        model: result.model,
-      };
+      // 🎯 增強容錯處理：修復常見JSON格式錯誤
+      try {
+        // 嘗試標準解析
+        const analysis = JSON.parse(jsonContent);
+        
+        // 驗證必要字段
+        if (!analysis.intent || !analysis.confidence) {
+          throw new Error('Missing required fields: intent or confidence');
+        }
+        
+        return {
+          success: true,
+          analysis,
+          usage: result.usage,
+          model: result.model,
+        };
+        
+      } catch (strictParseError) {
+        console.warn('[OpenAIService] 標準JSON解析失敗，嘗試容錯修復:', strictParseError.message);
+        
+        // 🎯 容錯修復策略（第一性原則：最大化容錯能力）
+        let fixedContent = jsonContent;
+        
+        // 修復1: 移除控制字符（根本問題修復）
+        fixedContent = fixedContent.replace(/[\x00-\x1F\x7F]/g, '');
+        
+        // 修復2: 處理未閉合的字符串
+        fixedContent = fixedContent.replace(/("[^"]*?)(\n|$)/g, '$1"$2');
+        
+        // 修復3: 處理末尾缺少的括號
+        if (!fixedContent.trim().endsWith('}')) {
+          fixedContent = fixedContent.trim() + '}';
+        }
+        
+        // 修復4: 處理多餘的逗號
+        fixedContent = fixedContent.replace(/,(\s*[}\]])/g, '$1');
+        
+        // 修復5: 處理特殊字符轉義
+        fixedContent = fixedContent.replace(/\\n/g, '\\\\n');
+        
+        // 修復6: 處理其他常見問題
+        fixedContent = fixedContent.replace(/\n/g, ' ').replace(/\t/g, ' ');
+        
+        try {
+          const analysis = JSON.parse(fixedContent);
+          
+          console.log('[OpenAIService] JSON容錯修復成功');
+          return {
+            success: true,
+            analysis,
+            usage: result.usage,
+            model: `${result.model}-fixed`,
+            repaired: true
+          };
+          
+        } catch (fixedParseError) {
+          console.warn('[OpenAIService] JSON容錯修復也失敗:', fixedParseError.message);
+          throw strictParseError; // 拋出原始錯誤
+        }
+      }
     } catch (parseError) {
       // 🎯 JSON 解析失敗時，嘗試基礎關鍵詞 fallback
       console.warn('[OpenAIService] JSON 解析失敗，啟用關鍵詞 fallback:', parseError.message);
@@ -284,11 +348,26 @@ class OpenAIService {
   static fallbackIntentAnalysis(text) {
     const lowerText = text.toLowerCase();
     
-    // 🎯 核心意圖關鍵詞映射
+    // 🎯 核心意圖關鍵詞映射（第一性原則修復：完整覆蓋所有意圖）
     const intentPatterns = {
       clear_schedule: {
         keywords: ['清空', '全部刪除', '刪除所有', '清除所有', '重置'],
         requiredContext: ['課表', '課程', '所有'],
+        confidence: 0.7
+      },
+      create_recurring_course: {
+        keywords: ['每週', '每周', '每天', '每日', '每月', '重複', '定期', '固定'],
+        weekdays: ['週一', '週二', '週三', '週四', '週五', '週六', '週日', '周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+        confidence: 0.8  // 🎯 高置信度，重複課程是明確意圖
+      },
+      stop_recurring_course: {
+        keywords: ['停止', '結束', '暫停', '中止', '終止', '取消', '不要'],
+        requiredContext: ['每週', '每周', '每天', '每月', '重複', '定期'],
+        confidence: 0.7
+      },
+      modify_recurring_course: {
+        keywords: ['修改', '更改', '調整', '改變', '編輯', '更新'],
+        requiredContext: ['每週', '每周', '每天', '每月', '重複', '定期'],
         confidence: 0.7
       },
       cancel_course: {
@@ -330,17 +409,37 @@ class OpenAIService {
       
       // 檢查主要關鍵詞
       if (pattern.keywords.some(keyword => text.includes(keyword))) {
-        // 特殊處理 clear_schedule - 需要額外上下文
+        // 🎯 特殊處理 clear_schedule - 需要額外上下文
         if (intent === 'clear_schedule') {
           matched = pattern.requiredContext.some(context => text.includes(context));
-        } else if (intent === 'record_course') {
-          // record_course 需要時間詞彙
-          matched = pattern.timeWords && pattern.timeWords.some(word => text.includes(word));
-          if (!matched) {
-            // 或者有明確的課程名稱
-            matched = text.includes('課') || text.includes('班');
+        } 
+        // 🎯 特殊處理 create_recurring_course - 重複關鍵詞優先
+        else if (intent === 'create_recurring_course') {
+          matched = true; // 已經匹配到重複關鍵詞，直接確認
+          // 可選：檢查星期詞彙增加置信度
+          if (pattern.weekdays && pattern.weekdays.some(day => text.includes(day))) {
+            maxConfidence = Math.max(maxConfidence, 0.9); // 更高置信度
           }
-        } else {
+        }
+        // 🎯 特殊處理需要重複上下文的意圖
+        else if (intent === 'stop_recurring_course' || intent === 'modify_recurring_course') {
+          matched = pattern.requiredContext.some(context => text.includes(context));
+        }
+        // 🎯 特殊處理 record_course - 需要時間詞彙且不能有重複關鍵詞
+        else if (intent === 'record_course') {
+          // 先檢查是否有重複關鍵詞，如果有則不匹配單次課程
+          const hasRecurringKeywords = ['每週', '每周', '每天', '每月', '重複', '定期'].some(keyword => text.includes(keyword));
+          if (hasRecurringKeywords) {
+            matched = false; // 有重複關鍵詞，不應該匹配單次課程
+          } else {
+            matched = pattern.timeWords && pattern.timeWords.some(word => text.includes(word));
+            if (!matched) {
+              // 或者有明確的課程名稱
+              matched = text.includes('課') || text.includes('班');
+            }
+          }
+        } 
+        else {
           matched = true;
         }
       }
@@ -351,11 +450,35 @@ class OpenAIService {
       }
     }
 
-    // 基礎實體提取
-    // 課程名稱
-    const courseMatch = text.match(/([一-龯A-Za-z]+)(?:課|班)/);
-    if (courseMatch) {
-      entities.course_name = courseMatch[1];
+    // 🎯 基礎實體提取（第一性原則修復：精確而非貪婪）
+    
+    // 課程名稱提取 - 使用更精確的模式
+    let courseName = null;
+    
+    // 模式1: 直接在"有"字前面的課程名稱（如：有科學實驗課）
+    const hasPattern = text.match(/有([一-龯A-Za-z\d]{2,8}[課班])/);
+    if (hasPattern) {
+      courseName = hasPattern[1];
+    }
+    // 模式2: 課程名稱後直接跟"課"或"班"（避免貪婪匹配）
+    else {
+      const coursePatterns = [
+        /([一-龯]{2,6})課/, // 中文課程名稱
+        /([A-Za-z]{2,10})課/, // 英文課程名稱
+        /([一-龯A-Za-z]{2,8})班/ // 班級名稱
+      ];
+      
+      for (const pattern of coursePatterns) {
+        const match = text.match(pattern);
+        if (match && !['每週', '每周', '下午', '上午', '早上'].includes(match[1])) {
+          courseName = match[1];
+          break;
+        }
+      }
+    }
+    
+    if (courseName) {
+      entities.course_name = courseName;
     }
 
     // 時間提取
@@ -368,6 +491,29 @@ class OpenAIService {
     const dateMatch = text.match(/(今天|明天|後天|週[一二三四五六日]|星期[一二三四五六日])/);
     if (dateMatch) {
       entities.date = dateMatch[0];
+    }
+    
+    // 🎯 重複模式提取（重複課程的關鍵信息）
+    if (detectedIntent === 'create_recurring_course' || detectedIntent === 'modify_recurring_course' || detectedIntent === 'stop_recurring_course') {
+      const recurringPatterns = [
+        /(每週[一二三四五六日])/,
+        /(每周[一二三四五六日])/,
+        /(週[一二三四五六日])/,
+        /(周[一二三四五六日])/,
+        /(每天)/,
+        /(每日)/,
+        /(每月)/,
+        /(每週)/,
+        /(每周)/
+      ];
+      
+      for (const pattern of recurringPatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          entities.recurrence_pattern = match[1];
+          break;
+        }
+      }
     }
 
     return {

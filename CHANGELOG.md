@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v11.2.0] - 2025-07-31 🎯 第一性原則架構修復：統一OpenAI優先策略
+
+### Fixed - 重大架構問題修復
+- **🚨 混合架構根本問題解決**: 基於第一性原則重新設計語義理解架構
+  - **根本問題識別**: 意圖識別使用"規則優先→OpenAI後備"，實體提取使用"OpenAI優先→正則後備"，違反剃刀法則
+  - **設計矛盾**: 規則引擎高confidence直接返回，阻斷OpenAI分析機會，導致重複課程無法正確識別
+  - **第一性原則分析**: 統一語義理解路徑比混合決策更簡潔、可靠、準確
+
+### Changed - 統一OpenAI優先架構
+- **SemanticService 架構重構**: 完全統一為OpenAI優先策略
+  ```javascript
+  // 修復前：混合邏輯
+  if (ruleResult.confidence > 0) return 規則結果; // 阻斷OpenAI
+  // 修復後：統一優先
+  const openaiResult = await OpenAI.analyzeIntent();
+  if (openaiResult.success) return OpenAI結果;
+  else return 規則引擎容錯兜底;
+  ```
+- **意圖識別與實體提取**: 統一使用相同的優先策略，符合第一性原則
+
+### Enhanced - OpenAI能力完善
+- **OpenAI Prompt 修復**: 添加完整重複課程意圖支持
+  - 新增意圖: `create_recurring_course`, `modify_recurring_course`, `stop_recurring_course`
+  - 明確識別指南: 重複關鍵詞(每週、每天、每月)的優先級處理
+  - 具體範例: "LUMI每週三下午三點有科學實驗課" → create_recurring_course
+- **JSON解析容錯增強**: 
+  - 控制字符處理: 移除`[\x00-\x1F\x7F]`避免解析失敗
+  - 多層修復策略: 未閉合字符串、缺失括號、多餘逗號
+  - 智能降級: JSON失敗時啟用增強的關鍵詞fallback
+
+### Technical - Fallback機制完善
+- **fallbackIntentAnalysis 重構**: 添加完整重複課程處理邏輯
+  - 重複課程優先級: confidence=0.8，高於一般課程
+  - 智能排除邏輯: record_course檢查重複關鍵詞，避免誤判
+  - 精確實體提取: 修復貪婪匹配，"LUMI每週三...科學實驗課" → "科學實驗課"
+- **IntentRuleEngine 優化**: 啟用required_keywords檢查，確保重複課程強制匹配
+
+### Results - 修復效果驗證
+- **測試案例**: "LUMI每週三下午三點有科學實驗課"
+  - 修復前: `intent: record_course` ❌ (規則引擎阻斷OpenAI)
+  - 修復後: `intent: create_recurring_course` ✅ (OpenAI優先正確分析)
+- **實體提取精確性**:
+  - 課程名稱: "科學實驗課" ✅ (修復貪婪匹配)
+  - 學生姓名: "LUMI" ✅
+  - 重複模式: "每週三" ✅
+  - 時間解析: "08/06 3:00 PM" ✅
+
+### Architecture Philosophy
+- **🎯 第一性原則勝利**: 統一語義理解路徑，OpenAI負責準確理解，規則引擎負責容錯保底
+- **⚡ 剃刀法則應用**: 消除不必要的混合架構複雜性，單一決策路徑更簡潔可靠
+- **🔧 永不失效原則**: 多層容錯機制確保任何情況下都有基礎功能保障
+- **📈 可擴展設計**: 統一架構更容易維護和擴展新功能
+
 ## [v11.1.0] - 2025-07-30 🎯 第一性原則實現：真實圖片存儲
 
 ### Added - Firebase Storage 圖片存儲功能

@@ -300,38 +300,11 @@ class SemanticService {
       this.debugLog(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities);
       this.debugLog(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo);
 
-      // Step 3: 二進制判斷 - 規則匹配就用規則，不匹配就用 AI
-      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
-        // 高信心度：使用規則引擎結果
-        this.debugLog(`🔧 [DEBUG] SemanticService - 使用規則引擎結果 (高信心度: ${ruleResult.confidence})`);
-        const result = {
-          success: true,
-          method: 'rule_engine',
-          intent: finalIntent,
-          confidence: ruleResult.confidence,
-          entities: {
-            course_name: entities.course_name,
-            location: entities.location,
-            teacher: entities.teacher,
-            student: entities.student, // 🚨 新增學生信息
-            confirmation: entities.confirmation,
-            recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
-            student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
-            timeInfo: processedTimeInfo,
-          },
-          context,
-          analysis_time: Date.now(),
-        };
-        
-        // 🔧 更新會話上下文（除了糾錯意圖，因為已經在上面處理過了）
-        if (ruleResult.intent !== 'correction_intent') {
-          this.updateConversationContext(userId, finalIntent, entities, result);
-        }
-        
-        return result;
-      }
-      // 低信心度：調用 OpenAI 作為後備
-      this.debugLog(`🔧 [DEBUG] SemanticService - 調用 OpenAI 作為後備 (低信心度: ${ruleResult.confidence})`);
+      // Step 3: 🎯 第一性原則修復 - OpenAI 優先，規則引擎容錯兜底
+      // 剃刀法則：統一語義理解路徑，避免混合架構的複雜性
+      
+      // 3.1: 優先使用 OpenAI 進行完整語義分析
+      this.debugLog(`🎯 [DEBUG] SemanticService - OpenAI 優先分析 (統一架構): "${text}"`);
       const openaiResult = await OpenAIService.analyzeIntent(text, userId);
       this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult);
 
@@ -351,8 +324,9 @@ class SemanticService {
         });
       }
 
+      // 3.3: ✅ OpenAI 成功 - 返回高質量語義分析結果
       if (openaiResult.success) {
-        // OpenAI 成功返回結構化結果
+        this.debugLog(`✅ [DEBUG] SemanticService - OpenAI 分析成功，返回高質量結果`);
         const { analysis } = openaiResult;
         const result = {
           success: true,
@@ -363,10 +337,10 @@ class SemanticService {
             course_name: analysis.entities.course_name,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
-            student: analysis.entities.student || entities.student, // 🚨 優先使用 OpenAI 提取的學生信息
+            student: analysis.entities.student || entities.student,
             confirmation: entities.confirmation,
-            student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
-            // ✅ 使用統一處理的時間信息
+            recurrence_pattern: analysis.entities.recurrence_pattern, // 🎯 使用 OpenAI 提取的重複模式
+            student_name: analysis.entities.student_name || entities.student_name,
             timeInfo: processedTimeInfo,
           },
           context,
@@ -375,40 +349,56 @@ class SemanticService {
           analysis_time: Date.now(),
         };
         
-        // 🔧 更新會話上下文
         this.updateConversationContext(userId, analysis.intent, result.entities, result);
-        
         return result;
       }
-      // OpenAI 無法解析，回退到規則引擎結果
-      const fallbackResult = {
-        success: true,
-        method: 'rule_engine_fallback',
-        intent: finalIntent,
-        confidence: ruleResult.confidence,
-        entities: {
-          course_name: entities.course_name,
-          location: entities.location,
-          teacher: entities.teacher,
-          student: entities.student, // 🚨 新增學生信息
-          confirmation: entities.confirmation,
-          recurrence_pattern: entities.recurrence_pattern, // 🔧 Phase 3: 新增重複模式
-          student_name: entities.student_name, // 🎯 Multi-student: 新增學生信息
-          // ✅ 使用統一處理的時間信息
-          timeInfo: processedTimeInfo,
-        },
-        context,
-        openai_error: openaiResult.error,
-        usage: openaiResult.usage,
-        analysis_time: Date.now(),
-      };
       
-      // 🔧 更新會話上下文（除了糾錯意圖）
-      if (ruleResult.intent !== 'correction_intent') {
-        this.updateConversationContext(userId, finalIntent, entities, fallbackResult);
+      // 3.4: ⚠️ OpenAI 失敗 - 檢查規則引擎是否可作為容錯兜底
+      this.debugLog(`⚠️ [DEBUG] SemanticService - OpenAI 失敗: ${openaiResult.error || 'Unknown error'}`);
+      
+      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
+        this.debugLog(`🔧 [DEBUG] SemanticService - 使用規則引擎容錯兜底 (置信度: ${ruleResult.confidence})`);
+        const fallbackResult = {
+          success: true,
+          method: 'rule_engine_fallback',
+          intent: finalIntent,
+          confidence: ruleResult.confidence,
+          entities: {
+            course_name: entities.course_name,
+            location: entities.location,
+            teacher: entities.teacher,
+            student: entities.student,
+            confirmation: entities.confirmation,
+            recurrence_pattern: entities.recurrence_pattern,
+            student_name: entities.student_name,
+            timeInfo: processedTimeInfo,
+          },
+          context,
+          openai_error: openaiResult.error,
+          usage: openaiResult.usage,
+          analysis_time: Date.now(),
+        };
+        
+        if (ruleResult.intent !== 'correction_intent') {
+          this.updateConversationContext(userId, finalIntent, entities, fallbackResult);
+        }
+        return fallbackResult;
       }
       
-      return fallbackResult;
+      // 3.5: ❌ 所有方法都失敗 - 返回失敗結果
+      this.debugLog(`❌ [DEBUG] SemanticService - OpenAI 和規則引擎都無法處理`);
+      return {
+        success: false,
+        method: 'all_failed',
+        intent: 'unknown',
+        confidence: 0,
+        entities: null,
+        context,
+        openai_error: openaiResult.error,
+        rule_confidence: ruleResult.confidence,
+        analysis_time: Date.now(),
+        message: '無法理解您的輸入，請提供更清楚的描述'
+      };
     } catch (error) {
       // 所有方法失敗，返回錯誤信息
       return {
