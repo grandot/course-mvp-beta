@@ -82,7 +82,7 @@ class IntentRuleEngine {
     // 🎯 混合策略：OpenAI 優先 + 基礎關鍵詞 Fallback
     // 大部分情況交由 OpenAI，但保留核心意圖的基礎識別能力
     
-    const { keywords = [], exclusions = [], priority = 1, intent_name, required_keywords = [] } = rule;
+    const { keywords = [], exclusions = [], priority = 1, intent_name, required_keywords = [], patterns = [] } = rule;
     
     // 🎯 檢查必需關鍵詞（Phase 3: 重複課程強制要求）
     if (required_keywords.length > 0) {
