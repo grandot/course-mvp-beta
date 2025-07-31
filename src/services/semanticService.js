@@ -329,6 +329,7 @@ class SemanticService {
             recurrence_pattern: entities.recurrence_pattern,  
             student_name: entities.student_name,
             timeInfo: processedTimeInfo,
+            originalUserInput: text, // 🎯 添加原始用戶輸入，用於"上次"等模糊時間概念處理
           },
           context,
           analysis_time: Date.now(),
@@ -748,6 +749,8 @@ class SemanticService {
   static extractStudentName(text) {
     if (!text || typeof text !== 'string') return null;
     
+    console.log(`🔧 [DEBUG] extractStudentName 被調用，輸入: "${text}"`);
+    
     // 🎯 第一性原則修復：恢復學生名稱正則提取 - Regex優先架構
     console.log(`[SemanticService] 使用正則提取學生名稱: "${text}"`);
     
@@ -799,7 +802,7 @@ class SemanticService {
           /(?:查詢|看看|檢查)([A-Za-z]{2,10})([^A-Za-z]|$)/, // 查詢LUMI
           /([小大][一-龯]{1,2})(?:的|有什麼|怎麼|狀況)/,      // 小美的xxx, 小美有什麼
           /([一-龯]{2,3})(?:的|有什麼|怎麼|狀況)/,             // 明明的xxx, 明明有什麼
-          /([A-Za-z]{2,10})(?:的|有什麼|怎麼|狀況|課表)/       // LUMI的xxx, LUMI課表
+          /([A-Za-z]{2,10})(?:的|有什麼|怎麼|狀況|課表|表現如何|表現怎麼樣)/       // LUMI的xxx, LUMI課表, LUMI表現如何
         ]
       }
     ];
@@ -833,8 +836,19 @@ class SemanticService {
    * 🚨 新增：使用正則表達式進行實體提取（fallback方法）
    */
   static async extractEntitiesWithRegex(text, userId, intentHint) {
-    // 傳統的正則提取邏輯
-    let courseName = this.extractCourseNameByRegex(text);
+    // 🎯 首先提取學生名稱
+    const studentInfo = this.extractStudentName(text);
+    let processedText = text;
+    let studentName = null;
+    
+    if (studentInfo) {
+      studentName = studentInfo.name;
+      processedText = studentInfo.remainingText;
+      console.log(`👶 [SemanticService] extractEntitiesWithRegex - 識別到學生: ${studentName}`);
+    }
+    
+    // 傳統的正則提取邏輯 - 使用處理後的文本
+    let courseName = this.extractCourseNameByRegex(processedText);
     
     // 如果正則也失敗，嘗試單獨調用OpenAI課程名提取
     if (!courseName) {
@@ -897,7 +911,15 @@ class SemanticService {
       }
     }
     
-    return await this.buildEntityResult(text, courseName, location, student, arguments[0]); // 傳遞處理後文本和原始文本
+    const result = await this.buildEntityResult(processedText, courseName, location, student, text); // 傳遞處理後文本和原始文本
+    
+    // 🎯 添加學生名稱到結果中
+    if (studentName) {
+      result.student_name = studentName;
+      console.log(`👶 [SemanticService] extractEntitiesWithRegex - 設置學生名稱: ${studentName}`);
+    }
+    
+    return result;
   }
 
   /**

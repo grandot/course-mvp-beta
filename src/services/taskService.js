@@ -599,14 +599,24 @@ class TaskService {
         targetDate = entities.timeInfo.date;
       }
       
+      // 🎯 檢測"上次"等模糊時間概念
+      const originalInput = entities.originalUserInput || entities.raw_text || '';
+      const isLastTimeQuery = originalInput.includes('上次') || originalInput.includes('上一次') || originalInput.includes('最近一次');
+      
       // 查詢課程
       const queryParams = {
         course_name: entities.course_name || entities.content_entities?.course_name
       };
       
-      // 如果有特定日期，添加日期篩選
-      if (targetDate) {
+      // 🎯 處理"上次"查詢：不添加日期篩選，而是查詢所有相關課程然後排序
+      if (!isLastTimeQuery && targetDate) {
         queryParams.course_date = targetDate;
+      }
+      
+      // 🎯 添加學生名稱篩選（如果識別到）
+      if (entities.student_name) {
+        queryParams.student_name = entities.student_name;
+        console.log(`🔧 [DEBUG] 添加學生篩選: ${entities.student_name}`);
       }
       
       const courses = await DataService.getUserCourses(userId, queryParams);
@@ -622,7 +632,19 @@ class TaskService {
           if (course.notes && Array.isArray(course.notes)) {
             // 從 notes 中提取內容記錄
             for (const note of course.notes) {
-              if (targetDate && note.date !== targetDate) continue;
+              // 🎯 智能日期匹配：當精確匹配失敗時，允許 ±2 天彈性範圍
+              if (targetDate && note.date) {
+                const targetDateObj = new Date(targetDate + 'T00:00:00');
+                const noteDateObj = new Date(note.date + 'T00:00:00');
+                const daysDiff = Math.abs((targetDateObj - noteDateObj) / (1000 * 60 * 60 * 24));
+                
+                // 超過2天差距則跳過
+                if (daysDiff > 2) continue;
+                
+                // 記錄日期差異用於後續排序和提示
+                note._dateDiff = daysDiff;
+                note._isExactMatch = daysDiff === 0;
+              }
               
               contents.push({
                 course_id: course.id,
@@ -631,7 +653,9 @@ class TaskService {
                 content: note.content || note,
                 raw_text: note.raw_text,
                 created_at: note.created_at,
-                student_name: entities.student_name || course.student_name
+                student_name: entities.student_name || course.student_name,
+                date_difference: note._dateDiff || 0,
+                is_exact_date_match: note._isExactMatch !== false
               });
             }
           }
@@ -641,15 +665,36 @@ class TaskService {
         for (const course of courses) {
           if (course.notes && Array.isArray(course.notes)) {
             for (const note of course.notes) {
-              contents.push({
-                course_id: course.id,
-                course_name: course.course_name,
-                content_date: note.date || course.course_date,
-                content: note.content || note,
-                raw_text: note.raw_text,
-                created_at: note.created_at,
-                student_name: entities.student_name || course.student_name
-              });
+              // 🎯 智能日期匹配：即使在精確課程匹配中，也應用彈性日期匹配
+              let shouldInclude = true;
+              let dateDiff = 0;
+              let isExactMatch = true;
+              
+              if (targetDate && note.date) {
+                const targetDateObj = new Date(targetDate + 'T00:00:00');
+                const noteDateObj = new Date(note.date + 'T00:00:00');
+                dateDiff = Math.abs((targetDateObj - noteDateObj) / (1000 * 60 * 60 * 24));
+                isExactMatch = dateDiff === 0;
+                
+                // 超過2天差距則跳過
+                if (dateDiff > 2) {
+                  shouldInclude = false;
+                }
+              }
+              
+              if (shouldInclude) {
+                contents.push({
+                  course_id: course.id,
+                  course_name: course.course_name,
+                  content_date: note.date || course.course_date,
+                  content: note.content || note,
+                  raw_text: note.raw_text,
+                  created_at: note.created_at,
+                  student_name: entities.student_name || course.student_name,
+                  date_difference: dateDiff,
+                  is_exact_date_match: isExactMatch
+                });
+              }
             }
           }
         }
@@ -682,15 +727,51 @@ class TaskService {
         }
       });
 
-      // 🎯 生成友好的查詢結果消息
+      // 🎯 智能排序：根據查詢類型決定排序策略
+      if (isLastTimeQuery) {
+        // "上次"查詢：按日期降序排序（最新的在前）
+        contents.sort((a, b) => {
+          const dateA = new Date(a.content_date || a.created_at || '1970-01-01');
+          const dateB = new Date(b.content_date || b.created_at || '1970-01-01');
+          return dateB - dateA; // 降序：最新的在前
+        });
+        console.log(`🔧 [DEBUG] "上次"查詢排序：按日期降序，最新記錄優先`);
+      } else {
+        // 一般查詢：精確匹配優先，然後按日期相近程度排序
+        contents.sort((a, b) => {
+          // 精確匹配優先
+          if (a.is_exact_date_match && !b.is_exact_date_match) return -1;
+          if (!a.is_exact_date_match && b.is_exact_date_match) return 1;
+          
+          // 然後按日期差異排序
+          return (a.date_difference || 0) - (b.date_difference || 0);
+        });
+      }
+      
+      // 🎯 生成智能友好的查詢結果消息
       let message = '';
+      const hasExactMatch = contents.some(c => c.is_exact_date_match);
+      const hasNearMatch = contents.some(c => !c.is_exact_date_match && c.date_difference > 0);
       
       if (contents.length === 1) {
         // 單一記錄，顯示詳細內容
         const content = contents[0];
         const dateStr = content.content_date || '未知日期';
         
-        message = `📚 ${content.course_name} (${dateStr})\n`;
+        // 🎯 智能日期提示
+        let datePrefix = '';
+        if (isLastTimeQuery) {
+          datePrefix = '上次的記錄：';
+        } else if (!content.is_exact_date_match && content.date_difference > 0) {
+          const daysDiff = Math.round(content.date_difference);
+          if (daysDiff === 1) {
+            datePrefix = targetDate ? '沒找到確切日期的記錄，但找到相近的：' : '';
+          } else if (daysDiff === 2) {
+            datePrefix = targetDate ? '沒找到確切日期的記錄，但找到前天的：' : '';
+          }
+        }
+        
+        message = `${datePrefix}📚 ${content.course_name} (${dateStr})\n`;
         
         if (content.raw_text) {
           message += `\n💬 課程記錄：${content.raw_text}`;
@@ -703,14 +784,32 @@ class TaskService {
         }
       } else {
         // 多條記錄，顯示摘要
-        message = entities.course_name ? 
-          `找到「${entities.course_name}」的 ${contents.length} 項記錄：\n` : 
-          `找到 ${contents.length} 項課程內容記錄：\n`;
+        const exactMatchCount = contents.filter(c => c.is_exact_date_match).length;
+        const nearMatchCount = contents.length - exactMatchCount;
+        
+        let headerMessage = entities.course_name ? 
+          `找到「${entities.course_name}」的 ${contents.length} 項記錄` : 
+          `找到 ${contents.length} 項課程內容記錄`;
+        
+        // 🎯 智能日期匹配提示
+        if (targetDate && nearMatchCount > 0) {
+          if (exactMatchCount === 0) {
+            headerMessage += `（沒有精確匹配，以下為相近日期）`;
+          } else {
+            headerMessage += `（包含 ${exactMatchCount} 項精確匹配，${nearMatchCount} 項相近日期）`;
+          }
+        }
+        
+        message = headerMessage + '：\n';
           
-        // 顯示最近3條記錄
+        // 顯示最近3條記錄，按相關性排序顯示
         contents.slice(0, 3).forEach((content, index) => {
           const dateStr = content.content_date || '未知日期';
-          message += `\n${index + 1}. ${content.course_name} (${dateStr})`;
+          const matchIndicator = content.is_exact_date_match ? '' : 
+            (content.date_difference === 1 ? ' [相近]' : 
+             content.date_difference === 2 ? ' [前天]' : ' [相近]');
+          
+          message += `\n${index + 1}. ${content.course_name} (${dateStr})${matchIndicator}`;
           if (content.raw_text) {
             const preview = content.raw_text.substring(0, 50);
             message += `\n   ${preview}${content.raw_text.length > 50 ? '...' : ''}`;
