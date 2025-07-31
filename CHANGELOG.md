@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v13.0.0] - 2025-07-31 🔥 剃刀法則重大突破：課程內容記錄智能化
+
+### ✨ 核心問題解決
+- **🎯 場景**: 「今天上課很專心」缺課程名稱，無法記錄
+- **❌ 過度工程化方案**: 新增Helper類、複雜狀態管理、多層查詢邏輯
+- **✅ 剃刀法則方案**: OpenAI prompt 4行修改 + TaskService 1個方法
+
+### 🧠 OpenAI Prompt智能化
+```javascript
+// 新增特殊場景識別
+- ⚠️ 特殊：內容描述但缺少課程名稱 = query_today_courses_for_content (查詢今天課程來記錄內容)
+
+// 新增範例
+- "今天上課很專心" → query_today_courses_for_content (需查詢今天課程)
+```
+
+### 🎯 TaskService極簡實現
+- **新增意圖**: `query_today_courses_for_content`
+- **新增方法**: `queryTodayCoursesForContent()` - 50行搞定完整邏輯
+- **智能分流**:
+  - 0堂課 → 詢問新增課程
+  - 1堂課 → 確認記錄到該課程  
+  - 多堂課 → 用戶選擇課程
+
+### 🔄 完整業務流程
+1. 🧠 **語義識別**: OpenAI直接識別 `query_today_courses_for_content`
+2. 🔍 **課程查詢**: 自動查詢今天課程安排
+3. 💬 **智能對話**: 根據課程數量動態響應
+4. ✅ **內容記錄**: 將內容關聯到正確課程
+
+### 📊 性能對比
+| 方法 | 複雜度 | 代碼行數 | 架構影響 | 維護成本 |
+|------|--------|----------|----------|----------|
+| 過度工程化 | 🔴 高 | +200行 | 🔴 新增類 | 🔴 高 |
+| **剃刀法則** | 🟢 低 | +50行 | 🟢 零影響 | 🟢 低 |
+
+### 🧪 測試驗證
+- ✅ 「今天上課很專心」→ `query_today_courses_for_content` (信心度: 0.95)
+- ✅ 「明天數學課很專心」→ `record_course` (正確區分)
+- ✅ 完整多輪對話流程測試通過
+
 ## [v12.0.0] - 2025-07-31 🎯 第一性原則語義識別重大修復：OpenAI極簡化+Fallback超詳細化
 
 ### Fixed - 時間語境判斷根本問題修復

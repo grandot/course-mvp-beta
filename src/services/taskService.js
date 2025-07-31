@@ -74,6 +74,9 @@ class TaskService {
         case 'clear_schedule':
           return await this.scenarioTemplate.clearAllEntities(entities, userId);
 
+        case 'query_today_courses_for_content':
+          return await this.queryTodayCoursesForContent(entities, userId);
+
         case 'set_reminder':
           return {
             success: false,
@@ -761,6 +764,76 @@ class TaskService {
       if (scenarioType && originalScenarioType !== undefined) {
         process.env.SCENARIO_TYPE = originalScenarioType;
       }
+    }
+  }
+  /**
+   * 🎯 剃刀法則：查詢今天課程以記錄內容（最簡實現）
+   * @param {Object} entities - 實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 查詢結果
+   */
+  async queryTodayCoursesForContent(entities, userId) {
+    try {
+      const TimeService = require('./timeService');
+      const EntityService = require('./entityService');
+      
+      // 獲取今天日期
+      const today = TimeService.formatForStorage(TimeService.getCurrentUserTime());
+      
+      // 查詢今天的課程
+      const todayCourses = await EntityService.queryEntities('courses', {
+        student_id: userId,
+        course_date: today,
+        status: 'scheduled'
+      });
+      
+      const contentToRecord = entities.content_to_record || entities.originalUserInput || '課程內容';
+      
+      if (todayCourses.length === 0) {
+        return {
+          success: false,
+          action: 'no_courses_today',
+          message: `今天沒有安排課程。\n\n要記錄的內容：「${contentToRecord}」\n\n是否要新增今天的課程？`,
+          requiresConfirmation: true,
+          pendingContent: contentToRecord
+        };
+      }
+      
+      if (todayCourses.length === 1) {
+        // 只有一堂課，直接確認記錄
+        const course = todayCourses[0];
+        return {
+          success: false,
+          action: 'confirm_single_course',
+          message: `要將內容「${contentToRecord}」記錄到今天的${course.course_name}嗎？`,
+          requiresConfirmation: true,
+          targetCourse: course,
+          pendingContent: contentToRecord
+        };
+      }
+      
+      // 多堂課，讓用戶選擇
+      const courseOptions = todayCourses.map((course, index) => {
+        const timeInfo = course.schedule_time ? ` (${course.schedule_time})` : '';
+        return `${index + 1}. ${course.course_name}${timeInfo}`;
+      }).join('\n');
+      
+      return {
+        success: false,
+        action: 'select_course_for_content',
+        message: `今天有${todayCourses.length}堂課程，請選擇要記錄內容的課程：\n\n${courseOptions}\n\n要記錄的內容：「${contentToRecord}」`,
+        courses: todayCourses,
+        pendingContent: contentToRecord,
+        requiresSelection: true
+      };
+      
+    } catch (error) {
+      console.error('❌ [TaskService] queryTodayCoursesForContent failed:', error.message);
+      return {
+        success: false,
+        error: 'Query failed',
+        message: '查詢今天課程時發生錯誤，請稍後再試'
+      };
     }
   }
 }

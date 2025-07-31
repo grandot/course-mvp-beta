@@ -346,13 +346,21 @@ class SemanticService {
           };
         }
         
+        // 🎯 第一性原則：用正則過濾無效課程名稱（各司其職）
+        let filteredCourseName = analysis.entities.course_name;
+        const invalidCourseNames = ['上課', '課', '課程', '上學', '學習', '讀書'];
+        if (filteredCourseName && invalidCourseNames.includes(filteredCourseName)) {
+          this.debugLog(`🔧 [DEBUG] Fallback過濾無效課程名稱: "${filteredCourseName}" → null`);
+          filteredCourseName = null;
+        }
+
         const result = {
           success: true,
           method: 'openai',
           intent: analysis.intent,
           confidence: analysis.confidence,
           entities: {
-            course_name: analysis.entities.course_name,
+            course_name: filteredCourseName,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
             student: analysis.entities.student || entities.student,

@@ -70,32 +70,43 @@ class LineController {
       });
     }
 
-    // 2. 🎯 第一性原則：區分"沒有時間"和"模糊時間"
+    // 2. 🎯 第一性原則：課程內容記錄vs課程安排的時間需求不同
     const hasValidTimeInEntities = entities.timeInfo && entities.timeInfo.display && entities.timeInfo.date;
     
-    // 3. 檢查模糊時間（有時間詞但不具體）
+    // 檢測是否為課程內容記錄（已發生的事件）
+    const contentWords = ['表現', '回饋', '學到', '老師說', '成功', '很好', '不錯', '進步', '棒', '厲害', '造出', '做出', '完成', '專心', '認真', '開心'];
+    const pastTimeWords = ['昨天', '前天', '剛才', '之前', '已經', '今天'];
+    const hasContent = contentWords.some(word => originalText.includes(word));
+    const hasPastContext = pastTimeWords.some(word => originalText.includes(word));
+    
+    // 如果是課程內容記錄，時間要求較寬鬆
+    const isContentRecord = hasContent || hasPastContext;
+    
+    // 3. 檢查模糊時間（有時間詞但不具體）- 僅對新課程安排嚴格要求
     const vagueTimePatterns = ['下午', '上午', '晚上', '早上', '中午', '傍晚'];
     const hasVagueTime = vagueTimePatterns.some(pattern => 
       originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)`))
     );
     
-    // 4. 🎯 智能時間檢查：區分三種情況
-    if (hasVagueTime) {
-      // 情況1：有模糊時間詞（如"下午"）但不具體
-      const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern));
-      problems.push({
-        type: 'vague_time',
-        field: 'time', 
-        value: vagueTimeFound,
-        message: '具體上課時間'
-      });
-    } else if (!hasValidTimeInEntities && !this.hasSpecificTime(originalText)) {
-      // 情況2：完全沒有時間信息（如"鋼琴課"）- 友好詢問
-      problems.push({
-        type: 'missing_time',
-        field: 'time', 
-        message: '上課時間'
-      });
+    // 4. 🎯 智能時間檢查：課程安排需要精確時間，內容記錄不需要
+    if (!isContentRecord) {
+      if (hasVagueTime) {
+        // 情況1：有模糊時間詞（如"下午"）但不具體 - 僅對新安排要求
+        const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern));
+        problems.push({
+          type: 'vague_time',
+          field: 'time', 
+          value: vagueTimeFound,
+          message: '具體上課時間'
+        });
+      } else if (!hasValidTimeInEntities && !this.hasSpecificTime(originalText)) {
+        // 情況2：完全沒有時間信息 - 僅對新安排要求
+        problems.push({
+          type: 'missing_time',
+          field: 'time', 
+          message: '上課時間'
+        });
+      }
     }
 
     // 4. 檢查無效日期（如「後台」「前台」被誤認為日期）
