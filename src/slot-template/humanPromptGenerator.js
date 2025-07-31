@@ -7,12 +7,15 @@
  * 2. 生成單一問題提示訊息
  * 3. 提供具體範例和建議
  * 4. 上下文感知提示
+ * 
+ * v2.0 更新：整合 ConfigManager 統一配置管理
  */
 
-/**
- * 提示訊息模板定義
- */
-const PROMPT_TEMPLATES = {
+const { getConfigManager } = require('../config/configManager');
+
+// 🎯 第一性原則：統一配置管理，移除硬編碼
+// 保留舊版配置作為預設值，確保向後兼容
+const LEGACY_PROMPT_TEMPLATES = {
   MULTI_PROBLEM: {
     prefix: "我需要一些更清楚的資訊才能幫您安排課程：",
     format: "• {problem_description}",
@@ -32,10 +35,7 @@ const PROMPT_TEMPLATES = {
   }
 };
 
-/**
- * 問題描述模板
- */
-const PROBLEM_DESCRIPTIONS = {
+const LEGACY_PROBLEM_DESCRIPTIONS = {
   invalid_date: "日期資訊不清楚（「{value}」無法識別為有效日期）",
   vague_time: "時間需要更具體（「{value}」請提供確切時間）",
   missing_required: "缺少{field_name}資訊",
@@ -47,10 +47,7 @@ const PROBLEM_DESCRIPTIONS = {
   mixed_extraction: "已智能分離混雜內容"
 };
 
-/**
- * 欄位名稱對照表
- */
-const FIELD_NAMES = {
+const LEGACY_FIELD_NAMES = {
   course: "課程",
   date: "日期", 
   time: "時間",
@@ -59,10 +56,7 @@ const FIELD_NAMES = {
   location: "地點"
 };
 
-/**
- * 範例生成模板
- */
-const EXAMPLE_TEMPLATES = {
+const LEGACY_EXAMPLE_TEMPLATES = {
   complete_course: [
     "明天下午3點小美大提琴課",
     "7月30日晚上7點鋼琴課",
@@ -92,11 +86,122 @@ const EXAMPLE_TEMPLATES = {
  */
 class HumanPromptGenerator {
   constructor() {
-    // 初始化模板和描述
-    this.templates = PROMPT_TEMPLATES;
-    this.descriptions = PROBLEM_DESCRIPTIONS;
-    this.fieldNames = FIELD_NAMES;
-    this.examples = EXAMPLE_TEMPLATES;
+    // 🎯 整合 ConfigManager 統一配置管理
+    this.configManager = getConfigManager();
+    
+    // 加載配置，支援運行時更新
+    this.loadConfigurations();
+    
+    // 設置配置變更監聽
+    this.setupConfigListener();
+    
+    console.log('[HumanPromptGenerator] v2.0 初始化完成 - 使用 ConfigManager');
+  }
+  
+  /**
+   * 加載配置（支援 ConfigManager 和舊版兼容）
+   */
+  loadConfigurations() {
+    try {
+      // 嘗試從 ConfigManager 加載配置
+      const config = this.configManager.get('slotTemplateConfig');
+      
+      if (config && Object.keys(config).length > 0) {
+        // 使用新的配置系統
+        this.templates = this.mapConfigToTemplates(config.promptTemplates);
+        this.descriptions = this.mapConfigToDescriptions(config.problemDescriptions);
+        this.fieldNames = config.fieldNames || LEGACY_FIELD_NAMES;
+        this.examples = this.mapConfigToExamples(config.examples);
+        
+        console.log('[HumanPromptGenerator] 使用 ConfigManager 配置');
+      } else {
+        // 降級到舊版配置
+        this.templates = LEGACY_PROMPT_TEMPLATES;
+        this.descriptions = LEGACY_PROBLEM_DESCRIPTIONS;
+        this.fieldNames = LEGACY_FIELD_NAMES;
+        this.examples = LEGACY_EXAMPLE_TEMPLATES;
+        
+        console.log('[HumanPromptGenerator] 使用舊版兼容配置');
+      }
+    } catch (error) {
+      console.warn('[HumanPromptGenerator] 配置加載失敗，使用舊版配置:', error);
+      
+      // 錯誤處理：使用舊版配置
+      this.templates = LEGACY_PROMPT_TEMPLATES;
+      this.descriptions = LEGACY_PROBLEM_DESCRIPTIONS;
+      this.fieldNames = LEGACY_FIELD_NAMES;
+      this.examples = LEGACY_EXAMPLE_TEMPLATES;
+    }
+  }
+  
+  /**
+   * 映射配置到模板格式
+   */
+  mapConfigToTemplates(promptTemplates) {
+    if (!promptTemplates) return LEGACY_PROMPT_TEMPLATES;
+    
+    return {
+      MULTI_PROBLEM: {
+        prefix: promptTemplates.multiProblem?.prefix || LEGACY_PROMPT_TEMPLATES.MULTI_PROBLEM.prefix,
+        format: promptTemplates.multiProblem?.format || LEGACY_PROMPT_TEMPLATES.MULTI_PROBLEM.format,
+        footer: promptTemplates.multiProblem?.footer || LEGACY_PROMPT_TEMPLATES.MULTI_PROBLEM.footer
+      },
+      SINGLE_PROBLEM: {
+        confirmation: promptTemplates.singleProblem?.confirmation || LEGACY_PROMPT_TEMPLATES.SINGLE_PROBLEM.confirmation,
+        question: promptTemplates.singleProblem?.question || LEGACY_PROMPT_TEMPLATES.SINGLE_PROBLEM.question,
+        example: promptTemplates.singleProblem?.example || LEGACY_PROMPT_TEMPLATES.SINGLE_PROBLEM.example
+      },
+      MIXED_EXTRACTION: {
+        prefix: promptTemplates.mixedExtraction?.prefix || LEGACY_PROMPT_TEMPLATES.MIXED_EXTRACTION.prefix,
+        separated_info: promptTemplates.mixedExtraction?.separatedInfo || LEGACY_PROMPT_TEMPLATES.MIXED_EXTRACTION.separated_info,
+        completion: promptTemplates.mixedExtraction?.completion || LEGACY_PROMPT_TEMPLATES.MIXED_EXTRACTION.completion
+      }
+    };
+  }
+  
+  /**
+   * 映射配置到問題描述格式
+   */
+  mapConfigToDescriptions(problemDescriptions) {
+    if (!problemDescriptions) return LEGACY_PROBLEM_DESCRIPTIONS;
+    
+    return {
+      invalid_date: problemDescriptions.invalidDate || LEGACY_PROBLEM_DESCRIPTIONS.invalid_date,
+      vague_time: problemDescriptions.vagueTime || LEGACY_PROBLEM_DESCRIPTIONS.vague_time,
+      missing_required: problemDescriptions.missingRequired || LEGACY_PROBLEM_DESCRIPTIONS.missing_required,
+      missing_time: problemDescriptions.missingTime || LEGACY_PROBLEM_DESCRIPTIONS.missing_time,
+      missing_date: problemDescriptions.missingDate || LEGACY_PROBLEM_DESCRIPTIONS.missing_date,
+      missing_course: problemDescriptions.missingCourse || LEGACY_PROBLEM_DESCRIPTIONS.missing_course,
+      missing_student: problemDescriptions.missingStudent || LEGACY_PROBLEM_DESCRIPTIONS.missing_student,
+      format_error: problemDescriptions.formatError || LEGACY_PROBLEM_DESCRIPTIONS.format_error,
+      mixed_extraction: problemDescriptions.mixedExtraction || LEGACY_PROBLEM_DESCRIPTIONS.mixed_extraction
+    };
+  }
+  
+  /**
+   * 映射配置到範例格式
+   */
+  mapConfigToExamples(examples) {
+    if (!examples) return LEGACY_EXAMPLE_TEMPLATES;
+    
+    return {
+      complete_course: examples.completeCourse || LEGACY_EXAMPLE_TEMPLATES.complete_course,
+      time_examples: examples.timeExamples || LEGACY_EXAMPLE_TEMPLATES.time_examples,
+      date_examples: examples.dateExamples || LEGACY_EXAMPLE_TEMPLATES.date_examples,
+      course_examples: examples.courseExamples || LEGACY_EXAMPLE_TEMPLATES.course_examples
+    };
+  }
+  
+  /**
+   * 設置配置變更監聽器
+   */
+  setupConfigListener() {
+    this.configManager.addListener('slotTemplateConfig', (keyPath, newValue, configName) => {
+      if (keyPath === '__reload__') {
+        console.log('[HumanPromptGenerator] 配置重載，更新模板');
+        this.loadConfigurations();
+      }
+    });
   }
 
   /**

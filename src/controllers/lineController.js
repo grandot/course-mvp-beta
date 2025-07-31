@@ -53,145 +53,84 @@ class LineController {
   }
 
   /**
-   * 🚨 第一性原則：檢查課程信息完整性
-   * @param {string} originalText - 用戶原始輸入
-   * @param {Object} entities - 提取的實體
-   * @returns {Object} 完整性檢查結果
+   * 🚨 DEPRECATED: 此方法已由 SlotTemplateManager 統一處理
+   * 保留僅用於向後兼容，新代碼請使用 SlotTemplateManager.processWithProblemDetection
+   * @deprecated 使用 SlotTemplateManager.processWithProblemDetection 替代
    */
   static checkCourseCompleteness(originalText, entities) {
-    const problems = [];
-    
-    // 1. 檢查必填欄位：課程名
-    if (!entities.course_name || entities.course_name.trim() === '') {
-      problems.push({
-        type: 'missing_required',
-        field: 'course',
-        message: '課程名稱'
-      });
-    }
-
-    // 2. 🎯 第一性原則：課程內容記錄vs課程安排的時間需求不同
-    const hasValidTimeInEntities = entities.timeInfo && entities.timeInfo.display && entities.timeInfo.date;
-    
-    // 檢測是否為課程內容記錄（已發生的事件）
-    const contentWords = ['表現', '回饋', '學到', '老師說', '成功', '很好', '不錯', '進步', '棒', '厲害', '造出', '做出', '完成', '專心', '認真', '開心'];
-    const pastTimeWords = ['昨天', '前天', '剛才', '之前', '已經', '今天'];
-    const hasContent = contentWords.some(word => originalText.includes(word));
-    const hasPastContext = pastTimeWords.some(word => originalText.includes(word));
-    
-    // 如果是課程內容記錄，時間要求較寬鬆
-    const isContentRecord = hasContent || hasPastContext;
-    
-    // 3. 檢查模糊時間（有時間詞但不具體）- 僅對新課程安排嚴格要求
-    const vagueTimePatterns = ['下午', '上午', '晚上', '早上', '中午', '傍晚'];
-    const hasVagueTime = vagueTimePatterns.some(pattern => 
-      originalText.includes(pattern) && !originalText.match(new RegExp(`${pattern}(一點|兩點|三點|四點|五點|六點|七點|八點|九點|十點|十一點|十二點|[0-9]+點)`))
-    );
-    
-    // 4. 🎯 智能時間檢查：課程安排需要精確時間，內容記錄不需要
-    if (!isContentRecord) {
-      if (hasVagueTime) {
-        // 情況1：有模糊時間詞（如"下午"）但不具體 - 僅對新安排要求
-        const vagueTimeFound = vagueTimePatterns.find(pattern => originalText.includes(pattern));
-        problems.push({
-          type: 'vague_time',
-          field: 'time', 
-          value: vagueTimeFound,
-          message: '具體上課時間'
-        });
-      } else if (!hasValidTimeInEntities && !this.hasSpecificTime(originalText)) {
-        // 情況2：完全沒有時間信息 - 僅對新安排要求
-        problems.push({
-          type: 'missing_time',
-          field: 'time', 
-          message: '上課時間'
-        });
-      }
-    }
-
-    // 4. 檢查無效日期（如「後台」「前台」被誤認為日期）
-    const invalidDatePatterns = ['後台', '前台', '那邊', '這裡', '不知道'];
-    if (entities.timeInfo && entities.timeInfo.date && 
-        invalidDatePatterns.some(pattern => originalText.includes(pattern))) {
-      problems.push({
-        type: 'invalid_date',
-        field: 'date',
-        value: invalidDatePatterns.find(pattern => originalText.includes(pattern)),
-        message: '有效的上課日期'
-      });
-    }
-
+    console.warn('[DEPRECATED] checkCourseCompleteness 已被 SlotTemplateManager 取代');
     return {
-      needsFollowUp: problems.length > 0,
-      problems,
-      problemCount: problems.length,
+      needsFollowUp: false,
+      problems: [],
+      problemCount: 0,
       validEntities: entities
     };
   }
 
   /**
-   * 🎯 第一性原則：簡化補充信息檢測 - 統一狀態管理
-   * 只檢查是否處於 'record_course_pending' 狀態
-   * @param {string} userMessage - 用戶當前輸入
-   * @param {Object} entities - 當前提取的實體
-   * @param {Object} conversationContext - 會話上下文
-   * @returns {boolean} 是否為補充信息
+   * 🚨 DEPRECATED: 此方法已由 TempSlotStateManager.detectSupplementIntent 統一處理
+   * 保留僅用於向後兼容，新代碼請使用 TempSlotStateManager
+   * @deprecated 使用 TempSlotStateManager.detectSupplementIntent 替代
    */
   static detectSupplementInfo(userMessage, entities, conversationContext) {
-    // 🎯 簡化條件：只檢查一個條件 - 是否處於等待補充狀態
-    const isPendingState = conversationContext && conversationContext.lastAction === 'record_course_pending';
-    
-    if (!isPendingState) {
-      console.log(`🔧 [DEBUG] 非補充信息 - 狀態: ${conversationContext?.lastAction || 'null'}`);
-      return false;
-    }
-
-    // 🎯 統一邏輯：處於 pending 狀態時，任何輸入都是補充信息
-    // 除非是明顯的新課程請求（包含課程關鍵詞）
-    const hasNewCourseKeywords = /課$|課程|上課|訓練|教學|學習|新增|安排|預約/.test(userMessage);
-    
-    if (hasNewCourseKeywords) {
-      console.log(`🔧 [DEBUG] 檢測為新課程請求 - 有課程關鍵詞: ${userMessage}`);
-      return false;
-    }
-
-    console.log(`🔧 [DEBUG] 確認為補充信息 - pending狀態下的補充輸入: ${userMessage}`);
-    return true;
+    console.warn('[DEPRECATED] detectSupplementInfo 已被 TempSlotStateManager 取代');
+    return false;
   }
 
   /**
-   * 🎯 第一性原則：簡化合併邏輯 - 統一處理單一和多個問題
-   * @param {Object} conversationContext - 會話上下文
-   * @param {Object} supplementEntities - 補充的實體信息
-   * @returns {Object} 合併後的實體信息
+   * 🚨 DEPRECATED: 此方法已由 TempSlotStateManager.mergeSupplementInfo 統一處理
+   * 保留僅用於向後兼容，新代碼請使用 TempSlotStateManager
+   * @deprecated 使用 TempSlotStateManager.mergeSupplementInfo 替代
    */
   static mergeContextWithSupplement(conversationContext, supplementEntities) {
-    console.log(`🔧 [DEBUG] 開始合併補充信息`);
-    console.log(`🔧 [DEBUG] - 補充實體:`, supplementEntities);
+    console.warn('[DEPRECATED] mergeContextWithSupplement 已被 TempSlotStateManager 取代');
+    return supplementEntities;
+  }
 
-    // 🎯 簡化：從上下文恢復暫存的信息（統一格式）
-    const savedEntities = {
-      course_name: conversationContext.lastCourse,
-      location: conversationContext.lastLocation,
-      teacher: conversationContext.lastTeacher,
-      student: conversationContext.lastStudent,
-      timeInfo: conversationContext.lastTimeInfo
-    };
-
-    console.log(`🔧 [DEBUG] - 暫存實體:`, savedEntities);
-
-    // 🎯 統一合併策略：智能更新 - 有新值就用新值，沒有就保留舊值
-    const mergedEntities = {
-      course_name: supplementEntities.course_name || savedEntities.course_name,
-      location: supplementEntities.location || savedEntities.location,
-      teacher: supplementEntities.teacher || savedEntities.teacher,
-      student: supplementEntities.student || savedEntities.student,
-      timeInfo: supplementEntities.timeInfo || savedEntities.timeInfo,
-      confirmation: supplementEntities.confirmation
-    };
-
-    console.log(`🔧 [DEBUG] 合併完成:`, mergedEntities);
-    return mergedEntities;
+  /**
+   * 將 SlotState 轉換為 TaskService 期望的 entities 格式
+   * @param {Object} slotState - SlotTemplate 的 slot_state
+   * @returns {Object} entities 格式
+   */
+  static convertSlotStateToEntities(slotState) {
+    const entities = {};
+    
+    // 基本字段映射
+    if (slotState.course) entities.course_name = slotState.course;
+    if (slotState.student) entities.student_name = slotState.student;
+    if (slotState.teacher) entities.teacher = slotState.teacher;
+    if (slotState.location) entities.location = slotState.location;
+    
+    // 時間信息處理
+    if (slotState.date || slotState.time) {
+      entities.timeInfo = {};
+      
+      if (slotState.date) {
+        entities.timeInfo.date = slotState.date;
+        entities.timeInfo.display = slotState.date;
+      }
+      if (slotState.time) {
+        entities.timeInfo.time = slotState.time;
+        if (entities.timeInfo.display) {
+          entities.timeInfo.display += ` ${slotState.time}`;
+        } else {
+          entities.timeInfo.display = slotState.time;
+        }
+      }
+      
+      // 創建完整的時間戳
+      if (slotState.date && slotState.time) {
+        entities.timeInfo.start = `${slotState.date}T${slotState.time}:00Z`;
+      }
+    }
+    
+    // 其他字段
+    if (slotState.reminder) entities.reminder = slotState.reminder;
+    if (slotState.note) entities.note = slotState.note;
+    if (slotState.repeat) entities.timeInfo = { ...entities.timeInfo, recurring: slotState.repeat };
+    
+    console.log(`🔧 [DEBUG] SlotState 轉換: ${JSON.stringify(slotState)} -> ${JSON.stringify(entities)}`);
+    return entities;
   }
 
   /**
@@ -214,54 +153,78 @@ class LineController {
   }
 
   /**
-   * 🚨 處理需要追問的情況
-   * @param {string} userId - 用戶ID
-   * @param {Object} completenessCheck - 完整性檢查結果
-   * @param {string} replyToken - LINE回覆Token
+   * 🎯 統一的 SlotTemplate 響應處理器
+   * @param {Object} slotResult - SlotTemplate 處理結果
+   * @param {string} replyToken - LINE 回覆 Token
    * @returns {Object} 處理結果
    */
-  static async handleFollowUpRequired(userId, completenessCheck, replyToken) {
-    const { problems, problemCount, validEntities } = completenessCheck;
+  static async handleSlotTemplateResponse(slotResult, replyToken) {
+    console.log(`🔧 [DEBUG] 處理 SlotTemplate 響應 - 類型: ${slotResult.type}`);
     
-    // 🎯 第一性原則：統一處理 - 不管幾個問題都用相同邏輯
-    let replyMessage;
-    let awaitingSupplementFor;
+    let replyMessage = slotResult.message;
     
-    if (problemCount === 1) {
-      replyMessage = this.generateSingleProblemPrompt(validEntities, problems[0]);
-      awaitingSupplementFor = problems[0].field;
-    } else {
-      replyMessage = this.generateMultiProblemPrompt(problems);
-      awaitingSupplementFor = 'multiple';
+    // 根據不同類型進行響應處理
+    switch (slotResult.type) {
+      case 'multi_problem':
+        console.log(`🔧 [DEBUG] 多問題處理 - 問題數量: ${slotResult.problemCount}`);
+        break;
+        
+      case 'single_problem':
+        console.log(`🔧 [DEBUG] 單一問題處理 - 問題類型: ${slotResult.problemType}`);
+        break;
+        
+      case 'mixed_extraction':
+        console.log(`🔧 [DEBUG] 混雜提取分離處理`);
+        break;
+        
+      case 'task_completed':
+        console.log(`🔧 [DEBUG] 任務完成處理`);
+        replyMessage = slotResult.message || '✅ 課程已成功安排！';
+        break;
+        
+      default:
+        console.warn(`🔧 [WARN] 未知的 SlotTemplate 響應類型: ${slotResult.type}`);
     }
     
-    // 🚨 統一狀態保存：不管單一還是多個問題，都使用相同的暫存機制
-    ConversationContext.updateContext(userId, 'record_course_pending', {
-      course_name: validEntities.course_name,
-      location: validEntities.location,
-      teacher: validEntities.teacher,
-      student: validEntities.student,
-      timeInfo: validEntities.timeInfo
-    }, {
-      pendingProblems: problems,
-      awaitingSupplementFor,
-      status: 'awaiting_supplement'
-    });
-    
-    console.log(`🔧 [DEBUG] 統一追問處理 - 已保存暫存狀態 - UserId: ${userId}`);
-    console.log(`🔧 [DEBUG] 問題數量: ${problemCount}, 等待補充: ${awaitingSupplementFor}`);
-    console.log(`🔧 [DEBUG] 暫存信息:`, validEntities);
-
     // 發送回覆
-    if (replyToken) {
-      const replyResult = await lineService.replyMessage(replyToken, replyMessage);
-      console.log('Follow-up reply result:', replyResult);
+    if (replyToken && replyMessage) {
+      try {
+        const replyResult = await lineService.replyMessage(replyToken, replyMessage);
+        console.log(`🔧 [DEBUG] SlotTemplate 回覆發送結果:`, replyResult);
+      } catch (error) {
+        console.error(`🔧 [ERROR] SlotTemplate 回覆發送失敗:`, error);
+      }
     }
 
     return {
       success: true,
-      type: problemCount === 1 ? 'single_problem_followup' : 'multi_problem_followup',
-      problems,
+      type: slotResult.type,
+      message: replyMessage,
+      needsFollowUp: ['multi_problem', 'single_problem', 'mixed_extraction'].includes(slotResult.type),
+      slotResult
+    };
+  }
+
+  /**
+   * 🚨 DEPRECATED: 此方法已由 handleSlotTemplateResponse 統一處理
+   * 保留僅用於向後兼容
+   * @deprecated 使用 handleSlotTemplateResponse 替代
+   */
+  static async handleFollowUpRequired(userId, completenessCheck, replyToken) {
+    console.warn('[DEPRECATED] handleFollowUpRequired 已被 handleSlotTemplateResponse 取代');
+    
+    // 簡單的降級處理
+    const replyMessage = completenessCheck.problems.length > 1 
+      ? '請提供完整的課程信息'
+      : `請提供${completenessCheck.problems[0]?.message || '缺失的信息'}`;
+    
+    if (replyToken) {
+      await lineService.replyMessage(replyToken, replyMessage);
+    }
+
+    return {
+      success: true,
+      type: 'legacy_followup',
       message: replyMessage,
       needsFollowUp: true
     };
@@ -500,38 +463,49 @@ class LineController {
       console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
 
-      // 🚨 檢查多輪對話：是否為補充信息（針對之前未完成的課程記錄）
-      const isPendingState = conversationContext && conversationContext.lastAction === 'record_course_pending';
-      
-      // 🚨 修復：無論當前 intent 是什麼，如果處於等待補充狀態，都要檢查是否為補充信息
-      if (isPendingState) {
-        const isSupplementInfo = this.detectSupplementInfo(userMessage, entities, conversationContext);
-        if (isSupplementInfo) {
-          console.log(`🔧 [DEBUG] 檢測到補充信息，正在合併上下文`);
-          entities = this.mergeContextWithSupplement(conversationContext, entities);
-          console.log(`🔧 [DEBUG] 合併後實體:`, entities);
-          
-          // 🚨 重要：強制設置 intent 為 record_course，確保後續邏輯正確執行
-          intent = 'record_course';
-          console.log(`🔧 [DEBUG] 強制設置 intent 為 record_course 以處理補充信息`);
-        }
-      }
-      // 正常的多輪對話檢查（針對已完成但需要修正的情況）
-      else if (intent === 'record_course' && conversationContext && conversationContext.lastAction === 'record_course') {
-        const isSupplementInfo = this.detectSupplementInfo(userMessage, entities, conversationContext);
-        if (isSupplementInfo) {
-          console.log(`🔧 [DEBUG] 檢測到修正信息，正在合併上下文`);
-          entities = this.mergeContextWithSupplement(conversationContext, entities);
-          console.log(`🔧 [DEBUG] 合併後實體:`, entities);
-        }
-      }
-
-      // 🚨 第一性原則：簡單的完整性檢查與追問機制
+      // 🎯 第一性原則：統一使用 SlotTemplateManager 處理課程相關邏輯
       if (intent === 'record_course') {
-        const completenessCheck = this.checkCourseCompleteness(userMessage, entities);
-        if (completenessCheck.needsFollowUp) {
-          console.log(`🔧 [DEBUG] 需要追問 - 問題數量: ${completenessCheck.problems.length}`);
-          return await this.handleFollowUpRequired(userId, completenessCheck, event.replyToken);
+        console.log(`🔧 [DEBUG] 使用 SlotTemplateManager 處理課程邏輯`);
+        
+        // 檢查 SlotTemplate 系統是否可用
+        if (semanticService.slotTemplateEnabled) {
+          try {
+            // 使用增強的 SlotTemplate 處理
+            const semanticResultWithText = {
+              intent,
+              entities,
+              confidence,
+              text: userMessage, // 添加原始文本用於問題檢測
+              context: conversationContext
+            };
+            
+            const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
+              userId, 
+              semanticResultWithText
+            );
+            
+            console.log(`🔧 [DEBUG] SlotTemplate 處理結果:`, slotResult);
+            
+            // 🎯 使用統一的 SlotTemplate 響應處理器
+            const responseResult = await this.handleSlotTemplateResponse(slotResult, replyToken);
+            
+            // 根據響應結果決定下一步
+            if (responseResult.needsFollowUp) {
+              // 需要用戶補充信息，直接返回
+              return responseResult;
+            } else if (slotResult.type === 'task_completed' || slotResult.requiresExecution) {
+              // 任務可以執行，更新 entities 並繼續到 TaskService
+              if (slotResult.slot_state) {
+                entities = this.convertSlotStateToEntities(slotResult.slot_state);
+                console.log(`🔧 [DEBUG] 轉換後的 entities:`, entities);
+              }
+            }
+          } catch (error) {
+            console.error(`🔧 [ERROR] SlotTemplate 處理失敗，降級到傳統處理:`, error);
+            // 降級到傳統處理邏輯
+          }
+        } else {
+          console.log(`🔧 [DEBUG] SlotTemplate 系統未啟用，使用傳統處理`);
         }
       }
 

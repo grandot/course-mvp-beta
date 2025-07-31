@@ -2,6 +2,91 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v15.0.0] - 2025-07-31 🎯 第一性原則語氣系統重構：統一溫暖活潑體驗
+
+### ✨ 用戶體驗根本改善
+- **🚨 問題根因**: 多語氣風格切換導致用戶體驗不一致，感覺在與陌生人對話
+- **🎯 第一性原則**: 用戶需要一個溫暖、一致的助理，而非多個令人困惑的風格選擇
+- **⚡ 剃刀法則**: 用戶體驗一致性 > 技術靈活性，簡單即美
+
+### 🎭 語氣系統重大重構
+
+#### 重構前問題：
+```javascript
+❌ 三種語氣風格 (warm/cheerful/calm) + 自動切換
+❌ 用戶困惑：今天溫暖，明天專業，後天活潑
+❌ 過度工程：200+ 行複雜選擇邏輯
+```
+
+#### 重構後解決方案：
+```javascript
+✅ 統一溫暖活潑風格 (warm_cheerful)
+✅ 固定語氣配置，確保每次互動一致
+✅ 簡化架構：移除多風格選擇，專注用戶價值
+```
+
+### 🔧 核心組件重構
+
+#### 1. UnifiedToneManager
+- **移除**: 多風格配置系統、自動切換邏輯、用戶偏好調整
+- **統一**: 固定溫暖活潑語氣風格
+- **新增**: `enhanceMessage()` 統一語氣增強
+- **保留**: 向後兼容 `ToneManager` 別名
+
+#### 2. UnifiedFewShotManager  
+- **簡化**: 從複雜嵌套結構改為扁平化場景管理
+- **統一**: 所有範例使用一致的溫暖活潑語氣
+- **場景**: 6種核心場景 (new_course, follow_up, need_info, chat_redirect, error_handling, success)
+- **移除**: 智能選擇、多風格映射、複雜權重計算
+
+#### 3. LineController 重複邏輯移除
+- **整合**: 統一使用 `SlotTemplateManager.processWithProblemDetection()`
+- **新增**: `convertSlotStateToEntities()` 格式轉換
+- **新增**: `handleSlotTemplateResponse()` 統一響應處理
+- **移除**: `checkCourseCompleteness`, `detectSupplementInfo`, `mergeContextWithSupplement`
+
+#### 4. 配置管理系統
+- **新增**: `ConfigManager` 統一配置管理
+- **支援**: 環境變數覆蓋、運行時配置更新、文件監聽
+- **整合**: `HumanPromptGenerator` 使用 ConfigManager
+- **文件**: `config/slotTemplateConfig.json` 集中化配置
+
+### 🎯 用戶體驗展示
+
+#### 統一語氣風格範例：
+```
+新增課程: "太好了！已為你安排明天下午兩點的鋼琴課喔～需要提醒嗎？🎹"
+缺少信息: "✅ 已記錄：下午兩點 還需要確認上課日期喔～比如：明天、後天、7月30日 😊"
+延續對話: "好的～還有什麼課程要安排嗎？😊"
+任務完成: "完成啦！🎉 所有資訊都收集完畢～正在為你安排課程中..."
+```
+
+### 📊 技術改進成果
+- **代碼簡化**: 移除 200+ 行複雜多風格邏輯
+- **性能提升**: 減少運行時選擇判斷，降低內存使用
+- **維護性**: 統一語氣管理，簡化測試用例
+- **向後兼容**: 保留舊類名別名，平滑遷移
+
+### 🚀 核心價值實現
+- ✅ **用戶體驗一致性**: 每次互動都是同一個熟悉助理
+- ✅ **溫暖有溫度**: 讓冰冷的系統變得親切
+- ✅ **適度活潑**: 增加互動樂趣但不過度
+- ✅ **系統可靠性**: 簡化邏輯，降低故障風險
+
+### 📁 新增檔案
+- `src/tone/toneManager.js` → UnifiedToneManager (重構)
+- `src/tone/fewShotExamples.js` → UnifiedFewShotManager (重構)
+- `src/config/configManager.js` → 統一配置管理器
+- `config/slotTemplateConfig.json` → 集中化配置文件
+- `examples/unified-tone-demo.js` → 統一語氣系統展示
+
+### 🔧 修改檔案
+- `src/controllers/lineController.js` → 移除重複邏輯，整合統一處理
+- `src/slot-template/humanPromptGenerator.js` → 整合 ConfigManager
+- `CLAUDE.md` → 更新架構約束說明
+
+---
+
 ## [v14.0.0] - 2025-07-31 🎯 第一性原則重大架構重構：Regex優先 → OpenAI Fallback
 
 ### ✨ 架構哲學根本變革

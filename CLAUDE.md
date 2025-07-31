@@ -16,15 +16,15 @@
 
 ### ⚡ 智能分流機制（意圖辨識 & 實體提取）
 ```javascript
-// SemanticService 統一架構：OpenAI 優先 → 規則引擎容錯兜底
-const openaiResult = await OpenAI.analyzeIntent(text, userId);
-if (openaiResult.success) {
-  return OpenAI結果;  // 90%+ 案例，準確語義理解，200-500ms
+// SemanticService 統一架構：Regex 優先 → OpenAI Fallback
+const ruleResult = IntentRuleEngine.analyzeIntent(text);
+if (ruleResult.confidence > 0.7) {
+  return Regex結果;  // 70%+ 案例，瞬間響應，<50ms
 } else {
-  return 規則引擎容錯兜底;  // <10% 案例，基礎功能保障，<10ms
+  return await OpenAI.analyzeIntent(text);  // 30% 案例，智能處理，200-500ms
 }
 ```
-🎯 **第一性原則修復**: **意圖辨別**與**實體提取**都統一語義理解路徑，OpenAI負責準確理解，規則引擎負責容錯保底
+🎯 **第一性原則架構**: 確定性操作用確定性方法(Regex)，模糊操作才用智能推理(OpenAI)
 
 ## 課程必要欄位 ##
 1. 課程名稱
