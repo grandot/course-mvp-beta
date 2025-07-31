@@ -217,7 +217,6 @@ class OpenAIService {
 - 查詢詞(什麼課/課表/時間表) = query_schedule
 - 課程 + 具體內容/備註/提醒/成果 (不論時間) = record_course (記錄課程內容)
 - ⚠️ 特殊：內容描述但缺少課程名稱 = query_today_courses_for_content (查詢今天課程來記錄內容)
-- 非課程相關內容 = not_course_related
 
 範例說明：
 - "明天下午3點有數學課" → record_course (新增安排)
@@ -227,7 +226,7 @@ class OpenAIService {
 
 返回JSON：
 {
-  "intent": "record_course|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_today_courses_for_content|not_course_related",
+  "intent": "record_course|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_today_courses_for_content",
   "confidence": 0.0-1.0,
   "entities": {
     "course_name": "課程名稱",

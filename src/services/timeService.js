@@ -48,8 +48,11 @@ class TimeService {
     // 設置時間
     if (timeInfo.hour !== null) {
       userLocalTime.setHours(timeInfo.hour, timeInfo.minute, 0, 0);
+    } else if (dateOffset !== 0) {
+      // 🎯 修復：如果有日期偏移但沒有具體時間，設為日期開始時間（課程內容記錄場景）
+      userLocalTime.setHours(0, 0, 0, 0);
     } else {
-      // 🚨 修復：如果沒有找到時間組件，拋出錯誤而不是返回當前時間
+      // 🚨 只有在既沒有日期偏移也沒有時間組件時才拋出錯誤
       throw new Error('No time component found in the input');
     }
 

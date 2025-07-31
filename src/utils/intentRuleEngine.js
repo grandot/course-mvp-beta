@@ -102,81 +102,7 @@ class IntentRuleEngine {
       return { confidence: 0, priority };
     }
     
-    // 🎯 基礎關鍵詞 Fallback：只處理最核心、最明確的意圖
-    let fallbackConfidence = 0;
-    
-    if (intent_name === 'query_schedule') {
-      // 課表查詢：包含課表、課程、安排等明確詞彙
-      const scheduleKeywords = ['課表', '課程', '安排', '課程安排', '上課時間'];
-      if (scheduleKeywords.some(keyword => text.includes(keyword))) {
-        fallbackConfidence = 0.3; // 低置信度，確保 OpenAI 優先
-        console.log(`[IntentRuleEngine] 基礎 Fallback - 課表查詢: "${text}"`);
-      }
-    } else if (intent_name === 'record_course') {
-      // 記錄課程：包含時間詞彙 + 課程詞彙
-      const timeWords = ['今天', '明天', '後天', '下週', '本週', '這週', '點', '時', '分'];
-      const courseWords = ['課', '班', '上課', '學習'];
-      if (timeWords.some(word => text.includes(word)) && courseWords.some(word => text.includes(word))) {
-        fallbackConfidence = 0.3;
-        console.log(`[IntentRuleEngine] 基礎 Fallback - 記錄課程: "${text}"`);
-      }
-    } else if (intent_name === 'cancel_course') {
-      // 取消課程：包含取消、刪除等明確動作詞
-      const cancelWords = ['取消', '刪除', '移除', '不上了'];
-      if (cancelWords.some(word => text.includes(word))) {
-        fallbackConfidence = 0.3;
-        console.log(`[IntentRuleEngine] 基礎 Fallback - 取消課程: "${text}"`);
-      }
-    } else if (intent_name === 'clear_schedule') {
-      // 🎯 清空課表：高風險操作，需要明確關鍵詞
-      const clearWords = ['清空', '全部刪除', '刪除所有', '清除所有', '重置'];
-      const scheduleWords = ['課表', '課程', '所有'];
-      // 需要同時包含清空動作詞和對象詞
-      if (clearWords.some(word => text.includes(word)) && 
-          (text.includes('課表') || text.includes('課程') || scheduleWords.some(word => text.includes(word)))) {
-        fallbackConfidence = 0.3;
-        console.log(`[IntentRuleEngine] 基礎 Fallback - 清空課表: "${text}"`);
-      }
-    } else if (intent_name === 'create_recurring_course') {
-      // 🎯 重複課程：必須包含重複關鍵詞
-      const recurringWords = ['每週', '每周', '每天', '每日', '每月', '重複', '定期'];
-      if (recurringWords.some(word => text.includes(word))) {
-        fallbackConfidence = 0.4; // 稍高置信度，優先識別重複課程
-        console.log(`[IntentRuleEngine] 基礎 Fallback - 重複課程: "${text}"`);
-      }
-    }
-    
-    if (fallbackConfidence > 0) {
-      console.log(`[IntentRuleEngine] 基礎 Fallback 成功 (${intent_name}): confidence=${fallbackConfidence}`);
-      return { confidence: fallbackConfidence, priority };
-    } else {
-      console.log(`[IntentRuleEngine] 無基礎 Fallback 匹配，交由 OpenAI 處理: "${text}"`);
-      return { confidence: 0, priority };
-    }
-    
-    /*
-    // === 原始正則邏輯（已禁用）===
-    const {
-      keywords = [], exclusions = [], patterns = [], priority = 1,
-      required_keywords = [] // Phase 3: 支援必需關鍵詞
-    } = rule;
-
-    // 檢查排除詞
-    if (exclusions.some((exclusion) => text.includes(exclusion))) {
-      return { confidence: 0, priority };
-    }
-
-    // Phase 3: 檢查必需關鍵詞（至少有一個必需關鍵詞存在）
-    if (required_keywords.length > 0) {
-      const hasAnyRequiredKeyword = required_keywords.some(requiredKeyword => 
-        text.includes(requiredKeyword)
-      );
-      
-      if (!hasAnyRequiredKeyword) {
-        return { confidence: 0, priority };
-      }
-    }
-
+    // 🎯 第一性原則修復：恢復完整正則邏輯 - Regex優先架構
     let matchScore = 0;
     let maxScore = 0;
 
@@ -223,7 +149,6 @@ class IntentRuleEngine {
     }
 
     return { confidence, priority };
-    */
   }
 
   /**

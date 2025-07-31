@@ -300,13 +300,41 @@ class SemanticService {
       this.debugLog(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities);
       this.debugLog(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo);
 
-      // Step 3: 🎯 第一性原則修復 - OpenAI 優先，規則引擎容錯兜底
-      // 剃刀法則：統一語義理解路徑，避免混合架構的複雜性
+      // Step 3: 🎯 第一性原則修復 - Regex 優先，OpenAI Fallback
+      // 剃刀法則：確定性操作用確定性方法，模糊操作才用智能推理
       
-      // 3.1: 優先使用 OpenAI 進行完整語義分析
-      this.debugLog(`🎯 [DEBUG] SemanticService - OpenAI 優先分析 (統一架構): "${text}"`);
+      // 3.1: 檢查規則引擎結果，如果信心度足夠高直接使用
+      if (ruleResult.confidence > 0.7) {
+        this.debugLog(`✅ [DEBUG] SemanticService - 規則引擎高信心度直接使用 (${ruleResult.confidence}): "${text}"`);
+        const ruleEngineResult = {
+          success: true,
+          method: 'rule_engine_primary',
+          intent: finalIntent,
+          confidence: ruleResult.confidence,
+          entities: {
+            course_name: entities.course_name,
+            location: entities.location,
+            teacher: entities.teacher,
+            student: entities.student,
+            confirmation: entities.confirmation,
+            recurrence_pattern: entities.recurrence_pattern,  
+            student_name: entities.student_name,
+            timeInfo: processedTimeInfo,
+          },
+          context,
+          analysis_time: Date.now(),
+        };
+        
+        if (ruleResult.intent !== 'correction_intent') {
+          this.updateConversationContext(userId, finalIntent, entities, ruleEngineResult);
+        }
+        return ruleEngineResult;
+      }
+      
+      // 3.2: 信心度不足，使用 OpenAI 作為 Fallback
+      this.debugLog(`🎯 [DEBUG] SemanticService - 規則引擎信心度不足 (${ruleResult.confidence})，使用 OpenAI Fallback: "${text}"`);
       const openaiResult = await OpenAIService.analyzeIntent(text, userId);
-      this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult);
+      this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI Fallback 結果:`, openaiResult);
 
       // 記錄 token 使用量
       if (openaiResult.usage) {
@@ -324,9 +352,9 @@ class SemanticService {
         });
       }
 
-      // 3.3: ✅ OpenAI 成功 - 返回高質量語義分析結果
+      // 3.3: ✅ OpenAI Fallback 成功 - 返回智能語義分析結果
       if (openaiResult.success) {
-        this.debugLog(`✅ [DEBUG] SemanticService - OpenAI 分析成功，返回高質量結果`);
+        this.debugLog(`✅ [DEBUG] SemanticService - OpenAI Fallback 成功，返回智能分析結果`);
         const { analysis } = openaiResult;
         
         // 🚨 處理非課程管理內容拒絕
@@ -430,9 +458,9 @@ class SemanticService {
         return fallbackResult;
       }
       
-      // 規則引擎作為最後的容錯
+      // 規則引擎作為最終容錯（OpenAI也失敗時）
       if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
-        this.debugLog(`🔧 [DEBUG] SemanticService - 最後使用規則引擎容錯兜底 (置信度: ${ruleResult.confidence})`);
+        this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI失敗，使用規則引擎最終容錯 (置信度: ${ruleResult.confidence})`);
         const ruleEngineResult = {
           success: true,
           method: 'rule_engine_final_fallback',
@@ -692,13 +720,9 @@ class SemanticService {
   static extractStudentName(text) {
     if (!text || typeof text !== 'string') return null;
     
-    // 🚨 暫時禁用學生名稱正則提取 - 強制 OpenAI 接管
-    // 原因：正則邊界條件處理困難，如"小美"需要特定詞彙邊界才能識別
-    console.log(`[SemanticService] 學生名稱正則提取已禁用，將交由 OpenAI 處理: "${text}"`);
-    return null;
+    // 🎯 第一性原則修復：恢復學生名稱正則提取 - Regex優先架構
+    console.log(`[SemanticService] 使用正則提取學生名稱: "${text}"`);
     
-    /*
-    // === 原始正則邏輯（已禁用）===
     // 🎯 第一性原則：學生名稱是獨立實體，應可在任何位置被識別
     // 使用多層次匹配策略，而非僵化的詞彙列表
     
@@ -721,8 +745,8 @@ class SemanticService {
       // 長度檢查：一般中文姓名2-4字
       if (name.length < 2 || name.length > 4) return false;
       
-      // 只包含中文字符
-      if (!/^[一-龯]+$/.test(name)) return false;
+      // 只包含中文字符或英文字符
+      if (!/^[一-龯]+$/.test(name) && !/^[A-Za-z]+$/.test(name)) return false;
       
       return true;
     };
@@ -734,7 +758,8 @@ class SemanticService {
         name: 'sentence_start',
         patterns: [
           /^([小大][一-龯]{1,2})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/,  // 小美+特定詞彙邊界
-          /^([一-龯]{2,3})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/        // 明明+特定詞彙邊界
+          /^([一-龯]{2,3})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|[^一-龯]|$)/,        // 明明+特定詞彙邊界
+          /^([A-Za-z]{2,10})(?=後天|明天|今天|下週|本週|這週|課|的|有|安排|時間|早上|下午|晚上|點|[^A-Za-z]|$)/  // LUMI等英文名
         ]
       },
       // 策略2：句中學生名稱
@@ -743,8 +768,10 @@ class SemanticService {
         patterns: [
           /(?:查詢|看看|檢查)([小大][一-龯]{1,2})([^一-龯]|$)/, // 查詢小美xxx
           /(?:查詢|看看|檢查)([一-龯]{2,3})([^一-龯]|$)/,    // 查詢明明xxx
+          /(?:查詢|看看|檢查)([A-Za-z]{2,10})([^A-Za-z]|$)/, // 查詢LUMI
           /([小大][一-龯]{1,2})(?:的|有什麼|怎麼|狀況)/,      // 小美的xxx, 小美有什麼
-          /([一-龯]{2,3})(?:的|有什麼|怎麼|狀況)/             // 明明的xxx, 明明有什麼
+          /([一-龯]{2,3})(?:的|有什麼|怎麼|狀況)/,             // 明明的xxx, 明明有什麼
+          /([A-Za-z]{2,10})(?:的|有什麼|怎麼|狀況|課表)/       // LUMI的xxx, LUMI課表
         ]
       }
     ];
@@ -772,7 +799,6 @@ class SemanticService {
     // 如果所有策略都失敗，返回 null
     console.log(`👶 [SemanticService] 未識別到有效的學生名稱: "${text}"`);
     return null;
-    */
   }
 
   /**
