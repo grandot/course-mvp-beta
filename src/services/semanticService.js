@@ -328,6 +328,24 @@ class SemanticService {
       if (openaiResult.success) {
         this.debugLog(`✅ [DEBUG] SemanticService - OpenAI 分析成功，返回高質量結果`);
         const { analysis } = openaiResult;
+        
+        // 🚨 處理非課程管理內容拒絕
+        if (analysis.intent === 'not_course_related') {
+          this.debugLog(`🚫 [DEBUG] SemanticService - OpenAI 識別為非課程管理內容，拒絕處理`);
+          return {
+            success: false,
+            method: 'rejected_not_course_related',
+            intent: 'not_course_related',
+            confidence: analysis.confidence,
+            entities: {},
+            context,
+            reasoning: analysis.reasoning,
+            usage: openaiResult.usage,
+            analysis_time: Date.now(),
+            message: '抱歉，我是課程管理助手，只能協助處理課程相關的事務。請告訴我您需要幫助的課程安排、查詢或修改等需求。'
+          };
+        }
+        
         const result = {
           success: true,
           method: 'openai',
@@ -353,14 +371,63 @@ class SemanticService {
         return result;
       }
       
-      // 3.4: ⚠️ OpenAI 失敗 - 檢查規則引擎是否可作為容錯兜底
-      this.debugLog(`⚠️ [DEBUG] SemanticService - OpenAI 失敗: ${openaiResult.error || 'Unknown error'}`);
+      // 3.4: ⚠️ OpenAI 失敗 - 使用超詳細fallback進行最後嘗試  
+      this.debugLog(`⚠️ [DEBUG] SemanticService - OpenAI 失敗，使用超詳細fallback: ${openaiResult.error || 'Unknown error'}`);
       
-      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
-        this.debugLog(`🔧 [DEBUG] SemanticService - 使用規則引擎容錯兜底 (置信度: ${ruleResult.confidence})`);
+      // 🚨 使用增強版fallback分析
+      const fallbackAnalysis = OpenAIService.fallbackIntentAnalysis(text);
+      this.debugLog(`🔧 [DEBUG] SemanticService - Fallback 分析結果:`, fallbackAnalysis);
+      
+      // 檢查fallback是否識別為非課程管理內容
+      if (fallbackAnalysis.intent === 'not_course_related') {
+        this.debugLog(`🚫 [DEBUG] SemanticService - Fallback 識別為非課程管理內容，拒絕處理`);
+        return {
+          success: false,
+          method: 'rejected_not_course_related_fallback',
+          intent: 'not_course_related',
+          confidence: fallbackAnalysis.confidence,
+          entities: {},
+          context,
+          reasoning: fallbackAnalysis.reasoning,
+          analysis_time: Date.now(),
+          message: '抱歉，我是課程管理助手，只能協助處理課程相關的事務。請告訴我您需要幫助的課程安排、查詢或修改等需求。'
+        };
+      }
+      
+      // 如果fallback找到有效意圖，使用fallback結果
+      if (fallbackAnalysis.confidence > 0 && fallbackAnalysis.intent !== 'unknown') {
+        this.debugLog(`🔧 [DEBUG] SemanticService - 使用Fallback結果 (置信度: ${fallbackAnalysis.confidence})`);
         const fallbackResult = {
           success: true,
-          method: 'rule_engine_fallback',
+          method: 'detailed_fallback',
+          intent: fallbackAnalysis.intent,
+          confidence: fallbackAnalysis.confidence,
+          entities: {
+            course_name: fallbackAnalysis.entities.course_name || entities.course_name,
+            location: fallbackAnalysis.entities.location || entities.location,
+            teacher: fallbackAnalysis.entities.teacher || entities.teacher,
+            student: entities.student,
+            confirmation: entities.confirmation,
+            recurrence_pattern: fallbackAnalysis.entities.recurrence_pattern || entities.recurrence_pattern,
+            student_name: entities.student_name,
+            timeInfo: processedTimeInfo,
+          },
+          context,
+          openai_error: openaiResult.error,
+          reasoning: fallbackAnalysis.reasoning,
+          analysis_time: Date.now(),
+        };
+        
+        this.updateConversationContext(userId, fallbackAnalysis.intent, fallbackResult.entities, fallbackResult);
+        return fallbackResult;
+      }
+      
+      // 規則引擎作為最後的容錯
+      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
+        this.debugLog(`🔧 [DEBUG] SemanticService - 最後使用規則引擎容錯兜底 (置信度: ${ruleResult.confidence})`);
+        const ruleEngineResult = {
+          success: true,
+          method: 'rule_engine_final_fallback',
           intent: finalIntent,
           confidence: ruleResult.confidence,
           entities: {
@@ -369,20 +436,19 @@ class SemanticService {
             teacher: entities.teacher,
             student: entities.student,
             confirmation: entities.confirmation,
-            recurrence_pattern: entities.recurrence_pattern,
+            recurrence_pattern: entities.recurrence_pattern,  
             student_name: entities.student_name,
             timeInfo: processedTimeInfo,
           },
           context,
           openai_error: openaiResult.error,
-          usage: openaiResult.usage,
           analysis_time: Date.now(),
         };
         
         if (ruleResult.intent !== 'correction_intent') {
-          this.updateConversationContext(userId, finalIntent, entities, fallbackResult);
+          this.updateConversationContext(userId, finalIntent, entities, ruleEngineResult);
         }
-        return fallbackResult;
+        return ruleEngineResult;
       }
       
       // 3.5: ❌ 所有方法都失敗 - 返回失敗結果
