@@ -212,10 +212,16 @@ class OpenAIService {
 "${text}"
 
 核心判斷原則：
-- 過去時間(昨天/前天/上週) + 課程描述/回饋 = query_schedule
-- 未來時間(明天/後天/下週) + 課程安排 = record_course  
-- 重複模式(每週/每天) + 課程 = create_recurring_course
+- 時間 + 課程名稱 (無具體內容) = record_course (新增課程安排)
+- 重複模式(每週/每天) + 課程 = create_recurring_course  
+- 查詢詞(什麼課/課表/時間表) = query_schedule
+- 課程 + 具體內容/備註/提醒/成果 (不論時間) = record_course (記錄課程內容)
 - 非課程相關內容 = not_course_related
+
+範例說明：
+- "明天下午3點有數學課" → record_course (新增安排)
+- "明天數學課要帶計算機" → record_course (記錄提醒)  
+- "昨天數學課學了分數" → record_course (記錄內容)
 
 返回JSON：
 {
@@ -382,17 +388,23 @@ class OpenAIService {
       recurrence_pattern: null
     };
 
-    // 🚨 優先級1：過去語境檢測（最高優先級 - 防止誤判為新增課程）
-    const pastWords = ['昨天', '前天', '上週', '上個月', '之前', '以前', '已經', '剛才'];
-    const feedbackWords = ['表現', '回饋', '學到', '老師說', '成功', '很好', '不錯', '進步', '棒', '厲害', '造出', '做出', '完成'];
+    // 🚨 優先級1：課程內容記錄檢測（最高優先級 - MVP核心功能）
     const courseWords = ['課', '班'];
+    const contentWords = [
+      // 課程內容/成果
+      '表現', '回饋', '學到', '老師說', '成功', '很好', '不錯', '進步', '棒', '厲害', '造出', '做出', '完成', '成果', '評語',
+      // 課程準備/提醒 (關鍵！)
+      '要帶', '準備', '提醒', '注意', '記得', '別忘', '需要', '要交', '作業', '考試', '測驗',
+      // 課程狀況
+      '專心', '認真', '開心', '困難', '簡單', '有趣', '無聊'
+    ];
     
-    const hasPastContext = pastWords.some(word => text.includes(word));
-    const hasFeedbackContext = feedbackWords.some(word => text.includes(word));
     const hasCourseContent = courseWords.some(word => text.includes(word));
+    const hasSpecificContent = contentWords.some(word => text.includes(word));
     
-    if ((hasPastContext || hasFeedbackContext) && hasCourseContent) {
-      detectedIntent = 'query_schedule';
+    // 課程+具體內容 = 記錄課程內容到學習日曆 (不論時間，MVP核心功能)
+    if (hasCourseContent && hasSpecificContent) {
+      detectedIntent = 'record_course';
       maxConfidence = 0.9;
     }
     
