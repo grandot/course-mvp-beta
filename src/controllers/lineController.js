@@ -458,10 +458,19 @@ class LineController {
         };
       }
 
-      let { intent, entities, confidence } = analysis;
+      let { intent, entities, confidence, content_entities, is_content_related } = analysis;
+
+      // 🎯 修復：確保 content_entities 被正確傳遞到 TaskService
+      if (content_entities) {
+        entities.content_entities = content_entities;
+        entities.is_content_related = is_content_related;
+      }
 
       console.log(`🔧 [DEBUG] 語義分析完成 - Intent: ${intent}, Confidence: ${confidence}`);
       console.log(`🔧 [DEBUG] 提取實體:`, entities);
+      if (content_entities) {
+        console.log(`🔧 [DEBUG] 內容實體:`, content_entities);
+      }
 
       // 🎯 第一性原則：統一使用 SlotTemplateManager 處理課程相關邏輯
       if (intent === 'record_course') {
