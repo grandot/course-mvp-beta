@@ -1,0 +1,24 @@
+userId: test_user_regex_enhancement
+students:
+  小明:
+    courses:
+      - courseName: 數學課
+        schedule:
+          time: '14:00'
+          recurring: once
+        teacher: 張老師
+        frequency: 1
+        lastMentioned: '2025-07-31T12:01:54.372Z'
+    preferences:
+      frequentCourses: []
+      defaultSettings: {}
+recentActivities:
+  - activityId: activity_1753963314372_v3xs6ghjw
+    activityType: create
+    studentName: 小明
+    courseName: 數學課
+    timestamp: '2025-07-31T12:01:54.372Z'
+    metadata:
+      source: user_input
+recurringPatterns: []
+lastUpdated: '2025-07-31T12:01:54.372Z'
