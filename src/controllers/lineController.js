@@ -1315,9 +1315,14 @@ class LineController {
         if (students.length === 1) {
           // 單一學生：顯示學生名稱+課程
           const student = students[0];
-          const buttonText = student.student_name ? 
+          let buttonText = student.student_name ? 
             `${student.student_name}的${courseName}` : 
             courseName;
+          
+          // 確保 label 不超過 20 字符
+          if (buttonText.length > 20) {
+            buttonText = courseName.length > 20 ? courseName.substring(0, 20) : courseName;
+          }
           
           buttons.push({
             type: "action",
@@ -1333,9 +1338,19 @@ class LineController {
           for (const student of students) {
             if (buttonCount >= maxButtons) break;
             
-            const buttonText = student.student_name ? 
+            let buttonText = student.student_name ? 
               `${student.student_name}的${courseName}` : 
               `${courseName}(${student.student_id})`;
+            
+            // 確保 label 不超過 20 字符
+            if (buttonText.length > 20) {
+              // 優先保留課程名稱，如果還是太長就截斷
+              if (courseName.length <= 20) {
+                buttonText = courseName;
+              } else {
+                buttonText = courseName.substring(0, 20);
+              }
+            }
             
             buttons.push({
               type: "action", 

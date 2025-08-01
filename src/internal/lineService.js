@@ -272,11 +272,14 @@ class LineService {
       throw new Error('Button label and text are required');
     }
 
+    // 確保 label 不超過 LINE API 的 20 字符限制
+    const limitedLabel = label.length > 20 ? label.substring(0, 20) : label;
+
     return {
       type: "action",
       action: {
         type: "message",
-        label: label,
+        label: limitedLabel,
         text: text
       }
     };
