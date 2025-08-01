@@ -2367,9 +2367,14 @@ class SemanticService {
 {
   "intent": "必須使用英文標準意圖名稱，從以下選擇：record_course, query_schedule, modify_course, cancel_course, create_recurring_course, modify_recurring_course, stop_recurring_course, clear_schedule, set_reminder, record_lesson_content, record_homework, upload_class_photo, query_course_content, modify_course_content, correction_intent",
   "entities": {
-    "course_name": "課程名稱",
-    "student_name": "學生名稱",
-    "time": "時間信息"
+    "course_name": "課程名稱（欄位名必須是course_name）",
+    "student_name": "學生名稱（欄位名必須是student_name）", 
+    "time": "時間信息（欄位名必須是time）",
+    "location": "地點信息（欄位名必須是location）",
+    "teacher": "老師信息（欄位名必須是teacher）",
+    "student": "學生信息（欄位名必須是student）",
+    "confirmation": "確認信息（欄位名必須是confirmation）",
+    "recurrence_pattern": "重複模式（欄位名必須是recurrence_pattern）"
   },
   "evidence": {
     "temporal_clues": ["時間相關詞語"],
@@ -2396,6 +2401,11 @@ class SemanticService {
 - 純粹描述課程內容 = 新增記錄
 - 包含修改詞彙 = 修改意圖
 - 語氣分析很重要：疑問語氣通常不是新增意圖
+
+🚨 格式約束：
+- intent 必須使用上述列出的英文標準名稱
+- entities 所有欄位名必須使用英文（course_name, student_name, time, location, teacher, student, confirmation, recurrence_pattern）
+- 絕對不可使用中文欄位名如「課程名稱」、「學生姓名」等
 
 請確保返回有效的JSON格式。`;
   }
