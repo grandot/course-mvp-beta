@@ -29,11 +29,17 @@ class SemanticController {
     try {
       console.log(`🎯 [SemanticController] 開始語義分析: "${text}"`);
       
-      // 並行執行 AI 分析和 Regex 分析
-      const [aiAnalysis, regexAnalysis] = await Promise.all([
-        this.performAIAnalysis(text, context),
-        this.performRegexAnalysis(text)
-      ]);
+      // 優先執行快速 Regex 分析
+      const regexAnalysis = this.performRegexAnalysis(text);
+      
+      // 如果 Regex 高信心度匹配，跳過 AI 分析提升性能
+      let aiAnalysis;
+      if (regexAnalysis.success && regexAnalysis.confidence > 0.9) {
+        console.log(`⚡ [SemanticController] Regex 高信心度匹配，跳過 AI 分析`);
+        aiAnalysis = { success: false, intent: 'unknown', entities: {}, confidence: 0 };
+      } else {
+        aiAnalysis = await this.performAIAnalysis(text, context);
+      }
       
       // P1-P5 證據驅動決策
       const decision = this.decideByEvidence(aiAnalysis, regexAnalysis, text);
@@ -85,22 +91,19 @@ class SemanticController {
       const result = await this.enhancedSemanticService.analyzeMessage(text, context.userId || 'unknown', context);
       
       return {
-        success: result.success,
-        intent: result.intent,
+        success: result.success || false,
+        intent: result.intent || 'unknown',
         entities: result.entities || {},
-        confidence: result.confidence || 0.8,
+        confidence: typeof result.confidence === 'number' ? result.confidence : 0,
         method: result.method,
-        // 證據提取
+        // 真實證據提取（基於 EnhancedSemanticService 實際返回）
         evidence: {
           temporal_clues: this.extractTemporalClues(text),
           mood_indicators: this.extractMoodIndicators(text),
           question_markers: this.extractQuestionMarkers(text)
         },
-        reasoning_chain: {
-          step1: "基於 EnhancedSemanticService 分析",
-          step2: `識別意圖: ${result.intent}`,
-          step3: `信心度: ${result.confidence || 0.8}`
-        }
+        // 只有真實推理鏈才計入，不硬編碼假數據
+        reasoning_chain: result.reasoning || {}
       };
     } catch (error) {
       console.warn(`⚠️ [SemanticController] AI 分析失敗:`, error.message);
@@ -124,19 +127,19 @@ class SemanticController {
       const result = IntentRuleEngine.analyzeIntent(text);
       
       return {
-        success: result.success,
-        intent: result.intent,
-        entities: result.entities || {},
-        confidence: result.confidence || 0,
-        // 匹配詳情
+        success: result.intent !== 'unknown' && result.confidence > 0,
+        intent: result.intent || 'unknown',
+        entities: {}, // IntentRuleEngine 不提供 entities
+        confidence: typeof result.confidence === 'number' ? result.confidence : 0,
+        // 真實匹配詳情
         match_details: {
-          triggered_patterns: result.matchedPatterns || [],
+          triggered_patterns: [], // IntentRuleEngine 不提供此信息
           pattern_strength: result.confidence || 0,
           ambiguous_terms: this.detectAmbiguousTerms(text)
         },
         limitations: {
           context_blind: true,
-          temporal_blind: !this.hasTemporalClues(text),
+          temporal_blind: this.extractTemporalClues(text).length === 0,
           mood_blind: true
         }
       };
@@ -209,37 +212,34 @@ class SemanticController {
     }
     decisionPath.push('P2未命中');
 
-    // P3: AI推理鏈完整
-    decisionPath.push('P3檢查-推理鏈質量');
-    const reasoningSteps = ai.reasoning_chain ? Object.keys(ai.reasoning_chain).length - 1 : 0;
-    if (reasoningSteps >= 3 && ai.confidence > 0.8) {
-      decisionPath.push('P3命中-推理鏈完整');
+    // P3: AI 高信心度 (簡化邏輯，不依賴假推理鏈)
+    decisionPath.push('P3檢查-AI高信心度');
+    if (ai.success && ai.confidence > 0.85) {
+      decisionPath.push('P3命中-AI高信心度');
       return {
         intent: ai.intent,
         entities: ai.entities,
         confidence: ai.confidence,
         source: 'ai',
-        reason: 'AI推理鏈完整',
+        reason: 'AI高信心度分析',
         used_rule: 'P3',
         decision_path: decisionPath
       };
     }
     decisionPath.push('P3未命中');
 
-    // P4: Regex強匹配
+    // P4: Regex強匹配 (修復邏輯矛盾)
     decisionPath.push('P4檢查-Regex強匹配');
     if (regex.success && 
-        regex.match_details && 
-        regex.match_details.pattern_strength > 0.9 && 
-        ai.confidence < 0.7 &&
-        regex.match_details.ambiguous_terms.length === 0) {
+        regex.confidence > 0.9 && 
+        this.isValidRegexMatch(text, regex.intent)) {
       decisionPath.push('P4命中-Regex強匹配');
       return {
         intent: regex.intent,
         entities: regex.entities,
         confidence: regex.confidence,
         source: 'regex',
-        reason: 'Regex強匹配且無歧義',
+        reason: 'Regex強匹配無歧義',
         used_rule: 'P4',
         decision_path: decisionPath
       };
@@ -259,10 +259,21 @@ class SemanticController {
     };
   }
 
-  // 輔助方法 - 提取時間線索
+  // 輔助方法 - 提取時間線索 (改進準確性)
   extractTemporalClues(text) {
-    const temporalWords = ['上次', '昨天', '之前', '剛才', '最近', '上週', '上個月'];
-    return temporalWords.filter(word => text.includes(word));
+    const temporalPatterns = [
+      /(?:^|[^不是])上次/,
+      /(?:^|[^不是])昨天/,
+      /(?:^|[^不是])之前/,
+      /(?:^|[^不是])剛才/,
+      /(?:^|[^不是])最近/,
+      /(?:^|[^不是])上週/,
+      /(?:^|[^不是])上個月/,
+      /(?:^|[^不是])前天/
+    ];
+    return temporalPatterns.filter(pattern => pattern.test(text)).map(pattern => 
+      text.match(pattern)?.[0]?.replace(/^[^不是]*/, '') || ''
+    ).filter(match => match);
   }
 
   // 輔助方法 - 提取語氣指標
@@ -277,10 +288,22 @@ class SemanticController {
     return questionWords.filter(word => text.includes(word));
   }
 
-  // 輔助方法 - 檢測歧義詞
+  // 輔助方法 - 檢測真正的歧義詞
   detectAmbiguousTerms(text) {
-    const ambiguousWords = ['課', '那個', '這個'];
+    const ambiguousWords = ['那個', '這個', '東西', '事情'];
     return ambiguousWords.filter(word => text.includes(word));
+  }
+
+  // 輔助方法 - 驗證 Regex 匹配的有效性
+  isValidRegexMatch(text, intent) {
+    // 特殊處理："清空課表" 中的 "課" 不是歧義詞
+    if (intent === 'clear_schedule' && text.includes('清空') && text.includes('課表')) {
+      return true;
+    }
+    
+    // 其他意圖的歧義檢查
+    const realAmbiguousTerms = this.detectAmbiguousTerms(text);
+    return realAmbiguousTerms.length === 0;
   }
 
   // 輔助方法 - 檢查是否含時間線索
