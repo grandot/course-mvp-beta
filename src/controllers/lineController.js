@@ -1088,29 +1088,61 @@ class LineController {
         return { success: false, error: 'Failed to upload image', replyToken };
       }
 
-      // 🎯 簡化：清除任何舊的待處理狀態，專注於當前圖片處理
-      // 根據用戶反饋：內容丟失沒關係，使用簡單的Occam's razor原則
-      ConversationContext.clearContext(userId);
-
-      // 🎯 核心邏輯：生成課程選擇按鈕
-      const quickReply = await this.buildCourseSelectionButtons(userId);
+      // 🎯 檢查是否有相關的對話上下文
+      const conversationContext = ConversationContext.getContext(userId);
+      let autoCourseName = null;
       
-      // 暫存圖片信息，等待用戶選擇課程
-      ConversationContext.setPendingImageContext(userId, {
-        uploadResult,
-        messageId: message.id,
-        timestamp: new Date().toISOString(),
-        expiresAt: Date.now() + 30000 // 30秒超時
-      });
+      if (conversationContext && conversationContext.lastCourse) {
+        autoCourseName = conversationContext.lastCourse;
+        console.log(`🎯 [Image] 從對話上下文自動識別課程: ${autoCourseName}`);
+      }
 
-      // 發送帶Quick Reply的回覆
-      const replyMessage = {
-        type: 'text',
-        text: '📸 收到課堂照片！這是哪門課的照片？',
-        quickReply
-      };
+      if (autoCourseName) {
+        // 🎯 自動處理：直接將圖片關聯到識別的課程
+        console.log(`📸 [Image] 自動關聯圖片到課程: ${autoCourseName}`);
+        
+        // 更新圖片元數據
+        const updatedUploadResult = await this.uploadImageToStorage(imageContent.data, {
+          userId,
+          messageId: message.id,
+          timestamp: new Date().toISOString(),
+          courseId: autoCourseName
+        });
 
-      await lineService.replyMessage(replyToken, replyMessage);
+        // 發送確認消息
+        const confirmMessage = `📸 已將課堂照片自動關聯到「${autoCourseName}」！`;
+        await lineService.replyMessage(replyToken, confirmMessage);
+
+        return {
+          success: true,
+          action: 'auto_course_assignment',
+          replyToken,
+          userId,
+          mediaId: updatedUploadResult.mediaId,
+          courseName: autoCourseName,
+          message: 'Auto course assignment completed'
+        };
+      } else {
+        // 🎯 手動選擇：生成課程選擇按鈕
+        const quickReply = await this.buildCourseSelectionButtons(userId);
+        
+        // 暫存圖片信息，等待用戶選擇課程
+        ConversationContext.setPendingImageContext(userId, {
+          uploadResult,
+          messageId: message.id,
+          timestamp: new Date().toISOString(),
+          expiresAt: Date.now() + 30000 // 30秒超時
+        });
+
+        // 發送帶Quick Reply的回覆
+        const replyMessage = {
+          type: 'text',
+          text: '📸 收到課堂照片！這是哪門課的照片？',
+          quickReply
+        };
+
+        await lineService.replyMessage(replyToken, replyMessage);
+      }
 
       // 🎯 簡化：移除冗余的setTimeout，getPendingImageContext已有自動過期清理機制
 
