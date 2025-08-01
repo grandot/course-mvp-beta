@@ -207,35 +207,23 @@ class OpenAIService {
     }
 
     const prompt = `
-分析用戶輸入的課程管理意圖，特別注意自然語言表達：
+你是一個課程管理助手。分析用戶輸入的課程管理意圖，並返回JSON格式的結果。
 
-"${text}"
+用戶輸入："${text}"
 
-核心判斷原則：
-1. **查詢意圖識別**：
-   - 包含"怎麼樣"、"如何"、"記得"、"不是...嗎"等疑問語氣 = query_schedule 或 query_course_content
-   - 包含"上次"、"最近"、"之前"等模糊時間詞 = query_schedule
-   - 包含"課表"、"時間表"、"有什麼課"等查詢詞 = query_schedule
+分析規則：
+1. 查詢意圖：包含"怎麼樣"、"如何"、"記得"、"不是...嗎"、"課程記錄"、"是什麼"等 = query_schedule 或 query_course_content
+2. 新增課程：時間 + 課程名稱 (無具體內容) = record_course
+3. 重複課程：重複模式(每週/每天) + 課程 = create_recurring_course
+4. 內容記錄：課程 + 具體內容/備註/提醒/成果 = record_course
 
-2. **新增課程識別**：
-   - 時間 + 課程名稱 (無具體內容) = record_course (新增課程安排)
-   - 重複模式(每週/每天) + 課程 = create_recurring_course
+範例：
+- "昨天的課程記錄是什麼" → query_course_content
+- "上次Rumi的課上得怎麼樣" → query_course_content
+- "明天下午3點有數學課" → record_course
 
-3. **內容記錄識別**：
-   - 課程 + 具體內容/備註/提醒/成果 (不論時間) = record_course (記錄課程內容)
-   - 包含"學了"、"教了"、"表現"、"老師說"等 = record_course
+請直接返回JSON格式，不要包含任何中文解釋：
 
-4. **特殊情況**：
-   - 內容描述但缺少課程名稱 = query_today_courses_for_content
-
-範例說明：
-- "上次Rumi的課上得怎麼樣" → query_course_content (查詢課程表現)
-- "我記得7/31不是已經記錄過了嗎" → query_schedule (確認性查詢)
-- "LUMI昨天的科學實驗上得怎麼樣" → query_course_content (查詢課程表現)
-- "明天下午3點有數學課" → record_course (新增安排)
-- "昨天數學課學了分數" → record_course (記錄內容)
-
-返回JSON：
 {
   "intent": "record_course|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_course_content|query_today_courses_for_content",
   "confidence": 0.0-1.0,
@@ -406,19 +394,21 @@ class OpenAIService {
     };
 
     // 🚨 優先級1：查詢意圖檢測（最高優先級 - 處理自然語言查詢）
-    const queryWords = ['怎麼樣', '如何', '記得', '不是', '嗎', '查詢', '看', '顯示', '課表', '時間表', '有什麼', '上次', '最近', '之前'];
-    const questionWords = ['怎麼樣', '如何', '記得', '不是', '嗎'];
+    const queryWords = ['怎麼樣', '如何', '記得', '不是', '嗎', '查詢', '看', '顯示', '課表', '時間表', '有什麼', '上次', '最近', '之前', '課程記錄', '是什麼'];
+    const questionWords = ['怎麼樣', '如何', '記得', '不是', '嗎', '是什麼'];
     const fuzzyTimeWords = ['上次', '最近', '之前', '上一次'];
+    const recordQueryWords = ['課程記錄', '記錄', '內容'];
     
     const hasQueryWords = queryWords.some(word => text.includes(word));
     const hasQuestionWords = questionWords.some(word => text.includes(word));
     const hasFuzzyTime = fuzzyTimeWords.some(word => text.includes(word));
+    const hasRecordQuery = recordQueryWords.some(word => text.includes(word));
     
-    // 查詢課程內容（表現查詢）
-    if (hasQuestionWords && text.includes('課')) {
+    // 查詢課程內容（表現查詢或記錄查詢）
+    if ((hasQuestionWords || hasRecordQuery) && text.includes('課')) {
       detectedIntent = 'query_course_content';
       maxConfidence = 0.9;
-      entities.query_type = '表現查詢';
+      entities.query_type = hasRecordQuery ? '記錄查詢' : '表現查詢';
     }
     // 一般查詢
     else if (hasQueryWords) {
