@@ -360,16 +360,27 @@ class TaskService {
     const DataService = require('./dataService');
     
     try {
-      // 驗證必要參數
-      if (!entities.content_entities) {
+      // 🎯 修復：支持兩種數據結構
+      let contentData = null;
+      
+      if (entities.content_entities) {
+        // 新格式：content_entities
+        contentData = entities.content_entities;
+      } else if (entities.content_to_record) {
+        // 舊格式：content_to_record
+        contentData = {
+          course_name: entities.course_name,
+          lesson_content: entities.content_to_record,
+          raw_text: entities.originalUserInput || entities.content_to_record,
+          content_date: entities.timeInfo?.date || new Date().toISOString().split('T')[0]
+        };
+      } else {
         return {
           success: false,
           error: 'Missing course content entities',
           message: '缺少課程內容信息',
         };
       }
-
-      const { content_entities } = entities;
       
       // 查找或創建關聯的課程
       let courseId = await this.findOrCreateCourse(entities, userId);
@@ -382,13 +393,13 @@ class TaskService {
       }
 
       // 創建課程內容記錄
-      const contentData = {
+      const contentRecord = {
         course_id: courseId,
         student_id: userId,
-        content_date: content_entities.content_date,
-        lesson_content: content_entities.lesson_content,
+        content_date: contentData.content_date,
+        lesson_content: contentData.lesson_content,
         raw_input: {
-          text: content_entities.raw_text,
+          text: contentData.raw_text,
           extraction_metadata: {
             timestamp: new Date().toISOString(),
             method: 'TaskService'
@@ -398,16 +409,16 @@ class TaskService {
         source: 'line_bot'
       };
 
-      const result = await DataService.createCourseContent(contentData);
+      const result = await DataService.createCourseContent(contentRecord);
       
       if (result.success) {
         return {
           success: true,
           action: 'record_lesson_content',
-          message: `✅ 已記錄「${content_entities.course_name || '課程'}」的上課內容`,
+          message: `✅ 已記錄「${contentData.course_name || '課程'}」的上課內容`,
           contentId: result.contentId,
-          course_name: content_entities.course_name,
-          content_summary: content_entities.lesson_content?.title || '課程內容記錄'
+          course_name: contentData.course_name,
+          content_summary: contentData.lesson_content || '課程內容記錄'
         };
       } else {
         return {

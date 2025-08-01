@@ -211,32 +211,39 @@ class OpenAIService {
 
 用戶輸入："${text}"
 
-規則：
-1. 查詢意圖：包含"怎麼樣"、"如何"、"記得"、"不是...嗎"、"課程記錄"、"是什麼"等 = query_schedule 或 query_course_content
-2. 新增課程：時間 + 課程名稱 = record_course
-3. 重複課程：重複模式(每週/每天) + 課程 = create_recurring_course
-4. 內容記錄：課程 + 具體內容 = record_course
+🚨 關鍵判斷規則：
+1. 記錄課程內容 (record_lesson_content)：包含具體內容、表現、成果、學習內容
+   - 關鍵詞：老師說、表現、學了、教了、成功、很好、造出、學會、完成
+   - 範例："老師說昨天LUMI科學實驗課表現很好 都造出火箭了" → record_lesson_content
+   - 範例："昨天數學課學了分數的加減法" → record_lesson_content
 
-範例：
-- "昨天的課程記錄是什麼" → query_course_content
-- "上次Rumi的課上得怎麼樣" → query_course_content
-- "明天下午3點有數學課" → record_course
+2. 新增課程安排 (record_course)：只有時間+課程，無具體內容
+   - 範例："明天下午3點有數學課" → record_course
+   - 範例："下週二鋼琴課" → record_course
 
-⚠️ 重要：只返回JSON格式，不要任何中文解釋、不要markdown代碼塊、不要其他文字！
+3. 查詢課程 (query_schedule/query_course_content)：詢問、查詢、了解
+   - 關鍵詞：怎麼樣、如何、記得、不是...嗎、課程記錄、是什麼
+   - 範例："上次Rumi的課上得怎麼樣" → query_course_content
+
+4. 重複課程 (create_recurring_course)：包含重複模式
+   - 關鍵詞：每週、每天、每月
+   - 範例："LUMI每週三下午三點有科學實驗課" → create_recurring_course
+
+⚠️ 優先級：記錄內容 > 查詢 > 新增安排
 
 {
-  "intent": "record_course|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_course_content|query_today_courses_for_content",
+  "intent": "record_course|record_lesson_content|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_course_content|query_today_courses_for_content",
   "confidence": 0.0-1.0,
   "entities": {
     "course_name": "課程名稱",
-    "student_name": "學生名稱",
+    "student_name": "學生名稱", 
     "time": "時間",
-    "date": "日期", 
+    "date": "日期",
     "location": "地點",
     "teacher": "老師",
     "recurrence_pattern": "重複模式",
     "content_to_record": "要記錄的課程內容",
-    "query_type": "查詢類型(表現/內容/安排等)"
+    "query_type": "查詢類型"
   },
   "reasoning": "判斷理由"
 }
