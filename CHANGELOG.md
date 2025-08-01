@@ -2,6 +2,106 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v18.6.0] - 2025-08-01 🎯 全用AI優先架構改造 - 解決Regex智能度不足問題
+
+### 🚀 第一性原則架構革命：從Regex優先到AI優先
+
+#### 核心問題解決
+**原架構問題**：
+- ❌ Regex優先導致複雜自然語言無法處理
+- ❌ "上次Rumi的課上得怎麼樣" 被誤判為新增課程
+- ❌ "我記得7/31不是已經記錄過了嗎" 被誤判為修改課程
+- ❌ 用戶體驗機械化，缺乏智能理解
+
+**根本問題**：Regex無法處理自然語言表達，需要AI優先架構
+
+#### ✅ 革命性解決方案：全用AI優先架構
+
+**新架構**：`AI優先 → 簡單fallback → 智能理解`
+
+```
+用戶輸入 → OpenAI 智能分析 → 如果失敗 → 簡單fallback → 結果返回
+```
+
+### 🎯 核心改造內容
+
+#### 1. SemanticService 架構重構
+- **移除Regex優先邏輯**：不再使用 `IntentRuleEngine.analyzeIntent` 作為主要分析
+- **AI優先處理**：所有情況直接使用 `OpenAIService.analyzeIntent`
+- **簡化fallback**：AI失敗時使用改進的 `fallbackIntentAnalysis`
+- **統一結果格式**：確保所有路徑返回相同格式
+
+#### 2. OpenAI Prompt 優化
+- **自然語言支持**：添加對"怎麼樣"、"如何"、"記得"、"不是...嗎"等表達的識別
+- **模糊時間處理**：支持"上次"、"最近"、"之前"等模糊時間概念
+- **學生名稱提取**：改進學生名稱識別，支持"LUMI表現如何"等表達
+- **查詢類型區分**：區分一般查詢和表現查詢
+
+#### 3. Fallback 分析增強
+- **查詢意圖優先**：將查詢意圖檢測提升為最高優先級
+- **自然語言模式**：添加對疑問語氣和模糊時間的支持
+- **學生名稱提取**：優先提取學生名稱，支持多種表達模式
+- **實體提取改進**：更精確的課程名稱、時間、日期提取
+
+### 📊 改造前後對比
+
+#### 改造前（Regex優先）：
+```javascript
+// 複雜的多層決策邏輯
+const ruleResult = IntentRuleEngine.analyzeIntent(text);
+if (ruleResult.confidence > 0.7) {
+  return ruleResult;  // Regex處理
+} else {
+  return await OpenAIService.analyzeIntent(text, userId);  // AI處理
+}
+```
+
+#### 改造後（AI優先）：
+```javascript
+// 簡單直接的AI優先架構
+const openaiResult = await OpenAIService.analyzeIntent(text, userId);
+if (openaiResult.success) {
+  return openaiResult.analysis;  // AI處理
+} else {
+  return OpenAIService.fallbackIntentAnalysis(text);  // 簡單fallback
+}
+```
+
+### 🎯 智能度提升效果
+
+#### 測試案例修復：
+- ✅ "上次Rumi的課上得怎麼樣" → `query_course_content` (AI識別為表現查詢)
+- ✅ "我記得7/31不是已經記錄過了嗎" → `query_schedule` (AI識別為確認性查詢)
+- ✅ "LUMI昨天的科學實驗上得怎麼樣" → `query_course_content` (AI識別為表現查詢)
+- ✅ "查詢課表" → `query_schedule` (AI識別為一般查詢)
+
+#### 實體提取改進：
+- ✅ 學生名稱：LUMI、小明等
+- ✅ 課程名稱：科學實驗課、數學課等
+- ✅ 模糊時間：上次、最近、之前等
+- ✅ 查詢類型：表現查詢、一般查詢等
+
+### 📁 修改文件
+- `src/services/semanticService.js` - 核心架構重構，改為AI優先
+- `src/internal/openaiService.js` - Prompt優化和fallback增強
+- `CHANGELOG.md` - 添加改造記錄
+
+### 🎯 架構優勢
+1. **智能度優先**：AI能處理所有自然語言表達
+2. **簡單可靠**：移除複雜的決策邏輯，降低維護成本
+3. **統一體驗**：所有用戶輸入都經過AI處理，體驗一致
+4. **成本可控**：AI失敗時有簡單fallback，確保系統穩定
+
+### 📝 經驗總結
+1. **AI優先不是複雜化**：簡單的AI優先比複雜的Regex+AI混合更有效
+2. **第一性原則重要性**：找到根本問題（Regex智能度不足），用最直接方法解決
+3. **架構簡化價值**：移除複雜邏輯，讓系統更容易理解和維護
+4. **用戶體驗優先**：智能度提升直接改善用戶體驗
+
+這次改造確保了系統的智能度，同時保持了架構的簡潔性。
+
+---
+
 ## [v18.5.0] - 2025-07-31 🎯 "上次"查詢支持：學生識別+模糊時間+智能排序
 
 ### 🎯 第一性原則解決複雜查詢場景

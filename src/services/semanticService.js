@@ -213,7 +213,7 @@ class SemanticService {
   }
 
   /**
-   * 分析用戶訊息的整體語義 (原有方法，保持向後兼容)
+   * 分析用戶訊息的整體語義 - 全用AI優先架構
    * @param {string} text - 用戶輸入文本
    * @param {string} userId - 用戶ID
    * @param {Object} context - 上下文信息
@@ -236,7 +236,6 @@ class SemanticService {
       const pendingContext = ConversationContext.getPendingContext(userId);
 
       // Step 0: 🎯 檢測純時間輸入 - 拒絕處理歧義性極高的極端情況
-      // 僅在沒有等待補充的上下文時執行
       if (!pendingContext) {
         const pureTimeInputCheck = SemanticService.detectPureTimeInput(text);
         if (pureTimeInputCheck.isPureTimeInput) {
@@ -254,116 +253,12 @@ class SemanticService {
         }
       }
 
-      // Step 1: 先嘗試規則引擎分析獲取意圖上下文
-      this.debugLog(`🔧 [DEBUG] SemanticService - 開始規則引擎分析`);
-      let ruleResult = IntentRuleEngine.analyzeIntent(text);
-      this.debugLog(`🔧 [DEBUG] SemanticService - 規則引擎結果:`, ruleResult);
+      // 🎯 第一性原則：全用AI優先架構
+      this.debugLog(`🎯 [DEBUG] SemanticService - 使用全AI優先架構分析: "${text}"`);
       
-      // Step 1.5: 🔧 處理糾錯意圖 - 需要會話上下文
-      let finalIntent = ruleResult.intent;
-      let entities = null;
-      let processedTimeInfo = null;
-      
-      if (ruleResult.intent === 'correction_intent') {
-        this.debugLog(`🔧 [DEBUG] SemanticService - 檢測到糾錯意圖，嘗試從會話上下文解析`);
-        
-        // 檢查是否有有效的會話上下文
-        const hasContext = ConversationContext.hasValidContext(userId);
-        if (hasContext) {
-          // 從上下文解析實體
-          entities = ConversationContext.resolveEntitiesFromContext(userId, text);
-          // 處理當前輸入的時間信息（糾錯的新時間）
-          processedTimeInfo = await this.processTimeInfo(text);
-          
-          // 將糾錯意圖映射為修改課程意圖進行後續處理
-          finalIntent = 'modify_course';
-          ruleResult.intent = 'modify_course';
-          ruleResult.confidence = Math.min(ruleResult.confidence + 0.1, 1.0); // 提高信心度
-          
-          console.log(`🔧 [DEBUG] SemanticService - 糾錯意圖處理完成，映射為: ${finalIntent}, 課程: ${entities?.course_name}`); // [REMOVE_ON_PROD]
-        } else {
-          console.log(`🔧 [DEBUG] SemanticService - 糾錯意圖但無會話上下文，回退到普通處理`); // [REMOVE_ON_PROD]
-          // 沒有上下文，使用普通流程處理
-          entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
-          processedTimeInfo = await this.processTimeInfo(text);
-          
-          // 保持原始意圖，但降低信心度
-          ruleResult.confidence = Math.max(ruleResult.confidence - 0.3, 0.1);
-        }
-      } else {
-        // Step 2: 💡 利用意圖上下文進行語義理解的實體提取（非糾錯意圖）
-        this.debugLog(`🔧 [DEBUG] SemanticService - 開始實體提取`);
-        
-        // 🎯 性能優化：規則引擎高信心度時優先使用規則提取，避免OpenAI調用
-        if (ruleResult.confidence >= 0.8) {
-          this.debugLog(`🚀 [DEBUG] SemanticService - 規則引擎高信心度 (${ruleResult.confidence})，使用純規則提取`);
-          entities = await this.extractEntitiesWithRegex(text, userId, ruleResult.intent);
-        } else {
-          this.debugLog(`🔧 [DEBUG] SemanticService - 規則引擎信心度一般 (${ruleResult.confidence})，使用OpenAI增強實體提取`);
-          entities = await this.extractCourseEntities(text, userId, ruleResult.intent);
-        }
-        
-        processedTimeInfo = await this.processTimeInfo(text);
-      }
-      
-      this.debugLog(`🔧 [DEBUG] SemanticService - 實體提取結果:`, entities);
-      this.debugLog(`🔧 [DEBUG] SemanticService - 時間處理結果:`, processedTimeInfo);
-
-      // Step 3: 🎯 第一性原則修復 - Regex 優先，OpenAI Fallback
-      // 剃刀法則：確定性操作用確定性方法，模糊操作才用智能推理
-      
-      // 3.1: 檢查規則引擎結果，如果信心度足夠高直接使用
-      if (ruleResult.confidence > 0.7) {
-        this.debugLog(`✅ [DEBUG] SemanticService - 規則引擎高信心度直接使用 (${ruleResult.confidence}): "${text}"`);
-        const ruleEngineResult = {
-          success: true,
-          method: 'rule_engine_primary',
-          intent: finalIntent,
-          confidence: ruleResult.confidence,
-          entities: {
-            course_name: entities.course_name,
-            location: entities.location,
-            teacher: entities.teacher,
-            student: entities.student,
-            confirmation: entities.confirmation,
-            recurrence_pattern: entities.recurrence_pattern,  
-            student_name: entities.student_name,
-            timeInfo: processedTimeInfo,
-            originalUserInput: text, // 🎯 添加原始用戶輸入，用於"上次"等模糊時間概念處理
-          },
-          context,
-          analysis_time: Date.now(),
-        };
-        
-        // 🎯 第一性原則修復: 確保內容相關意圖也提取 content_entities
-        const contentIntents = [
-          'record_lesson_content',
-          'record_homework', 
-          'upload_class_photo',
-          'query_course_content',
-          'modify_course_content'
-        ];
-        if (contentIntents.includes(finalIntent)) {
-          this.debugLog(`🔧 [DEBUG] SemanticService - 規則引擎路徑添加內容實體提取: ${finalIntent}`);
-          const contentEntities = await this.extractCourseContentEntities(
-            text, 
-            userId, 
-            finalIntent
-          );
-          ruleEngineResult.content_entities = contentEntities;
-          ruleEngineResult.is_content_related = true;
-        }
-        
-        if (ruleResult.intent !== 'correction_intent') {
-          this.updateConversationContext(userId, finalIntent, entities, ruleEngineResult);
-        }
-        return ruleEngineResult;
-      }
-      
-      // 3.2: 信心度不足，使用 OpenAI 作為 Fallback
-      this.debugLog(`🎯 [DEBUG] SemanticService - 規則引擎信心度不足 (${ruleResult.confidence})，使用 OpenAI Fallback: "${text}"`);
+      // Step 1: 直接使用 OpenAI 進行語義分析
       const openaiResult = await OpenAIService.analyzeIntent(text, userId);
-      this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI Fallback 結果:`, openaiResult);
+      this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI 分析結果:`, openaiResult);
 
       // 記錄 token 使用量
       if (openaiResult.usage) {
@@ -381,9 +276,8 @@ class SemanticService {
         });
       }
 
-      // 3.3: ✅ OpenAI Fallback 成功 - 返回智能語義分析結果
+      // Step 2: 處理 OpenAI 分析結果
       if (openaiResult.success) {
-        this.debugLog(`✅ [DEBUG] SemanticService - OpenAI Fallback 成功，返回智能分析結果`);
         const { analysis } = openaiResult;
         
         // 🚨 處理非課程管理內容拒絕
@@ -402,44 +296,64 @@ class SemanticService {
             message: '抱歉，我是課程管理助手，只能協助處理課程相關的事務。請告訴我您需要幫助的課程安排、查詢或修改等需求。'
           };
         }
-        
-        // 🎯 第一性原則：用正則過濾無效課程名稱（各司其職）
-        let filteredCourseName = analysis.entities.course_name;
-        const invalidCourseNames = ['上課', '課', '課程', '上學', '學習', '讀書'];
-        if (filteredCourseName && invalidCourseNames.includes(filteredCourseName)) {
-          this.debugLog(`🔧 [DEBUG] Fallback過濾無效課程名稱: "${filteredCourseName}" → null`);
-          filteredCourseName = null;
-        }
 
+        // 🎯 處理時間信息
+        const processedTimeInfo = await this.processTimeInfo(text);
+        
+        // 🎯 構建標準化結果
         const result = {
           success: true,
-          method: 'openai',
+          method: 'openai_primary',
           intent: analysis.intent,
           confidence: analysis.confidence,
           entities: {
-            course_name: filteredCourseName,
+            course_name: analysis.entities.course_name,
             location: analysis.entities.location,
             teacher: analysis.entities.teacher,
-            student: analysis.entities.student || entities.student,
-            confirmation: entities.confirmation,
-            recurrence_pattern: analysis.entities.recurrence_pattern, // 🎯 使用 OpenAI 提取的重複模式
-            student_name: analysis.entities.student_name || entities.student_name,
+            student: analysis.entities.student,
+            student_name: analysis.entities.student_name,
+            recurrence_pattern: analysis.entities.recurrence_pattern,
+            content_to_record: analysis.entities.content_to_record,
             timeInfo: processedTimeInfo,
+            originalUserInput: text, // 🎯 保留原始輸入用於後續處理
           },
           context,
           reasoning: analysis.reasoning,
           usage: openaiResult.usage,
           analysis_time: Date.now(),
         };
+
+        // 🎯 處理內容相關意圖的特殊實體提取
+        const contentIntents = [
+          'record_lesson_content',
+          'record_homework', 
+          'upload_class_photo',
+          'query_course_content',
+          'modify_course_content'
+        ];
         
+        if (contentIntents.includes(analysis.intent)) {
+          this.debugLog(`🔧 [DEBUG] SemanticService - 內容相關意圖，提取內容實體: ${analysis.intent}`);
+          const contentEntities = await this.extractCourseContentEntities(
+            text, 
+            userId, 
+            analysis.intent
+          );
+          result.content_entities = contentEntities;
+          result.is_content_related = true;
+        }
+
+        // 🎯 更新會話上下文
         this.updateConversationContext(userId, analysis.intent, result.entities, result);
+        
+        this.debugLog(`✅ [DEBUG] SemanticService - AI分析成功: ${analysis.intent} (${analysis.confidence})`);
         return result;
       }
+
+      // Step 3: OpenAI 失敗時的簡單 fallback
+      this.debugLog(`⚠️ [DEBUG] SemanticService - OpenAI 失敗，使用簡單 fallback`);
       
-      // 3.4: ⚠️ OpenAI 失敗 - 使用超詳細fallback進行最後嘗試  
-      this.debugLog(`⚠️ [DEBUG] SemanticService - OpenAI 失敗，使用超詳細fallback: ${openaiResult.error || 'Unknown error'}`);
-      
-      // 🚨 使用增強版fallback分析
+      // 🎯 使用簡單的 fallback 分析
       const fallbackAnalysis = OpenAIService.fallbackIntentAnalysis(text);
       this.debugLog(`🔧 [DEBUG] SemanticService - Fallback 分析結果:`, fallbackAnalysis);
       
@@ -462,20 +376,22 @@ class SemanticService {
       // 如果fallback找到有效意圖，使用fallback結果
       if (fallbackAnalysis.confidence > 0 && fallbackAnalysis.intent !== 'unknown') {
         this.debugLog(`🔧 [DEBUG] SemanticService - 使用Fallback結果 (置信度: ${fallbackAnalysis.confidence})`);
+        const processedTimeInfo = await this.processTimeInfo(text);
+        
         const fallbackResult = {
           success: true,
-          method: 'detailed_fallback',
+          method: 'simple_fallback',
           intent: fallbackAnalysis.intent,
           confidence: fallbackAnalysis.confidence,
           entities: {
-            course_name: fallbackAnalysis.entities.course_name || entities.course_name,
-            location: fallbackAnalysis.entities.location || entities.location,
-            teacher: fallbackAnalysis.entities.teacher || entities.teacher,
-            student: entities.student,
-            confirmation: entities.confirmation,
-            recurrence_pattern: fallbackAnalysis.entities.recurrence_pattern || entities.recurrence_pattern,
-            student_name: entities.student_name,
+            course_name: fallbackAnalysis.entities.course_name,
+            location: fallbackAnalysis.entities.location,
+            teacher: fallbackAnalysis.entities.teacher,
+            student: fallbackAnalysis.entities.student,
+            student_name: fallbackAnalysis.entities.student_name,
+            recurrence_pattern: fallbackAnalysis.entities.recurrence_pattern,
             timeInfo: processedTimeInfo,
+            originalUserInput: text,
           },
           context,
           openai_error: openaiResult.error,
@@ -487,66 +403,33 @@ class SemanticService {
         return fallbackResult;
       }
       
-      // 規則引擎作為最終容錯（OpenAI也失敗時）
-      if (ruleResult.confidence > 0 && finalIntent !== 'unknown') {
-        this.debugLog(`🔧 [DEBUG] SemanticService - OpenAI失敗，使用規則引擎最終容錯 (置信度: ${ruleResult.confidence})`);
-        const ruleEngineResult = {
-          success: true,
-          method: 'rule_engine_final_fallback',
-          intent: finalIntent,
-          confidence: ruleResult.confidence,
-          entities: {
-            course_name: entities.course_name,
-            location: entities.location,
-            teacher: entities.teacher,
-            student: entities.student,
-            confirmation: entities.confirmation,
-            recurrence_pattern: entities.recurrence_pattern,  
-            student_name: entities.student_name,
-            timeInfo: processedTimeInfo,
-          },
-          context,
-          openai_error: openaiResult.error,
-          analysis_time: Date.now(),
-        };
-        
-        if (ruleResult.intent !== 'correction_intent') {
-          this.updateConversationContext(userId, finalIntent, entities, ruleEngineResult);
-        }
-        return ruleEngineResult;
-      }
-      
-      // 3.5: ❌ 所有方法都失敗 - 返回失敗結果
-      this.debugLog(`❌ [DEBUG] SemanticService - OpenAI 和規則引擎都無法處理`);
+      // Step 4: ❌ 所有方法都失敗 - 返回失敗結果
+      this.debugLog(`❌ [DEBUG] SemanticService - AI 和 fallback 都無法處理`);
       return {
         success: false,
-        method: 'all_failed',
+        method: 'all_methods_failed',
         intent: 'unknown',
         confidence: 0,
-        entities: null,
+        entities: {},
         context,
         openai_error: openaiResult.error,
-        rule_confidence: ruleResult.confidence,
+        fallback_error: 'Fallback analysis failed',
         analysis_time: Date.now(),
-        message: '無法理解您的輸入，請提供更清楚的描述'
+        message: '抱歉，我無法理解您的請求。請嘗試用更明確的方式描述您的課程需求，例如："查詢課表"、"新增數學課"、"昨天數學課學了什麼"等。'
       };
+
     } catch (error) {
-      // 所有方法失敗，返回錯誤信息
+      console.error(`❌ [SemanticService] 分析失敗:`, error.message);
       return {
         success: false,
-        error: error.message,
-        method: 'error',
+        method: 'exception',
         intent: 'unknown',
-        confidence: 0.0,
-        entities: {
-          course_name: null,
-          location: null,
-          teacher: null,
-          confirmation: null,
-          timeInfo: null,
-        },
+        confidence: 0,
+        entities: {},
         context,
+        error: error.message,
         analysis_time: Date.now(),
+        message: '系統發生錯誤，請稍後再試。'
       };
     }
   }
@@ -816,11 +699,14 @@ class SemanticService {
           // 從原文本中移除學生名稱，得到剩餘文本
           const remainingText = text.replace(studentName, '').replace(/^[的\s]+|[的\s]+$/g, '').trim();
           
-          console.log(`👶 [SemanticService] 使用策略 "${strategy.name}" 識別到學生: ${studentName}`);
+          // 🎯 第一性原則修復：學生名稱大小寫標準化 - 統一轉為大寫
+          const normalizedStudentName = studentName.toUpperCase();
+          
+          console.log(`👶 [SemanticService] 使用策略 "${strategy.name}" 識別到學生: ${studentName} → ${normalizedStudentName}`);
           console.log(`👶 [SemanticService] 剩餘文本: "${remainingText}"`);
           
           return {
-            name: studentName,
+            name: normalizedStudentName,
             remainingText: remainingText || '課表' // 如果剩餘文本為空，默認為查詢課表
           };
         }
