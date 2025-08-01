@@ -6,15 +6,14 @@
  * Phase 6: 增加會話上下文支持
  */
 const crypto = require('crypto');
-const SemanticService = require('../services/semanticService');
-const SemanticController = require('../services/semanticController');
+const { getEnhancedSemanticNormalizer } = require('../services/enhancedSemanticNormalizer');
 const TaskService = require('../services/taskService');
 const TimeService = require('../services/timeService');
 const lineService = require('../services/lineService');
 const ConversationContext = require('../utils/conversationContext');
 
-// 創建 SemanticService 實例
-const semanticService = new SemanticService();
+// 獲取 Enhanced Semantic Normalizer 實例 (統一語義處理入口)
+const semanticNormalizer = getEnhancedSemanticNormalizer();
 
 class LineController {
   // 靜態初始化TaskService實例
@@ -413,37 +412,26 @@ class LineController {
       // 詳細調試信息
       console.log(`🔧 [DEBUG] ENABLE_SLOT_TEMPLATE 環境變數:`, process.env.ENABLE_SLOT_TEMPLATE);
       console.log(`🔧 [DEBUG] useSlotTemplate:`, useSlotTemplate);
-      console.log(`🔧 [DEBUG] semanticService.analyzeMessageWithSlotTemplate 存在:`, !!semanticService.analyzeMessageWithSlotTemplate);
-      console.log(`🔧 [DEBUG] 條件檢查: useSlotTemplate=${useSlotTemplate} && method存在=${!!semanticService.analyzeMessageWithSlotTemplate}`);
+      console.log(`🔧 [DEBUG] 使用統一語義處理器分析`);
       
       let analysis;
-      if (useSlotTemplate && semanticService.analyzeMessageWithSlotTemplate) {
-        console.log(`🔧 [DEBUG] 使用 Slot Template System 分析訊息`);
-        analysis = await semanticService.analyzeMessageWithSlotTemplate(
-          userMessage, 
-          userId, 
-          conversationContext || {},
-          { enableSlotTemplate: true, useEnhancedExtraction: true }
-        );
-      } else {
-        console.log(`🔧 [DEBUG] 使用新語意控制器分析`);
-        const controllerResult = await SemanticController.analyze(userMessage, conversationContext || {});
-        
-        // 🎯 適配新語意控制器返回格式到舊格式
-        analysis = {
-          success: true,
-          intent: controllerResult.final_intent,
-          confidence: controllerResult.confidence,
-          entities: controllerResult.entities || {},
-          method: `semantic_controller_${controllerResult.source}`,
-          reasoning: controllerResult.reason,
-          used_rule: controllerResult.used_rule,
-          execution_time: controllerResult.execution_time,
-          debug_info: controllerResult.debug_info
-        };
-        
-        console.log(`🎯 [DEBUG] 語意控制器結果 - Rule: ${controllerResult.used_rule}, Source: ${controllerResult.source}, Intent: ${controllerResult.final_intent}`);
-      }
+      // 🎯 使用統一的 Enhanced Semantic Normalizer
+      const semanticResult = semanticNormalizer.normalizeIntent(userMessage, conversationContext || {});
+      
+      // 🎯 適配統一語義處理器返回格式到現有格式
+      analysis = {
+        success: true,
+        intent: semanticResult.mapped_intent,
+        confidence: semanticResult.confidence || 0.9,
+        entities: semanticResult.entities || {},
+        method: `enhanced_semantic_normalizer`,
+        reasoning: semanticResult.reasoning || '統一語義處理',
+        used_rule: semanticResult.source || 'enhanced_normalizer',
+        execution_time: semanticResult.processing_time || 0,
+        debug_info: semanticResult.debug_info || {}
+      };
+      
+      console.log(`🎯 [DEBUG] 統一語義處理結果 - Source: ${semanticResult.source}, Intent: ${semanticResult.mapped_intent}`);
 
       if (!analysis.success) {
         // 🎯 處理純時間輸入拒絕情況
@@ -492,8 +480,8 @@ class LineController {
       if (intent === 'record_course') {
         console.log(`🔧 [DEBUG] 使用 SlotTemplateManager 處理課程邏輯`);
         
-        // 檢查 SlotTemplate 系統是否可用
-        if (semanticService.slotTemplateEnabled) {
+        // 🚨 Slot Template 系統暫時禁用，使用直接處理方式
+        if (false) { // semanticService.slotTemplateEnabled
           try {
             // 使用增強的 SlotTemplate 處理
             const semanticResultWithText = {
@@ -504,10 +492,10 @@ class LineController {
               context: conversationContext
             };
             
-            const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
-              userId, 
-              semanticResultWithText
-            );
+            // const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
+            //   userId, 
+            //   semanticResultWithText
+            // );
             
             console.log(`🔧 [DEBUG] SlotTemplate 處理結果:`, slotResult);
             

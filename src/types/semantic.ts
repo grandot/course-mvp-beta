@@ -119,3 +119,133 @@ export interface ISemanticService {
 export interface ISemanticController {
   route(userText: string, conversationHistory?: Message[], config?: Partial<SemanticControllerConfig>): Promise<SemanticDecisionResult>;
 }
+
+// === 語意映射重構相關類型 ===
+
+/**
+ * Intent 映射結果
+ */
+export interface IntentMappingResult {
+  mapped_intent: string;
+  original_intent: string;
+  mapping_source: 'direct' | 'fallback' | 'none';
+  confidence: number;
+}
+
+/**
+ * Entity 映射結果
+ */
+export interface EntityMappingResult {
+  mapped_entities: Record<string, any>;
+  original_entities: Record<string, any>;
+  key_mappings: Record<string, string>;
+  value_mappings: Record<string, any>;
+  unmapped_keys: string[];
+}
+
+/**
+ * 標準化結果
+ */
+export interface NormalizationResult {
+  intent: IntentMappingResult;
+  entities: EntityMappingResult;
+  success: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * 映射配置介面
+ */
+export interface MappingConfig {
+  strict_mode: boolean;           // 嚴格模式：未映射項目報錯
+  fallback_enabled: boolean;      // 啟用fallback模式
+  log_unmapped: boolean;          // 記錄未映射項目
+  validation_enabled: boolean;    // 啟用格式驗證
+}
+
+/**
+ * 語意標準化器介面
+ */
+export interface ISemanticNormalizer {
+  normalizeIntent(intent: string, config?: Partial<MappingConfig>): IntentMappingResult;
+  normalizeEntities(entities: Record<string, any>, config?: Partial<MappingConfig>): EntityMappingResult;
+  normalize(result: AIAnalysisResult | RegexAnalysisResult, config?: Partial<MappingConfig>): NormalizationResult;
+}
+
+/**
+ * 統一語意網關介面
+ */
+export interface IUnifiedSemanticGateway {
+  analyze(text: string, userId: string, context?: any): Promise<SemanticDecisionResult>;
+  checkSmartQuery(text: string, userId: string): Promise<SemanticDecisionResult | null>;
+  callUnifiedOpenAI(text: string, context?: any): Promise<AIAnalysisResult>;
+  callRegex(text: string): Promise<RegexAnalysisResult>;
+}
+
+/**
+ * 標準Intent枚舉（系統內部使用）
+ */
+export enum StandardIntent {
+  RECORD_COURSE = 'record_course',
+  CREATE_RECURRING_COURSE = 'create_recurring_course',
+  MODIFY_COURSE = 'modify_course',
+  MODIFY_RECURRING_COURSE = 'modify_recurring_course',
+  CANCEL_COURSE = 'cancel_course',
+  STOP_RECURRING_COURSE = 'stop_recurring_course',
+  QUERY_SCHEDULE = 'query_schedule',
+  CLEAR_SCHEDULE = 'clear_schedule',
+  QUERY_TODAY_COURSES_FOR_CONTENT = 'query_today_courses_for_content',
+  SET_REMINDER = 'set_reminder',
+  RECORD_LESSON_CONTENT = 'record_lesson_content',
+  RECORD_HOMEWORK = 'record_homework',
+  UPLOAD_CLASS_PHOTO = 'upload_class_photo',
+  QUERY_COURSE_CONTENT = 'query_course_content',
+  MODIFY_COURSE_CONTENT = 'modify_course_content',
+  CORRECTION_INTENT = 'correction_intent',
+  UNKNOWN = 'unknown'
+}
+
+/**
+ * 標準Entity鍵名枚舉
+ */
+export enum StandardEntityKey {
+  COURSE_NAME = 'course_name',
+  STUDENT_NAME = 'student_name',
+  TEACHER = 'teacher', 
+  LOCATION = 'location',
+  DATE = 'date',
+  TIME = 'time',
+  START_TIME = 'start_time',
+  END_TIME = 'end_time',
+  TIME_INFO = 'timeInfo',
+  CONTENT = 'content',
+  HOMEWORK = 'homework',
+  PHOTOS = 'photos',
+  PERFORMANCE = 'performance',
+  TEACHER_FEEDBACK = 'teacher_feedback',
+  CONFIRMATION = 'confirmation',
+  ORIGINAL_USER_INPUT = 'originalUserInput',
+  RAW_TEXT = 'raw_text',
+  DATE_PHRASE = 'date_phrase',
+  TIME_PHRASE = 'time_phrase',
+  CONTENT_ENTITIES = 'content_entities'
+}
+
+/**
+ * 標準化的語意分析結果（統一格式）
+ */
+export interface StandardSemanticResult {
+  intent: StandardIntent;
+  entities: Record<StandardEntityKey, any>;
+  confidence: number;
+  source: 'ai' | 'regex' | 'fallback';
+  normalization_applied: boolean;
+  original_result?: AIAnalysisResult | RegexAnalysisResult;
+  debug_info?: {
+    original_intent: string;
+    mapping_source: string;
+    normalizer_version: string;
+    processing_time_ms: number;
+  };
+}

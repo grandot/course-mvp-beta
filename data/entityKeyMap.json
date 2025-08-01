@@ -1,0 +1,150 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "description": "Entity 鍵名中英文映射表，用於將 OpenAI 返回的中文 entity 鍵名標準化為系統內部使用的英文鍵名",
+    "created": "2025-08-01",
+    "total_mappings": 35
+  },
+  
+  "_standard_entity_keys": [
+    "course_name",
+    "student_name", 
+    "teacher",
+    "location",
+    "date",
+    "time",
+    "start_time",
+    "end_time",
+    "timeInfo",
+    "content",
+    "homework",
+    "photos",
+    "performance", 
+    "teacher_feedback",
+    "confirmation",
+    "originalUserInput",
+    "raw_text",
+    "date_phrase",
+    "time_phrase",
+    "content_entities"
+  ],
+
+  "entity_key_mappings": {
+    "課程名稱": "course_name",
+    "課程": "course_name",
+    "科目": "course_name",
+    "課名": "course_name",
+    "課": "course_name",
+    
+    "學生姓名": "student_name",
+    "學生名字": "student_name", 
+    "學生": "student_name",
+    "姓名": "student_name",
+    "名字": "student_name",
+    "小朋友": "student_name",
+    "孩子": "student_name",
+    
+    "老師": "teacher",
+    "教師": "teacher",
+    "講師": "teacher",
+    "師父": "teacher",
+    "指導老師": "teacher",
+    
+    "地點": "location",
+    "位置": "location",
+    "場所": "location",
+    "教室": "location",
+    "地址": "location",
+    "場地": "location",
+    
+    "日期": "date",
+    "時間": "time",
+    "開始時間": "start_time",
+    "結束時間": "end_time",
+    "時間資訊": "timeInfo",
+    "時間信息": "timeInfo",
+    
+    "內容": "content",
+    "課程內容": "content",
+    "上課內容": "content",
+    "課堂內容": "content",
+    "學習內容": "content",
+    "教學內容": "content",
+    
+    "作業": "homework",
+    "功課": "homework",
+    "家庭作業": "homework",
+    "練習": "homework",
+    "習題": "homework",
+    
+    "照片": "photos",
+    "圖片": "photos",
+    "相片": "photos",
+    "影像": "photos",
+    
+    "表現": "performance",
+    "成績": "performance",
+    "評價": "performance",
+    "評估": "performance",
+    "狀況": "performance",
+    
+    "老師反饋": "teacher_feedback",
+    "老師回饋": "teacher_feedback",
+    "教師反饋": "teacher_feedback",
+    "老師評語": "teacher_feedback",
+    "老師說": "teacher_feedback",
+    
+    "確認": "confirmation",
+    "確認項目": "confirmation",
+    "同意": "confirmation",
+    
+    "原始輸入": "originalUserInput",
+    "用戶輸入": "originalUserInput",
+    "原文": "originalUserInput",
+    
+    "原始文本": "raw_text",
+    "原文字": "raw_text",
+    
+    "日期短語": "date_phrase",
+    "日期片語": "date_phrase",
+    "時間短語": "time_phrase",
+    "時間片語": "time_phrase",
+    
+    "內容實體": "content_entities",
+    "內容相關": "content_entities"
+  },
+
+  "nested_mappings": {
+    "timeInfo": {
+      "日期": "date",
+      "時間": "time", 
+      "開始": "start",
+      "結束": "end",
+      "開始時間": "start",
+      "結束時間": "end"
+    },
+    "content_entities": {
+      "內容": "content",
+      "作業": "homework", 
+      "照片": "photos",
+      "表現": "performance",
+      "老師反饋": "teacher_feedback"
+    }
+  },
+
+  "fallback_patterns": {
+    "name": "course_name",
+    "student": "student_name",
+    "teacher": "teacher", 
+    "location": "location",
+    "date": "date",
+    "time": "time",
+    "content": "content",
+    "homework": "homework",
+    "photo": "photos",
+    "image": "photos",
+    "performance": "performance",
+    "feedback": "teacher_feedback",
+    "confirm": "confirmation"
+  }
+}

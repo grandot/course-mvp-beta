@@ -1,0 +1,334 @@
+{
+  "_metadata": {
+    "version": "2.0.0",
+    "description": "Task 3.2 增強版 Intent 映射表 - 支持模糊匹配和更多自然語言表達",
+    "created": "2025-08-01",
+    "total_mappings": 120,
+    "enhancement": "Phase 3.2 極簡prompt適配版本"
+  },
+  
+  "_standard_intents": [
+    "record_course",
+    "create_recurring_course", 
+    "modify_course",
+    "modify_recurring_course",
+    "cancel_course",
+    "stop_recurring_course",
+    "query_schedule",
+    "clear_schedule",
+    "query_today_courses_for_content",
+    "set_reminder",
+    "record_lesson_content",
+    "record_homework",
+    "upload_class_photo",
+    "query_course_content",
+    "modify_course_content",
+    "correction_intent",
+    "unknown"
+  ],
+
+  "intent_mappings": {
+    "_record_course_variants": {
+      "記錄課程": "record_course",
+      "新增課程": "record_course",
+      "安排課程": "record_course", 
+      "預約課程": "record_course",
+      "上課": "record_course",
+      "課程記錄": "record_course",
+      "添加課程": "record_course",
+      "建立課程": "record_course",
+      "設定課程": "record_course",
+      "排課": "record_course",
+      "約課": "record_course",
+      "訂課": "record_course",
+      "註冊課程": "record_course",
+      "報名": "record_course",
+      "開始上課": "record_course",
+      "課程安排": "record_course",
+      "學習記錄": "record_course",
+      "課堂記錄": "record_course"
+    },
+
+    "_create_recurring_variants": {
+      "建立重複課程": "create_recurring_course",
+      "新增重複課程": "create_recurring_course",
+      "設定重複課程": "create_recurring_course",
+      "創建週期課程": "create_recurring_course",
+      "安排定期課程": "create_recurring_course",
+      "建立循環課程": "create_recurring_course"
+    },
+
+    "_query_variants": {
+      "查詢課表": "query_schedule",
+      "查看課表": "query_schedule",
+      "看課表": "query_schedule",
+      "課表": "query_schedule",
+      "今天有什麼課": "query_schedule",
+      "明天課程": "query_schedule",
+      "這週課程": "query_schedule",
+      "課程安排": "query_schedule",
+      "時間表": "query_schedule",
+      "行程": "query_schedule",
+      "什麼時候上課": "query_schedule",
+      "有哪些課": "query_schedule",
+      "課程查詢": "query_schedule",
+      "檢查課表": "query_schedule",
+      "課程時間": "query_schedule"
+    },
+
+    "_query_content_variants": {
+      "課程怎麼樣": "query_course_content",
+      "上課內容": "query_course_content",
+      "學了什麼": "query_course_content", 
+      "課堂表現": "query_course_content",
+      "今天課程內容": "query_course_content",
+      "學習狀況": "query_course_content",
+      "課程進度": "query_course_content",
+      "學習情況": "query_course_content",
+      "課堂記錄": "query_course_content",
+      "上課記錄": "query_course_content",
+      "學習記錄": "query_course_content",
+      "課程詳情": "query_course_content",
+      "課程資訊": "query_course_content"
+    },
+
+    "_modify_variants": {
+      "修改課程": "modify_course",
+      "更改課程": "modify_course", 
+      "調整課程": "modify_course",
+      "編輯課程": "modify_course",
+      "更新課程": "modify_course",
+      "變更課程": "modify_course",
+      "改時間": "modify_course",
+      "換時間": "modify_course",
+      "改課": "modify_course",
+      "調課": "modify_course",
+      "重新安排": "modify_course",
+      "時間調整": "modify_course",
+      "課程調整": "modify_course",
+      "修正": "modify_course",
+      "更正": "modify_course"
+    },
+
+    "_modify_recurring_variants": {
+      "修改重複課程": "modify_recurring_course",
+      "調整重複課程": "modify_recurring_course",
+      "更改定期課程": "modify_recurring_course",
+      "編輯循環課程": "modify_recurring_course",
+      "修改週期課程": "modify_recurring_course",
+      "更新重複課程": "modify_recurring_course"
+    },
+
+    "_cancel_variants": {
+      "取消課程": "cancel_course",
+      "刪除課程": "cancel_course",
+      "移除課程": "cancel_course",
+      "停課": "cancel_course",
+      "不上了": "cancel_course",
+      "課程取消": "cancel_course",
+      "退課": "cancel_course",
+      "課程刪除": "cancel_course",
+      "不要上課": "cancel_course",
+      "暫停課程": "cancel_course",
+      "終止課程": "cancel_course"
+    },
+
+    "_clear_variants": {
+      "清空課表": "clear_schedule",
+      "清除課表": "clear_schedule",
+      "全部刪除": "clear_schedule",
+      "清空所有": "clear_schedule",
+      "重置課表": "clear_schedule",
+      "清理課表": "clear_schedule",
+      "刪除全部": "clear_schedule",
+      "課表清空": "clear_schedule",
+      "全部清除": "clear_schedule"
+    },
+
+    "_reminder_variants": {
+      "設提醒": "set_reminder",
+      "提醒我": "set_reminder",
+      "通知": "set_reminder",
+      "鬧鐘": "set_reminder",
+      "提醒": "set_reminder",
+      "設定提醒": "set_reminder",
+      "課前提醒": "set_reminder",
+      "上課提醒": "set_reminder"
+    },
+
+    "_content_record_variants": {
+      "記錄內容": "record_lesson_content",
+      "課堂內容": "record_lesson_content",
+      "學習內容": "record_lesson_content",
+      "上課內容記錄": "record_lesson_content",
+      "課程記錄": "record_lesson_content",
+      "學習記錄": "record_lesson_content",
+      "課堂筆記": "record_lesson_content",
+      "內容記錄": "record_lesson_content"
+    },
+
+    "_photo_variants": {
+      "上傳照片": "upload_class_photo",
+      "傳照片": "upload_class_photo",
+      "課堂照片": "upload_class_photo",
+      "上課照片": "upload_class_photo",
+      "學習照片": "upload_class_photo",
+      "照片記錄": "upload_class_photo",  
+      "圖片上傳": "upload_class_photo",
+      "拍照記錄": "upload_class_photo"
+    },
+
+    "_homework_variants": {
+      "作業": "record_homework",
+      "功課": "record_homework", 
+      "作業記錄": "record_homework",
+      "功課記錄": "record_homework",
+      "家庭作業": "record_homework",
+      "課後作業": "record_homework",
+      "練習": "record_homework"
+    }
+  },
+
+  "fallback_patterns": {
+    "_action_keywords": {
+      "record": "record_course",
+      "create": "record_course", 
+      "add": "record_course",
+      "schedule": "record_course",
+      "book": "record_course",
+      "register": "record_course",
+      
+      "query": "query_schedule",
+      "check": "query_schedule",
+      "view": "query_schedule", 
+      "see": "query_schedule",
+      "look": "query_schedule",
+      "show": "query_schedule",
+      
+      "modify": "modify_course",
+      "edit": "modify_course",
+      "update": "modify_course",
+      "change": "modify_course",
+      "adjust": "modify_course",
+      "revise": "modify_course",
+      
+      "cancel": "cancel_course",
+      "delete": "cancel_course",
+      "remove": "cancel_course",
+      "stop": "cancel_course",
+      
+      "clear": "clear_schedule",
+      "reset": "clear_schedule",
+      "clean": "clear_schedule",
+      
+      "remind": "set_reminder",
+      "notify": "set_reminder",
+      "alert": "set_reminder"
+    },
+
+    "_chinese_keywords": {
+      "記錄": "record_course",
+      "新增": "record_course",
+      "添加": "record_course",
+      "安排": "record_course",
+      "預約": "record_course",
+      "上課": "record_course",
+      "排課": "record_course",
+      
+      "查詢": "query_schedule", 
+      "查看": "query_schedule",
+      "看": "query_schedule",
+      "檢查": "query_schedule",
+      
+      "修改": "modify_course",
+      "更改": "modify_course",
+      "調整": "modify_course",
+      "編輯": "modify_course",
+      "變更": "modify_course",
+      "改": "modify_course",
+      
+      "取消": "cancel_course",
+      "刪除": "cancel_course",
+      "移除": "cancel_course",
+      "停": "cancel_course",
+      
+      "清空": "clear_schedule",
+      "清除": "clear_schedule",
+      "重置": "clear_schedule",
+      
+      "提醒": "set_reminder",
+      "通知": "set_reminder",
+      
+      "內容": "record_lesson_content",
+      "記錄內容": "record_lesson_content",
+      
+      "照片": "upload_class_photo",
+      "圖片": "upload_class_photo",
+      
+      "作業": "record_homework",
+      "功課": "record_homework"
+    },
+
+    "_context_patterns": {
+      "今天": "query_schedule",
+      "明天": "query_schedule", 
+      "這週": "query_schedule",
+      "下週": "query_schedule",
+      "課表": "query_schedule",
+      "時間表": "query_schedule",
+      "行程": "query_schedule",
+      
+      "怎麼樣": "query_course_content",
+      "如何": "query_course_content",
+      "表現": "query_course_content",
+      "進度": "query_course_content",
+      "狀況": "query_course_content",
+      
+      "不上": "cancel_course",
+      "不要": "cancel_course",
+      "停止": "cancel_course",
+      
+      "全部": "clear_schedule",
+      "所有": "clear_schedule",
+      "整個": "clear_schedule"
+    }
+  },
+
+  "fuzzy_matching_config": {
+    "enable_fuzzy_matching": true,
+    "similarity_threshold": 0.6,
+    "max_edit_distance": 2,
+    "phonetic_matching": false,
+    "context_aware": true
+  },
+
+  "semantic_clusters": {
+    "course_management": {
+      "keywords": ["課程", "課堂", "上課", "學習", "教學"],
+      "default_intent": "record_course",
+      "related_intents": ["record_course", "modify_course", "query_course_content"]
+    },
+    "schedule_operations": {
+      "keywords": ["時間", "排程", "行程", "安排", "計劃"],
+      "default_intent": "query_schedule", 
+      "related_intents": ["query_schedule", "modify_course", "record_course"]
+    },
+    "content_operations": {
+      "keywords": ["內容", "資料", "記錄", "檔案", "照片"],
+      "default_intent": "record_lesson_content",
+      "related_intents": ["record_lesson_content", "upload_class_photo", "query_course_content"]
+    },
+    "administrative": {
+      "keywords": ["提醒", "通知", "設定", "清空", "管理"],
+      "default_intent": "set_reminder",
+      "related_intents": ["set_reminder", "clear_schedule", "modify_course"]
+    }
+  },
+
+  "natural_language_patterns": {
+    "question_indicators": ["什麼", "怎麼", "如何", "哪", "誰", "為什麼", "嗎", "嗎？"],
+    "time_indicators": ["今天", "明天", "昨天", "這週", "下週", "上週", "現在", "等一下"],
+    "action_indicators": ["要", "想", "可以", "能", "需要", "希望", "打算"],
+    "negation_indicators": ["不", "沒", "別", "不要", "不用", "取消", "停止"]
+  }
+}

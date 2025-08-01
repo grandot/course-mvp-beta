@@ -5,6 +5,7 @@
  */
 
 const SemanticService = require('./semanticService');
+const { getInstance: getSemanticNormalizer } = require('./semanticNormalizer');
 
 class SemanticController {
   constructor() {
@@ -224,11 +225,62 @@ class SemanticController {
       confidence
     };
 
-    // 添加實體信息
+    // 🎯 添加實體信息並進行標準化
+    let rawEntities = null;
     if (source === 'ai' && ai.entities) {
-      result.entities = ai.entities;
+      rawEntities = ai.entities;
     } else if (source === 'regex' && regex.entities) {
-      result.entities = regex.entities;
+      rawEntities = regex.entities;
+    }
+
+    if (rawEntities && Object.keys(rawEntities).length > 0) {
+      try {
+        // 使用SemanticNormalizer標準化entities
+        const normalizer = getSemanticNormalizer();
+        const normalizationResult = normalizer.normalizeEntities(rawEntities, {
+          log_unmapped: debug // 只在debug模式下記錄未映射項目
+        });
+        
+        result.entities = normalizationResult.mapped_entities;
+        
+        // 在debug模式下記錄標準化信息
+        if (debug && (Object.keys(normalizationResult.key_mappings).length > 0 || 
+                      Object.keys(normalizationResult.value_mappings).length > 0)) {
+          // 如果還沒有debug_info則初始化
+          if (!result.debug_info) {
+            result.debug_info = {};
+          }
+          
+          result.debug_info.entity_normalization = {
+            applied: true,
+            key_mappings: normalizationResult.key_mappings,
+            value_mappings: normalizationResult.value_mappings,
+            unmapped_keys: normalizationResult.unmapped_keys,
+            original_entities: rawEntities
+          };
+        }
+        
+        SemanticService.debugLog(`🔄 [SemanticController] Entities標準化完成`, {
+          original: rawEntities,
+          normalized: result.entities
+        });
+        
+      } catch (error) {
+        // 標準化失敗時的fallback保護
+        console.warn(`[SemanticController] Entity標準化失敗，使用原始entities: ${error.message}`);
+        result.entities = rawEntities;
+        
+        if (debug) {
+          if (!result.debug_info) {
+            result.debug_info = {};
+          }
+          result.debug_info.entity_normalization = {
+            applied: false,
+            error: error.message,
+            original_entities: rawEntities
+          };
+        }
+      }
     }
 
     // Fallback 特殊處理
@@ -238,7 +290,11 @@ class SemanticController {
 
     // Debug 信息
     if (debug) {
+      // 保留可能已經設置的entity_normalization信息
+      const existingDebugInfo = result.debug_info || {};
+      
       result.debug_info = {
+        ...existingDebugInfo, // 保留之前設置的信息
         ai_analysis: ai,
         regex_analysis: regex,
         decision_path: decisionPath,

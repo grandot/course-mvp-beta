@@ -8,8 +8,8 @@
  * - 確保系統穩定性和降級處理
  */
 
-const SemanticService = require('../services/semanticService');
-const SemanticController = require('../services/semanticController');
+// Phase 1/2 遺留組件已移除，統一使用 Phase 3 組件
+const { getEnhancedSemanticNormalizer } = require('../services/enhancedSemanticNormalizer');
 
 class SemanticAdapter {
   constructor() {
@@ -19,19 +19,16 @@ class SemanticAdapter {
       fallbackOnError: true,
       maxRetries: 2,
       enableABTesting: process.env.ENABLE_AB_TESTING === 'true' || false,
-      abTestingRatio: parseFloat(process.env.AB_TESTING_RATIO || '0.1') // 10% 用戶使用新系統
+      abTestingRatio: parseFloat(process.env.AB_TESTING_RATIO || '0.1'), // 10% 用戶使用新系統
+      useEnhancedNormalizer: process.env.USE_ENHANCED_NORMALIZER !== 'false' // 預設啟用
     };
     
-    // 創建 SemanticService 實例 (支援 Slot Template)
+    // 🎯 Task 3.3: 初始化增強版語義標準化器
+    this.enhancedNormalizer = getEnhancedSemanticNormalizer();
+    
+    // 🚨 Slot Template 系統暫時禁用，統一使用 Enhanced Semantic Normalizer
     this.semanticServiceInstance = null;
-    try {
-      if (this.config.enableSlotTemplate && SemanticService.isSlotTemplateAvailable()) {
-        this.semanticServiceInstance = SemanticService.createWithSlotTemplate();
-        console.log('[SemanticAdapter] Slot Template System 已啟用');
-      }
-    } catch (error) {
-      console.warn('[SemanticAdapter] Slot Template System 初始化失敗:', error.message);
-    }
+    console.log('[SemanticAdapter] 使用統一語義處理器 (Enhanced Semantic Normalizer)');
     
     // 統計資訊
     this.stats = {
@@ -93,13 +90,19 @@ class SemanticAdapter {
           options
         );
         
+        // 🎯 Task 3.3: 應用增強版語義標準化
+        const finalResult = this.config.useEnhancedNormalizer 
+          ? this.applySemanticNormalization(result) 
+          : result;
+
         // 增強結果以包含系統資訊
         return {
-          ...result,
+          ...finalResult,
           systemUsed: 'slot_template',
           adapterVersion: '1.0.0',
           processingTime: this.calculateProcessingTime(),
-          retryCount
+          retryCount,
+          enhancedNormalizationApplied: this.config.useEnhancedNormalizer
         };
         
       } catch (error) {
@@ -156,19 +159,85 @@ class SemanticAdapter {
         debug_info: controllerResult.debug_info
       };
       
+      // 🎯 Task 3.3: 應用增強版語義標準化
+      const finalResult = this.config.useEnhancedNormalizer 
+        ? this.applySemanticNormalization(result) 
+        : result;
+
       return {
-        ...result,
+        ...finalResult,
         systemUsed: 'semantic_controller',
         adapterVersion: '1.0.0',
         processingTime: this.calculateProcessingTime(),
         fallbackReason: options.fallbackReason || null,
-        originalError: options.originalError || null
+        originalError: options.originalError || null,
+        enhancedNormalizationApplied: this.config.useEnhancedNormalizer
       };
       
     } catch (error) {
       this.stats.errorRequests++;
       console.error(`[SemanticAdapter] 經典系統也失敗了:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * 🎯 Task 3.3: 應用語義標準化
+   * 使用EnhancedSemanticNormalizer對結果進行標準化
+   * @param {Object} result - 原始語義分析結果
+   * @returns {Object} 標準化後的結果
+   */
+  applySemanticNormalization(result) {
+    if (!result || !this.enhancedNormalizer) {
+      return result;
+    }
+
+    try {
+      const normalizedResult = { ...result };
+
+      // 標準化Intent
+      if (result.intent) {
+        const intentNormalization = this.enhancedNormalizer.normalizeIntent(result.intent);
+        normalizedResult.intent = intentNormalization.mapped_intent;
+        
+        // 添加標準化元數據
+        if (!normalizedResult.debug_info) normalizedResult.debug_info = {};
+        normalizedResult.debug_info.semantic_adapter_normalization = {
+          intent: {
+            original: intentNormalization.original_intent,
+            mapped: intentNormalization.mapped_intent,
+            source: intentNormalization.mapping_source,
+            confidence: intentNormalization.confidence
+          }
+        };
+      }
+
+      // 標準化Entities
+      if (result.entities && typeof result.entities === 'object') {
+        const entityNormalization = this.enhancedNormalizer.normalizeEntities(result.entities);
+        normalizedResult.entities = entityNormalization.mapped_entities;
+        
+        // 添加標準化元數據
+        if (!normalizedResult.debug_info) normalizedResult.debug_info = {};
+        if (!normalizedResult.debug_info.semantic_adapter_normalization) {
+          normalizedResult.debug_info.semantic_adapter_normalization = {};
+        }
+        normalizedResult.debug_info.semantic_adapter_normalization.entities = {
+          applied: entityNormalization.normalization_applied,
+          stats: entityNormalization.mapping_stats
+        };
+      }
+
+      // 更新method標記
+      if (normalizedResult.method) {
+        normalizedResult.method = `${normalizedResult.method}_adapter_normalized`;
+      }
+
+      return normalizedResult;
+
+    } catch (error) {
+      console.error('[SemanticAdapter] 語義標準化失敗:', error.message);
+      return result; // 標準化失敗時返回原結果
     }
   }
 

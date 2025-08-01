@@ -10,6 +10,7 @@ const DataService = require('./dataService');
 const TimeService = require('./timeService');
 const ConversationContext = require('../utils/conversationContext');
 const RegexService = require('./regexService');
+const { getInstance: getPromptConfigManager } = require('./promptConfigManager');
 
 // Slot Template System 整合 (可選功能)
 let SlotTemplateManager = null;
@@ -2359,6 +2360,37 @@ class SemanticService {
    * @returns {string} 構建的 prompt
    */
   buildEvidenceDrivenPrompt(userText, conversationHistory) {
+    try {
+      // 🎯 Phase 3: 使用 PromptConfigManager 動態選擇 prompt 模式
+      const promptManager = getPromptConfigManager();
+      const promptConfig = promptManager.buildPrompt(userText, conversationHistory, 'evidence_minimal');
+      
+      // 返回構建好的 prompt 文本
+      if (promptConfig.messages && promptConfig.messages.length > 0) {
+        // 組合 system message 和 user message
+        const systemMsg = promptConfig.messages.find(msg => msg.role === 'system')?.content || '';
+        const userMsg = promptConfig.messages.find(msg => msg.role === 'user')?.content || '';
+        
+        return systemMsg ? `${systemMsg}\n\n${userMsg}` : userMsg;
+      }
+      
+      // Fallback：如果配置有問題，返回原有的完整 prompt
+      return this._buildLegacyFullPrompt(userText, conversationHistory);
+      
+    } catch (error) {
+      console.error('[SemanticService] PromptConfigManager 失敗，使用 fallback:', error.message);
+      return this._buildLegacyFullPrompt(userText, conversationHistory);
+    }
+  }
+
+  /**
+   * Legacy 完整 prompt（fallback 用）
+   * @param {string} userText - 用戶輸入
+   * @param {Array} conversationHistory - 對話歷史
+   * @returns {string} 完整的 legacy prompt
+   * @private
+   */
+  _buildLegacyFullPrompt(userText, conversationHistory) {
     const historyContext = conversationHistory.length > 0 
       ? `\n對話歷史：${JSON.stringify(conversationHistory.slice(-3))}` 
       : '';

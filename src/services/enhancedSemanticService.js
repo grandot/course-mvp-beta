@@ -14,8 +14,7 @@
  * Layer 3: SmartQueryEngine (實時查詢處理)
  */
 
-const SemanticService = require('./semanticService');
-const SemanticController = require('./semanticController');
+// Phase 1/2 遺留組件已移除，統一使用 Phase 3 組件
 const MemoryYamlService = require('./memoryYamlService');
 const SmartQueryEngine = require('./smartQueryEngine');
 const ConversationContext = require('../utils/conversationContext');
@@ -23,26 +22,35 @@ const EnhancedConversationContext = require('../utils/enhancedConversationContex
 const IntentRuleEngine = require('../utils/intentRuleEngine');
 const OpenAIService = require('../internal/openaiService');
 const DataService = require('./dataService');
+const { getEnhancedSemanticNormalizer } = require('./enhancedSemanticNormalizer');
+const { getMonitoringMiddleware } = require('../middleware/monitoringMiddleware');
 
-class EnhancedSemanticService extends SemanticService {
+class EnhancedSemanticService {
   constructor(config = {}) {
-    super();
     
     // 三層記憶系統初始化
     this.memoryYamlService = new MemoryYamlService(config.memoryYaml || {});
     this.smartQueryEngine = new SmartQueryEngine();
+    
+    // 🎯 Task 3.3: 初始化增強版語義標準化器
+    this.enhancedNormalizer = getEnhancedSemanticNormalizer();
+    
+    // 🎯 Task 3.5: 初始化監控中間件
+    this.monitoringMiddleware = getMonitoringMiddleware();
     
     // 配置參數
     this.regexFirstPriority = config.regexFirstPriority !== false; // 預設啟用
     this.memoryInjectionEnabled = config.memoryInjectionEnabled !== false; // 預設啟用
     this.smartQueryBypass = config.smartQueryBypass !== false; // 預設啟用
     this.enhancedContextEnabled = config.enhancedContextEnabled !== false; // 預設啟用增強上下文
+    this.useEnhancedNormalizer = config.useEnhancedNormalizer !== false; // 預設啟用增強標準化
     
     console.log('🚀 EnhancedSemanticService 初始化完成');
     console.log(`   Regex 優先機制: ${this.regexFirstPriority ? '✅' : '❌'}`);
     console.log(`   記憶注入: ${this.memoryInjectionEnabled ? '✅' : '❌'}`);
     console.log(`   SmartQuery 繞過: ${this.smartQueryBypass ? '✅' : '❌'}`);
     console.log(`   增強上下文: ${this.enhancedContextEnabled ? '✅' : '❌'}`);
+    console.log(`   🎯 增強標準化器: ${this.useEnhancedNormalizer ? '✅' : '❌'}`);
   }
 
   /**
@@ -56,8 +64,12 @@ class EnhancedSemanticService extends SemanticService {
   async analyzeMessage(text, userId, context = {}) {
     const startTime = Date.now();
     
+    // 🎯 Task 3.5: 開始監控請求
+    const requestId = `semantic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const requestInfo = this.monitoringMiddleware.beforeSemanticAnalysis(requestId, text, userId, context);
+    
     try {
-      console.log(`🔍 增強版語義分析開始: "${text}" [${userId}]`);
+      console.log(`🔍 增強版語義分析開始: "${text}" [${userId}] [RequestID: ${requestId}]`);
       
       // Phase 1: SmartQuery 優先檢查 (Layer 3)
       if (this.smartQueryBypass) {
@@ -90,8 +102,23 @@ class EnhancedSemanticService extends SemanticService {
       // Phase 5: 更新三層記憶
       await this.updateTripleMemory(userId, gptResult, memoryLayers);
       
-      console.log(`🎯 增強版語義分析完成 (${Date.now() - startTime}ms)`);
-      return gptResult;
+      // 🎯 Task 3.3: 應用增強版語義標準化
+      let finalResult = gptResult;
+      if (this.useEnhancedNormalizer && gptResult) {
+        finalResult = this.applyEnhancedNormalization(gptResult);
+        console.log(`🎯 增強版語義分析完成 (${Date.now() - startTime}ms) [Enhanced Normalized]`);
+      } else {
+        console.log(`🎯 增強版語義分析完成 (${Date.now() - startTime}ms)`);
+      }
+      
+      // 🎯 Task 3.5: 完成監控請求
+      this.monitoringMiddleware.afterSemanticAnalysis(requestId, finalResult, {
+        cacheHitRate: this.enhancedNormalizer?.getCacheStats()?.performance_stats?.hit_ratio / 100 || 0,
+        normalizerTime: this.enhancedNormalizer?.getCacheStats()?.performance_stats?.avg_response_time || 0,
+        cacheSize: this.enhancedNormalizer?.getCacheStats()?.total_cache_size || 0
+      });
+      
+      return finalResult;
       
     } catch (error) {
       console.error(`❌ 增強版語義分析失敗:`, error.message);
@@ -101,7 +128,7 @@ class EnhancedSemanticService extends SemanticService {
       const controllerResult = await SemanticController.analyze(text, context || {});
       
       // 🎯 適配新語意控制器返回格式到增強服務格式
-      return {
+      const fallbackResult = {
         success: true,
         intent: controllerResult.final_intent,
         confidence: controllerResult.confidence,
@@ -114,6 +141,78 @@ class EnhancedSemanticService extends SemanticService {
         enhanced_context: context,
         fallback_reason: 'enhanced_service_error'
       };
+
+      // 🎯 Task 3.3: 對fallback結果也應用增強標準化
+      let finalFallbackResult = fallbackResult;
+      if (this.useEnhancedNormalizer) {
+        finalFallbackResult = this.applyEnhancedNormalization(fallbackResult);
+      }
+      
+      // 🎯 Task 3.5: 監控錯誤處理的fallback結果
+      this.monitoringMiddleware.afterSemanticAnalysis(requestId, finalFallbackResult, {
+        cacheHitRate: 0, // fallback情況無緩存
+        normalizerTime: 0,
+        cacheSize: 0,
+        error: error.message
+      });
+      
+      return finalFallbackResult;
+    }
+  }
+
+  /**
+   * 🎯 Task 3.3: 應用增強版語義標準化
+   * 將增強版SemanticNormalizer應用到分析結果
+   * @param {Object} result - 語義分析結果
+   * @returns {Object} 標準化後的結果
+   */
+  applyEnhancedNormalization(result) {
+    if (!result || !this.enhancedNormalizer) {
+      return result;
+    }
+
+    try {
+      const normalizedResult = { ...result };
+
+      // 標準化Intent
+      if (result.intent) {
+        const intentNormalization = this.enhancedNormalizer.normalizeIntent(result.intent);
+        normalizedResult.intent = intentNormalization.mapped_intent;
+        
+        // 添加標準化元數據
+        if (!normalizedResult.debug_info) normalizedResult.debug_info = {};
+        normalizedResult.debug_info.intent_normalization = {
+          original_intent: intentNormalization.original_intent,
+          mapped_intent: intentNormalization.mapped_intent,
+          mapping_source: intentNormalization.mapping_source,
+          confidence: intentNormalization.confidence
+        };
+      }
+
+      // 標準化Entities
+      if (result.entities && typeof result.entities === 'object') {
+        const entityNormalization = this.enhancedNormalizer.normalizeEntities(result.entities);
+        normalizedResult.entities = entityNormalization.mapped_entities;
+        
+        // 添加標準化元數據
+        if (!normalizedResult.debug_info) normalizedResult.debug_info = {};
+        normalizedResult.debug_info.entity_normalization = {
+          applied: entityNormalization.normalization_applied,
+          mapping_stats: entityNormalization.mapping_stats,
+          original_entities: entityNormalization.original_entities
+        };
+      }
+
+      // 更新method標記
+      if (normalizedResult.method) {
+        normalizedResult.method = `${normalizedResult.method}_enhanced_normalized`;
+      }
+
+      return normalizedResult;
+
+    } catch (error) {
+      console.error('[EnhancedSemanticService] 標準化失敗:', error.message);
+      return result; // 標準化失敗時返回原結果
     }
   }
 

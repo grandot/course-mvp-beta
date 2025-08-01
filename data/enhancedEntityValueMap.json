@@ -1,0 +1,557 @@
+{
+  "_metadata": {
+    "version": "2.0.0",
+    "description": "Task 3.2 增強版 Entity 值映射表 - 支持更智能的值標準化",
+    "created": "2025-08-01",
+    "total_mappings": 180,
+    "enhancement": "Phase 3.2 智能映射算法適配版本"
+  },
+
+  "common_course_names": {
+    "_core_subjects": {
+      "數學": "數學",
+      "英文": "英文",
+      "中文": "中文",
+      "國語": "中文",
+      "語文": "中文",
+      "物理": "物理",
+      "化學": "化學",
+      "生物": "生物",
+      "科學": "科學",
+      "自然": "科學",
+      "理科": "科學",
+      "歷史": "歷史",
+      "地理": "地理",
+      "社會": "社會",
+      "公民": "公民"
+    },
+
+    "_arts_and_music": {
+      "音樂": "音樂",
+      "美術": "美術",
+      "藝術": "美術",
+      "畫畫": "美術",
+      "繪畫": "美術",
+      "書法": "書法",
+      "鋼琴": "鋼琴",
+      "小提琴": "小提琴",
+      "吉他": "吉他",
+      "大提琴": "大提琴",
+      "長笛": "長笛",
+      "薩克斯風": "薩克斯風",
+      "舞蹈": "舞蹈",
+      "芭蕾": "舞蹈",
+      "現代舞": "舞蹈",
+      "民族舞": "舞蹈"
+    },
+
+    "_sports": {
+      "體育": "體育",
+      "運動": "體育",
+      "游泳": "游泳",
+      "足球": "足球",
+      "籃球": "籃球",
+      "羽毛球": "羽毛球",
+      "桌球": "桌球",
+      "乒乓球": "桌球",
+      "網球": "網球",
+      "排球": "排球",
+      "棒球": "棒球",
+      "高爾夫": "高爾夫",
+      "直排輪": "直排輪",
+      "溜冰": "溜冰",
+      "滑雪": "滑雪"
+    },
+
+    "_martial_arts": {
+      "跆拳道": "跆拳道",
+      "空手道": "空手道",
+      "柔道": "柔道",
+      "劍道": "劍道",
+      "武術": "武術",
+      "太極": "太極"
+    },
+
+    "_languages": {
+      "法語": "法語",
+      "日語": "日語",
+      "韓語": "韓語",
+      "西班牙語": "西班牙語",
+      "德語": "德語",
+      "義大利語": "義大利語",
+      "俄語": "俄語",
+      "阿拉伯語": "阿拉伯語"
+    },
+
+    "_technology": {
+      "程式設計": "程式設計",
+      "編程": "程式設計",
+      "程式": "程式設計",
+      "coding": "程式設計",
+      "電腦": "電腦",
+      "資訊": "電腦",
+      "機器人": "機器人",
+      "AI": "人工智慧",
+      "人工智慧": "人工智慧"
+    },
+
+    "_games_and_hobbies": {
+      "圍棋": "圍棋",
+      "象棋": "象棋",
+      "國際象棋": "國際象棋",
+      "西洋棋": "國際象棋",
+      "瑜伽": "瑜伽",
+      "冥想": "冥想",
+      "烹飪": "烹飪",
+      "手工": "手工",
+      "陶藝": "陶藝",
+      "攝影": "攝影"
+    },
+
+    "_academic_skills": {
+      "閱讀": "閱讀",
+      "寫作": "寫作",
+      "作文": "寫作",
+      "演講": "演講",
+      "辯論": "辯論",
+      "邏輯": "邏輯思維",
+      "思維訓練": "邏輯思維",
+      "記憶": "記憶訓練",
+      "專注力": "專注力訓練"
+    }
+  },
+
+  "confirmation_mappings": {
+    "_positive_responses": {
+      "是": true,
+      "對": true,
+      "好": true,
+      "確認": true,
+      "同意": true,
+      "沒錯": true,
+      "正確": true,
+      "對的": true,
+      "就是": true,
+      "當然": true,
+      "可以": true,
+      "行": true,
+      "好的": true,
+      "沒問題": true,
+      "OK": true,
+      "ok": true,
+      "yes": true,
+      "Yes": true,
+      "YES": true,
+      "okay": true,
+      "Okay": true,
+      "sure": true,
+      "Sure": true,
+      "right": true,
+      "correct": true,
+      "true": true,
+      "👍": true,
+      "✓": true,
+      "✅": true
+    },
+
+    "_negative_responses": {
+      "不是": false,
+      "否": false,
+      "不": false,
+      "不同意": false,
+      "不對": false,
+      "錯": false,
+      "不是的": false,
+      "不可以": false,
+      "不行": false,
+      "不要": false,
+      "no": false,
+      "No": false,
+      "NO": false,
+      "nope": false,
+      "wrong": false,
+      "false": false,
+      "incorrect": false,
+      "👎": false,
+      "✗": false,
+      "❌": false
+    }
+  },
+
+  "performance_mappings": {
+    "_excellent_level": {
+      "很好": "excellent",
+      "非常好": "excellent", 
+      "棒": "excellent",
+      "優秀": "excellent",
+      "完美": "excellent",
+      "傑出": "excellent",
+      "超棒": "excellent",
+      "頂呱呱": "excellent",
+      "厲害": "excellent",
+      "讚": "excellent",
+      "太棒了": "excellent",
+      "amazing": "excellent",
+      "perfect": "excellent",
+      "excellent": "excellent",
+      "outstanding": "excellent",
+      "brilliant": "excellent",
+      "fantastic": "excellent",
+      "wonderful": "excellent",
+      "superb": "excellent",
+      "A+": "excellent",
+      "100分": "excellent",
+      "滿分": "excellent"
+    },
+
+    "_good_level": {
+      "好": "good",
+      "不錯": "good",
+      "還可以": "good",
+      "還好": "good",
+      "還行": "good",
+      "可以": "good",
+      "尚可": "good",
+      "良好": "good",
+      "good": "good",
+      "nice": "good",
+      "fine": "good",
+      "okay": "good",
+      "ok": "good",
+      "decent": "good",
+      "B": "good",
+      "80分": "good",
+      "及格": "good"
+    },
+
+    "_average_level": {
+      "普通": "average",
+      "一般": "average",
+      "平常": "average",
+      "中等": "average",
+      "馬馬虎虎": "average",
+      "還可以": "average",
+      "差不多": "average",
+      "average": "average",
+      "normal": "average",
+      "so-so": "average",
+      "mediocre": "average",
+      "C": "average",
+      "60分": "average",
+      "及格邊緣": "average"
+    },
+
+    "_poor_level": {
+      "差": "poor",
+      "不好": "poor",
+      "需要努力": "poor",
+      "有待改善": "poor",
+      "要加油": "poor",
+      "不理想": "poor",
+      "需要加強": "poor",
+      "poor": "poor",
+      "bad": "poor",
+      "terrible": "poor",
+      "awful": "poor",
+      "needs improvement": "poor",
+      "below average": "poor",
+      "D": "poor",
+      "F": "poor",
+      "不及格": "poor",
+      "40分": "poor"
+    },
+
+    "_progress_indicators": {
+      "進步": "improving",
+      "有進步": "improving",
+      "變好": "improving",
+      "改善": "improving",
+      "improving": "improving",
+      "better": "improving",
+      "progress": "improving",
+      
+      "退步": "declining",
+      "變差": "declining",
+      "下降": "declining",
+      "declining": "declining",
+      "worse": "declining",
+      "regressing": "declining"
+    }
+  },
+
+  "time_phrase_mappings": {
+    "_immediate_time": {
+      "現在": "now",
+      "立刻": "now",
+      "馬上": "now",
+      "即刻": "now",
+      "當下": "now",
+      "此刻": "now",
+      "now": "now",
+      "right now": "now",
+      "immediately": "now"
+    },
+
+    "_today_variants": {
+      "今天": "today",
+      "今日": "today",
+      "本日": "today",
+      "今": "today",
+      "today": "today",
+      "this day": "today"
+    },
+
+    "_tomorrow_variants": {
+      "明天": "tomorrow",
+      "明日": "tomorrow",
+      "隔天": "tomorrow",
+      "次日": "tomorrow",
+      "tomorrow": "tomorrow",
+      "next day": "tomorrow"
+    },
+
+    "_yesterday_variants": {
+      "昨天": "yesterday",
+      "昨日": "yesterday",
+      "前天": "day_before_yesterday",
+      "大前天": "three_days_ago",
+      "yesterday": "yesterday",
+      "last day": "yesterday"
+    },
+
+    "_week_references": {
+      "這週": "this_week",
+      "本週": "this_week",
+      "這星期": "this_week",
+      "下週": "next_week",
+      "下星期": "next_week",
+      "上週": "last_week",
+      "上星期": "last_week",
+      "this week": "this_week",
+      "next week": "next_week",
+      "last week": "last_week"
+    },
+
+    "_relative_time": {
+      "等一下": "later",
+      "稍後": "later",
+      "等會": "later",
+      "待會": "later",
+      "過一會": "later",
+      "later": "later",
+      "soon": "soon",
+      "shortly": "soon",
+      
+      "之前": "before",
+      "以前": "before",
+      "先前": "before",
+      "早先": "before",
+      "before": "before",
+      "earlier": "before",
+      "previously": "before",
+      
+      "之後": "after",
+      "以後": "after",
+      "後來": "after",
+      "稍後": "after",
+      "after": "after",
+      "later on": "after"
+    }
+  },
+
+  "location_mappings": {
+    "_home_variants": {
+      "家": "home",
+      "家裡": "home",
+      "在家": "home",
+      "家中": "home",
+      "住家": "home",
+      "home": "home",
+      "at home": "home"
+    },
+
+    "_school_variants": {
+      "學校": "school",
+      "校內": "school",
+      "在學校": "school",
+      "學院": "school",
+      "school": "school",
+      "at school": "school",
+      "campus": "school"
+    },
+
+    "_online_variants": {
+      "線上": "online",
+      "網路": "online",
+      "網上": "online",
+      "遠距": "online",
+      "視訊": "online",
+      "online": "online",
+      "remote": "online",
+      "virtual": "online",
+      "video call": "online",
+      "zoom": "online",
+      "teams": "online",
+      "meet": "online"
+    },
+
+    "_center_variants": {
+      "補習班": "tuition_center",
+      "安親班": "after_school_center",
+      "才藝班": "activity_center",
+      "學習中心": "learning_center",
+      "教室": "classroom",
+      "課室": "classroom",
+      "center": "center",
+      "classroom": "classroom",
+      "studio": "studio"
+    }
+  },
+
+  "student_info_mappings": {
+    "_grade_levels": {
+      "小一": "grade_1",
+      "小二": "grade_2",
+      "小三": "grade_3",
+      "小四": "grade_4",
+      "小五": "grade_5",
+      "小六": "grade_6",
+      "國一": "grade_7",
+      "國二": "grade_8",
+      "國三": "grade_9",
+      "高一": "grade_10",
+      "高二": "grade_11",
+      "高三": "grade_12",
+      "一年級": "grade_1",
+      "二年級": "grade_2",
+      "三年級": "grade_3",
+      "四年級": "grade_4",
+      "五年級": "grade_5",
+      "六年級": "grade_6"
+    },
+
+    "_age_references": {
+      "3歲": "age_3",
+      "4歲": "age_4", 
+      "5歲": "age_5",
+      "6歲": "age_6",
+      "7歲": "age_7",
+      "8歲": "age_8",
+      "9歲": "age_9",
+      "10歲": "age_10",
+      "11歲": "age_11",
+      "12歲": "age_12",
+      "13歲": "age_13",
+      "14歲": "age_14",
+      "15歲": "age_15",
+      "16歲": "age_16",
+      "17歲": "age_17",
+      "18歲": "age_18"
+    }
+  },
+
+  "teacher_info_mappings": {
+    "_title_variants": {
+      "老師": "teacher",
+      "教師": "teacher",
+      "師傅": "master",
+      "教練": "coach",
+      "指導老師": "instructor", 
+      "助教": "assistant",
+      "tutor": "tutor",
+      "teacher": "teacher",
+      "instructor": "instructor",
+      "coach": "coach",
+      "professor": "professor"
+    }
+  },
+
+  "homework_types": {
+    "_assignment_types": {
+      "作業": "assignment",
+      "功課": "homework",
+      "練習": "exercise",
+      "習題": "practice",
+      "測驗": "quiz",
+      "考試": "exam",
+      "報告": "report",
+      "專題": "project",
+      "essay": "essay",
+      "homework": "homework",
+      "assignment": "assignment",
+      "exercise": "exercise",
+      "quiz": "quiz",
+      "test": "test",
+      "exam": "exam"
+    }
+  },
+
+  "mood_indicators": {
+    "_positive_moods": {
+      "開心": "happy",
+      "快樂": "happy",
+      "高興": "happy",
+      "興奮": "excited",
+      "滿意": "satisfied",
+      "愉快": "pleasant",
+      "happy": "happy",
+      "excited": "excited",
+      "pleased": "pleased",
+      "satisfied": "satisfied",
+      "😊": "happy",
+      "😄": "happy",
+      "😁": "happy",
+      "🎉": "excited"
+    },
+
+    "_negative_moods": {
+      "不開心": "unhappy",
+      "難過": "sad",
+      "生氣": "angry",
+      "沮喪": "frustrated",
+      "煩惱": "worried",
+      "tired": "tired",
+      "sad": "sad",
+      "angry": "angry",
+      "frustrated": "frustrated",
+      "worried": "worried",
+      "😢": "sad",
+      "😠": "angry",
+      "😰": "worried",
+      "😴": "tired"
+    }
+  },
+
+  "difficulty_levels": {
+    "_easy_variants": {
+      "容易": "easy",
+      "簡單": "easy",
+      "不難": "easy",
+      "輕鬆": "easy",
+      "easy": "easy",
+      "simple": "easy",
+      "basic": "easy"
+    },
+
+    "_medium_variants": {
+      "普通": "medium",
+      "中等": "medium",
+      "適中": "medium",
+      "還好": "medium",
+      "medium": "medium",
+      "moderate": "medium",
+      "average": "medium"
+    },
+
+    "_hard_variants": {
+      "困難": "hard",
+      "難": "hard",
+      "不容易": "hard",
+      "挑戰": "challenging",
+      "hard": "hard",
+      "difficult": "hard",
+      "challenging": "challenging",
+      "tough": "hard"
+    }
+  }
+}

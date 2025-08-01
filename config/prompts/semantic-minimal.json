@@ -1,0 +1,75 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "description": "極簡版語意分析Prompt - Token優化設計",
+    "target_tokens": "< 200 tokens",
+    "created": "2025-08-01",
+    "purpose": "Phase 3 Token優化 - 移除所有格式約束，依賴SemanticNormalizer處理"
+  },
+
+  "minimal_prompt": {
+    "system_message": "你是課程管理助手，分析用戶輸入並返回JSON格式結果。",
+    
+    "user_template": "分析：\"{user_input}\"\n{context}\n返回JSON：\n{\n  \"intent\": \"用戶想做什麼\",\n  \"entities\": {\n    \"course_name\": \"課程名稱\",\n    \"student_name\": \"學生姓名\",\n    \"date\": \"日期\",\n    \"time\": \"時間\",\n    \"content\": \"內容\"\n  }\n}",
+    
+    "context_template": "對話歷史：{history}",
+    
+    "estimated_tokens": 180
+  },
+
+  "ultra_minimal_prompt": {
+    "system_message": "課程管理JSON分析器",
+    
+    "user_template": "\"{user_input}\"\n↓JSON:\n{\n\"intent\":\"\",\n\"entities\":{\n\"course_name\":\"\",\n\"student_name\":\"\",\n\"date\":\"\",\n\"time\":\"\"\n}\n}",
+    
+    "estimated_tokens": 120
+  },
+
+  "evidence_minimal_prompt": {
+    "system_message": "分析課程管理意圖，提供推理過程。",
+    
+    "user_template": "輸入：\"{user_input}\"\n{context}\nJSON回應：\n{\n  \"intent\": \"意圖\",\n  \"entities\": {\"course_name\": \"\", \"student_name\": \"\"},\n  \"evidence\": {\"temporal_clues\": [], \"question_markers\": []},\n  \"reasoning_chain\": {\"step1\": \"\", \"confidence_source\": \"\"},\n  \"confidence\": {\"overall\": 0.9}\n}",
+    
+    "context_template": "歷史：{history}",
+    
+    "estimated_tokens": 195
+  },
+
+  "prompt_modes": {
+    "ultra": {
+      "description": "極度簡化，僅基本結構",
+      "use_case": "高頻簡單請求",
+      "fallback_to": "minimal"
+    },
+    "minimal": {
+      "description": "簡化但保留基本entity結構", 
+      "use_case": "一般課程管理請求",
+      "fallback_to": "evidence_minimal"
+    },
+    "evidence_minimal": {
+      "description": "保留推理鏈的簡化版",
+      "use_case": "需要決策邏輯的複雜請求",
+      "fallback_to": "full"
+    },
+    "full": {
+      "description": "完整版prompt（當前實現）",
+      "use_case": "映射失敗或複雜場景",
+      "fallback_to": null
+    }
+  },
+
+  "token_comparison": {
+    "current_full_prompt": "~800-1000 tokens",
+    "evidence_minimal": "~195 tokens",
+    "minimal": "~180 tokens", 
+    "ultra_minimal": "~120 tokens",
+    "optimization_ratio": "85-90% token reduction"
+  },
+
+  "migration_strategy": {
+    "phase_1": "實現配置機制，支持動態切換",
+    "phase_2": "A/B測試minimal prompt效果",
+    "phase_3": "漸進部署ultra_minimal",
+    "rollback_trigger": "準確率下降超過5%或錯誤率上升"
+  }
+}
