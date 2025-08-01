@@ -15,6 +15,7 @@
  */
 
 const SemanticService = require('./semanticService');
+const SemanticController = require('./semanticController');
 const MemoryYamlService = require('./memoryYamlService');
 const SmartQueryEngine = require('./smartQueryEngine');
 const ConversationContext = require('../utils/conversationContext');
@@ -95,9 +96,24 @@ class EnhancedSemanticService extends SemanticService {
     } catch (error) {
       console.error(`❌ 增強版語義分析失敗:`, error.message);
       
-      // 降級到標準 SemanticService
-      console.log(`🔄 降級到標準 SemanticService`);
-      return await super.analyzeMessage(text, userId, context);
+      // 降級到語意控制器
+      console.log(`🔄 降級到語意控制器`);
+      const controllerResult = await SemanticController.analyze(text, context || {});
+      
+      // 🎯 適配新語意控制器返回格式到增強服務格式
+      return {
+        success: true,
+        intent: controllerResult.final_intent,
+        confidence: controllerResult.confidence,
+        entities: controllerResult.entities || {},
+        method: `enhanced_fallback_${controllerResult.source}`,
+        reasoning: controllerResult.reason,
+        used_rule: controllerResult.used_rule,
+        execution_time: controllerResult.execution_time,
+        debug_info: controllerResult.debug_info,
+        enhanced_context: context,
+        fallback_reason: 'enhanced_service_error'
+      };
     }
   }
 

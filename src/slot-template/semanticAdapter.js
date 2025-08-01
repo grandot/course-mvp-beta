@@ -9,6 +9,7 @@
  */
 
 const SemanticService = require('../services/semanticService');
+const SemanticController = require('../services/semanticController');
 
 class SemanticAdapter {
   constructor() {
@@ -138,13 +139,26 @@ class SemanticAdapter {
     }
     
     try {
-      console.log(`[SemanticAdapter] 使用經典系統 - 用戶: ${userId}`);
+      console.log(`[SemanticAdapter] 使用語意控制器系統 - 用戶: ${userId}`);
       
-      const result = await SemanticService.analyzeMessage(text, userId, context);
+      const controllerResult = await SemanticController.analyze(text, context || {});
+      
+      // 🎯 適配新語意控制器返回格式到舊格式
+      const result = {
+        success: true,
+        intent: controllerResult.final_intent,
+        confidence: controllerResult.confidence,
+        entities: controllerResult.entities || {},
+        method: `semantic_controller_${controllerResult.source}`,
+        reasoning: controllerResult.reason,
+        used_rule: controllerResult.used_rule,
+        execution_time: controllerResult.execution_time,
+        debug_info: controllerResult.debug_info
+      };
       
       return {
         ...result,
-        systemUsed: 'classic',
+        systemUsed: 'semantic_controller',
         adapterVersion: '1.0.0',
         processingTime: this.calculateProcessingTime(),
         fallbackReason: options.fallbackReason || null,
@@ -280,14 +294,16 @@ class SemanticAdapter {
     };
 
     try {
-      // 檢查經典系統
-      const classicTest = await SemanticService.analyzeMessage('測試', 'health_check_user', {});
-      health.classicSystem = {
-        status: classicTest.success ? 'healthy' : 'degraded',
-        confidence: classicTest.confidence || 0
+      // 檢查語意控制器系統
+      const controllerTest = await SemanticController.analyze('測試', {});
+      health.semanticController = {
+        status: controllerTest.final_intent !== 'unknown' ? 'healthy' : 'degraded',
+        confidence: controllerTest.confidence || 0,
+        used_rule: controllerTest.used_rule,
+        source: controllerTest.source
       };
     } catch (error) {
-      health.classicSystem = {
+      health.semanticController = {
         status: 'unhealthy',
         error: error.message
       };

@@ -2408,8 +2408,18 @@ class SemanticService {
    */
   parseAIAnalysisResponse(content, originalText) {
     try {
+      // 🎯 處理 OpenAI 回應中的 ```json 標記
+      let jsonContent = content.trim();
+      
+      // 移除 ```json 和 ``` 標記
+      if (jsonContent.startsWith('```json')) {
+        jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
       // 嘗試解析 JSON
-      const parsed = JSON.parse(content);
+      const parsed = JSON.parse(jsonContent);
       
       // 驗證必要字段
       const result = {

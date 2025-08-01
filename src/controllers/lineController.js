@@ -7,6 +7,7 @@
  */
 const crypto = require('crypto');
 const SemanticService = require('../services/semanticService');
+const SemanticController = require('../services/semanticController');
 const TaskService = require('../services/taskService');
 const TimeService = require('../services/timeService');
 const lineService = require('../services/lineService');
@@ -425,8 +426,23 @@ class LineController {
           { enableSlotTemplate: true, useEnhancedExtraction: true }
         );
       } else {
-        console.log(`🔧 [DEBUG] 使用標準語義分析`);
-        analysis = await SemanticService.analyzeMessage(userMessage, userId, conversationContext || {});
+        console.log(`🔧 [DEBUG] 使用新語意控制器分析`);
+        const controllerResult = await SemanticController.analyze(userMessage, conversationContext || {});
+        
+        // 🎯 適配新語意控制器返回格式到舊格式
+        analysis = {
+          success: true,
+          intent: controllerResult.final_intent,
+          confidence: controllerResult.confidence,
+          entities: controllerResult.entities || {},
+          method: `semantic_controller_${controllerResult.source}`,
+          reasoning: controllerResult.reason,
+          used_rule: controllerResult.used_rule,
+          execution_time: controllerResult.execution_time,
+          debug_info: controllerResult.debug_info
+        };
+        
+        console.log(`🎯 [DEBUG] 語意控制器結果 - Rule: ${controllerResult.used_rule}, Source: ${controllerResult.source}, Intent: ${controllerResult.final_intent}`);
       }
 
       if (!analysis.success) {
