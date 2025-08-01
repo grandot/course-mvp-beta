@@ -9,6 +9,7 @@ const OpenAIService = require('../internal/openaiService');
 const DataService = require('./dataService');
 const TimeService = require('./timeService');
 const ConversationContext = require('../utils/conversationContext');
+const RegexService = require('./regexService');
 
 // Slot Template System 整合 (可選功能)
 let SlotTemplateManager = null;
@@ -2274,6 +2275,184 @@ class SemanticService {
         confidence: 0.0,
         is_content_related: false,
         analysis_time: Date.now(),
+      };
+    }
+  }
+
+  /**
+   * 增強版 Regex 分析 - 支援證據驅動決策
+   * @param {string} userText - 用戶輸入文本
+   * @returns {Promise<RegexAnalysisResult>} 增強版 Regex 分析結果
+   */
+  async analyzeByRegex(userText) {
+    SemanticService.debugLog(`🔧 [DEBUG] SemanticService.analyzeByRegex - 輸入: "${userText}"`);
+    
+    try {
+      const result = await RegexService.analyzeByRegex(userText);
+      SemanticService.debugLog(`✅ [DEBUG] SemanticService.analyzeByRegex - 結果:`, result);
+      return result;
+    } catch (error) {
+      SemanticService.debugLog(`❌ [ERROR] SemanticService.analyzeByRegex - 錯誤:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * 增強版 OpenAI 分析 - 支援證據驅動決策
+   * @param {string} userText - 用戶輸入文本
+   * @param {Array} conversationHistory - 對話歷史 (可選)
+   * @returns {Promise<AIAnalysisResult>} 增強版 AI 分析結果
+   */
+  async analyzeByOpenAI(userText, conversationHistory = []) {
+    SemanticService.debugLog(`🔧 [DEBUG] SemanticService.analyzeByOpenAI - 輸入: "${userText}"`);
+    
+    try {
+      // 構建證據驅動的 prompt
+      const prompt = this.buildEvidenceDrivenPrompt(userText, conversationHistory);
+      
+      // 調用 OpenAI API
+      const response = await OpenAIService.complete({
+        prompt,
+        model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+        maxTokens: 800,
+        temperature: 0.3  // 較低溫度確保一致性
+      });
+
+      // 解析回應
+      const result = this.parseAIAnalysisResponse(response.content, userText);
+      SemanticService.debugLog(`✅ [DEBUG] SemanticService.analyzeByOpenAI - 結果:`, result);
+      
+      return result;
+    } catch (error) {
+      SemanticService.debugLog(`❌ [ERROR] SemanticService.analyzeByOpenAI - 錯誤:`, error);
+      
+      // 錯誤情況下返回安全的默認值
+      return {
+        intent: 'unknown',
+        entities: {},
+        evidence: {
+          temporal_clues: [],
+          mood_indicators: [],
+          action_verbs: [],
+          question_markers: []
+        },
+        reasoning_chain: {
+          confidence_source: `分析失敗: ${error.message}`
+        },
+        confidence: {
+          overall: 0.1,
+          intent_certainty: 0.1,
+          context_understanding: 0.1
+        }
+      };
+    }
+  }
+
+  /**
+   * 構建證據驅動的 prompt
+   * @param {string} userText - 用戶輸入
+   * @param {Array} conversationHistory - 對話歷史
+   * @returns {string} 構建的 prompt
+   */
+  buildEvidenceDrivenPrompt(userText, conversationHistory) {
+    const historyContext = conversationHistory.length > 0 
+      ? `\n對話歷史：${JSON.stringify(conversationHistory.slice(-3))}` 
+      : '';
+
+    return `分析這句話的意圖，並提供詳細的證據和推理過程：
+
+用戶輸入："${userText}"${historyContext}
+
+請以JSON格式回答，包含以下字段：
+{
+  "intent": "主要意圖（record_course/query_schedule/modify_course/cancel_course等）",
+  "entities": {
+    "course_name": "課程名稱",
+    "student_name": "學生名稱",
+    "time": "時間信息"
+  },
+  "evidence": {
+    "temporal_clues": ["時間相關詞語"],
+    "mood_indicators": ["語氣相關詞語"],
+    "action_verbs": ["動作詞"],
+    "question_markers": ["疑問標記"]
+  },
+  "reasoning_chain": {
+    "step1": "第一步推理",
+    "step2": "第二步推理", 
+    "step3": "第三步推理",
+    "confidence_source": "信心來源說明"
+  },
+  "confidence": {
+    "overall": 0.95,
+    "intent_certainty": 0.95,
+    "context_understanding": 0.88
+  }
+}
+
+重要規則：
+- "上次/昨天/之前" + 疑問語氣 = 查詢過去記錄
+- "不是...嗎" = 確認性疑問，通常是查詢
+- 純粹描述課程內容 = 新增記錄
+- 包含修改詞彙 = 修改意圖
+- 語氣分析很重要：疑問語氣通常不是新增意圖
+
+請確保返回有效的JSON格式。`;
+  }
+
+  /**
+   * 解析 AI 分析回應
+   * @param {string} content - OpenAI 回應內容
+   * @param {string} originalText - 原始用戶輸入
+   * @returns {AIAnalysisResult} 解析後的結果
+   */
+  parseAIAnalysisResponse(content, originalText) {
+    try {
+      // 嘗試解析 JSON
+      const parsed = JSON.parse(content);
+      
+      // 驗證必要字段
+      const result = {
+        intent: parsed.intent || 'unknown',
+        entities: parsed.entities || {},
+        evidence: {
+          temporal_clues: parsed.evidence?.temporal_clues || [],
+          mood_indicators: parsed.evidence?.mood_indicators || [],
+          action_verbs: parsed.evidence?.action_verbs || [],  
+          question_markers: parsed.evidence?.question_markers || []
+        },
+        reasoning_chain: parsed.reasoning_chain || {
+          confidence_source: "解析不完整"
+        },
+        confidence: {
+          overall: Math.min(Math.max(parsed.confidence?.overall || 0.5, 0), 1),
+          intent_certainty: Math.min(Math.max(parsed.confidence?.intent_certainty || 0.5, 0), 1),
+          context_understanding: Math.min(Math.max(parsed.confidence?.context_understanding || 0.5, 0), 1)
+        }
+      };
+
+      return result;
+    } catch (error) {
+      SemanticService.debugLog(`⚠️ [WARN] parseAIAnalysisResponse JSON解析失敗:`, error);
+      
+      // JSON 解析失敗時的後備處理
+      return {
+        intent: 'unknown',
+        entities: {},
+        evidence: {
+          temporal_clues: [],
+          mood_indicators: [],
+          action_verbs: [],
+          question_markers: []
+        },
+        reasoning_chain: {
+          confidence_source: `JSON解析失敗，原始回應: ${content.substring(0, 100)}...`
+        },
+        confidence: {
+          overall: 0.2,
+          intent_certainty: 0.2,
+          context_understanding: 0.2
+        }
       };
     }
   }

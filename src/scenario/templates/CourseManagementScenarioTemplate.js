@@ -13,6 +13,8 @@ const RecurringCourseCalculator = require('../../utils/recurringCourseCalculator
 class CourseManagementScenarioTemplate extends ScenarioTemplate {
   constructor(config) {
     super(config);
+    // TODO: 技術債 - 此層目前主要做Service調用協調
+    // 未來場景切換時需重構為包含真正業務邏輯
     console.log('✅✅✅ CourseManagementScenarioTemplate constructor is called! ✅✅✅');
   }
 

@@ -26,6 +26,7 @@ class TaskService {
 
   /**
    * 統一任務執行入口 - 委託給場景模板
+   * TODO: 技術債 - 此層主要做意圖路由到場景模板的Service調用協調
    * @param {string} intent - 用戶意圖
    * @param {Object} entities - 實體信息（使用新契約：entities.timeInfo）
    * @param {string} userId - 用戶ID

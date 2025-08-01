@@ -2,6 +2,9 @@
  * ScenarioManager - 場景管理器單例
  * 職責：啟動時一次性加載所有場景配置和模板，運行時復用實例
  * 架構約束：保持 Forced Boundaries，提供與 ScenarioFactory 相同的接口
+ * 
+ * TODO: 技術債 - 當前場景系統主要用於模板消息格式化
+ * 未來實現真正業務場景切換時需重構語義解析層整合
  */
 
 const fs = require('fs');
