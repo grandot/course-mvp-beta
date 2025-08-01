@@ -2365,7 +2365,7 @@ class SemanticService {
 
 請以JSON格式回答，包含以下字段：
 {
-  "intent": "主要意圖（record_course/query_schedule/modify_course/cancel_course等）",
+  "intent": "必須使用英文標準意圖名稱，從以下選擇：record_course, query_schedule, modify_course, cancel_course, create_recurring_course, modify_recurring_course, stop_recurring_course, clear_schedule, set_reminder, record_lesson_content, record_homework, upload_class_photo, query_course_content, modify_course_content, correction_intent",
   "entities": {
     "course_name": "課程名稱",
     "student_name": "學生名稱",
