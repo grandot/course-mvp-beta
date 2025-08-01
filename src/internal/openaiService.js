@@ -331,6 +331,18 @@ class OpenAIService {
         // 修復6: 處理其他常見問題
         fixedContent = fixedContent.replace(/\n/g, ' ').replace(/\t/g, ' ');
         
+        // 🎯 修復7: 處理未閉合的中文字符串
+        fixedContent = fixedContent.replace(/"([^"]*?)(\s*[}\]])/g, '"$1"$2');
+        
+        // 修復8: 處理多餘的逗號在對象末尾
+        fixedContent = fixedContent.replace(/,(\s*})/g, '$1');
+        
+        // 🎯 修復9: 處理 reasoning 字段中的未閉合字符串
+        fixedContent = fixedContent.replace(/"reasoning":\s*"([^"]*?)(\s*})/g, '"reasoning": "$1"$2');
+        
+        // 🎯 修復10: 強制修復所有未閉合的字符串字段
+        fixedContent = fixedContent.replace(/"([^"]*?)(\s*})/g, '"$1"$2');
+        
         try {
           const analysis = JSON.parse(fixedContent);
           
@@ -351,9 +363,41 @@ class OpenAIService {
     } catch (parseError) {
       // 🎯 JSON 解析失敗時，嘗試基礎關鍵詞 fallback
       console.warn('[OpenAIService] JSON 解析失敗，啟用關鍵詞 fallback:', parseError.message);
-      
+      // === 新增：正則兜底抽取 ===
+      try {
+        const raw = result.content || '';
+        const intentMatch = raw.match(/"intent"\s*:\s*"([^"]+)"/);
+        const confidenceMatch = raw.match(/"confidence"\s*:\s*([0-9.]+)/);
+        const entitiesMatch = raw.match(/"entities"\s*:\s*({[\s\S]*?})\s*,?\s*"reasoning"/);
+        const reasoningMatch = raw.match(/"reasoning"\s*:\s*"([^"]*)"/);
+        const intent = intentMatch ? intentMatch[1] : undefined;
+        const confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.8;
+        let entities = {};
+        try {
+          if (entitiesMatch && entitiesMatch[1]) {
+            entities = JSON.parse(entitiesMatch[1]);
+          }
+        } catch (e) {}
+        const reasoning = reasoningMatch ? reasoningMatch[1] : '正則兜底抽取';
+        if (intent) {
+          return {
+            success: true,
+            analysis: {
+              intent,
+              confidence,
+              entities,
+              reasoning,
+            },
+            usage: result.usage,
+            model: `${result.model}-regex-fallback`,
+            regex_fallback: true,
+            parseError: parseError.message,
+            raw_content: result.content
+          };
+        }
+      } catch (e) {}
+      // === 原本 fallback ===
       const fallbackResult = this.fallbackIntentAnalysis(text);
-      
       return {
         success: true,
         analysis: fallbackResult,
@@ -445,9 +489,9 @@ class OpenAIService {
       const hasCourseContent = courseWords.some(word => text.includes(word));
       const hasSpecificContent = contentWords.some(word => text.includes(word));
       
-      // 課程+具體內容 = 記錄課程內容到學習日曆 (不論時間，MVP核心功能)
+      // 🎯 修復：課程+具體內容 = 記錄課程內容 (record_lesson_content)
       if (hasCourseContent && hasSpecificContent) {
-        detectedIntent = 'record_course';
+        detectedIntent = 'record_lesson_content';
         maxConfidence = 0.9;
       }
     }
