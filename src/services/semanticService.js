@@ -1370,18 +1370,22 @@ class SemanticService {
 
     // 檢查意圖類型
     const validIntents = [
-      'cancel_course',
       'record_course',
-      'query_schedule',
+      'query_schedule', 
       'modify_course',
-      'set_reminder',
+      'cancel_course',
+      'create_recurring_course',
+      'modify_recurring_course',
+      'stop_recurring_course',
       'clear_schedule',
-      'correction_intent',
+      'set_reminder',
+      'query_today_courses_for_content',
       'record_lesson_content',
       'record_homework',
       'upload_class_photo',
       'query_course_content',
       'modify_course_content',
+      'correction_intent',
       'unknown',
     ];
 
@@ -2365,7 +2369,7 @@ class SemanticService {
 
 請以JSON格式回答，包含以下字段：
 {
-  "intent": "必須使用英文標準意圖名稱，從以下選擇：record_course, query_schedule, modify_course, cancel_course, create_recurring_course, modify_recurring_course, stop_recurring_course, clear_schedule, set_reminder, record_lesson_content, record_homework, upload_class_photo, query_course_content, modify_course_content, correction_intent",
+  "intent": "必須使用英文標準意圖名稱，從以下選擇：record_course, query_schedule, modify_course, cancel_course, create_recurring_course, modify_recurring_course, stop_recurring_course, clear_schedule, set_reminder, query_today_courses_for_content, record_lesson_content, record_homework, upload_class_photo, query_course_content, modify_course_content, correction_intent",
   "entities": {
     "course_name": "課程名稱（欄位名必須是course_name）",
     "student_name": "學生名稱（欄位名必須是student_name）", 
@@ -2374,7 +2378,13 @@ class SemanticService {
     "teacher": "老師信息（欄位名必須是teacher）",
     "student": "學生信息（欄位名必須是student）",
     "confirmation": "確認信息（欄位名必須是confirmation）",
-    "recurrence_pattern": "重複模式（欄位名必須是recurrence_pattern）"
+    "recurrence_pattern": "重複模式（欄位名必須是recurrence_pattern）",
+    "timeInfo": "時間詳細信息對象（欄位名必須是timeInfo）",
+    "originalUserInput": "原始用戶輸入（欄位名必須是originalUserInput）",
+    "content_entities": "課程內容實體（欄位名必須是content_entities）",
+    "raw_text": "原始文本（欄位名必須是raw_text）",
+    "date_phrase": "日期短語（欄位名必須是date_phrase）",
+    "time_phrase": "時間短語（欄位名必須是time_phrase）"
   },
   "evidence": {
     "temporal_clues": ["時間相關詞語"],
@@ -2404,7 +2414,7 @@ class SemanticService {
 
 🚨 格式約束：
 - intent 必須使用上述列出的英文標準名稱
-- entities 所有欄位名必須使用英文（course_name, student_name, time, location, teacher, student, confirmation, recurrence_pattern）
+- entities 所有欄位名必須使用英文（course_name, student_name, time, location, teacher, student, confirmation, recurrence_pattern, timeInfo, originalUserInput, content_entities, raw_text, date_phrase, time_phrase）
 - 絕對不可使用中文欄位名如「課程名稱」、「學生姓名」等
 
 請確保返回有效的JSON格式。`;
