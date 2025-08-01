@@ -865,8 +865,12 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Clearing all course entities', { userId, entities });
 
     try {
-      const { confirmation } = entities;
-      const isConfirmation = confirmation === '確認清空' || confirmation === '確認';
+      // 🔧 修復：檢查 originalUserInput 而不是 confirmation 字段
+      const { confirmation, originalUserInput } = entities;
+      const isConfirmation = confirmation === '確認清空' || 
+                            confirmation === '確認' ||
+                            originalUserInput === '確認清空' || 
+                            originalUserInput === '確認';
 
       if (!isConfirmation) {
         // 第一步：檢查課程數量並要求確認
