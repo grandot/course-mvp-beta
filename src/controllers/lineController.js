@@ -415,23 +415,24 @@ class LineController {
       console.log(`🔧 [DEBUG] 使用統一語義處理器分析`);
       
       let analysis;
-      // 🎯 使用統一的 Enhanced Semantic Normalizer
-      const semanticResult = semanticNormalizer.normalizeIntent(userMessage, conversationContext || {});
+      // 🎯 修復：使用正確的語義分析入口 - EnhancedSemanticService.analyzeMessage
+      const enhancedSemanticService = new (require('../services/enhancedSemanticService'))();
+      const semanticResult = await enhancedSemanticService.analyzeMessage(userMessage, userId, conversationContext || {});
       
-      // 🎯 適配統一語義處理器返回格式到現有格式
+      // 🎯 適配完整語義處理結果到現有格式
       analysis = {
-        success: true,
-        intent: semanticResult.mapped_intent,
+        success: semanticResult.success,
+        intent: semanticResult.intent,
         confidence: semanticResult.confidence || 0.9,
         entities: semanticResult.entities || {},
-        method: `enhanced_semantic_normalizer`,
-        reasoning: semanticResult.reasoning || '統一語義處理',
-        used_rule: semanticResult.source || 'enhanced_normalizer',
-        execution_time: semanticResult.processing_time || 0,
+        method: semanticResult.method || 'enhanced_semantic_service',
+        reasoning: semanticResult.reasoning || '完整語義分析',
+        used_rule: semanticResult.source || 'unknown',
+        execution_time: semanticResult.execution_time || 0,
         debug_info: semanticResult.debug_info || {}
       };
       
-      console.log(`🎯 [DEBUG] 統一語義處理結果 - Source: ${semanticResult.source}, Intent: ${semanticResult.mapped_intent}`);
+      console.log(`🎯 [DEBUG] 完整語義分析結果 - Source: ${semanticResult.source}, Intent: ${semanticResult.intent}`);
 
       if (!analysis.success) {
         // 🎯 處理純時間輸入拒絕情況
