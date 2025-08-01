@@ -1101,6 +1101,28 @@ class LineController {
       if (conversationContext && conversationContext.lastCourse) {
         autoCourseName = conversationContext.lastCourse;
         console.log(`🎯 [Image] 從對話上下文自動識別課程: ${autoCourseName}`);
+      } else {
+        // 🎯 智能推斷：從用戶最近的課程中推斷最可能的課程
+        console.log(`🔍 [Image] 嘗試從用戶課程歷史推斷課程`);
+        const recentCourses = this.getCachedUserCourses(userId);
+        
+        if (recentCourses && recentCourses.length > 0) {
+          // 找到最常見的課程名稱
+          const courseCount = {};
+          recentCourses.forEach(course => {
+            const courseName = course.course_name;
+            courseCount[courseName] = (courseCount[courseName] || 0) + 1;
+          });
+          
+          // 選擇出現次數最多的課程
+          const mostFrequentCourse = Object.entries(courseCount)
+            .sort(([,a], [,b]) => b - a)[0];
+          
+          if (mostFrequentCourse) {
+            autoCourseName = mostFrequentCourse[0];
+            console.log(`🎯 [Image] 從課程歷史推斷最可能的課程: ${autoCourseName} (出現 ${mostFrequentCourse[1]} 次)`);
+          }
+        }
       }
 
       if (autoCourseName) {
@@ -1483,10 +1505,25 @@ class LineController {
       
       // 處理其他按鈕類型
       if (buttonMessage === '上傳課堂照片' || buttonMessage === '上傳作業照片') {
-        // 設置等待照片上傳的狀態
-        ConversationContext.updateContext(userId, 'waiting_for_photo', {
-          photo_type: buttonMessage.includes('作業') ? 'homework' : 'lesson'
-        });
+        // 🎯 修復：保留之前的對話上下文，只更新照片相關信息
+        const existingContext = ConversationContext.getContext(userId);
+        const photoType = buttonMessage.includes('作業') ? 'homework' : 'lesson';
+        
+        // 合併現有上下文和新的照片信息
+        const updatedEntities = {
+          ...existingContext,
+          photo_type: photoType,
+          lastAction: 'waiting_for_photo',
+          lastIntent: 'waiting_for_photo'
+        };
+        
+        // 保留原有的課程信息
+        if (existingContext && existingContext.lastCourse) {
+          updatedEntities.lastCourse = existingContext.lastCourse;
+          console.log(`🔧 [DEBUG] 保留課程信息: ${existingContext.lastCourse}`);
+        }
+        
+        ConversationContext.updateContext(userId, 'waiting_for_photo', updatedEntities);
         
         const replyMessage = '📸 請上傳您的照片';
         await lineService.replyMessage(replyToken, replyMessage);
