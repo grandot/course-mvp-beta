@@ -127,40 +127,30 @@ class EnhancedSemanticService {
     } catch (error) {
       console.error(`❌ 增強版語義分析失敗:`, error.message);
       
-      // 降級到語意控制器
-      console.log(`🔄 降級到語意控制器`);
-      const controllerResult = await SemanticController.analyze(text, context || {});
-      
-      // 🎯 適配新語意控制器返回格式到增強服務格式
+      // 🚨 緊急修復 - 直接返回錯誤結果，避免循環引用
+      console.log(`🔄 返回降級結果`);
       const fallbackResult = {
-        success: true,
-        intent: controllerResult.final_intent,
-        confidence: controllerResult.confidence,
-        entities: controllerResult.entities || {},
-        method: `enhanced_fallback_${controllerResult.source}`,
-        reasoning: controllerResult.reason,
-        used_rule: controllerResult.used_rule,
-        execution_time: controllerResult.execution_time,
-        debug_info: controllerResult.debug_info,
+        success: false,
+        intent: 'unknown',
+        confidence: 0,
+        entities: {},
+        method: 'enhanced_service_error_fallback',
+        reasoning: '語義分析服務發生錯誤',
+        error: error.message,
         enhanced_context: context,
-        fallback_reason: 'enhanced_service_error'
+        fallback_reason: 'enhanced_service_error',
+        analysis_time: Date.now()
       };
 
-      // 🎯 Task 3.3: 對fallback結果也應用增強標準化
-      let finalFallbackResult = fallbackResult;
-      if (this.useEnhancedNormalizer) {
-        finalFallbackResult = this.applyEnhancedNormalization(fallbackResult);
-      }
-      
       // 🎯 Task 3.5: 監控錯誤處理的fallback結果
-      this.monitoringMiddleware.afterSemanticAnalysis(requestId, finalFallbackResult, {
+      this.monitoringMiddleware.afterSemanticAnalysis(requestId, fallbackResult, {
         cacheHitRate: 0, // fallback情況無緩存
         normalizerTime: 0,
         cacheSize: 0,
         error: error.message
       });
       
-      return finalFallbackResult;
+      return fallbackResult;
     }
   }
 

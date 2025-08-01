@@ -415,24 +415,15 @@ class LineController {
       console.log(`🔧 [DEBUG] 使用統一語義處理器分析`);
       
       let analysis;
-      // 🎯 恢復 SemanticController 改版 - 使用證據驅動的語義控制器
-      const SemanticController = require('../services/semanticController');
-      const controllerResult = await SemanticController.analyze(userMessage, conversationContext || {});
+      // 🚨 緊急修復 - 使用現有的 enhancedSemanticService (生產環境穩定性優先)
+      const EnhancedSemanticService = require('../services/enhancedSemanticService');
+      const semanticService = new EnhancedSemanticService();
+      const controllerResult = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
       
-      // 🎯 適配語意控制器返回格式到舊格式 (保持 f78258d 改版兼容性)
-      analysis = {
-        success: true,
-        intent: controllerResult.final_intent,
-        confidence: controllerResult.confidence,
-        entities: controllerResult.entities || {},
-        method: `semantic_controller_${controllerResult.source}`,
-        reasoning: controllerResult.reason,
-        used_rule: controllerResult.used_rule,
-        execution_time: controllerResult.execution_time,
-        debug_info: controllerResult.debug_info
-      };
+      // 🚨 緊急修復 - 直接使用 enhancedSemanticService 返回格式
+      analysis = controllerResult;
       
-      console.log(`🎯 [DEBUG] 語意控制器結果 - Rule: ${controllerResult.used_rule}, Source: ${controllerResult.source}, Intent: ${controllerResult.final_intent}`);
+      console.log(`🎯 [DEBUG] 語義分析結果 - Method: ${analysis.method}, Intent: ${analysis.intent}, Success: ${analysis.success}`);
 
       if (!analysis.success) {
         // 🎯 處理純時間輸入拒絕情況
