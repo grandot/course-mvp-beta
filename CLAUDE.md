@@ -9,22 +9,37 @@
 
 | 服務 | 職責 | 禁止事項 |
 |------|------|----------|
-| `SemanticService` | 所有語義處理 | ❌ 直接調用 OpenAI |
+| `SemanticController` | **唯一語義分析入口** (P1-P5證據驅動決策) | ❌ 外部直接調用其他語義服務 |
+| `EnhancedSemanticService` | SemanticController 內部語義處理 | ❌ 外部直接調用 (僅供 SemanticController 使用) |
 | `TimeService` | 所有時間操作 | ❌ 直接使用 `new Date()` |
 | `DataService` | 所有數據操作 | ❌ 直接調用 Firebase |
 | `TaskService` | 業務邏輯協調 | ❌ 硬編碼邏輯 |
 
-### ⚡ 智能分流機制（意圖辨識 & 實體提取）
+### 🚨 語義分析強制約束
 ```javascript
-// SemanticService 統一架構：Regex 優先 → OpenAI Fallback
-const ruleResult = IntentRuleEngine.analyzeIntent(text);
-if (ruleResult.confidence > 0.7) {
-  return Regex結果;  // 70%+ 案例，瞬間響應，<50ms
-} else {
-  return await OpenAI.analyzeIntent(text);  // 30% 案例，智能處理，200-500ms
-}
+// ✅ 正確：lineController 必須使用 SemanticController
+const SemanticController = require('../services/semanticController');
+const result = await SemanticController.analyze(text, context);
+
+// ❌ 禁止：直接使用其他語義服務（破壞 P1-P5 證據驅動決策）
+const service = new EnhancedSemanticService(); // 禁止
+const result = semanticNormalizer.normalizeIntent(); // 禁止
 ```
-🎯 **第一性原則架構**: 確定性操作用確定性方法(Regex)，模糊操作才用智能推理(OpenAI)
+
+### ⚡ SemanticController 內部智能分流機制
+```javascript
+// ✅ 正確：智能分流機制封裝在 SemanticController 內部
+// SemanticController.analyze() 內部實現：
+// 1. Regex 優先判斷 (IntentRuleEngine)
+// 2. 信心度 > 0.7 → 瞬間響應 <50ms  
+// 3. 信心度 ≤ 0.7 → OpenAI Fallback 200-500ms
+
+// ❌ 禁止：外部直接調用分流邏輯
+const ruleResult = IntentRuleEngine.analyzeIntent(text); // 禁止
+const openaiResult = await OpenAI.analyzeIntent(text);   // 禁止
+```
+🎯 **第一性原則架構**: 確定性操作用確定性方法(Regex)，模糊操作才用智能推理(OpenAI)  
+📍 **架構約束**: 分流邏輯必須封裝在 SemanticController 內部，外部統一調用 `SemanticController.analyze()`
 
 ## 課程必要欄位 ##
 1. 課程名稱
