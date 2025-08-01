@@ -415,13 +415,23 @@ class LineController {
       console.log(`🔧 [DEBUG] 使用統一語義處理器分析`);
       
       let analysis;
-      // 🚨 緊急修復 - 使用現有的 enhancedSemanticService (生產環境穩定性優先)
-      const EnhancedSemanticService = require('../services/enhancedSemanticService');
-      const semanticService = new EnhancedSemanticService();
-      const controllerResult = await semanticService.analyzeMessage(userMessage, userId, conversationContext || {});
+      // ✅ 架構修復 - 使用 SemanticController 作為唯一語義分析入口
+      const SemanticController = require('../services/semanticController');
+      const semanticController = new SemanticController();
+      const controllerResult = await semanticController.analyze(userMessage, { userId, ...conversationContext });
       
-      // 🚨 緊急修復 - 直接使用 enhancedSemanticService 返回格式
-      analysis = controllerResult;
+      // 🎯 適配 SemanticController 返回格式到 lineController 格式
+      analysis = {
+        success: controllerResult.final_intent !== 'unknown',
+        intent: controllerResult.final_intent,
+        confidence: controllerResult.confidence,
+        entities: controllerResult.entities || {},
+        method: `semantic_controller_${controllerResult.source}`,
+        reasoning: controllerResult.reason,
+        used_rule: controllerResult.used_rule,
+        execution_time: controllerResult.execution_time,
+        debug_info: controllerResult.debug_info
+      };
       
       console.log(`🎯 [DEBUG] 語義分析結果 - Method: ${analysis.method}, Intent: ${analysis.intent}, Success: ${analysis.success}`);
 
