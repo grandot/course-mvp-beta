@@ -772,6 +772,14 @@ class LineController {
                         label: "✅ 沒有照片",
                         text: "沒有照片"
                       }
+                    },
+                    {
+                      type: "action",
+                      action: {
+                        type: "message",
+                        label: "❌ 取消",
+                        text: "取消"
+                      }
                     }
                   ]
                 };
@@ -829,6 +837,14 @@ class LineController {
                         type: "message", 
                         label: "✅ 沒有照片",
                         text: "沒有照片"
+                      }
+                    },
+                    {
+                      type: "action",
+                      action: {
+                        type: "message",
+                        label: "❌ 取消",
+                        text: "取消"
                       }
                     }
                   ]
@@ -1440,6 +1456,20 @@ class LineController {
           success: true,
           action: 'completed_without_photo',
           message: '流程完成'
+        };
+      }
+      
+      if (buttonMessage === '取消') {
+        // 清除任何等待狀態，取消流程
+        ConversationContext.clearContext(userId);
+        
+        const replyMessage = '❌ 已取消操作';
+        await lineService.replyMessage(replyToken, replyMessage);
+        
+        return {
+          success: true,
+          action: 'cancelled',
+          message: '用戶取消操作'
         };
       }
       
