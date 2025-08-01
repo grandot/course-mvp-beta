@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v17.1.0] - 2025-08-01 🎯 多輪對話功能緊急修復
+
+### 🚨 第一性原則緊急修復
+**根本問題**: 多輪對話功能在 lineController.js 中被錯誤禁用，導致用戶無法使用漸進式資訊收集功能
+
+#### 🔧 修復內容
+- **啟用 SlotTemplate 系統**: 移除 `if (false)` 硬編碼禁用邏輯 (lineController.js:484)
+- **恢復核心調用**: 取消註釋 `processWithProblemDetection` 方法調用 (lineController.js:498)
+- **修復服務依賴**: 在 EnhancedSemanticService 中重新初始化 SlotTemplateManager (enhancedSemanticService.js:43)
+- **第一性原則**: 解決根本原因而非補丁式修復
+
+#### 📊 功能恢復
+- ✅ 多輪對話狀態追蹤 - TempSlotStateManager 自動檢測補充信息
+- ✅ 漸進式資訊收集 - 用戶可分步提供課程信息
+- ✅ 智能問題分離和處理 - SlotProblemDetector 自動檢測缺失字段
+- ✅ 問題補充提示生成 - HumanPromptGenerator 生成友好提示
+
+#### 🎯 影響範圍
+- **架構完整性**: ✅ 不影響 enhancedSemanticNormalizer 統一入口
+- **核心功能**: 課程資訊收集體驗大幅提升 (支持 "數學課" → "什麼時候上課？")
+- **用戶體驗**: 無需重複輸入完整資訊，智能引導補全
+- **系統穩定性**: 無副作用，純功能恢復，保持 Phase 3 架構成果
+
+#### 🔍 技術細節
+```javascript
+// 修復前 (被禁用)
+if (false) { // semanticService.slotTemplateEnabled
+  // const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(...)
+}
+
+// 修復後 (功能恢復)
+try {
+  const EnhancedSemanticService = require('../services/enhancedSemanticService');
+  const semanticService = new EnhancedSemanticService();
+  const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
+    userId, semanticResultWithText
+  );
+} catch (error) {
+  // 優雅降級到傳統處理
+}
+```
+
+---
+
 ## [v17.0.0] - 2025-08-01 🎆 Phase 3 語義控制器重構項目圓滿完成
 
 ### 🏆 項目總覽：17天完成9大核心任務

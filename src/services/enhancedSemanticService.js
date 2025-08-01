@@ -24,6 +24,7 @@ const OpenAIService = require('../internal/openaiService');
 const DataService = require('./dataService');
 const { getEnhancedSemanticNormalizer } = require('./enhancedSemanticNormalizer');
 const { getMonitoringMiddleware } = require('../middleware/monitoringMiddleware');
+const SlotTemplateManager = require('../slot-template/slotTemplateManager');
 
 class EnhancedSemanticService {
   constructor(config = {}) {
@@ -37,6 +38,9 @@ class EnhancedSemanticService {
     
     // 🎯 Task 3.5: 初始化監控中間件
     this.monitoringMiddleware = getMonitoringMiddleware();
+    
+    // 🎯 多輪對話功能恢復：初始化 SlotTemplateManager
+    this.slotTemplateManager = new SlotTemplateManager();
     
     // 配置參數
     this.regexFirstPriority = config.regexFirstPriority !== false; // 預設啟用

@@ -480,45 +480,45 @@ class LineController {
       if (intent === 'record_course') {
         console.log(`🔧 [DEBUG] 使用 SlotTemplateManager 處理課程邏輯`);
         
-        // 🚨 Slot Template 系統暫時禁用，使用直接處理方式
-        if (false) { // semanticService.slotTemplateEnabled
-          try {
-            // 使用增強的 SlotTemplate 處理
-            const semanticResultWithText = {
-              intent,
-              entities,
-              confidence,
-              text: userMessage, // 添加原始文本用於問題檢測
-              context: conversationContext
-            };
-            
-            // const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
-            //   userId, 
-            //   semanticResultWithText
-            // );
-            
-            console.log(`🔧 [DEBUG] SlotTemplate 處理結果:`, slotResult);
-            
-            // 🎯 使用統一的 SlotTemplate 響應處理器
-            const responseResult = await this.handleSlotTemplateResponse(slotResult, replyToken);
-            
-            // 根據響應結果決定下一步
-            if (responseResult.needsFollowUp) {
-              // 需要用戶補充信息，直接返回
-              return responseResult;
-            } else if (slotResult.type === 'task_completed' || slotResult.requiresExecution) {
-              // 任務可以執行，更新 entities 並繼續到 TaskService
-              if (slotResult.slot_state) {
-                entities = this.convertSlotStateToEntities(slotResult.slot_state);
-                console.log(`🔧 [DEBUG] 轉換後的 entities:`, entities);
-              }
+        // 🎯 多輪對話功能恢復 - 移除臨時禁用
+        try {
+          // 使用增強的 SlotTemplate 處理
+          const semanticResultWithText = {
+            intent,
+            entities,
+            confidence,
+            text: userMessage, // 添加原始文本用於問題檢測
+            context: conversationContext
+          };
+          
+          // 🎯 恢復多輪對話核心調用
+          const EnhancedSemanticService = require('../services/enhancedSemanticService');
+          const semanticService = new EnhancedSemanticService();
+          
+          const slotResult = await semanticService.slotTemplateManager.processWithProblemDetection(
+            userId, 
+            semanticResultWithText
+          );
+          
+          console.log(`🔧 [DEBUG] SlotTemplate 處理結果:`, slotResult);
+          
+          // 🎯 使用統一的 SlotTemplate 響應處理器
+          const responseResult = await this.handleSlotTemplateResponse(slotResult, replyToken);
+          
+          // 根據響應結果決定下一步
+          if (responseResult.needsFollowUp) {
+            // 需要用戶補充信息，直接返回
+            return responseResult;
+          } else if (slotResult.type === 'task_completed' || slotResult.requiresExecution) {
+            // 任務可以執行，更新 entities 並繼續到 TaskService
+            if (slotResult.slot_state) {
+              entities = this.convertSlotStateToEntities(slotResult.slot_state);
+              console.log(`🔧 [DEBUG] 轉換後的 entities:`, entities);
             }
-          } catch (error) {
-            console.error(`🔧 [ERROR] SlotTemplate 處理失敗，降級到傳統處理:`, error);
-            // 降級到傳統處理邏輯
           }
-        } else {
-          console.log(`🔧 [DEBUG] SlotTemplate 系統未啟用，使用傳統處理`);
+        } catch (error) {
+          console.error(`🔧 [ERROR] SlotTemplate 處理失敗，降級到傳統處理:`, error);
+          // 降級到傳統處理邏輯
         }
       }
 
