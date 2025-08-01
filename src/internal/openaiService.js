@@ -207,22 +207,22 @@ class OpenAIService {
     }
 
     const prompt = `
-你是一個課程管理助手。分析用戶輸入的課程管理意圖，並返回JSON格式的結果。
+你是課程管理助手。分析用戶輸入並返回JSON格式結果。
 
 用戶輸入："${text}"
 
-分析規則：
+規則：
 1. 查詢意圖：包含"怎麼樣"、"如何"、"記得"、"不是...嗎"、"課程記錄"、"是什麼"等 = query_schedule 或 query_course_content
-2. 新增課程：時間 + 課程名稱 (無具體內容) = record_course
+2. 新增課程：時間 + 課程名稱 = record_course
 3. 重複課程：重複模式(每週/每天) + 課程 = create_recurring_course
-4. 內容記錄：課程 + 具體內容/備註/提醒/成果 = record_course
+4. 內容記錄：課程 + 具體內容 = record_course
 
 範例：
 - "昨天的課程記錄是什麼" → query_course_content
 - "上次Rumi的課上得怎麼樣" → query_course_content
 - "明天下午3點有數學課" → record_course
 
-請直接返回JSON格式，不要包含任何中文解釋：
+⚠️ 重要：只返回JSON格式，不要任何中文解釋、不要markdown代碼塊、不要其他文字！
 
 {
   "intent": "record_course|cancel_course|query_schedule|modify_course|set_reminder|clear_schedule|create_recurring_course|modify_recurring_course|stop_recurring_course|query_course_content|query_today_courses_for_content",
@@ -258,6 +258,12 @@ class OpenAIService {
         jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
       } else if (jsonContent.startsWith('```')) {
         jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      // 🎯 新增：從包含中文解釋的文本中提取JSON
+      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
       }
       
       // 🎯 增強容錯處理：修復常見JSON格式錯誤
