@@ -14,9 +14,9 @@
 | `DataService` | 所有數據操作 | ❌ 直接調用 Firebase |
 | `TaskService` | 業務邏輯協調 | ❌ 硬編碼邏輯 |
 
-### ⚡ 智能分流機制（意圖辨識 & 實體提取）
+### ⚡ 簡單語義處理架構（Regex 優先 → OpenAI 補全）
 ```javascript
-// SemanticService 統一架構：Regex 優先 → OpenAI Fallback
+// SemanticService 簡化架構：確定性優先，智能補全
 const ruleResult = IntentRuleEngine.analyzeIntent(text);
 if (ruleResult.confidence > 0.7) {
   return Regex結果;  // 70%+ 案例，瞬間響應，<50ms
@@ -25,6 +25,12 @@ if (ruleResult.confidence > 0.7) {
 }
 ```
 🎯 **第一性原則架構**: 確定性操作用確定性方法(Regex)，模糊操作才用智能推理(OpenAI)
+
+### 🚫 已移除的複雜組件
+- ❌ `SemanticController` (P1-P5證據驅動決策系統)
+- ❌ 複雜的語義仲裁機制  
+- ❌ 多層決策路徑追蹤
+- ✅ 保持簡單的二元選擇：Regex 或 OpenAI
 
 ## 課程必要欄位 ##
 1. 課程名稱

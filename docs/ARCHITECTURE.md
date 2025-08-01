@@ -1,30 +1,83 @@
 # System Architecture Design
 
+## 🚑 重大架構回滾記錄 (2025-08-01)
+
+### 🚨 緊急回滾原因
+**根本問題**: 複雜的 P1-P5 證據驅動決策系統導致 bug 越修越多，用戶無法正常使用課程功能。
+
+**原始問題**（簡單）：
+- "上次Rumi的課上得怎麼樣" 被誤判為 "新增課程"
+- "我記得7/31不是已經記錄過了嗎" 被誤判為 "修改課程"
+
+**錯誤解決方案**（過度複雜）：
+- 創建了 8-9 層調用鏈的 SemanticController
+- 實現 P1-P5 證據驅動決策規則
+- 增加了 2558+ 行複雜代碼
+- 結果：引入更多 bug，系統更不穩定
+
+### 🔄 回滾過程
+**時間**: 2025-08-01 22:00-22:30  
+**決策**: 立即回滾到穩定版本 `3f2f27d` (v18.5.0)
+
+**執行步驟**:
+1. `git branch feature/semantic-controller-complex` - 保存複雜版本
+2. `git reset --hard 3f2f27d` - 回滾主分支
+3. `git push origin feature/semantic-controller-complex` - 推送複雜版本分支
+4. `git push origin main --force` - 強制推送回滾版本
+
+### ✅ 回滾結果
+**成功恢復**:
+- ✅ 用戶可正常使用課程功能
+- ✅ 回到簡單的 "Regex 優先 → OpenAI Fallback" 架構
+- ✅ 移除了 2558+ 行複雜代碼
+- ✅ 保留所有版本在 `feature/semantic-controller-complex` 分支
+
+**維護性改善**:
+- 代碼可讀性: 複雜 → 簡單
+- 調試難度: 困難 → 容易
+- 新功能開發: 高風險 → 低風險
+- 系統穩定性: 不穩定 → 穩定
+
+### 📝 經驗教訓
+1. **複雜系統不是好系統**: 簡單問題用簡單方法解決
+2. **第一性原則重要性**: 必須找到根本原因，不是直接增加複雜度
+3. **過度工程化風險**: 為了解決 2 個誤判問題，創建了整個語義仲裁系統
+4. **回滾策略重要性**: 保存所有版本，快速恢復服務
+
+---
+
 ## 🏗️ Three-Layer Semantic Architecture
 
-### Core Philosophy
-**Separation-based Architecture Design** - Single Source of Truth + Forced Boundaries
+### Core Philosophy (簡化後)
+**簡單優先架構設計** - 單一來源 + 清晰邊界 + 簡單可靠
 
 ```
-User Natural Language → Semantic Layer → Time Layer → Task Execution Layer → Unified Response
+User Natural Language → SemanticService → TaskService → Unified Response
 ```
 
-### System Design Principles
+### 🔄 簡化後的語義處理流程
+```
+用戶輸入 → IntentRuleEngine (Regex) → 若信心度 > 0.7 則直接返回
+                ↓ (信心度 <= 0.7)
+            OpenAI 語義分析 → 結果返回
+```
 
-**Single Source of Truth**: Each functionality has only one unique entry point
-- ✅ All time-related operations → `TimeService`
-- ✅ All semantic operations → `SemanticService`  
-- ✅ All data operations → `DataService`
+### 🎯 簡化後的設計原則
 
-**Forced Boundaries**: Enforce boundary constraints through technical means
-- ✅ ESLint rules prohibit cross-layer calls
-- ✅ Module encapsulation hides internal implementation
-- ✅ Interface contracts define clear responsibility boundaries
+**單一來源原則**: 每個功能只有一個入口
+- ✅ 所有時間相關操作 → `TimeService`
+- ✅ 所有語義操作 → `SemanticService` (簡化版)
+- ✅ 所有数據操作 → `DataService`
 
-**No Cross-Layer Access**: Prohibit direct cross-layer calls
-- ❌ Controllers must not directly call OpenAI
-- ❌ Services must not directly use `new Date()`
-- ❌ Utils must not directly operate database
+**簡單優先**: 能用簡單方法解決的不用複雜系統
+- ✅ Regex 優先，確定性高、速度快
+- ✅ OpenAI 補全，處理複雜情況
+- ❌ 不再使用 P1-P5 語義仲裁系統
+
+**清晰邊界**: 禁止跨層直接調用
+- ❌ Controllers 不得直接調用 OpenAI
+- ❌ Services 不得直接使用 `new Date()`
+- ❌ Utils 不得直接操作数据库
 
 ## 🎯 Scenario Layer Architecture (v9.0)
 
@@ -98,16 +151,23 @@ Insurance Business Chatbot:
 
 ## 🔧 Unified Service Layer Architecture
 
-### Separation Architecture Constraints (Single Source of Truth)
+### 📊 簡化後的架構約束 (單一來源原則)
 
-| Domain | Unique Entry | Responsibility | Prohibited Actions |
+| 域 | 唯一入口 | 職責 | 禁止事項 |
 |--------|-------------|----------------|-------------------|
-| **Scenario Layer** | `ScenarioTemplate` | Business logic implementation | ❌ Direct DataService calls |
-| **Semantic Processing** | `SemanticService` | Intent+Entity+Context | ❌ Direct OpenAI/Rule engine calls |
-| **Entity Operations** | `EntityService` | Universal CRUD + Validation | ❌ Direct Firebase calls |
-| **Time Processing** | `TimeService` | Parse+Format+Calculate+Validate | ❌ Direct `new Date()` usage |
-| **Data Processing** | `DataService` | Store+Query+Format | ❌ Direct Firebase calls |
-| **Task Execution** | `TaskService` | Scenario delegation coordination | ❌ Hardcoded business logic |
+| **場景層** | `ScenarioTemplate` | 業務邏輯實現 | ❌ 直接調用 DataService |
+| **語義處理** | `SemanticService` (簡化版) | 意圖+實體+上下文 | ❌ 直接調用 OpenAI/規則引擎 |
+| **實體操作** | `EntityService` | 通用 CRUD + 驗證 | ❌ 直接調用 Firebase |
+| **時間處理** | `TimeService` | 解析+格式化+計算+驗證 | ❌ 直接使用 `new Date()` |
+| **數據處理** | `DataService` | 存取+查詢+格式化 | ❌ 直接調用 Firebase |
+| **任務執行** | `TaskService` | 場景委託協調 | ❌ 硬編碼業務邏輯 |
+
+### ❌ 已移除的複雜組件
+- `SemanticController` (P1-P5 證據驅動決策系統)
+- 複雜的語義仲裁機制
+- 多層決策路徑追蹤
+- 增強版語義標準化器
+- 監控中間件
 
 ## 📊 Database Design (Firebase Firestore)
 

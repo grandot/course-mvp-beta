@@ -787,13 +787,11 @@ class LineController {
                 console.log('Course content reply with photo option result:', replyResult);
 
                 // 🎯 關鍵修復：設置會話上下文，記錄當前課程信息供後續照片操作使用
-                ConversationContext.setContext(userId, {
-                  lastAction: 'record_lesson_content',
-                  lastCourse: result.course_name,
-                  lastCourseId: result.contentId?.split('_content_')[0], // 從contentId提取courseId
-                  awaitingPhotoResponse: true,
-                  contextTimestamp: Date.now()
-                });
+                ConversationContext.updateContext(userId, 'record_lesson_content', {
+                  course_name: result.course_name,
+                  contentId: result.contentId,
+                  awaitingPhotoResponse: true
+                }, result);
                 console.log(`🔧 [DEBUG] 設置照片上傳上下文 - Course: ${result.course_name}, UserId: ${userId}`);
 
                 return {
