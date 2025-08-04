@@ -2187,6 +2187,62 @@ class SemanticService {
       };
     }
   }
+
+  /**
+   * 🚀 防止重複記錄檢查
+   * @param {string} userId - 用戶ID
+   * @param {string} courseName - 課程名稱
+   * @param {string} content - 內容摘要
+   * @returns {Promise<boolean>} 是否為重複記錄
+   */
+  static async checkDuplicateRecord(userId, courseName, content = null) {
+    try {
+      const ConversationContext = require('../utils/conversationContext');
+      const context = ConversationContext.getContext(userId);
+      
+      // 🎯 檢查上下文中的最近記錄
+      if (context && context.executionResult) {
+        const lastResult = context.executionResult;
+        
+        // 檢查是否為相同的課程和內容
+        if (lastResult.course_name === courseName) {
+          const timeDiff = Date.now() - context.timestamp;
+          
+          // 如果時間間隔小於 30 秒，可能是重複記錄
+          if (timeDiff < 30000) {
+            console.log(`🔧 [DEBUG] 檢測到可能的重複記錄: ${courseName} (${timeDiff}ms 前)`);
+            return true;
+          }
+        }
+      }
+      
+      // 🎯 檢查數據庫中的最近記錄
+      const DataService = require('./dataService');
+      const recentContents = await DataService.queryCourseContents({
+        student_id: userId,
+        course_name: courseName,
+        limit: 1,
+        orderBy: 'created_at',
+        orderDirection: 'desc'
+      });
+      
+      if (recentContents.length > 0) {
+        const lastContent = recentContents[0];
+        const timeDiff = Date.now() - new Date(lastContent.created_at).getTime();
+        
+        // 如果最近記錄在 5 分鐘內，檢查內容相似性
+        if (timeDiff < 300000) {
+          console.log(`🔧 [DEBUG] 發現最近的課程記錄: ${courseName} (${timeDiff}ms 前)`);
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('❌ [DuplicateCheck] 檢查重複記錄失敗:', error);
+      return false;
+    }
+  }
 }
 
 module.exports = SemanticService;

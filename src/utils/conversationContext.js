@@ -12,7 +12,7 @@ class ConversationContext {
   static CONTEXT_EXPIRE_TIME = 5 * 60 * 1000;
 
   /**
-   * 更新用戶會話上下文
+   * 更新用戶會話上下文 - 智能合併版本
    * @param {string} userId - 用戶ID
    * @param {string} action - 執行的動作類型
    * @param {Object} entities - 提取的實體信息
@@ -25,35 +25,108 @@ class ConversationContext {
     }
 
     const now = Date.now();
+    
+    // 🎯 第一性原則：獲取現有上下文，智能合併而不是覆蓋
+    const existingContext = this.contexts.get(userId) || {};
+    
+    // 🎯 智能合併策略
     const context = {
+      // 保留現有上下文的重要信息
+      ...existingContext,
+      
+      // 更新基本信息
       userId,
       lastAction: action,
       lastIntent: action,
-      lastCourse: entities.course_name || entities.courseName,
-      lastTime: entities.timeInfo?.display || entities.timeInfo?.schedule_time,
-      lastDate: entities.timeInfo?.date || entities.timeInfo?.course_date,
-      lastLocation: entities.location,
-      lastTeacher: entities.teacher,
-      lastStudent: entities.student, // 🚨 新增：保存學生信息
-      // 🚨 修復：保存完整的 timeInfo 結構
+      timestamp: now,
+      expiresAt: now + this.CONTEXT_EXPIRE_TIME,
+      
+      // 🎯 智能課程名稱處理
+      lastCourse: this.mergeCourseName(existingContext.lastCourse, entities.course_name || entities.courseName),
+      
+      // 🎯 智能時間信息處理
+      lastTime: entities.timeInfo?.display || entities.timeInfo?.schedule_time || existingContext.lastTime,
+      lastDate: entities.timeInfo?.date || entities.timeInfo?.course_date || existingContext.lastDate,
+      lastLocation: entities.location || existingContext.lastLocation,
+      lastTeacher: entities.teacher || existingContext.lastTeacher,
+      lastStudent: entities.student || existingContext.lastStudent,
+      
+      // 🎯 智能 timeInfo 處理
       lastTimeInfo: entities.timeInfo ? {
         display: entities.timeInfo.display,
         date: entities.timeInfo.date,
         raw: entities.timeInfo.raw,
         timestamp: entities.timeInfo.timestamp
-      } : null,
-      executionResult: result,
-      timestamp: now,
-      expiresAt: now + this.CONTEXT_EXPIRE_TIME,
+      } : existingContext.lastTimeInfo,
+      
+      // 🎯 智能執行結果處理
+      executionResult: result || existingContext.executionResult,
+      
+      // 🎯 新增：會話狀態追蹤
+      sessionState: this.determineSessionState(action, existingContext.sessionState),
+      
+      // 🎯 新增：操作歷史
+      actionHistory: this.updateActionHistory(existingContext.actionHistory || [], action, now),
     };
 
     this.contexts.set(userId, context);
     
-    console.log(`🔧 [DEBUG] 更新會話上下文 - UserId: ${userId}, Action: ${action}, Course: ${context.lastCourse}`);
-    console.log(`🔧 [DEBUG] 上下文詳情:`, context);
+    console.log(`🔧 [DEBUG] 智能更新會話上下文 - UserId: ${userId}, Action: ${action}, Course: ${context.lastCourse}`);
+    console.log(`🔧 [DEBUG] 會話狀態: ${context.sessionState}, 操作歷史: ${context.actionHistory.length} 項`);
     
     // 定期清理過期上下文
     this.clearExpired();
+  }
+
+  /**
+   * 🎯 智能合併課程名稱
+   * @param {string} existingCourse - 現有課程名稱
+   * @param {string} newCourse - 新課程名稱
+   * @returns {string} 合併後的課程名稱
+   */
+  static mergeCourseName(existingCourse, newCourse) {
+    // 如果新課程名稱存在且與現有不同，優先使用新的
+    if (newCourse && newCourse !== existingCourse) {
+      console.log(`🔧 [DEBUG] 課程名稱更新: ${existingCourse} -> ${newCourse}`);
+      return newCourse;
+    }
+    
+    // 否則保留現有的
+    return existingCourse;
+  }
+
+  /**
+   * 🎯 確定會話狀態
+   * @param {string} action - 當前動作
+   * @param {string} existingState - 現有狀態
+   * @returns {string} 新的會話狀態
+   */
+  static determineSessionState(action, existingState) {
+    const stateMap = {
+      'record_lesson_content': 'content_recorded',
+      'waiting_for_photo': 'awaiting_photo',
+      'photo_uploaded': 'photo_uploaded',
+      'course_selected': 'course_confirmed',
+      'cancel_course': 'cancelling',
+      'completed': 'completed'
+    };
+    
+    return stateMap[action] || existingState || 'idle';
+  }
+
+  /**
+   * 🎯 更新操作歷史
+   * @param {Array} history - 現有歷史
+   * @param {string} action - 新動作
+   * @param {number} timestamp - 時間戳
+   * @returns {Array} 更新後的歷史
+   */
+  static updateActionHistory(history, action, timestamp) {
+    const newEntry = { action, timestamp };
+    const updated = [newEntry, ...history];
+    
+    // 只保留最近 10 個操作
+    return updated.slice(0, 10);
   }
 
   /**

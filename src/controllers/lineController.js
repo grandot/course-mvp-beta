@@ -1098,6 +1098,8 @@ class LineController {
       const conversationContext = ConversationContext.getContext(userId);
       let autoCourseName = null;
       
+      console.log(`🔧 [DEBUG] 圖片處理時的上下文:`, conversationContext);
+      
       if (conversationContext && conversationContext.lastCourse) {
         autoCourseName = conversationContext.lastCourse;
         console.log(`🎯 [Image] 從對話上下文自動識別課程: ${autoCourseName}`);
@@ -1129,6 +1131,13 @@ class LineController {
         // 🎯 自動處理：直接將圖片關聯到識別的課程
         console.log(`📸 [Image] 自動關聯圖片到課程: ${autoCourseName}`);
         
+        // 🎯 更新上下文，記錄圖片上傳成功
+        ConversationContext.updateContext(userId, 'photo_uploaded', {
+          course_name: autoCourseName,
+          photo_uploaded: true,
+          upload_timestamp: new Date().toISOString()
+        });
+        
         // 更新圖片元數據
         const updatedUploadResult = await this.uploadImageToStorage(imageContent.data, {
           userId,
@@ -1153,6 +1162,13 @@ class LineController {
       } else {
         // 🎯 手動選擇：生成課程選擇按鈕
         const quickReply = await this.buildCourseSelectionButtons(userId);
+        
+        // 🎯 更新上下文，記錄等待課程選擇狀態
+        ConversationContext.updateContext(userId, 'photo_uploaded', {
+          photo_uploaded: true,
+          awaiting_course_selection: true,
+          upload_timestamp: new Date().toISOString()
+        });
         
         // 暫存圖片信息，等待用戶選擇課程
         ConversationContext.setPendingImageContext(userId, {
@@ -1364,13 +1380,21 @@ class LineController {
         });
       });
       
+      console.log(`🔧 [DEBUG] 課程映射:`, Array.from(courseMap.entries()).map(([name, students]) => 
+        `${name}: ${students.length}個學生`));
+      
       // 生成按鈕
       const buttons = [];
       let buttonCount = 0;
       const maxButtons = 10; // LINE Quick Reply最多11個按鈕，留一個給"其他課程"
       
-      for (const [courseName, students] of courseMap) {
+      // 🎯 改進：優先顯示課程名稱，避免重複
+      const uniqueCourses = Array.from(courseMap.keys());
+      
+      for (const courseName of uniqueCourses) {
         if (buttonCount >= maxButtons) break;
+        
+        const students = courseMap.get(courseName);
         
         if (students.length === 1) {
           // 單一學生：顯示學生名稱+課程
@@ -1394,34 +1418,25 @@ class LineController {
           });
           buttonCount++;
         } else {
-          // 多個學生：為每個學生生成按鈕
-          for (const student of students) {
-            if (buttonCount >= maxButtons) break;
-            
-            let buttonText = student.student_name ? 
-              `${student.student_name}的${courseName}` : 
-              `${courseName}(${student.student_id})`;
-            
-            // 確保 label 不超過 20 字符
-            if (buttonText.length > 20) {
-              // 優先保留課程名稱，如果還是太長就截斷
-              if (courseName.length <= 20) {
-                buttonText = courseName;
-              } else {
-                buttonText = courseName.substring(0, 20);
-              }
-            }
-            
-            buttons.push({
-              type: "action", 
-              action: {
-                type: "message",
-                label: buttonText,
-                text: `course:${courseName}:${student.student_id}`
-              }
-            });
-            buttonCount++;
+          // 🎯 改進：多個學生時，只顯示一個課程按鈕，不重複
+          let buttonText = courseName;
+          
+          // 確保 label 不超過 20 字符
+          if (buttonText.length > 20) {
+            buttonText = courseName.substring(0, 20);
           }
+          
+          // 使用第一個學生的ID作為代表
+          const firstStudent = students[0];
+          buttons.push({
+            type: "action", 
+            action: {
+              type: "message",
+              label: buttonText,
+              text: `course:${courseName}:${firstStudent.student_id}`
+            }
+          });
+          buttonCount++;
         }
       }
       
@@ -1505,25 +1520,17 @@ class LineController {
       
       // 處理其他按鈕類型
       if (buttonMessage === '上傳課堂照片' || buttonMessage === '上傳作業照片') {
-        // 🎯 修復：保留之前的對話上下文，只更新照片相關信息
-        const existingContext = ConversationContext.getContext(userId);
+        // 🎯 第一性原則：智能更新上下文，不覆蓋重要信息
         const photoType = buttonMessage.includes('作業') ? 'homework' : 'lesson';
         
-        // 合併現有上下文和新的照片信息
-        const updatedEntities = {
-          ...existingContext,
+        // 🎯 構建最小化的實體更新，只包含必要信息
+        const photoEntities = {
           photo_type: photoType,
-          lastAction: 'waiting_for_photo',
-          lastIntent: 'waiting_for_photo'
+          // 🎯 不覆蓋現有的課程信息，讓智能合併處理
         };
         
-        // 保留原有的課程信息
-        if (existingContext && existingContext.lastCourse) {
-          updatedEntities.lastCourse = existingContext.lastCourse;
-          console.log(`🔧 [DEBUG] 保留課程信息: ${existingContext.lastCourse}`);
-        }
-        
-        ConversationContext.updateContext(userId, 'waiting_for_photo', updatedEntities);
+        // 🎯 使用智能上下文更新
+        ConversationContext.updateContext(userId, 'waiting_for_photo', photoEntities);
         
         const replyMessage = '📸 請上傳您的照片';
         await lineService.replyMessage(replyToken, replyMessage);
@@ -1613,86 +1620,72 @@ class LineController {
   }
 
   /**
-   * 處理特定課程選擇
+   * 處理課程選擇
    * @param {string} courseName - 課程名稱
-   * @param {string} studentId - 學生ID（可選）
+   * @param {string} studentId - 學生ID
    * @param {string} userId - 用戶ID
    * @param {string} replyToken - 回覆令牌
    * @returns {Promise<Object>} 處理結果
    */
   static async handleCourseSelection(courseName, studentId, userId, replyToken) {
+    console.log(`📚 [CourseSelection] 處理課程選擇: ${courseName}, Student: ${studentId}`);
+    
     try {
-      // 獲取待處理的圖片上下文
-      const pendingImageContext = ConversationContext.getPendingImageContext(userId);
+      // 🎯 獲取待處理的圖片上下文
+      const pendingImage = ConversationContext.getPendingImageContext(userId);
       
-      if (!pendingImageContext) {
-        // 沒有待處理的圖片，提示錯誤
-        const replyMessage = '⚠️ 沒有找到待處理的照片，請重新上傳照片';
+      if (!pendingImage) {
+        console.log(`⚠️ [CourseSelection] 沒有待處理的圖片上下文`);
+        const replyMessage = '抱歉，沒有找到待處理的圖片，請重新上傳';
         await lineService.replyMessage(replyToken, replyMessage);
         
         return {
           success: false,
           error: 'No pending image context',
-          message: '沒有待處理的照片'
+          message: '沒有待處理的圖片上下文'
         };
       }
 
-      // 執行課程內容保存
-      const taskService = this.initializeTaskService();
-      
-      const entities = {
-        content_entities: {
-          course_name: courseName,
-          student_id: studentId,
-          content_date: new Date().toISOString().split('T')[0],
-          class_media: [{
-            id: pendingImageContext.uploadResult.mediaId,
-            type: 'photo',
-            url: pendingImageContext.uploadResult.url,
-            caption: `${courseName}課程照片`,
-            upload_time: pendingImageContext.timestamp,
-            tags: ['課程照片'],
-            file_size: pendingImageContext.uploadResult.fileSize || 0
-          }],
-          raw_text: `${courseName}課程照片上傳`
-        }
+      // 🎯 更新圖片元數據，關聯到選定的課程
+      const updatedUploadResult = await this.uploadImageToStorage(pendingImage.uploadResult.data, {
+        userId,
+        messageId: pendingImage.messageId,
+        timestamp: pendingImage.timestamp,
+        courseId: courseName,
+        studentId: studentId
+      });
+
+      // 🎯 更新上下文，記錄課程選擇完成
+      ConversationContext.updateContext(userId, 'course_selected', {
+        course_name: courseName,
+        student_id: studentId,
+        photo_linked: true,
+        selected_timestamp: new Date().toISOString()
+      });
+
+      // 🎯 清除待處理的圖片上下文
+      ConversationContext.clearPendingImageContext(userId);
+
+      // 🎯 發送確認消息
+      const confirmMessage = `📸 已將課堂照片關聯到「${courseName}」！`;
+      await lineService.replyMessage(replyToken, confirmMessage);
+
+      return {
+        success: true,
+        action: 'course_assignment_completed',
+        replyToken,
+        userId,
+        mediaId: updatedUploadResult.mediaId,
+        courseName: courseName,
+        studentId: studentId,
+        message: 'Course assignment completed'
       };
 
-      const result = await taskService.executeIntent('upload_class_photo', entities, userId);
-      
-      // 清除待處理的圖片上下文
-      ConversationContext.clearPendingImageContext(userId);
-      
-      if (result.success) {
-        const successMessage = `✅ 已保存「${courseName}」的課程照片！`;
-        await lineService.replyMessage(replyToken, successMessage);
-        
-        return {
-          success: true,
-          action: 'photo_saved',
-          courseName,
-          studentId,
-          message: successMessage
-        };
-      } else {
-        const errorMessage = result.message || '保存課程照片失敗，請稍後再試';
-        await lineService.replyMessage(replyToken, errorMessage);
-        
-        return {
-          success: false,
-          error: result.error,
-          message: errorMessage
-        };
-      }
-
     } catch (error) {
-      console.error('❌ [QuickReply] 處理課程選擇失敗:', error);
-      
-      // 清除待處理的圖片上下文
-      ConversationContext.clearPendingImageContext(userId);
+      console.error('❌ [CourseSelection] 處理課程選擇失敗:', error);
       
       try {
-        const errorReply = '抱歉，保存課程照片時發生錯誤，請稍後再試';
+        const errorReply = '抱歉，處理課程選擇時發生錯誤，請稍後再試';
         await lineService.replyMessage(replyToken, errorReply);
       } catch (replyError) {
         console.error('Failed to send error reply:', replyError);

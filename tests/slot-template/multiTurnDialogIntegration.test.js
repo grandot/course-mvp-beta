@@ -7,6 +7,7 @@ const SlotTemplateManager = require('../../src/slot-template/slotTemplateManager
 const SlotProblemDetector = require('../../src/slot-template/slotProblemDetector');
 const TempSlotStateManager = require('../../src/slot-template/tempSlotStateManager');
 const HumanPromptGenerator = require('../../src/slot-template/humanPromptGenerator');
+const ScenarioManager = require('../../src/scenario/ScenarioManager');
 
 // Mock 依賴
 jest.mock('../../src/slot-template/templateLoader', () => ({
@@ -68,6 +69,16 @@ jest.mock('../../src/slot-template/taskTrigger', () => {
 describe('Multi-Turn Dialog Enhancement Integration', () => {
   let manager;
   const userId = 'test_user_123';
+
+  beforeAll(async () => {
+    // 🎯 初始化 ScenarioManager 以支持 TaskService
+    await ScenarioManager.initialize();
+  });
+
+  afterAll(async () => {
+    // 🎯 清理 ScenarioManager 緩存
+    ScenarioManager.clearCache();
+  });
 
   beforeEach(() => {
     manager = new SlotTemplateManager();

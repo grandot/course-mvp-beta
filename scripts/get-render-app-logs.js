@@ -47,13 +47,37 @@ async function getRenderApplicationLogs() {
   // 使用正確的Render API端點
   queryParams.append('resource', config.serviceId); // resource參數是必需的
   
+  // 獲取 ownerId
+  const servicesResponse = await makeRequest('/v1/services', 'GET');
+  const ownerId = servicesResponse[0]?.service?.ownerId;
+  
+  if (!ownerId) {
+    throw new Error('無法獲取 ownerId');
+  }
+  
+  // 構建正確的日誌查詢參數
+  const logQueryParams = new URLSearchParams();
+  logQueryParams.append('ownerId', ownerId);
+  logQueryParams.append('resource', config.serviceId);
+  logQueryParams.append('limit', config.limit.toString());
+  
+  if (config.startTime) {
+    logQueryParams.append('startTime', config.startTime);
+  }
+  
+  if (config.endTime) {
+    logQueryParams.append('endTime', config.endTime);
+  }
+  
+  if (config.level) {
+    logQueryParams.append('level', config.level);
+  }
+
   const endpoints = [
-    // 官方API文檔中的正確端點
-    `/list-logs?${queryParams.toString()}`,
-    // 備選格式
-    `/subscribe-logs?${queryParams.toString()}`,
-    // GraphQL格式的替代方案
-    `/graphql`, // 需要特殊處理
+    // 正確的 Render 日誌 API 端點
+    `/v1/logs?${logQueryParams.toString()}`,
+    // 備選：服務事件端點
+    `/v1/services/${config.serviceId}/events?limit=${config.limit}`,
   ];
 
   for (let i = 0; i < endpoints.length - 1; i++) { // 跳過GraphQL暫時

@@ -7,6 +7,7 @@ const SlotStateManager = require('../../src/slot-template/slotStateManager');
 const SlotMerger = require('../../src/slot-template/slotMerger');
 const SlotValidator = require('../../src/slot-template/slotValidator');
 const { getTemplateLoader } = require('../../src/slot-template/templateLoader');
+const ScenarioManager = require('../../src/scenario/ScenarioManager');
 
 jest.mock('../../src/slot-template/slotStateManager');
 jest.mock('../../src/slot-template/slotMerger');
@@ -19,6 +20,16 @@ describe('SlotTemplateManager', () => {
   let mockMerger;
   let mockValidator;
   let mockTemplateLoader;
+
+  beforeAll(async () => {
+    // 🎯 初始化 ScenarioManager 以支持 TaskService
+    await ScenarioManager.initialize();
+  });
+
+  afterAll(async () => {
+    // 🎯 清理 ScenarioManager 緩存
+    ScenarioManager.clearCache();
+  });
 
   beforeEach(() => {
     // 創建 mock 實例
@@ -168,6 +179,22 @@ describe('SlotTemplateManager', () => {
         missingSlots: []
       };
       mockValidator.validate.mockResolvedValue(completeValidationResult);
+      
+      // 🎯 修復：確保 merged state 有 active_task
+      const completeMergedState = {
+        ...mockMergedState,
+        active_task: {
+          intent: 'record_course',
+          slot_state: {
+            course: '鋼琴課',
+            location: '音樂教室',
+            date: '2025-08-01',
+            time: '14:00'
+          }
+        }
+      };
+      mockMerger.merge.mockResolvedValue(completeMergedState);
+      mockStateManager.updateUserState.mockResolvedValue(completeMergedState);
 
       const result = await manager.processSemanticResult(mockUserId, mockSemanticResult);
 

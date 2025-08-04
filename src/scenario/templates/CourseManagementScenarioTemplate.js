@@ -250,7 +250,7 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
   }
 
   /**
-   * 取消課程
+   * 取消課程 - 智能版本
    * @param {Object} entities - 從語義分析提取的實體信息
    * @param {string} userId - 用戶ID
    * @returns {Promise<Object>} 取消結果
@@ -259,7 +259,36 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
     this.log('info', 'Cancelling course entity', { userId, entities });
 
     try {
-      const { course_name } = entities;
+      let { course_name } = entities;
+      
+      // 🎯 第一性原則：如果沒有課程名稱，嘗試從上下文獲取
+      if (!course_name) {
+        const ConversationContext = require('../../utils/conversationContext');
+        const context = ConversationContext.getContext(userId);
+        
+        if (context && context.lastCourse) {
+          course_name = context.lastCourse;
+          this.log('info', 'Using course name from context', { course_name });
+        } else {
+          // 🎯 如果上下文中也沒有，嘗試從最近的課程中推斷
+          const recentCourses = await EntityService.queryEntities(this.entityType, {
+            student_id: userId,
+            status: 'scheduled'
+          });
+          
+          if (recentCourses.length === 1) {
+            course_name = recentCourses[0].course_name;
+            this.log('info', 'Inferred course name from recent courses', { course_name });
+          } else if (recentCourses.length > 1) {
+            // 🎯 多個課程時，返回課程選擇列表
+            return this.createErrorResponse(
+              'Multiple courses found',
+              '請指定要取消的課程：\n' + recentCourses.map(c => `• ${c.course_name}`).join('\n'),
+              { availableCourses: recentCourses }
+            );
+          }
+        }
+      }
       
       if (!course_name) {
         return this.createErrorResponse(
@@ -920,6 +949,98 @@ class CourseManagementScenarioTemplate extends ScenarioTemplate {
       return this.createErrorResponse(
         'Clear error',
         this.formatConfigMessage('clear_error')
+      );
+    }
+  }
+
+  /**
+   * 記錄課程內容 - 防重複版本
+   * @param {Object} entities - 從語義分析提取的實體信息
+   * @param {string} userId - 用戶ID
+   * @returns {Promise<Object>} 記錄結果
+   */
+  async recordContent(entities, userId) {
+    this.log('info', 'Recording course content', { userId, entities });
+
+    try {
+      const { course_name, content_to_record } = entities;
+      
+      if (!course_name) {
+        return this.createErrorResponse(
+          'Missing course name',
+          this.formatConfigMessage('record_missing_name')
+        );
+      }
+
+      // 🎯 第一性原則：檢查是否為重複記錄
+      const SemanticService = require('../../services/semanticService');
+      const isDuplicate = await SemanticService.checkDuplicateRecord(userId, course_name, content_to_record);
+      
+      if (isDuplicate) {
+        this.log('info', 'Duplicate record detected', { course_name });
+        return this.createErrorResponse(
+          'Duplicate record',
+          `⚠️ 檢測到重複記錄\n\n「${course_name}」的內容已經記錄過了，無需重複記錄。`,
+          { isDuplicate: true }
+        );
+      }
+
+      // 查找對應的課程
+      const courses = await EntityService.queryEntities(this.entityType, {
+        student_id: userId,
+        course_name,
+        status: 'scheduled'
+      });
+
+      if (courses.length === 0) {
+        return this.createErrorResponse(
+          'Course not found',
+          this.formatConfigMessage('record_not_found', { course_name })
+        );
+      }
+
+      const targetCourse = courses[0];
+
+      // 創建課程內容記錄
+      const contentData = {
+        course_id: targetCourse.id,
+        student_id: userId,
+        content_date: TimeService.getCurrentUserTime().toISOString().split('T')[0],
+        lesson_content: content_to_record || '課程內容記錄',
+        raw_input: entities.originalUserInput || '',
+        created_by: userId,
+        source: 'line_bot'
+      };
+
+      const result = await EntityService.createCourseContent(contentData);
+
+      if (!result.success) {
+        return this.createErrorResponse(
+          'Record failed',
+          this.formatConfigMessage('record_error'),
+          { details: result.error }
+        );
+      }
+
+      this.log('info', 'Course content recorded successfully', { 
+        contentId: result.data.id,
+        courseName: course_name
+      });
+
+      return this.createSuccessResponse(
+        this.formatConfigMessage('record_success', { course_name }),
+        { 
+          contentId: result.data.id,
+          course_name,
+          content_summary: '課程內容記錄'
+        }
+      );
+
+    } catch (error) {
+      this.log('error', 'Failed to record course content', { error: error.message });
+      return this.createErrorResponse(
+        'Record error',
+        this.formatConfigMessage('record_error')
       );
     }
   }
