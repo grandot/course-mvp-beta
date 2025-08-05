@@ -139,14 +139,16 @@ async function handleImageMessage(event) {
     if (error.response && error.response.status === 404) {
       await lineService.replyMessage(
         event.replyToken,
-        '⚠️ 無法處理這張圖片\n\n' +
-        '可能原因：\n' +
-        '• 這是轉傳的舊圖片（LINE 會自動刪除圖片內容）\n' +
-        '• 圖片已超過 1 小時時效\n\n' +
-        '解決方法：\n' +
-        '• 請重新拍照上傳\n' +
-        '• 或將圖片存到相簿後重新上傳\n' +
-        '• 避免轉傳舊圖片',
+        '📷 圖片上傳提醒\n' +
+        '這張圖片無法下載，可能是因為 LINE 的限制：\n\n' +
+        '圖片只能在傳送後 1 小時內讓機器人存取\n\n' +
+        '🔁 如果您是從其他群組轉傳的舊圖片，請改用以下方式：\n\n' +
+        '👉 正確做法：\n\n' +
+        '打開手機的「相簿」App\n\n' +
+        '找到要上傳的照片\n\n' +
+        '點選「分享」→ 選擇 LINE → 傳送到這個對話視窗\n\n' +
+        '❌ 不要從 LINE 對話框內點照片圖示選擇圖片，那樣可能只是轉傳，Bot 會抓不到內容。\n\n' +
+        '感謝您的配合 🙏',
       );
     } else {
       await lineService.replyMessage(
