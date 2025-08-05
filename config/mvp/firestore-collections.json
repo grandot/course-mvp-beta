@@ -1,0 +1,184 @@
+{
+  "collections": {
+    "parents": {
+      "description": "家長資料集合",
+      "document_structure": {
+        "displayName": {
+          "type": "string",
+          "description": "家長顯示名稱",
+          "required": true
+        },
+        "lineUserId": {
+          "type": "string", 
+          "description": "LINE 用戶 ID",
+          "required": true,
+          "index": true
+        },
+        "students": {
+          "type": "array",
+          "description": "學生列表",
+          "required": true,
+          "items": {
+            "type": "object",
+            "schema": {
+              "studentName": {
+                "type": "string",
+                "description": "學生姓名"
+              },
+              "calendarId": {
+                "type": "string", 
+                "description": "Google Calendar ID"
+              }
+            }
+          }
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "創建時間",
+          "required": true
+        },
+        "updatedAt": {
+          "type": "timestamp",
+          "description": "更新時間", 
+          "required": true
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null && request.auth.uid == resource.data.lineUserId",
+        "write": "request.auth != null && request.auth.uid == resource.data.lineUserId"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "lineUserId", "order": "ASCENDING"}
+          ]
+        }
+      ]
+    },
+    
+    "courses": {
+      "description": "課程資料集合",
+      "document_structure": {
+        "courseId": {
+          "type": "string",
+          "description": "課程唯一標識符",
+          "required": true
+        },
+        "userId": {
+          "type": "string",
+          "description": "LINE User ID",
+          "required": true,
+          "index": true
+        },
+        "studentName": {
+          "type": "string",
+          "description": "學生姓名",
+          "required": true,
+          "index": true
+        },
+        "courseName": {
+          "type": "string",
+          "description": "課程名稱", 
+          "required": true,
+          "index": true
+        },
+        "courseDate": {
+          "type": "string",
+          "description": "課程日期 (YYYY-MM-DD)",
+          "required": true,
+          "index": true
+        },
+        "scheduleTime": {
+          "type": "string",
+          "description": "上課時間 (HH:MM 24小時制)",
+          "required": true
+        },
+        "calendarEventId": {
+          "type": "string",
+          "description": "Google Calendar 事件 ID",
+          "required": false
+        },
+        "isRecurring": {
+          "type": "boolean",
+          "description": "是否為重複課程",
+          "required": true,
+          "default": false,
+          "index": true
+        },
+        "shouldRemind": {
+          "type": "boolean",
+          "description": "是否需要提醒",
+          "required": true,
+          "default": false,
+          "index": true
+        },
+        "courseRecord": {
+          "type": "object",
+          "description": "課程內容記錄",
+          "required": false,
+          "schema": {
+            "notes": {
+              "type": "string",
+              "description": "課程筆記"
+            },
+            "photos": {
+              "type": "array",
+              "description": "課程照片 URL 列表",
+              "items": "string"
+            }
+          }
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "創建時間",
+          "required": true,
+          "index": true
+        },
+        "updatedAt": {
+          "type": "timestamp",
+          "description": "更新時間",
+          "required": true
+        }
+      },
+      "security_rules": {
+        "read": "request.auth != null && request.auth.uid == resource.data.userId",
+        "write": "request.auth != null && request.auth.uid == resource.data.userId"
+      },
+      "indexes": [
+        {
+          "fields": [
+            {"field": "userId", "order": "ASCENDING"},
+            {"field": "courseDate", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "userId", "order": "ASCENDING"},
+            {"field": "studentName", "order": "ASCENDING"},
+            {"field": "courseDate", "order": "DESCENDING"}
+          ]
+        },
+        {
+          "fields": [
+            {"field": "shouldRemind", "order": "ASCENDING"},
+            {"field": "courseDate", "order": "ASCENDING"},
+            {"field": "scheduleTime", "order": "ASCENDING"}
+          ]
+        }
+      ]
+    }
+  },
+  
+  "metadata": {
+    "version": "1.0.0",
+    "phase": "Phase 1 - MVP",
+    "created_at": "2025-08-04T00:00:00Z",
+    "description": "MVP 階段 Firestore 集合結構定義",
+    "notes": [
+      "專注於基礎課程管理功能",
+      "支援 Google Calendar 整合",
+      "簡化的資料模型，便於快速開發",
+      "為未來 Slot Template 系統預留擴展空間"
+    ]
+  }
+}

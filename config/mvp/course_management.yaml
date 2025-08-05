@@ -7,13 +7,13 @@ entity_type: "courses"      # 資料庫集合名稱
 entity_name: "課程"          # 顯示名稱
 
 # 必要欄位定義
-required_fields: ["course_name", "timeInfo"]
+required_fields: ["courseName", "timeInfo"]
 optional_fields: ["location", "teacher"]
 
 # 訊息模板定義
 messages:
   # 創建相關訊息
-  create_success: "✅ {entity_name}「{course_name}」已成功新增！"
+  create_success: "✅ {entity_name}「{courseName}」已成功新增！"
   create_missing_name: "請告訴我{entity_name}名稱，例如：「數學課」、「英文課」等"
   create_missing_time: "請提供上課時間，例如：「明天下午2點」、「週三晚上7點」等"
   create_time_conflict: "該時間已有其他{entity_name}安排"
@@ -21,17 +21,17 @@ messages:
   create_error: "創建{entity_name}時發生錯誤，請稍後再試"
   
   # 修改相關訊息
-  modify_success: "✅ 成功修改「{course_name}」的{modified_fields}\n\n🕒 新時間：{new_time}"
-  modify_not_found: "找不到「{course_name}」{entity_name}，請確認名稱是否正確"
+  modify_success: "✅ 成功修改「{courseName}」的{modifiedFields}\n\n🕒 新時間：{newTime}"
+  modify_not_found: "找不到「{courseName}」{entity_name}，請確認名稱是否正確"
   modify_missing_name: "請指定要修改的{entity_name}名稱，例如：「修改數學課時間」"
   modify_no_fields: "請指定要修改的內容，例如：「修改數學課時間到下午3點」"
-  modify_time_conflict: "修改失敗：{course_date} {schedule_time} 時間已有其他{entity_name}安排"
+  modify_time_conflict: "修改失敗：{courseDate} {scheduleTime} 時間已有其他{entity_name}安排"
   modify_invalid_time: "時間格式不正確，請重新輸入時間信息"
   modify_error: "修改{entity_name}時發生錯誤，請稍後再試"
   
   # 取消相關訊息
-  cancel_success: "✅ {entity_name}「{course_name}」已成功取消！"
-  cancel_not_found: "找不到要取消的「{course_name}」{entity_name}"
+  cancel_success: "✅ {entity_name}「{courseName}」已成功取消！"
+  cancel_not_found: "找不到要取消的「{courseName}」{entity_name}"
   cancel_missing_name: "請指定要取消的{entity_name}名稱"
   cancel_error: "取消{entity_name}時發生錯誤，請稍後再試"
   
@@ -55,7 +55,7 @@ validation_rules:
 # 顯示格式配置
 display:
   time_format: "MM/DD HH:MM AM/PM"
-  list_item_format: "🕒 {schedule_time} - 📚 {course_name}"
+  list_item_format: "🕒 {scheduleTime} - 📚 {courseName}"
   location_format: "📍 {location}"
   teacher_format: "👨‍🏫 {teacher}"
 
@@ -69,7 +69,7 @@ business_rules:
   # 修改規則
   modify:
     requires_context: true            # 是否需要上下文
-    allowed_fields: ["schedule_time", "course_date", "location", "teacher"]
+    allowed_fields: ["scheduleTime", "courseDate", "location", "teacher"]
     conflict_resolution: "time_priority"  # 時間衝突解決策略
     
   # 取消規則

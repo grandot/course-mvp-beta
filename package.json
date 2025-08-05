@@ -8,17 +8,7 @@
     "dev": "node src/index.js",
     "lint": "eslint src/ --ext .js || true",
     "lint:fix": "eslint src/ --fix",
-    "prettier": "prettier --write src/",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:slot": "jest tests/slot-template/ --watch",
-    "migrate:slot-template": "node scripts/migrations/001_slot_template_setup.js",
-    "migrate:slot-template:rollback": "node scripts/migrations/001_slot_template_setup.js rollback",
-    "deploy:indexes": "node scripts/deploy-firestore-indexes.js deploy",
-    "check:indexes": "node scripts/deploy-firestore-indexes.js check",
-    "validate:indexes": "node scripts/deploy-firestore-indexes.js validate",
-    "logs": "node scripts/get-render-logs.js"
+    "prettier": "prettier --write src/"
   },
   "keywords": [
     "line-bot",
@@ -29,21 +19,16 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "dotenv": "^17.2.1",
     "express": "^4.18.2",
     "firebase-admin": "^13.4.0",
     "js-yaml": "^4.1.0",
-    "openai": "^5.10.2",
-    "uuid": "^11.1.0"
+    "openai": "^5.10.2"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-local": "file:eslint-plugin-local",
-    "jest": "^30.0.5",
     "prettier": "^3.2.5"
   },
   "engines": {
