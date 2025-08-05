@@ -5,6 +5,53 @@ All notable changes to the LINE Course Management Bot project will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-08-05 - Firebase 儲存問題完全修復 🔥
+
+**🎯 關鍵修復**: 解決三個 Firebase 儲存錯誤，系統現在可以完整儲存資料
+
+### 🐛 Critical Bug Fixes
+
+#### Firebase 儲存錯誤修復
+- **serverTimestamp() 陣列錯誤**: 修復 `FieldValue.serverTimestamp() cannot be used inside of an array`
+  - 問題: 在 `arrayUnion` 操作中使用 `serverTimestamp()`
+  - 修復: 在學生資料創建時使用 `new Date()` 替代 `serverTimestamp()`
+  - 影響: 學生資料現在可以正常儲存到 Firebase
+
+- **Google Calendar 時間範圍錯誤**: 修復 `The specified time range is empty`
+  - 問題: `addHours` 函數時區轉換錯誤，結束時間比開始時間早
+  - 修復: 重寫時間計算邏輯，正確處理台北時區和日期進位
+  - 影響: Google Calendar 事件現在可以正常創建
+
+- **Firestore undefined 值錯誤**: 修復 `Cannot use "undefined" as a Firestore value`
+  - 問題: 非重複課程的 `dayOfWeek` 欄位為 `undefined`
+  - 修復: 在傳入 Firestore 前過濾 `undefined` 值
+  - 影響: 課程資料現在可以完整儲存到 Firebase
+
+### ✅ System Status After Fix
+**完整資料流程現在正常運作**:
+1. ✅ 語意解析: "早上九點" → "09:00" 
+2. ✅ 學生資料儲存: Firebase 學生記錄創建成功
+3. ✅ Google Calendar: 事件創建成功 (正確的時間範圍)
+4. ✅ 課程資料儲存: Firebase 課程記錄創建成功
+5. ✅ 用戶回饋: 完整的成功訊息顯示
+
+### 🔧 Files Modified
+- `src/services/firebaseService.js` - 修復 serverTimestamp 在陣列中的使用
+- `src/services/googleCalendarService.js` - 重寫 addHours 時間計算函數
+- `src/tasks/handle_add_course_task.js` - 過濾 undefined 值避免 Firestore 錯誤
+
+### 📊 Test Results
+- **端到端測試**: ✅ 完全成功
+- **資料儲存**: ✅ Firebase 學生 + 課程資料完整儲存
+- **時間解析**: ✅ 中文數字時間完美支援
+- **Google Calendar**: ✅ 事件創建和時間範圍正確
+
+### 🎯 Impact
+**修復前**: 因為三個連續錯誤，系統無法儲存任何資料到 Firebase  
+**修復後**: 完整的端到端功能，從語意解析到資料儲存全部正常運作
+
+---
+
 ## [1.1.0] - 2025-08-05 - 高覆蓋度時間解析系統 🕒
 
 **🎯 核心問題解決**: 中文數字時間表達完全支援

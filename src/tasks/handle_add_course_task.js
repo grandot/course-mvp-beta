@@ -192,10 +192,14 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       calendarEventId: calendarEvent.eventId,
       calendarId: student.calendarId,
       isRecurring: slots.recurring || false,
-      dayOfWeek: slots.dayOfWeek,
       duration: 60, // 預設1小時
       createdFrom: 'line_bot'
     };
+    
+    // 只有當 dayOfWeek 不是 undefined 或 null 時才加入
+    if (slots.dayOfWeek !== undefined && slots.dayOfWeek !== null) {
+      courseData.dayOfWeek = slots.dayOfWeek;
+    }
     
     const savedCourse = await firebaseService.saveCourse(courseData);
     console.log('💾 Firebase 課程資料已儲存:', savedCourse.courseId);

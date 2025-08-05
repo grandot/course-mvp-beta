@@ -80,9 +80,38 @@ function buildDateTime(courseDate, scheduleTime, timeZone = 'Asia/Taipei') {
  * 加一小時（預設課程長度）
  */
 function addHours(dateTimeString, hours = 1) {
-  const date = new Date(dateTimeString);
-  date.setHours(date.getHours() + hours);
-  return date.toISOString().replace('Z', '+08:00');
+  // 解析日期時間字串，保持原始格式
+  // dateTimeString 格式: "2025-08-06T10:00:00+08:00"
+  const match = dateTimeString.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})([\+\-]\d{2}:\d{2})$/);
+  
+  if (!match) {
+    throw new Error(`無效的日期時間格式: ${dateTimeString}`);
+  }
+  
+  const [, date, hour, minute, second, timezone] = match;
+  const newHour = parseInt(hour) + hours;
+  
+  // 處理小時進位（24小時制）
+  if (newHour >= 24) {
+    // 需要處理日期進位，使用 Date 物件
+    const dateObj = new Date(dateTimeString);
+    dateObj.setUTCHours(dateObj.getUTCHours() + hours);
+    
+    // 格式化為台北時區
+    const taiwanTime = new Date(dateObj.getTime() + (8 * 60 * 60 * 1000));
+    const year = taiwanTime.getUTCFullYear();
+    const month = String(taiwanTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(taiwanTime.getUTCDate()).padStart(2, '0');
+    const h = String(taiwanTime.getUTCHours()).padStart(2, '0');
+    const m = String(taiwanTime.getUTCMinutes()).padStart(2, '0');
+    const s = String(taiwanTime.getUTCSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${h}:${m}:${s}+08:00`;
+  } else {
+    // 簡單的小時加法
+    const newHourStr = newHour.toString().padStart(2, '0');
+    return `${date}T${newHourStr}:${minute}:${second}${timezone}`;
+  }
 }
 
 /**

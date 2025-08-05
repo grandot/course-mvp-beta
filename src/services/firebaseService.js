@@ -114,7 +114,7 @@ async function addStudent(userId, studentName, calendarId) {
     const newStudent = {
       studentName,
       calendarId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: new Date()
     };
 
     await parentRef.update({
