@@ -134,10 +134,26 @@ async function handleImageMessage(event) {
     await lineService.replyMessage(replyToken, result.message, quickReply);
   } catch (error) {
     console.error('❌ 處理圖片訊息失敗:', error);
-    await lineService.replyMessage(
-      event.replyToken,
-      '處理圖片時發生錯誤，請稍後再試。',
-    );
+    
+    // 檢查是否為圖片內容過期（404 錯誤）
+    if (error.response && error.response.status === 404) {
+      await lineService.replyMessage(
+        event.replyToken,
+        '⚠️ 無法處理這張圖片\n\n' +
+        '可能原因：\n' +
+        '• 這是轉傳的舊圖片（LINE 會自動刪除圖片內容）\n' +
+        '• 圖片已超過 1 小時時效\n\n' +
+        '解決方法：\n' +
+        '• 請重新拍照上傳\n' +
+        '• 或將圖片存到相簿後重新上傳\n' +
+        '• 避免轉傳舊圖片',
+      );
+    } else {
+      await lineService.replyMessage(
+        event.replyToken,
+        '處理圖片時發生錯誤，請稍後再試。',
+      );
+    }
   }
 }
 
