@@ -138,20 +138,26 @@ async function getMessageContent(messageId) {
     };
     
     console.log('🧪 使用中的 LINE Token 開頭:', process.env.LINE_CHANNEL_ACCESS_TOKEN?.slice(0, 30));
+    console.log('📨 Message ID:', messageId);
     
     const url = `${LINE_API_BASE}/message/${messageId}/content`;
-    console.log('🔗 請求 URL:', url);
-    console.log('📋 請求 Headers:', JSON.stringify(headers, null, 2));
+    console.log('🔗 完整請求 URL:', url);
+    console.log('📋 完整請求 Headers:', JSON.stringify(headers, null, 2));
 
     const response = await axios.get(url, {
       headers,
       responseType: 'arraybuffer',
     });
 
-    console.log('✅ 圖片內容下載成功');
+    console.log('✅ 圖片內容下載成功，大小:', response.data.byteLength, 'bytes');
+    console.log('📄 Response Headers:', JSON.stringify(response.headers, null, 2));
     return Buffer.from(response.data);
   } catch (error) {
-    console.error('❌ 圖片內容下載失敗:', error.response?.data || error.message);
+    console.error('❌ 圖片內容下載失敗 - 詳細錯誤資訊:');
+    console.error('   Status:', error.response?.status);
+    console.error('   Status Text:', error.response?.statusText);
+    console.error('   Response Data:', error.response?.data);
+    console.error('   Full Error:', error.message);
     throw error;
   }
 }
