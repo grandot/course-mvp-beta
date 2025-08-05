@@ -118,7 +118,33 @@ firebase deploy --only storage
 
 ### 5. 部署主應用程式
 
-#### 選項 A: Google Cloud Run
+#### 選項 A: Render (推薦) ✅
+
+**當前部署狀態**: 已部署並運行中
+
+- **服務 URL**: https://course-mvp-beta.onrender.com
+- **Webhook URL**: https://course-mvp-beta.onrender.com/webhook  
+- **健康檢查**: https://course-mvp-beta.onrender.com/health
+
+```bash
+# 檢查服務狀態
+curl https://course-mvp-beta.onrender.com/health
+
+# 預期回應
+{
+  "status": "ok",
+  "timestamp": "2025-08-05T09:03:52.071Z", 
+  "version": "1.0.0"
+}
+```
+
+**Render 部署步驟**:
+1. 連接 GitHub 倉庫到 Render
+2. 設定環境變數（已完成）
+3. 自動部署（已完成）
+4. 設定 LINE Webhook URL
+
+#### 選項 B: Google Cloud Run
 ```bash
 # 建立 Dockerfile
 cat > Dockerfile << EOF

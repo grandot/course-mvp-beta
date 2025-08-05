@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+.git
+.env
+.env.local
+.env.example
+.env.production.example
+test-reports
+tools
+doc
+*.md
+.gitignore
+.eslintrc.js
+.prettierrc
+functions
+backup-*
+cleanup-*

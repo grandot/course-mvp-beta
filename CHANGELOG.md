@@ -5,7 +5,11 @@ All notable changes to the LINE Course Management Bot project will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-08-05 - MVP Phase 1 完成 🎉
+## [1.0.0] - 2025-08-05 - MVP Phase 1 完成並正式部署 🎉
+
+**🌐 正式環境**: https://course-mvp-beta.onrender.com  
+**📱 LINE Webhook**: https://course-mvp-beta.onrender.com/webhook  
+**💚 服務狀態**: 正常運行
 
 ### 🎯 Major Features Added
 - **核心語意處理系統**: 完整的意圖識別和實體提取系統

@@ -25,7 +25,6 @@ async function executeTask(intent, slots, userId, messageEvent) {
       'cancel_course': require('../tasks/handle_cancel_course_task'),
       'record_content': require('../tasks/handle_record_content_task'),
       'add_course_content': require('../tasks/handle_record_content_task'), // 使用同一個處理器
-      'modify_course': require('../tasks/handle_modify_course_task'),
     };
     
     const handler = taskHandlers[intent];
