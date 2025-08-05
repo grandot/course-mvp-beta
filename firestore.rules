@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 家長資料：僅允許對應用戶存取
+    match /parents/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // 課程資料：僅允許對應用戶存取
+    match /courses/{courseId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // 課程內容記錄：僅允許對應用戶存取
+    match /course_contents/{contentId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // 提醒記錄：僅允許對應用戶存取
+    match /reminders/{reminderId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // 健康檢查集合：僅 Cloud Functions 可存取
+    match /_health/{document} {
+      allow read, write: if false; // 僅 Cloud Functions 可存取
+    }
+    
+    // 測試集合：開發環境可存取
+    match /_test/{document} {
+      allow read, write: if true; // 測試用途
+    }
+  }
+}

@@ -39,3 +39,4 @@ Google Calendar 專精時間邏輯，Firebase 專精業務資料，兩者協作�
 - 架構設計：`/doc/technical.md` (設計決策、實作細節與未來規劃)
 - 任務規劃：`/doc/task.md` (Claude Code 執行任務的標準流程)
 - 配置組織：`/config/README.md` (分階段配置說明)
+- **專案進度：`/PROJECT_STATUS.md` (即時進度監控與里程碑追蹤)**
