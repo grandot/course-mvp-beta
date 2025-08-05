@@ -132,7 +132,10 @@ async function getUserProfile(userId) {
  */
 async function getMessageContent(messageId) {
   try {
-    const headers = getLineHeaders();
+    // 圖片下載不需要 Content-Type header
+    const headers = {
+      Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
+    };
     
     console.log('🧪 使用中的 LINE Token 開頭:', process.env.LINE_CHANNEL_ACCESS_TOKEN?.slice(0, 30));
     
