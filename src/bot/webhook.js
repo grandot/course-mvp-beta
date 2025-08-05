@@ -288,12 +288,14 @@ async function handleWebhook(req, res) {
     // 處理每個事件
     for (const event of events) {
       console.log('📋 事件類型:', event.type);
+      console.log('🔍 完整事件 JSON:', JSON.stringify(event, null, 2));
 
       switch (event.type) {
         case 'message':
           if (event.message.type === 'text') {
             await handleTextMessage(event);
           } else if (event.message.type === 'image') {
+            console.log('📸 圖片訊息完整資料:', JSON.stringify(event.message, null, 2));
             await handleImageMessage(event);
           } else {
             console.log('❓ 不支援的訊息類型:', event.message.type);
