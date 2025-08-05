@@ -59,7 +59,15 @@ function parseSpecificDate(message) {
 }
 
 function parseScheduleTime(message) {
-  // 匹配時間格式
+  // 使用高覆蓋度時間解析器
+  const { parseScheduleTime: advancedParseTime } = require('./timeParser');
+  
+  const result = advancedParseTime(message);
+  if (result) {
+    return result;
+  }
+  
+  // 備用：原始解析邏輯 (保持向後兼容)
   const timePatterns = [
     // 完整時間格式
     /(?:上午|早上|AM|am)\s*(\d{1,2})(?:[點时:](\d{1,2}))?/,
