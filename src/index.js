@@ -31,6 +31,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 環境配置檢查端點
+app.get('/debug/config', (req, res) => {
+  res.json({
+    ENABLE_AI_FALLBACK: process.env.ENABLE_AI_FALLBACK,
+    NODE_ENV: process.env.NODE_ENV,
+    has_openai_key: !!process.env.OPENAI_API_KEY,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // 啟動服務器
 async function startServer() {
   try {
