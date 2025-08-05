@@ -133,6 +133,8 @@ async function getUserProfile(userId) {
 async function getMessageContent(messageId) {
   try {
     const headers = getLineHeaders();
+    
+    console.log('🧪 使用中的 LINE Token 開頭:', process.env.LINE_CHANNEL_ACCESS_TOKEN?.slice(0, 30));
 
     const response = await axios.get(
       `${LINE_API_BASE}/message/${messageId}/content`,
