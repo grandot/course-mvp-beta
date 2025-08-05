@@ -350,4 +350,104 @@ async function handle_set_reminder_task(slots, userId) {
    - studentName + userId 是查找學生的關鍵
    - 每個 course 都會同時存在於 Google Calendar 和 Firebase
 
+## 7. 系統現狀與真正的待實作功能
+
+### ✅ **Phase 1 核心功能已完成**
+
+#### 7.1 提醒系統 ✅ **已完全實作**
+- ✅ 課前時間提醒（`handle_set_reminder_task.js`）
+- ✅ Firebase Scheduled Functions（`functions/index.js`）
+- ✅ LINE 推播提醒（每5分鐘檢查）
+- ✅ 清理過期提醒記錄
+
+#### 7.2 圖片處理功能 ✅ **已完全實作** 
+- ✅ 接收 LINE 圖片訊息（`webhook.js`）
+- ✅ 上傳至 Firebase Storage（`firebaseService.uploadImage()`）
+- ✅ 自動關聯到課程記錄（`handle_record_content_task.js`）
+
+#### 7.3 時間衝突檢測 ✅ **已完全實作並整合**
+- ✅ 使用 Google Calendar API 檢測衝突（`googleCalendarService.checkConflict()`）
+- ✅ 在新增課程時自動檢查（`handle_add_course_task.js`）
+- ✅ 提供清楚的衝突資訊給用戶
+
+#### 7.4 基礎任務處理 ✅ **已完全實作**
+- ✅ 新增課程（支援重複規則）
+- ✅ 查詢課表
+- ✅ 設定提醒
+- ✅ 取消課程
+- ✅ 記錄課程內容（文字+圖片）
+
+### 🚧 **真正的待實作功能**
+
+基於現狀分析，主要的未實作功能集中在進階功能和系統改善方面：
+
+#### 🔧 Phase 2 - 進階功能優化
+
+**7.1 企業級對話管理（Slot Template 系統）**
+- 🚧 **狀態：已規劃未實作** - Phase 2 功能，配置文件已準備
+- 🚧 多輪對話狀態持久化（目前僅內存暫存）
+- 🚧 Slot Template 引擎（支援動態配置）
+- 🚧 對話中斷後的狀態恢復
+- 🚧 企業級指標監控與分析
+
+**實作架構已設計**：
+```
+/config/future/slot-template-collections.json  # Firestore 結構
+/src/config/features.js                        # Feature Flag
+```
+
+**7.2 批次操作支援**
+- 🚧 批次新增多個課程
+- 🚧 批次修改重複課程
+- 🚧 批次匯出學習報告
+
+#### 🧪 Phase 3 - 系統品質提升
+
+**7.3 自動化測試**
+- 🚧 單元測試覆蓋（意圖識別、任務處理）
+- 🚧 整合測試（Google Calendar、Firebase API）
+- 🚧 端對端對話測試
+
+**7.4 監控與可觀測性**
+- 🚧 結構化日誌系統
+- 🚧 API 效能監控
+- 🚧 錯誤追蹤與告警
+- 🚧 使用者行為分析
+
+## 8. 開發優先級建議（基於實際現狀）
+
+### ✅ **MVP 核心功能已完成**
+系統已完成所有基礎功能：提醒系統、圖片處理、時間衝突檢測、任務處理等。
+
+### 🔴 高優先級（短期改善）
+1. **自動化測試系統** - 確保系統穩定性和重構安全
+2. **對話狀態持久化** - 提升用戶體驗連續性
+3. **結構化日誌系統** - 改善問題追蹤能力
+
+### 🟡 中優先級（中期優化）
+1. **批次操作功能** - 提升效率（批次新增課程等）
+2. **智慧上下文推斷** - 減少用戶輸入負擔
+3. **API 效能監控** - 預防性維護
+
+### 🟢 低優先級（長期規劃）
+1. **使用者行為分析** - 產品優化依據
+2. **進階對話管理** - 企業級功能
+3. **多租戶架構** - 商業化準備
+
+## 9. 開發指南
+
+### 新功能開發流程
+1. **需求分析** - 確認業務價值和技術可行性
+2. **設計階段** - 定義 API 介面和資料結構
+3. **實作階段** - 遵循現有命名和架構規範
+4. **測試階段** - 撰寫測試案例並執行
+5. **部署階段** - 使用 Feature Flag 漸進式發布
+
+### 程式碼規範提醒
+- 意圖命名：`snake_case`（如 `add_course`）
+- 函式命名：`handle_XXX_task()`
+- 變數命名：`camelCase`
+- 回傳格式：`{ success: boolean, message: string }`
+- 統一用詞：student/course/scheduleTime
+
 祝開發順利！如有問題請查閱 `/doc/implement.md` 的業務邏輯說明。
