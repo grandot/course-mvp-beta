@@ -135,14 +135,15 @@ async function getMessageContent(messageId) {
     const headers = getLineHeaders();
     
     console.log('🧪 使用中的 LINE Token 開頭:', process.env.LINE_CHANNEL_ACCESS_TOKEN?.slice(0, 30));
+    
+    const url = `${LINE_API_BASE}/message/${messageId}/content`;
+    console.log('🔗 請求 URL:', url);
+    console.log('📋 請求 Headers:', JSON.stringify(headers, null, 2));
 
-    const response = await axios.get(
-      `${LINE_API_BASE}/message/${messageId}/content`,
-      {
-        headers,
-        responseType: 'arraybuffer',
-      },
-    );
+    const response = await axios.get(url, {
+      headers,
+      responseType: 'arraybuffer',
+    });
 
     console.log('✅ 圖片內容下載成功');
     return Buffer.from(response.data);
