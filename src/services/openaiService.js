@@ -15,11 +15,11 @@ function initializeOpenAI() {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('❌ OPENAI_API_KEY 環境變數未設定');
     }
-    
+
     openaiClient = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    
+
     console.log('✅ OpenAI 服務初始化完成');
   }
   return openaiClient;
@@ -31,40 +31,40 @@ function initializeOpenAI() {
 async function chatCompletion(prompt, options = {}) {
   try {
     const client = initializeOpenAI();
-    
+
     const defaultOptions = {
       model: 'gpt-3.5-turbo',
-      temperature: 0.1,  // 較低的隨機性，確保一致性
+      temperature: 0.1, // 較低的隨機性，確保一致性
       max_tokens: 1000,
-      ...options
+      ...options,
     };
-    
+
     const response = await client.chat.completions.create({
       model: defaultOptions.model,
       messages: [
         {
           role: 'system',
-          content: '你是一個專業的課程管理助手，專門處理課程安排、查詢和記錄相關任務。請用繁體中文回應，並保持回應簡潔準確。'
+          content: '你是一個專業的課程管理助手，專門處理課程安排、查詢和記錄相關任務。請用繁體中文回應，並保持回應簡潔準確。',
         },
         {
           role: 'user',
-          content: prompt
-        }
+          content: prompt,
+        },
       ],
       temperature: defaultOptions.temperature,
       max_tokens: defaultOptions.max_tokens,
     });
-    
+
     const result = response.choices[0]?.message?.content?.trim();
-    
+
     if (!result) {
       throw new Error('OpenAI API 回應為空');
     }
-    
+
     return result;
   } catch (error) {
     console.error('❌ OpenAI API 呼叫失敗:', error);
-    
+
     // 根據錯誤類型提供不同的處理
     if (error.code === 'insufficient_quota') {
       throw new Error('OpenAI API 配額不足，請檢查帳戶餘額');
@@ -179,13 +179,12 @@ async function generateResponse(intent, slots, result) {
     return response;
   } catch (error) {
     console.error('❌ 回應生成失敗:', error);
-    
+
     // 提供備用回應
     if (result?.success) {
       return '✅ 操作已完成';
-    } else {
-      return '❌ 操作失敗，請稍後再試';
     }
+    return '❌ 操作失敗，請稍後再試';
   }
 }
 
@@ -209,5 +208,5 @@ module.exports = {
   extractEntities,
   generateResponse,
   testConnection,
-  initializeOpenAI
+  initializeOpenAI,
 };

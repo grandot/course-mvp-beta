@@ -15,18 +15,18 @@ const handle_cancel_course_task = require('./handle_cancel_course_task');
  */
 const taskHandlers = {
   // 課程管理
-  'add_course': handle_add_course_task,
-  'create_recurring_course': handle_add_course_task, // 重複課程使用相同處理器
-  'query_schedule': handle_query_schedule_task,
-  'cancel_course': handle_cancel_course_task,
-  'stop_recurring_course': handle_cancel_course_task, // 停止重複課程使用相同處理器
-  
+  add_course: handle_add_course_task,
+  create_recurring_course: handle_add_course_task, // 重複課程使用相同處理器
+  query_schedule: handle_query_schedule_task,
+  cancel_course: handle_cancel_course_task,
+  stop_recurring_course: handle_cancel_course_task, // 停止重複課程使用相同處理器
+
   // 內容記錄
-  'record_content': handle_record_content_task,
-  'add_course_content': handle_record_content_task, // 內容記錄使用相同處理器
-  
+  record_content: handle_record_content_task,
+  add_course_content: handle_record_content_task, // 內容記錄使用相同處理器
+
   // 提醒設定
-  'set_reminder': handle_set_reminder_task
+  set_reminder: handle_set_reminder_task,
 };
 
 /**
@@ -56,20 +56,20 @@ async function executeTask(intent, slots, userId) {
     if (!handler) {
       return {
         success: false,
-        message: `❌ 目前不支援「${intent}」功能，請稍後再試`
+        message: `❌ 目前不支援「${intent}」功能，請稍後再試`,
       };
     }
-    
+
     console.log(`🎯 執行任務: ${intent}`);
     const result = await handler(slots, userId);
-    
-    console.log(`📊 任務執行結果:`, result);
+
+    console.log('📊 任務執行結果:', result);
     return result;
   } catch (error) {
     console.error(`❌ 任務執行異常 (${intent}):`, error);
     return {
       success: false,
-      message: '❌ 系統處理異常，請稍後再試'
+      message: '❌ 系統處理異常，請稍後再試',
     };
   }
 }
@@ -87,14 +87,14 @@ module.exports = {
   getTaskHandler,
   executeTask,
   getSupportedIntents,
-  
+
   // 任務處理器對應表
   taskHandlers,
-  
+
   // 個別處理器（供直接引用）
   handle_add_course_task,
   handle_query_schedule_task,
   handle_record_content_task,
   handle_set_reminder_task,
-  handle_cancel_course_task
+  handle_cancel_course_task,
 };

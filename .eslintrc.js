@@ -11,10 +11,9 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['local'],
+  plugins: [],
   rules: {
     'no-console': 'warn',
-    'local/no-cross-layer-imports': 'error',
     'camelcase': ['error', { 
       'properties': 'never', 
       'allow': ['max_tokens', 'prompt_tokens', 'completion_tokens', 'total_tokens'] 

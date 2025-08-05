@@ -29,8 +29,8 @@ function loadIntentRules() {
  */
 function matchesKeywords(message, keywords) {
   if (!keywords || keywords.length === 0) return false;
-  
-  return keywords.some(keyword => message.includes(keyword));
+
+  return keywords.some((keyword) => message.includes(keyword));
 }
 
 /**
@@ -38,8 +38,8 @@ function matchesKeywords(message, keywords) {
  */
 function matchesPatterns(message, patterns) {
   if (!patterns || patterns.length === 0) return false;
-  
-  return patterns.some(pattern => {
+
+  return patterns.some((pattern) => {
     try {
       const regex = new RegExp(pattern);
       return regex.test(message);
@@ -55,8 +55,8 @@ function matchesPatterns(message, patterns) {
  */
 function hasRequiredKeywords(message, requiredKeywords) {
   if (!requiredKeywords || requiredKeywords.length === 0) return true;
-  
-  return requiredKeywords.some(keyword => message.includes(keyword));
+
+  return requiredKeywords.some((keyword) => message.includes(keyword));
 }
 
 /**
@@ -64,8 +64,8 @@ function hasRequiredKeywords(message, requiredKeywords) {
  */
 function hasExclusions(message, exclusions) {
   if (!exclusions || exclusions.length === 0) return false;
-  
-  return exclusions.some(exclusion => message.includes(exclusion));
+
+  return exclusions.some((exclusion) => message.includes(exclusion));
 }
 
 /**
@@ -111,7 +111,7 @@ function parseIntentByRules(message) {
         intent: intentName,
         score,
         priority,
-        rule
+        rule,
       });
     }
   }
@@ -125,7 +125,7 @@ function parseIntentByRules(message) {
   });
 
   if (process.env.DEBUG_INTENT_PARSING === 'true') {
-    console.log('🔍 意圖候選列表:', candidates.map(c => `${c.intent}(${c.score})`).join(', '));
+    console.log('🔍 意圖候選列表:', candidates.map((c) => `${c.intent}(${c.score})`).join(', '));
   }
 
   return candidates.length > 0 ? candidates[0].intent : null;
@@ -137,34 +137,52 @@ function parseIntentByRules(message) {
 async function parseIntentByAI(message) {
   try {
     const openaiService = require('../services/openaiService');
-    
+
     const prompt = `
-判斷以下語句的意圖，回傳 JSON 格式：
+你是課程管理聊天機器人的意圖分析師。僅處理課程相關語句，嚴格排除無關查詢。
 
 語句：「${message}」
 
-可能的意圖：
-- add_course: 新增課程
-- create_recurring_course: 創建重複課程  
-- query_schedule: 查詢課表
-- set_reminder: 設定提醒
-- cancel_course: 取消課程
-- record_content: 記錄課程內容
-- modify_course: 修改課程
-- unknown: 無法識別
+意圖判斷標準：
+- 必須明確涉及課程、學習、上課、學生等教育相關內容
+- 天氣、心情、狀況、時間等非課程查詢一律識別為 unknown
+- 對模糊或不確定的語句設置低信心度
 
-回傳格式：{"intent": "意圖名稱", "confidence": 0.8}
-如果不確定，請回傳：{"intent": "unknown", "confidence": 0.0}
+可能的意圖：
+- add_course: 新增單次課程（包含明確時間安排）
+- create_recurring_course: 創建重複課程（包含重複頻率）
+- query_schedule: 查詢課程安排（明確詢問課表或課程）
+- set_reminder: 設定課程提醒
+- cancel_course: 取消課程
+- record_content: 記錄課程內容或學習成果
+- modify_course: 修改課程資訊
+- unknown: 無關課程或無法識別
+
+❌ 非課程相關語句範例：
+"今天天氣如何" → unknown (天氣查詢)
+"我心情不好" → unknown (情緒表達)
+"現在幾點" → unknown (時間查詢)
+
+✅ 課程相關語句範例：
+"今天有什麼課" → query_schedule
+"小明數學課表現如何" → record_content
+"安排明天英文課" → add_course
+
+回傳格式（僅JSON）：
+{"intent": "意圖名稱", "confidence": 0.0到1.0的數字}
+
+對於非課程相關語句，必須回傳：
+{"intent": "unknown", "confidence": 0.0}
 `;
 
     const response = await openaiService.chatCompletion(prompt);
     const result = JSON.parse(response);
-    
+
     if (result.confidence >= 0.6) {
       console.log('🤖 AI 識別意圖:', result.intent, '信心度:', result.confidence);
       return result.intent;
     }
-    
+
     return 'unknown';
   } catch (error) {
     console.error('❌ AI 意圖識別失敗:', error);
@@ -207,5 +225,5 @@ module.exports = {
   parseIntent,
   loadIntentRules,
   parseIntentByRules,
-  parseIntentByAI
+  parseIntentByAI,
 };

@@ -15,8 +15,8 @@ function initializeFirebase() {
     try {
       // 檢查必要的環境變數
       const requiredEnvVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_STORAGE_BUCKET'];
-      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-      
+      const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
       if (missingVars.length > 0) {
         throw new Error(`❌ 缺少 Firebase 環境變數: ${missingVars.join(', ')}`);
       }
@@ -59,20 +59,19 @@ async function getOrCreateParent(userId, displayName = null) {
 
     if (parentDoc.exists) {
       return parentDoc.data();
-    } else {
-      // 創建新家長資料
-      const newParent = {
-        lineUserId: userId,
-        displayName: displayName || '未設定',
-        students: [],
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
-
-      await parentRef.set(newParent);
-      console.log('✅ 創建新家長資料:', userId);
-      return newParent;
     }
+    // 創建新家長資料
+    const newParent = {
+      lineUserId: userId,
+      displayName: displayName || '未設定',
+      students: [],
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    await parentRef.set(newParent);
+    console.log('✅ 創建新家長資料:', userId);
+    return newParent;
   } catch (error) {
     console.error('❌ 家長資料操作失敗:', error);
     throw error;
@@ -89,13 +88,13 @@ async function getOrCreateParent(userId, displayName = null) {
 async function getStudent(userId, studentName) {
   try {
     const parent = await getOrCreateParent(userId);
-    const student = parent.students?.find(s => s.studentName === studentName);
-    
+    const student = parent.students?.find((s) => s.studentName === studentName);
+
     if (!student) {
       console.log('❓ 學生不存在:', studentName);
       return null;
     }
-    
+
     return student;
   } catch (error) {
     console.error('❌ 取得學生資料失敗:', error);
@@ -110,16 +109,16 @@ async function addStudent(userId, studentName, calendarId) {
   try {
     const firestore = initializeFirebase();
     const parentRef = firestore.collection('parents').doc(userId);
-    
+
     const newStudent = {
       studentName,
       calendarId,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     await parentRef.update({
       students: admin.firestore.FieldValue.arrayUnion(newStudent),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     console.log('✅ 新增學生資料:', studentName);
@@ -141,19 +140,19 @@ async function saveCourse(courseData) {
   try {
     const firestore = initializeFirebase();
     const coursesRef = firestore.collection('courses');
-    
+
     const courseDoc = {
       ...courseData,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     const docRef = await coursesRef.add(courseDoc);
     const courseId = docRef.id;
-    
+
     // 更新文件以包含 courseId
     await docRef.update({ courseId });
-    
+
     console.log('✅ 課程資料已儲存:', courseId);
     return { courseId, ...courseDoc };
   } catch (error) {
@@ -185,8 +184,8 @@ async function getCoursesByStudent(userId, studentName, options = {}) {
 
     const snapshot = await query.get();
     const courses = [];
-    
-    snapshot.forEach(doc => {
+
+    snapshot.forEach((doc) => {
       courses.push({ id: doc.id, ...doc.data() });
     });
 
@@ -214,17 +213,17 @@ async function findCourse(userId, studentName, courseName, courseDate = null) {
     }
 
     const snapshot = await query.get();
-    
+
     if (snapshot.empty) {
       return null;
     }
 
     // 如果有多筆結果，取最近的一筆
     const courses = [];
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       courses.push({ id: doc.id, ...doc.data() });
     });
-    
+
     courses.sort((a, b) => new Date(b.courseDate) - new Date(a.courseDate));
     return courses[0];
   } catch (error) {
@@ -240,13 +239,13 @@ async function updateCourseRecord(courseId, recordData) {
   try {
     const firestore = initializeFirebase();
     const courseRef = firestore.collection('courses').doc(courseId);
-    
+
     const updateData = {
       courseRecord: {
         ...recordData,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     await courseRef.update(updateData);
@@ -269,19 +268,19 @@ async function createReminder(reminderData) {
   try {
     const firestore = initializeFirebase();
     const remindersRef = firestore.collection('reminders');
-    
+
     const reminderDoc = {
       ...reminderData,
       executed: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     const docRef = await remindersRef.add(reminderDoc);
     const reminderId = docRef.id;
-    
+
     // 更新文件以包含 reminderId
     await docRef.update({ reminderId });
-    
+
     console.log('✅ 提醒記錄已創建:', reminderId);
     return { reminderId, ...reminderDoc };
   } catch (error) {
@@ -297,14 +296,14 @@ async function getPendingReminders() {
   try {
     const firestore = initializeFirebase();
     const now = new Date();
-    
+
     const snapshot = await firestore.collection('reminders')
       .where('executed', '==', false)
       .where('triggerTime', '<=', now)
       .get();
 
     const reminders = [];
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       reminders.push({ id: doc.id, ...doc.data() });
     });
 
@@ -323,10 +322,10 @@ async function markReminderExecuted(reminderId) {
   try {
     const firestore = initializeFirebase();
     const reminderRef = firestore.collection('reminders').doc(reminderId);
-    
+
     await reminderRef.update({
       executed: true,
-      executedAt: admin.firestore.FieldValue.serverTimestamp()
+      executedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     console.log('✅ 提醒已標記為執行:', reminderId);
@@ -344,11 +343,11 @@ async function deleteCourse(courseId) {
   try {
     const firestore = initializeFirebase();
     const courseRef = firestore.collection('courses').doc(courseId);
-    
+
     await courseRef.update({
       cancelled: true,
       cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     console.log('✅ 課程已標記為取消:', courseId);
@@ -368,9 +367,9 @@ async function testConnection() {
     // 嘗試讀取一個測試文件
     await firestore.collection('_test').doc('connection').set({
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'ok'
+      status: 'ok',
     });
-    
+
     console.log('🔗 Firebase 連接測試成功');
     return true;
   } catch (error) {
@@ -386,10 +385,10 @@ async function addDocument(collectionName, data) {
   try {
     const firestore = initializeFirebase();
     const collectionRef = firestore.collection(collectionName);
-    
+
     const docData = {
       ...data,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     const docRef = await collectionRef.add(docData);
@@ -408,10 +407,10 @@ async function updateDocument(collectionName, docId, data) {
   try {
     const firestore = initializeFirebase();
     const docRef = firestore.collection(collectionName).doc(docId);
-    
+
     const updateData = {
       ...data,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
     await docRef.update(updateData);
@@ -445,39 +444,38 @@ function getCollection(collectionName) {
 async function uploadImage(imageBuffer, courseId, fileName) {
   try {
     console.log(`🖼️ 開始上傳圖片: ${fileName} 到課程 ${courseId}`);
-    
+
     // 初始化 Firebase (確保 Storage 可用)
     initializeFirebase();
-    
+
     // 建立 Storage 參考路徑
     const timestamp = Date.now();
     const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const storagePath = `courses-images/${courseId}/${timestamp}_${safeFileName}`;
-    
+
     const bucket = admin.storage().bucket();
     const file = bucket.file(storagePath);
-    
+
     // 上傳圖片
     await file.save(imageBuffer, {
       metadata: {
         contentType: 'image/jpeg',
         cacheControl: 'public, max-age=31536000',
         metadata: {
-          courseId: courseId,
+          courseId,
           uploadedAt: new Date().toISOString(),
-        }
-      }
+        },
+      },
     });
-    
+
     // 設定公開存取權限
     await file.makePublic();
-    
+
     // 建立公開網址
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
-    
+
     console.log(`✅ 圖片上傳成功: ${publicUrl}`);
     return publicUrl;
-    
   } catch (error) {
     console.error('❌ 圖片上傳失敗:', error);
     throw new Error(`圖片上傳失敗: ${error.message}`);
@@ -493,17 +491,16 @@ async function uploadImage(imageBuffer, courseId, fileName) {
 async function uploadMultipleImages(images, courseId) {
   try {
     console.log(`🖼️ 開始批量上傳 ${images.length} 張圖片到課程 ${courseId}`);
-    
+
     const uploadPromises = images.map((image, index) => {
       const fileName = image.fileName || `image_${index + 1}.jpg`;
       return uploadImage(image.buffer, courseId, fileName);
     });
-    
+
     const imageUrls = await Promise.all(uploadPromises);
-    
+
     console.log(`✅ 批量上傳完成，共 ${imageUrls.length} 張圖片`);
     return imageUrls;
-    
   } catch (error) {
     console.error('❌ 批量圖片上傳失敗:', error);
     throw new Error(`批量圖片上傳失敗: ${error.message}`);
@@ -520,21 +517,20 @@ async function deleteImage(imageUrl) {
     // 從 URL 解析出 Storage 路徑
     const url = new URL(imageUrl);
     const pathMatch = url.pathname.match(/\/([^\/]+)\/(.*)/);
-    
+
     if (!pathMatch) {
       throw new Error('無法解析圖片路徑');
     }
-    
+
     const bucketName = pathMatch[1];
     const filePath = pathMatch[2];
-    
+
     const bucket = admin.storage().bucket(bucketName);
     const file = bucket.file(filePath);
-    
+
     await file.delete();
     console.log(`🗑️ 圖片已刪除: ${filePath}`);
     return true;
-    
   } catch (error) {
     console.error('❌ 刪除圖片失敗:', error);
     return false;
@@ -545,33 +541,33 @@ module.exports = {
   // 初始化
   initializeFirebase,
   testConnection,
-  
+
   // 通用操作
   addDocument,
   updateDocument,
   getCollection,
-  
+
   // 家長操作
   getOrCreateParent,
-  
+
   // 學生操作
   getStudent,
   addStudent,
-  
+
   // 課程操作
   saveCourse,
   getCoursesByStudent,
   findCourse,
   updateCourseRecord,
   deleteCourse,
-  
+
   // 提醒操作
   createReminder,
   getPendingReminders,
   markReminderExecuted,
-  
+
   // 圖片上傳操作
   uploadImage,
   uploadMultipleImages,
-  deleteImage
+  deleteImage,
 };

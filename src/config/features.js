@@ -9,28 +9,28 @@ const FEATURES = {
     enabled: true,
     phase: 'Phase 1',
     description: '基礎意圖識別系統',
-    status: 'active'
+    status: 'active',
   },
-  
+
   COURSE_MANAGEMENT: {
     enabled: true,
-    phase: 'Phase 1', 
+    phase: 'Phase 1',
     description: '課程新增/修改/查詢/取消',
-    status: 'active'
+    status: 'active',
   },
-  
+
   GOOGLE_CALENDAR_INTEGRATION: {
     enabled: true,
     phase: 'Phase 1',
     description: 'Google Calendar API 整合',
-    status: 'active'
+    status: 'active',
   },
-  
+
   LINE_BOT_WEBHOOK: {
     enabled: true,
     phase: 'Phase 1',
     description: 'LINE Bot 訊息處理',
-    status: 'active'
+    status: 'active',
   },
 
   // === Phase 2: 高級對話管理 (未來實現) ===
@@ -42,16 +42,16 @@ const FEATURES = {
     readyForProduction: false,
     configFiles: [
       'config/future/slot-template-collections.json',
-      'firestore.indexes.json (slot相關部分)'
-    ]
+      'firestore.indexes.json (slot相關部分)',
+    ],
   },
-  
+
   MULTI_TURN_CONVERSATION: {
     enabled: false,
-    phase: 'Phase 2', 
+    phase: 'Phase 2',
     description: '多輪對話狀態追蹤',
     status: 'planned',
-    dependencies: ['SLOT_TEMPLATE_SYSTEM']
+    dependencies: ['SLOT_TEMPLATE_SYSTEM'],
   },
 
   // === Phase 3: 企業級功能 (遠期規劃) ===
@@ -61,23 +61,23 @@ const FEATURES = {
     description: '三層記憶系統 (Context + YAML + SmartQuery)',
     status: 'planned',
     readyForProduction: false,
-    configSource: 'src/config/production.js (memorySystem部分)'
+    configSource: 'src/config/production.js (memorySystem部分)',
   },
-  
+
   ADVANCED_ANALYTICS: {
     enabled: false,
     phase: 'Phase 3',
     description: '對話分析與性能監控',
     status: 'planned',
-    dependencies: ['SLOT_TEMPLATE_SYSTEM']
+    dependencies: ['SLOT_TEMPLATE_SYSTEM'],
   },
-  
+
   PERFORMANCE_MONITORING: {
     enabled: false,
     phase: 'Phase 3',
     description: '系統監控與指標收集',
-    status: 'planned'
-  }
+    status: 'planned',
+  },
 };
 
 // 取得當前啟用的功能
@@ -116,7 +116,7 @@ function getRoadmap() {
       name: key,
       description: config.description,
       status: config.status,
-      enabled: config.enabled
+      enabled: config.enabled,
     });
   });
   return phases;
@@ -125,7 +125,7 @@ function getRoadmap() {
 module.exports = {
   FEATURES,
   getEnabledFeatures,
-  getFeaturesByPhase, 
+  getFeaturesByPhase,
   isFeatureEnabled,
-  getRoadmap
+  getRoadmap,
 };

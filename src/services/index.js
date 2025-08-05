@@ -12,5 +12,5 @@ module.exports = {
   firebaseService,
   googleCalendarService,
   lineService,
-  openaiService
+  openaiService,
 };

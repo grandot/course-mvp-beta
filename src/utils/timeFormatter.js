@@ -10,10 +10,10 @@
  */
 function to24HourFormat(inputText) {
   if (!inputText) return null;
-  
+
   // 移除空白字符
   const timeStr = inputText.trim();
-  
+
   // 正則表達式匹配各種中文時間格式
   const patterns = [
     // 下午2:00, 上午10:30
@@ -23,18 +23,18 @@ function to24HourFormat(inputText) {
     // 下午2點半, 上午10點半
     /^(上午|下午|早上|晚上|中午)(\d{1,2})點半$/,
     // 14:00 (已經是24小時制)
-    /^(\d{1,2}):(\d{2})$/
+    /^(\d{1,2}):(\d{2})$/,
   ];
-  
+
   // 時段對應表
   const periodMap = {
-    '上午': 'AM',
-    '早上': 'AM', 
-    '中午': 'PM', // 中午按下午處理
-    '下午': 'PM',
-    '晚上': 'PM'
+    上午: 'AM',
+    早上: 'AM',
+    中午: 'PM', // 中午按下午處理
+    下午: 'PM',
+    晚上: 'PM',
   };
-  
+
   for (const pattern of patterns) {
     const match = timeStr.match(pattern);
     if (match) {
@@ -47,35 +47,35 @@ function to24HourFormat(inputText) {
         }
         continue;
       }
-      
+
       const period = match[1];
       let hour = parseInt(match[2]);
       let minute = match[3] || '00';
-      
+
       // 處理"點半"的情況
       if (timeStr.includes('點半')) {
         minute = '30';
       }
-      
+
       // 轉換為24小時制
       if (periodMap[period] === 'PM' && hour !== 12) {
         hour += 12;
       } else if (periodMap[period] === 'AM' && hour === 12) {
         hour = 0;
       }
-      
+
       // 特殊處理：中午12點保持12，不變成24
       if (period === '中午' && hour === 12) {
         hour = 12;
       }
-      
+
       // 驗證時間合理性
       if (hour >= 0 && hour <= 23 && parseInt(minute) >= 0 && parseInt(minute) <= 59) {
         return `${hour.toString().padStart(2, '0')}:${minute.padStart(2, '0')}`;
       }
     }
   }
-  
+
   // 如果都不匹配，返回 null
   console.warn(`無法解析時間格式: ${inputText}`);
   return null;
@@ -88,19 +88,19 @@ function to24HourFormat(inputText) {
  */
 function toDisplayFormat(timeStr) {
   if (!timeStr) return '';
-  
+
   const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) {
     console.warn(`無效的時間格式: ${timeStr}`);
     return timeStr;
   }
-  
+
   const hour = parseInt(match[1]);
   const minute = match[2];
-  
+
   let period = '';
   let displayHour = hour;
-  
+
   if (hour === 0) {
     period = '午夜';
     displayHour = 12;
@@ -117,15 +117,14 @@ function toDisplayFormat(timeStr) {
     period = '晚上';
     displayHour = hour - 12;
   }
-  
+
   // 特殊處理分鐘顯示
   if (minute === '00') {
     return `${period}${displayHour}:00`;
-  } else if (minute === '30') {
+  } if (minute === '30') {
     return `${period}${displayHour}:30`;
-  } else {
-    return `${period}${displayHour}:${minute}`;
   }
+  return `${period}${displayHour}:${minute}`;
 }
 
 /**
@@ -138,17 +137,17 @@ function buildDateTime(date, time) {
   if (!date || !time) {
     throw new Error('日期和時間都是必填參數');
   }
-  
+
   // 驗證日期格式 YYYY-MM-DD
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     throw new Error(`無效的日期格式: ${date}，應為 YYYY-MM-DD`);
   }
-  
+
   // 驗證時間格式 HH:MM
   if (!/^\d{1,2}:\d{2}$/.test(time)) {
     throw new Error(`無效的時間格式: ${time}，應為 HH:MM`);
   }
-  
+
   return new Date(`${date}T${time}:00+08:00`);
 }
 
@@ -159,16 +158,16 @@ function buildDateTime(date, time) {
  */
 function addOneHour(timeStr) {
   if (!timeStr) return null;
-  
+
   const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) {
     console.warn(`無效的時間格式: ${timeStr}`);
     return timeStr;
   }
-  
+
   const hour = parseInt(match[1]);
   const minute = match[2];
-  
+
   const newHour = (hour + 1) % 24;
   return `${newHour.toString().padStart(2, '0')}:${minute}`;
 }
@@ -209,15 +208,23 @@ function getTomorrow() {
  */
 function dayStringToNumber(dayStr) {
   const dayMap = {
-    '週日': 0, '星期日': 0, '星期天': 0,
-    '週一': 1, '星期一': 1,
-    '週二': 2, '星期二': 2,
-    '週三': 3, '星期三': 3,
-    '週四': 4, '星期四': 4,
-    '週五': 5, '星期五': 5,
-    '週六': 6, '星期六': 6
+    週日: 0,
+    星期日: 0,
+    星期天: 0,
+    週一: 1,
+    星期一: 1,
+    週二: 2,
+    星期二: 2,
+    週三: 3,
+    星期三: 3,
+    週四: 4,
+    星期四: 4,
+    週五: 5,
+    星期五: 5,
+    週六: 6,
+    星期六: 6,
   };
-  
+
   return dayMap[dayStr] !== undefined ? dayMap[dayStr] : null;
 }
 
@@ -229,5 +236,5 @@ module.exports = {
   getYesterday,
   getToday,
   getTomorrow,
-  dayStringToNumber
+  dayStringToNumber,
 };

@@ -17,17 +17,17 @@ function calculateTriggerTime(courseDate, scheduleTime, reminderTime = 30) {
   try {
     // 組合課程完整時間
     const courseDateTime = new Date(`${courseDate}T${scheduleTime}:00+08:00`);
-    
+
     if (isNaN(courseDateTime.getTime())) {
       throw new Error('無效的日期時間格式');
     }
-    
+
     // 計算提醒時間（提前 reminderTime 分鐘）
     const triggerTime = new Date(courseDateTime.getTime() - (reminderTime * 60 * 1000));
-    
+
     console.log(`📅 課程時間: ${courseDateTime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`);
     console.log(`⏰ 提醒時間: ${triggerTime.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`);
-    
+
     return triggerTime;
   } catch (error) {
     console.error('❌ 計算提醒時間失敗:', error);
@@ -47,14 +47,14 @@ function calculateTriggerTime(courseDate, scheduleTime, reminderTime = 30) {
 async function findTargetCourse(userId, studentName, courseName, specificDate = null, timeReference = null) {
   try {
     let courseDate = specificDate;
-    
+
     // 如果沒有指定具體日期，根據時間參考計算
     if (!courseDate && timeReference) {
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
       const day = String(today.getDate()).padStart(2, '0');
-      
+
       switch (timeReference) {
         case 'today':
           courseDate = `${year}-${month}-${day}`;
@@ -74,15 +74,15 @@ async function findTargetCourse(userId, studentName, courseName, specificDate = 
           break;
       }
     }
-    
+
     // 查找課程
     const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
-    
+
     if (!course) {
       console.log(`❓ 找不到對應課程: 學生=${studentName}, 課程=${courseName}, 日期=${courseDate}`);
       return null;
     }
-    
+
     console.log(`📚 找到課程: ${course.studentName} 的 ${course.courseName} (${course.courseDate} ${course.scheduleTime})`);
     return course;
   } catch (error) {
@@ -100,117 +100,116 @@ async function findTargetCourse(userId, studentName, courseName, specificDate = 
 async function handle_set_reminder_task(slots, userId) {
   try {
     console.log('🔔 開始處理設定提醒任務:', slots);
-    
+
     // 1. 驗證必要參數
     if (!slots.studentName) {
-      return { 
-        success: false, 
-        message: '❌ 請提供學生姓名，例如：「提醒我小明的數學課」' 
+      return {
+        success: false,
+        message: '❌ 請提供學生姓名，例如：「提醒我小明的數學課」',
       };
     }
-    
+
     if (!slots.courseName) {
-      return { 
-        success: false, 
-        message: '❌ 請提供課程名稱，例如：「提醒我小明的數學課」' 
+      return {
+        success: false,
+        message: '❌ 請提供課程名稱，例如：「提醒我小明的數學課」',
       };
     }
-    
+
     // 2. 查找對應課程
     const course = await findTargetCourse(
-      userId, 
-      slots.studentName, 
+      userId,
+      slots.studentName,
       slots.courseName,
       slots.specificDate,
-      slots.timeReference
+      slots.timeReference,
     );
-    
+
     if (!course) {
       return {
         success: false,
-        message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否已安排`
+        message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否已安排`,
       };
     }
-    
+
     // 3. 檢查課程是否已過期
     const now = new Date();
     const courseDateTime = new Date(`${course.courseDate}T${course.scheduleTime}:00+08:00`);
-    
+
     if (courseDateTime < now) {
       return {
         success: false,
-        message: `❌ ${slots.studentName} 的 ${slots.courseName} (${course.courseDate} ${course.scheduleTime}) 已經過了，無法設定提醒`
+        message: `❌ ${slots.studentName} 的 ${slots.courseName} (${course.courseDate} ${course.scheduleTime}) 已經過了，無法設定提醒`,
       };
     }
-    
+
     // 4. 設定預設提醒時間（如果沒有指定）
     const reminderTime = slots.reminderTime || 30; // 預設提前30分鐘
-    
+
     // 5. 計算觸發時間
     const triggerTime = calculateTriggerTime(course.courseDate, course.scheduleTime, reminderTime);
-    
+
     // 檢查觸發時間是否已過
     if (triggerTime < now) {
       return {
         success: false,
-        message: `❌ 提醒時間已過，無法設定 ${reminderTime} 分鐘前的提醒`
+        message: `❌ 提醒時間已過，無法設定 ${reminderTime} 分鐘前的提醒`,
       };
     }
-    
+
     // 6. 建立提醒資料
     const reminderData = {
       courseId: course.id || course.courseId,
-      userId: userId,
+      userId,
       studentName: slots.studentName,
       courseName: slots.courseName,
-      reminderTime: reminderTime,
+      reminderTime,
       reminderNote: slots.reminderNote || `${slots.studentName} 的 ${slots.courseName}即將開始`,
-      triggerTime: triggerTime,
+      triggerTime,
       courseDate: course.courseDate,
-      scheduleTime: course.scheduleTime
+      scheduleTime: course.scheduleTime,
     };
-    
+
     // 7. 儲存提醒記錄到 Firebase
     const reminder = await firebaseService.createReminder(reminderData);
-    
+
     // 8. 格式化回應訊息
-    const courseTimeStr = courseDateTime.toLocaleString('zh-TW', { 
+    const courseTimeStr = courseDateTime.toLocaleString('zh-TW', {
       timeZone: 'Asia/Taipei',
       month: 'numeric',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
-    
+
     const triggerTimeStr = triggerTime.toLocaleString('zh-TW', {
-      timeZone: 'Asia/Taipei', 
+      timeZone: 'Asia/Taipei',
       month: 'numeric',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
-    
-    let message = `✅ 提醒設定完成！\n`;
+
+    let message = '✅ 提醒設定完成！\n';
     message += `📚 課程：${slots.studentName} 的 ${slots.courseName}\n`;
     message += `📅 上課時間：${courseTimeStr}\n`;
     message += `⏰ 提醒時間：${triggerTimeStr} (提前 ${reminderTime} 分鐘)`;
-    
+
     if (slots.reminderNote) {
       message += `\n📝 提醒內容：${slots.reminderNote}`;
     }
-    
+
     console.log('✅ 提醒設定成功:', reminder.reminderId);
-    
+
     return {
       success: true,
-      message: message
+      message,
     };
-    
   } catch (error) {
     console.error('❌ 設定提醒失敗:', error);
     return {
       success: false,
-      message: '❌ 提醒設定失敗，請稍後再試'
+      message: '❌ 提醒設定失敗，請稍後再試',
     };
   }
 }

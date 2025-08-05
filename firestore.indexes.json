@@ -1,6 +1,28 @@
 {
   "indexes": [
     {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "courseDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "scheduleTime",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "user_slot_states",
       "queryScope": "COLLECTION",
       "fields": [

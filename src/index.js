@@ -24,10 +24,10 @@ app.post('/webhook', async (req, res) => {
 
 // 健康檢查端點
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    version: require('../package.json').version
+    version: require('../package.json').version,
   });
 });
 
@@ -39,22 +39,22 @@ async function startServer() {
       'LINE_CHANNEL_ACCESS_TOKEN',
       'LINE_CHANNEL_SECRET',
       'OPENAI_API_KEY',
-      'FIREBASE_PROJECT_ID'
+      'FIREBASE_PROJECT_ID',
     ];
 
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
     if (missingVars.length > 0) {
       console.warn('⚠️ 缺少環境變數:', missingVars.join(', '));
       console.warn('⚠️ 請檢查 .env 檔案設定');
     }
 
     app.listen(PORT, () => {
-      console.log(`🚀 課程管理機器人服務已啟動`);
+      console.log('🚀 課程管理機器人服務已啟動');
       console.log(`📡 服務端口: ${PORT}`);
       console.log(`🔗 Webhook: http://localhost:${PORT}/webhook`);
       console.log(`❤️ 健康檢查: http://localhost:${PORT}/health`);
       console.log('---');
-      
+
       if (missingVars.length === 0) {
         console.log('✅ 所有環境變數已設定完成');
       }
