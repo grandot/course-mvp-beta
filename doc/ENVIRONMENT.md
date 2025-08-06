@@ -70,10 +70,10 @@ function processRequest(input) {
 ### 環境變數配置
 
 ```bash
-# Redis（必需）
+# Redis（必需）- Upstash 格式
 REDIS_HOST=xxx.upstash.io
 REDIS_PORT=6379
-REDIS_PASSWORD=xxx
+REDIS_PASSWORD=default:your_upstash_token_here
 REDIS_TLS=true
 
 # Firebase（必需）
@@ -90,14 +90,35 @@ NODE_ENV=production
 PORT=3000
 ```
 
+### Upstash Redis 連接配置 ⚠️ 重要
+
+Upstash 需要特殊的認證格式：
+
+```javascript
+const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT),
+  username: 'default',  // Upstash 固定使用 'default'
+  password: process.env.REDIS_PASSWORD.replace('default:', ''),  // 移除前綴
+  tls: {},  // Upstash 必需 TLS
+  family: 4,
+  retryStrategy: (times) => Math.min(times * 50, 2000)
+});
+```
+
+**環境變數格式**：
+- ✅ 正確：`REDIS_PASSWORD=default:ATpyAAI...`（保留前綴）
+- ❌ 錯誤：`REDIS_PASSWORD=ATpyAAI...`（不要手動移除前綴）
+
 ### 開發時注意事項
 
 1. **本地開發 vs 生產環境**
    ```javascript
-   // 開發環境可以用 Map（方便調試）
-   const storage = process.env.NODE_ENV === 'development' 
-     ? new Map() 
-     : new RedisStorage();
+   // ❌ 錯誤：開發環境絕對不能用 Map
+   // 因為部署環境是無狀態的，本地測試必須與生產一致
+   const storage = new RedisStorage();  // 永遠使用 Redis
    ```
 
 2. **錯誤處理**

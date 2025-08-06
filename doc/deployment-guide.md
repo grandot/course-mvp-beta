@@ -9,6 +9,8 @@
 - [ ] LINE Developer Console 帳號已設定
 - [ ] Google Cloud Platform 帳號已設定
 - [ ] OpenAI API 金鑰已取得
+- [ ] Redis 資料庫已建立 （服務商：Upstash）
+- [ ] **ioredis 套件已安裝** (`npm install ioredis`)
 - [ ] 網域名稱已準備（可選）
 
 ### ✅ 本地測試
@@ -25,7 +27,31 @@
 
 ## 🛠️ 部署步驟
 
-### 1. Firebase 專案設定
+### 1. Upstash Redis 設定
+
+我們使用 **Upstash** 作為 Redis 服務商，因為它最適合無狀態的 Serverless 環境。
+
+```bash
+# 方法一：使用分別的參數（推薦）
+REDIS_HOST=your-db-id.upstash.io
+REDIS_PORT=6380
+REDIS_PASSWORD=your-redis-password
+REDIS_TLS=true
+
+# 方法二：使用 Redis URL 格式
+REDIS_URL=rediss://:your-password@your-db-id.upstash.io:6380
+```
+
+#### 安裝 Redis 客戶端
+```bash
+# 安裝 ioredis（生產環境推薦）
+npm install ioredis
+
+# 檢查安裝
+npm list ioredis
+```
+
+### 2. Firebase 專案設定
 
 ```bash
 # 安裝 Firebase CLI
@@ -43,7 +69,52 @@ firebase init
 # - Storage
 ```
 
-### 2. 環境變數設定
+### 3. 環境變數設定
+
+#### 主應用程式環境變數
+建立 `.env.production` 檔案：
+```bash
+# LINE Bot Configuration
+LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token_here
+LINE_CHANNEL_SECRET=your_line_channel_secret_here
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Redis Configuration (Upstash) ⚠️ 必需
+REDIS_HOST=your-db-id.upstash.io
+REDIS_PORT=6380
+REDIS_PASSWORD=your-redis-password
+REDIS_TLS=true
+# 或使用 Redis URL 格式
+REDIS_URL=rediss://:your-password@your-db-id.upstash.io:6380
+
+# Firebase Configuration
+FIREBASE_PROJECT_ID=your_firebase_project_id
+FIREBASE_PRIVATE_KEY=your_firebase_private_key
+FIREBASE_CLIENT_EMAIL=your_firebase_client_email
+FIREBASE_STORAGE_BUCKET=your_firebase_project_id.appspot.com
+
+# Google Calendar
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your_service_account_email
+GOOGLE_CALENDAR_API_KEY=your_calendar_api_key
+
+# Application Configuration
+PORT=3000
+NODE_ENV=production
+SCENARIO_TYPE=course_management
+
+# Feature Flags
+ENABLE_AI_FALLBACK=true
+ENABLE_SLOT_TEMPLATE=true
+FEATURE_RECURRING_COURSES=true
+FEATURE_AUTO_SCHEDULER=true
+
+# Debugging (生產環境建議關閉)
+DEBUG_INTENT_PARSING=false
+DEBUG_SLOT_EXTRACTION=false
+SLOT_DEBUG_MODE=false
+```
 
 #### Firebase Functions 環境變數
 ```bash
@@ -57,37 +128,7 @@ firebase functions:config:set openai.api_key="YOUR_OPENAI_API_KEY"
 firebase functions:config:get
 ```
 
-#### 主應用程式環境變數
-建立 `.env.production` 檔案：
-```bash
-# LINE Bot Configuration
-LINE_CHANNEL_ACCESS_TOKEN=your_line_channel_access_token_here
-LINE_CHANNEL_SECRET=your_line_channel_secret_here
-
-# OpenAI Configuration
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Firebase Configuration
-FIREBASE_PROJECT_ID=your_firebase_project_id
-FIREBASE_PRIVATE_KEY=your_firebase_private_key
-FIREBASE_CLIENT_EMAIL=your_firebase_client_email
-FIREBASE_STORAGE_BUCKET=your_firebase_project_id.appspot.com
-
-# Application Configuration
-PORT=3000
-NODE_ENV=production
-
-# Feature Flags
-ENABLE_AI_FALLBACK=true
-ENABLE_REMINDERS=true
-ENABLE_IMAGE_UPLOAD=true
-
-# Debugging (生產環境建議關閉)
-DEBUG_INTENT_PARSING=false
-DEBUG_SLOT_EXTRACTION=false
-```
-
-### 3. 部署 Firebase Functions
+### 4. 部署 Firebase Functions
 
 ```bash
 # 進入 functions 目錄
@@ -103,7 +144,7 @@ firebase deploy --only functions
 firebase functions:log
 ```
 
-### 4. 部署 Firestore 規則和索引
+### 5. 部署 Firestore 規則和索引
 
 ```bash
 # 部署 Firestore 規則
@@ -116,7 +157,7 @@ firebase deploy --only firestore:indexes
 firebase deploy --only storage
 ```
 
-### 5. 部署主應用程式
+### 6. 部署主應用程式
 
 #### 選項 A: Render (推薦) ✅
 
@@ -194,7 +235,7 @@ git commit -m "部署到生產環境"
 git push heroku main
 ```
 
-### 6. LINE Bot Webhook 設定
+### 7. LINE Bot Webhook 設定
 
 1. 前往 [LINE Developer Console](https://developers.line.biz/)
 2. 選擇你的 Channel
@@ -244,6 +285,11 @@ app.get('/health', async (req, res) => {
     // 檢查 LINE API
     await lineService.testConnection();
     health.services.line = 'ok';
+
+    // 檢查 Redis (Upstash)
+    const conversationManager = getConversationManager();
+    const redisHealth = await conversationManager.healthCheck();
+    health.services.redis = redisHealth.status;
 
     res.json(health);
   } catch (error) {
@@ -358,22 +404,35 @@ process.on('uncaughtException', (error) => {
 
 ### 部署後測試清單
 ```bash
-# 1. 健康檢查
-curl https://your-domain.com/health
+# 1. 健康檢查（包含 Redis 狀態）
+curl https://course-mvp-beta.onrender.com/health
+
+# 預期回應應包含：
+# {
+#   "status": "ok",
+#   "services": {
+#     "firebase": "ok",
+#     "line": "ok", 
+#     "redis": "healthy"
+#   }
+# }
 
 # 2. LINE Webhook 測試
-curl -X POST https://your-domain.com/webhook \
+curl -X POST https://course-mvp-beta.onrender.com/webhook \
   -H "Content-Type: application/json" \
   -d '{"events":[]}'
 
 # 3. 執行完整測試
-npm run test:full -- --base-url https://your-domain.com
+npm run test:full
 
 # 4. 檢查 Functions 狀態
 firebase functions:log
 
-# 5. 測試提醒功能
-curl https://your-region-your-project.cloudfunctions.net/triggerReminderCheck
+# 5. 測試多輪對話功能
+# 透過 LINE 發送訊息，測試 Quick Reply 按鈕是否正常運作
+
+# 6. Redis 連接測試
+# 可以透過 Upstash Console 查看連接狀態和資料
 ```
 
 ## 🔄 維護作業
@@ -381,8 +440,10 @@ curl https://your-region-your-project.cloudfunctions.net/triggerReminderCheck
 ### 日常維護
 - 檢查應用程式日誌
 - 監控 Firebase 使用量
+- **監控 Upstash Redis 使用量**（免費額度限制）
 - 檢查 LINE API 配額
 - 更新依賴套件
+- **清理過期的對話狀態**（Redis TTL 自動處理）
 
 ### 週期性維護
 - 清理舊的測試資料
@@ -395,8 +456,21 @@ curl https://your-region-your-project.cloudfunctions.net/triggerReminderCheck
 ### 服務中斷處理
 1. 檢查健康檢查端點
 2. 查看錯誤日誌
-3. 檢查外部服務狀態
+3. 檢查外部服務狀態：
+   - Firebase Status
+   - **Upstash Status**
+   - LINE Platform Status
+   - Render Status
 4. 啟動備用系統（如有）
+
+### Redis 相關故障處理
+```bash
+# 檢查 Redis 連接
+curl https://course-mvp-beta.onrender.com/health | grep redis
+
+# 如果 Redis 故障，Bot 會降級為無狀態模式
+# Quick Reply 功能會失效，但基本功能仍可運作
+```
 
 ### 回滾程序
 ```bash
