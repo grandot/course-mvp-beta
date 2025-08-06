@@ -5,6 +5,18 @@
 ### 1.1 問題本質
 LINE Bot 的每個 webhook 請求都是無狀態的，但人類對話本質上是有狀態和上下文的。當前系統將每個用戶輸入當作獨立請求處理，導致無法理解依賴上下文的簡短回應。
 
+### 1.1.1 無狀態環境的挑戰
+**關鍵問題**：Vercel/Render 等無狀態環境會隨時重啟、釋放記憶體
+- ❌ **Map() 不可行**：存在記憶體中的資料會隨著服務重啟而消失
+- ❌ **全域變數不可行**：每個請求可能由不同的實例處理
+- ✅ **必須使用外部儲存**：Redis 提供獨立於應用實例的持久化儲存
+
+**為什麼選擇 Redis？**
+1. **高效能**：記憶體資料庫，讀寫速度快（毫秒級）
+2. **TTL 支援**：原生支援資料過期，自動清理
+3. **Serverless 友好**：Upstash 等服務專為無狀態環境設計
+4. **簡單可靠**：成熟的解決方案，易於整合
+
 ### 1.2 Quick Reply 功能失效原因
 ```
 用戶：小明今天下午3點數學課
@@ -286,58 +298,130 @@ function inferIntentFromContext(message, context) {
 }
 ```
 
-### 2.4 對話管理器（ConversationManager）
+### 2.4 對話管理器（ConversationManager）- Redis 版本
 
 ```javascript
+const Redis = require('ioredis');
+
 class ConversationManager {
-  constructor() {
-    // 使用 Map 暫存對話狀態（MVP階段）
-    this.conversations = new Map();
+  constructor(redisConfig = {}) {
+    // 使用 Redis 儲存對話狀態（適用於無狀態環境）
+    this.redis = new Redis({
+      host: process.env.REDIS_HOST || redisConfig.host,
+      port: process.env.REDIS_PORT || redisConfig.port || 6379,
+      password: process.env.REDIS_PASSWORD || redisConfig.password,
+      tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+      // Upstash Redis 相容設定
+      family: 4,
+      db: 0,
+      // 連接重試策略
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      // 錯誤處理
+      enableOfflineQueue: false
+    });
     
-    // 定期清理過期對話（30分鐘）
-    setInterval(() => this.cleanupExpiredConversations(), 5 * 60 * 1000);
+    // Redis 連接事件處理
+    this.redis.on('error', (err) => {
+      console.error('Redis 連接錯誤:', err);
+    });
+    
+    this.redis.on('connect', () => {
+      console.log('✅ Redis 連接成功');
+    });
+    
+    // 對話過期時間（30分鐘）
+    this.TTL_SECONDS = 30 * 60;
+  }
+  
+  // 生成 Redis key
+  _getKey(userId) {
+    return `conversation:${userId}`;
   }
   
   // 獲取對話上下文
   async getContext(userId) {
-    const context = this.conversations.get(userId);
-    if (context && Date.now() - context.lastActivity < 30 * 60 * 1000) {
+    try {
+      const key = this._getKey(userId);
+      const data = await this.redis.get(key);
+      
+      if (!data) return null;
+      
+      const context = JSON.parse(data);
+      
+      // 重新設定過期時間（滑動視窗）
+      await this.redis.expire(key, this.TTL_SECONDS);
+      
       return context;
+    } catch (error) {
+      console.error('獲取對話上下文失敗:', error);
+      // 降級處理：Redis 失敗時返回 null
+      return null;
     }
-    return null;
   }
   
   // 更新對話上下文
   async updateContext(userId, updates) {
-    const existing = this.conversations.get(userId) || { userId };
-    const updated = {
-      ...existing,
-      ...updates,
-      lastActivity: Date.now()
-    };
-    
-    // 維護歷史記錄（最多5輪）
-    if (updated.state?.history?.length > 10) {
-      updated.state.history = updated.state.history.slice(-10);
+    try {
+      const key = this._getKey(userId);
+      const existing = await this.getContext(userId) || { userId, state: {} };
+      
+      const updated = {
+        ...existing,
+        ...updates,
+        lastActivity: Date.now()
+      };
+      
+      // 維護歷史記錄（最多5輪）
+      if (updated.state?.history?.length > 10) {
+        updated.state.history = updated.state.history.slice(-10);
+      }
+      
+      // 序列化並儲存到 Redis，同時設定過期時間
+      await this.redis.setex(
+        key, 
+        this.TTL_SECONDS, 
+        JSON.stringify(updated)
+      );
+      
+      return updated;
+    } catch (error) {
+      console.error('更新對話上下文失敗:', error);
+      // 降級處理：記錄錯誤但不中斷流程
+      return null;
     }
-    
-    this.conversations.set(userId, updated);
+  }
+  
+  // 刪除對話上下文
+  async deleteContext(userId) {
+    try {
+      const key = this._getKey(userId);
+      await this.redis.del(key);
+    } catch (error) {
+      console.error('刪除對話上下文失敗:', error);
+    }
   }
   
   // 設定期待的輸入（支援複合期待）
   async setExpectation(userId, flowType, inputTypes, pendingData = {}) {
     const context = await this.getContext(userId) || { userId, state: {} };
+    
+    if (!context.state) context.state = {};
+    
     context.state.currentFlow = flowType;
     // 確保 inputTypes 是陣列格式
     context.state.expectingInput = Array.isArray(inputTypes) ? inputTypes : [inputTypes];
     context.state.pendingData = pendingData;
+    
     await this.updateContext(userId, context);
   }
   
   // 清除期待狀態
   async clearExpectation(userId) {
     const context = await this.getContext(userId);
-    if (context) {
+    if (context?.state) {
       context.state.currentFlow = null;
       context.state.expectingInput = [];
       context.state.pendingData = {};
@@ -347,14 +431,16 @@ class ConversationManager {
   
   // 更新特定意圖的 lastAction
   async updateLastAction(userId, intent, actionData) {
-    const context = await this.getContext(userId) || { userId, state: { lastActions: {} } };
-    if (!context.state.lastActions) {
-      context.state.lastActions = {};
-    }
+    const context = await this.getContext(userId) || { userId, state: {} };
+    
+    if (!context.state) context.state = {};
+    if (!context.state.lastActions) context.state.lastActions = {};
+    
     context.state.lastActions[intent] = {
       ...actionData,
       timestamp: Date.now()
     };
+    
     await this.updateContext(userId, context);
   }
   
@@ -363,10 +449,56 @@ class ConversationManager {
     const context = await this.getContext(userId);
     return context?.state?.lastActions?.[intent] || null;
   }
+  
+  // 健康檢查
+  async healthCheck() {
+    try {
+      await this.redis.ping();
+      return { status: 'healthy', storage: 'redis' };
+    } catch (error) {
+      return { status: 'unhealthy', storage: 'redis', error: error.message };
+    }
+  }
+  
+  // 關閉連接（優雅關機）
+  async close() {
+    await this.redis.quit();
+  }
 }
 ```
 
-### 2.5 整合修改方案
+### 2.5 ConversationManager 初始化與使用
+
+```javascript
+// src/services/conversationManager.js
+const ConversationManager = require('./ConversationManager');
+
+// 單例模式，確保全域只有一個實例
+let instance = null;
+
+function getConversationManager() {
+  if (!instance) {
+    instance = new ConversationManager({
+      // 可選：如果環境變數未設定，使用預設值
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
+      password: process.env.REDIS_PASSWORD
+    });
+  }
+  return instance;
+}
+
+// 優雅關機處理
+process.on('SIGTERM', async () => {
+  if (instance) {
+    await instance.close();
+  }
+});
+
+module.exports = { getConversationManager };
+```
+
+### 2.6 整合修改方案
 
 #### 2.5.1 webhook.js 修改
 ```javascript
@@ -469,8 +601,23 @@ async function extractSlotsWithContext(message, intent, userId, context) {
 
 ## 3. 實作步驟
 
+### Phase 0：Redis 環境設定（0.5天）
+1. 選擇並註冊 Redis 服務（建議 Upstash 或 Redis Labs）
+2. 取得連接資訊並設定環境變數
+3. 安裝 ioredis 套件：`npm install ioredis`
+4. 測試 Redis 連接
+
+#### 環境變數配置
+```bash
+# .env
+REDIS_HOST=your-redis-host.upstash.io
+REDIS_PORT=6379
+REDIS_PASSWORD=your-redis-password
+REDIS_TLS=true  # Upstash 需要 TLS
+```
+
 ### Phase 1：基礎架構（2天）
-1. 實作 ConversationManager 類
+1. 實作 Redis 版 ConversationManager 類
 2. 新增操作性意圖到 intent-rules.yaml
 3. 修改 parseIntent.js 支援上下文感知
 4. 加入對話狀態的記錄和更新邏輯
@@ -546,10 +693,17 @@ Bot：✅ 已確認數學課安排 [正確識別是要確認數學課，而非�
 - 1000 個活躍用戶約需 5MB 記憶體
 - 定期清理超過 30 分鐘的對話
 
-### 5.2 持久化方案（未來）
-- Phase 1：記憶體 Map（MVP）
-- Phase 2：Redis（提升可靠性）
-- Phase 3：Firebase（統一儲存）
+### 5.2 持久化方案
+- ~~Phase 1：記憶體 Map（不適用於無狀態環境）~~
+- **Phase 1：Redis（必須立即採用）** ← 當前選擇
+- Phase 2：Firebase（統一儲存，未來考慮）
+
+#### Redis 服務選擇建議
+| 服務商 | 優點 | 缺點 | 建議場景 |
+|--------|------|------|----------|
+| **Upstash** | • Serverless 友好<br>• 按請求計費<br>• 全球邊緣部署 | • 每日免費額度有限 | Vercel 部署首選 |
+| **Redis Labs** | • 30MB 免費額度<br>• 穩定可靠 | • 需要持續連接 | Render 部署適用 |
+| **Railway Redis** | • 易於整合<br>• $5/月起 | • 需付費 | 生產環境 |
 
 ### 5.3 錯誤處理
 - 上下文遺失：降級為無上下文處理
@@ -582,10 +736,27 @@ Bot：✅ 已確認數學課安排 [正確識別是要確認數學課，而非�
 
 | 風險 | 影響 | 緩解措施 |
 |------|------|----------|
-| 記憶體洩漏 | 服務不穩定 | 定期清理、監控記憶體使用 |
+| Redis 連接失敗 | 對話功能降級 | 優雅降級，基本功能仍可運作 |
+| Redis 延遲 | 回應變慢 | 設定合理超時，使用就近區域的 Redis |
+| 成本超支 | 預算問題 | 監控使用量，設定告警閾值 |
+| 資料外洩 | 隱私風險 | 不儲存敏感資料，使用 TLS 加密 |
 | 上下文誤用 | 錯誤操作 | 操作前確認、提供撤銷功能 |
 | 歧義問題 | 用戶困惑 | 明確詢問、提供選項 |
-| 效能影響 | 回應變慢 | 優化查詢、考慮快取 |
+
+### 7.1 Redis 特定風險處理
+
+**連接失敗處理策略**：
+```javascript
+// 在 webhook 中的降級處理
+const conversationManager = getConversationManager();
+const context = await conversationManager.getContext(userId);
+
+if (!context && conversationManager.healthCheck().status === 'unhealthy') {
+  // Redis 故障，降級為無狀態處理
+  console.warn('Redis 不可用，降級處理');
+  // 繼續基本功能，但無法處理 Quick Reply
+}
+```
 
 ## 8. 未來擴展
 
