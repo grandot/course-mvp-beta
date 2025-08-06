@@ -751,10 +751,13 @@ Bot：✅ 已確認數學課安排 [正確識別是要確認數學課，而非�
 const conversationManager = getConversationManager();
 const context = await conversationManager.getContext(userId);
 
-if (!context && conversationManager.healthCheck().status === 'unhealthy') {
-  // Redis 故障，降級為無狀態處理
-  console.warn('Redis 不可用，降級處理');
-  // 繼續基本功能，但無法處理 Quick Reply
+if (!context) {
+  const healthStatus = await conversationManager.healthCheck();
+  if (healthStatus.status === 'unhealthy') {
+    // Redis 故障，降級為無狀態處理
+    console.warn('Redis 不可用，降級處理');
+    // 繼續基本功能，但無法處理 Quick Reply
+  }
 }
 ```
 
