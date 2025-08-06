@@ -64,4 +64,6 @@ yarn.lock
 # Vercel
 .vercel
 
+# 其他
 待處理.md
+.obsidian/

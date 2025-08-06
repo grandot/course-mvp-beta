@@ -34,6 +34,7 @@ Google Calendar 專精時間邏輯，Firebase 專精業務資料，兩者協作�
 - 快速開發優先，避免過度設計
 
 ## 詳細文檔
+- **環境限制：`/doc/ENVIRONMENT.md` (無狀態環境開發指南) ⚠️ 必讀**
 - 商業邏輯：`/doc/implement.md` (功能規格與使用情境)
 - 開發指南：`/doc/developer-guide.md` (給新進工程師的實作指南)
 - 架構設計：`/doc/technical.md` (設計決策、實作細節與未來規劃)
