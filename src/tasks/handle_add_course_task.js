@@ -235,6 +235,11 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         courseId: savedCourse.courseId,
         eventId: calendarEvent.eventId,
       },
+      quickReply: [
+        { label: '✅ 確認', text: '確認' },
+        { label: '✏️ 修改', text: '修改' },
+        { label: '❌ 取消操作', text: '取消操作' }
+      ]
     };
   } catch (error) {
     console.error('❌ 新增課程任務失敗:', error);

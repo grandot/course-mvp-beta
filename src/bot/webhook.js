@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const { parseIntent } = require('../intent/parseIntent');
 const { extractSlots } = require('../intent/extractSlots');
+const { executeTask, getSupportedIntents } = require('../tasks');
+const { getConversationManager } = require('../conversation/ConversationManager');
 const lineService = require('../services/lineService');
 
 /**
@@ -9,47 +11,16 @@ const lineService = require('../services/lineService');
  */
 
 /**
- * 執行對應的任務處理器
+ * 執行對應的任務處理器（已改用統一的任務處理器索引）
+ * 此函式現在移到 /src/tasks/index.js，這裡保留以避免破壞現有調用
  */
-async function executeTask(intent, slots, userId, messageEvent) {
-  try {
-    console.log('🎯 執行任務:', intent);
-    console.log('📋 參數:', slots);
-
-    // 動態載入對應的任務處理器
-    const taskHandlers = {
-      add_course: require('../tasks/handle_add_course_task'),
-      create_recurring_course: require('../tasks/handle_add_course_task'), // 使用同一個處理器
-      query_schedule: require('../tasks/handle_query_schedule_task'),
-      set_reminder: require('../tasks/handle_set_reminder_task'),
-      cancel_course: require('../tasks/handle_cancel_course_task'),
-      record_content: require('../tasks/handle_record_content_task'),
-      add_course_content: require('../tasks/handle_record_content_task'), // 使用同一個處理器
-    };
-
-    const handler = taskHandlers[intent];
-    if (!handler) {
-      console.log('❓ 找不到對應的任務處理器:', intent);
-      return {
-        success: false,
-        message: '抱歉，我還不會處理這種請求。請試試其他說法，或告訴我具體要做什麼？',
-      };
-    }
-
-    // 呼叫任務處理器
-    const result = await handler(slots, userId, messageEvent);
-    return result;
-  } catch (error) {
-    console.error('❌ 任務執行失敗:', error);
-    return {
-      success: false,
-      message: '處理請求時發生錯誤，請稍後再試。',
-    };
-  }
+async function executeTaskLegacy(intent, slots, userId, messageEvent) {
+  console.log('⚠️ 使用舊版 executeTask，建議改用 /src/tasks/index.js 的版本');
+  return await executeTask(intent, slots, userId);
 }
 
 /**
- * 處理文字訊息
+ * 處理文字訊息（多輪對話版本）
  */
 async function handleTextMessage(event) {
   try {
@@ -60,15 +31,21 @@ async function handleTextMessage(event) {
     console.log('📝 收到文字訊息:', userMessage);
     console.log('👤 用戶ID:', userId);
 
-    // 第一步：意圖識別
-    const intent = await parseIntent(userMessage);
+    // 初始化對話管理器
+    const conversationManager = getConversationManager();
+
+    // 第一步：上下文感知的意圖識別
+    const intent = await parseIntent(userMessage, userId);
     console.log('🎯 識別意圖:', intent);
 
+    // 記錄用戶訊息到對話歷史（先記錄，後續需要slots補充）
+    await conversationManager.recordUserMessage(userId, userMessage, intent);
+
     if (intent === 'unknown') {
-      await lineService.replyMessage(
-        replyToken,
-        '抱歉，我不太理解您的意思。\n\n您可以試試：\n• 「小明每週三下午3點數學課」\n• 「查詢小明今天的課程」\n• 「記錄昨天英文課的內容」\n• 「提醒我明天的鋼琴課」',
-      );
+      const unknownMessage = '抱歉，我不太理解您的意思。\n\n您可以試試：\n• 「小明每週三下午3點數學課」\n• 「查詢小明今天的課程」\n• 「記錄昨天英文課的內容」\n• 「提醒我明天的鋼琴課」';
+      
+      await conversationManager.recordBotResponse(userId, unknownMessage);
+      await lineService.replyMessage(replyToken, unknownMessage);
       return;
     }
 
@@ -77,19 +54,43 @@ async function handleTextMessage(event) {
     console.log('📋 提取結果:', slots);
 
     // 第三步：執行任務
-    const result = await executeTask(intent, slots, userId, event);
+    const result = await executeTask(intent, slots, userId);
     console.log('✅ 任務結果:', result);
 
-    // 第四步：回應用戶
+    // 第四步：記錄任務執行結果到對話上下文
+    await conversationManager.recordTaskResult(userId, intent, slots, result);
+
+    // 第五步：處理回應和 Quick Reply
+    let responseMessage = result.message;
+    let quickReply = null;
+
     if (result.success) {
-      // 成功時可能需要加上操作按鈕
-      const quickReply = getQuickReplyForIntent(intent);
-      await lineService.replyMessage(replyToken, result.message, quickReply);
-    } else {
-      await lineService.replyMessage(replyToken, result.message);
+      // 如果任務結果包含 quickReply，使用任務提供的
+      if (result.quickReply) {
+        quickReply = result.quickReply;
+      } else {
+        // 否則根據意圖類型生成預設的 Quick Reply
+        quickReply = getQuickReplyForIntent(intent, result);
+      }
     }
+
+    // 記錄機器人回應到對話歷史
+    await conversationManager.recordBotResponse(userId, responseMessage, { quickReply });
+
+    // 回應用戶
+    await lineService.replyMessage(replyToken, responseMessage, quickReply);
+
   } catch (error) {
     console.error('❌ 處理文字訊息失敗:', error);
+    
+    // 記錄錯誤到對話歷史
+    try {
+      const conversationManager = getConversationManager();
+      await conversationManager.recordBotResponse(userId, '處理訊息時發生錯誤，請稍後再試。');
+    } catch (logError) {
+      console.error('❌ 記錄錯誤回應失敗:', logError);
+    }
+
     await lineService.replyMessage(
       event.replyToken,
       '處理訊息時發生錯誤，請稍後再試。',
@@ -160,39 +161,92 @@ async function handleImageMessage(event) {
 }
 
 /**
- * 根據意圖提供快捷回覆按鈕
+ * 根據意圖提供快捷回覆按鈕（支援多輪對話）
+ * @param {string} intent - 意圖名稱
+ * @param {object} result - 任務執行結果（可選）
+ * @returns {Array|null} Quick Reply 按鈕陣列
  */
-function getQuickReplyForIntent(intent) {
+function getQuickReplyForIntent(intent, result = null) {
   const commonActions = [
-    { label: '📚 新增課程', text: '新增課程' },
-    { label: '📅 查詢課表', text: '查詢課表' },
+    { label: '📚 新增課程', text: '我要新增課程' },
+    { label: '📅 查詢課表', text: '查詢今天課表' },
     { label: '📝 記錄內容', text: '記錄課程內容' },
   ];
 
   switch (intent) {
+    // 核心功能意圖 - 提供確認/修改/取消操作
     case 'add_course':
     case 'create_recurring_course':
       return [
         { label: '✅ 確認', text: '確認' },
         { label: '📝 修改', text: '修改' },
-        { label: '❌ 取消', text: '取消操作' },
+        { label: '❌ 取消操作', text: '取消操作' },
       ];
 
+    case 'set_reminder':
+      return [
+        { label: '✅ 確認', text: '確認' },
+        { label: '📝 修改', text: '修改' },
+        { label: '❌ 取消操作', text: '取消操作' },
+      ];
+
+    case 'record_content':
+    case 'add_course_content':
+      return [
+        { label: '✅ 確認', text: '確認' },
+        { label: '📝 修改', text: '修改' },
+        { label: '❌ 取消操作', text: '取消操作' },
+      ];
+
+    case 'cancel_course':
+    case 'stop_recurring_course':
+      return [
+        { label: '✅ 確認刪除', text: '確認' },
+        { label: '📝 修改', text: '修改' },
+        { label: '❌ 取消操作', text: '取消操作' },
+      ];
+
+    // 查詢類意圖 - 提供後續操作選項
     case 'query_schedule':
       return [
-        { label: '📚 新增課程', text: '新增課程' },
+        { label: '📚 新增課程', text: '我要新增課程' },
         { label: '📝 記錄內容', text: '記錄課程內容' },
         { label: '⏰ 設定提醒', text: '設定提醒' },
       ];
 
-    case 'record_content':
+    case 'query_course_content':
       return [
+        { label: '📝 新增記錄', text: '記錄課程內容' },
         { label: '📸 上傳照片', text: '上傳課程照片' },
-        { label: '📝 補充內容', text: '補充課程內容' },
-        { label: '📅 查詢記錄', text: '查詢課程記錄' },
+        { label: '📅 查詢其他', text: '查詢課表' },
       ];
 
+    // 操作性意圖 - 這些已在任務處理器中處理，通常不需要額外 Quick Reply
+    case 'confirm_action':
+    case 'modify_action':
+    case 'cancel_action':
+    case 'restart_input':
+      return null; // 這些意圖的 Quick Reply 由任務處理器決定
+
+    // 錯誤或未知意圖 - 提供重新開始的選項
+    case 'unknown':
+      return [
+        { label: '📚 新增課程', text: '我要新增課程' },
+        { label: '📅 查詢課表', text: '查詢今天課表' },
+        { label: '📝 記錄內容', text: '記錄課程內容' },
+        { label: '❓ 重新說明', text: '重新開始' },
+      ];
+
+    // 預設情況
     default:
+      // 如果任務執行成功，提供通用操作
+      if (result && result.success) {
+        return [
+          { label: '📚 新增課程', text: '我要新增課程' },
+          { label: '📅 查詢課表', text: '查詢課表' },
+          { label: '📝 記錄內容', text: '記錄課程內容' },
+        ];
+      }
       return commonActions;
   }
 }

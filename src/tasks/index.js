@@ -9,6 +9,12 @@ const handle_record_content_task = require('./handle_record_content_task');
 const handle_set_reminder_task = require('./handle_set_reminder_task');
 const handle_cancel_course_task = require('./handle_cancel_course_task');
 
+// 操作性意圖處理器（多輪對話功能）
+const handle_confirm_action_task = require('./handle_confirm_action_task');
+const handle_modify_action_task = require('./handle_modify_action_task');
+const handle_cancel_action_task = require('./handle_cancel_action_task');
+const handle_restart_input_task = require('./handle_restart_input_task');
+
 /**
  * 任務處理器對應表
  * 意圖名稱 -> 處理器函式的映射
@@ -27,6 +33,12 @@ const taskHandlers = {
 
   // 提醒設定
   set_reminder: handle_set_reminder_task,
+
+  // 操作性意圖（多輪對話功能）
+  confirm_action: handle_confirm_action_task,
+  modify_action: handle_modify_action_task,
+  cancel_action: handle_cancel_action_task,
+  restart_input: handle_restart_input_task,
 };
 
 /**
@@ -97,4 +109,10 @@ module.exports = {
   handle_record_content_task,
   handle_set_reminder_task,
   handle_cancel_course_task,
+
+  // 操作性意圖處理器
+  handle_confirm_action_task,
+  handle_modify_action_task,
+  handle_cancel_action_task,
+  handle_restart_input_task,
 };

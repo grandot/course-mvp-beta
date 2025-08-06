@@ -611,14 +611,14 @@ function calculateConfidence(slots, intent) {
 }
 
 /**
- * 主要 slots 提取函式
+ * 主要 slots 提取函式（支援上下文感知）
  */
 async function extractSlots(message, intent, userId = null) {
   if (!message || !intent) {
     return {};
   }
 
-  console.log('🔍 開始提取 slots - 意圖:', intent);
+  console.log('🔍 開始提取 slots - 意圖:', intent, userId ? `(用戶: ${userId})` : '');
 
   // 第一階段：規則提取
   let slots = await extractSlotsByIntent(message, intent);
@@ -627,7 +627,12 @@ async function extractSlots(message, intent, userId = null) {
     console.log('🔧 規則提取結果:', slots);
   }
 
-  // 第二階段：置信度評估和 AI 輔助提取
+  // 第二階段：上下文感知增強（如果提供用戶 ID）
+  if (userId) {
+    slots = await enhanceSlotsWithContext(slots, message, intent, userId);
+  }
+
+  // 第三階段：置信度評估和 AI 輔助提取
   if (process.env.ENABLE_AI_FALLBACK === 'true') {
     const confidence = calculateConfidence(slots, intent);
     console.log('📊 規則提取置信度:', confidence.toFixed(2));
@@ -696,4 +701,116 @@ module.exports = {
   parseDayOfWeek,
   extractStudentName,
   extractCourseName,
+  enhanceSlotsWithContext,
 };
+
+/**
+ * 使用上下文資訊增強 slots 提取
+ * @param {object} slots - 初步提取的 slots
+ * @param {string} message - 用戶訊息
+ * @param {string} intent - 意圖
+ * @param {string} userId - 用戶 ID
+ * @returns {Promise<object>} 增強後的 slots
+ */
+async function enhanceSlotsWithContext(slots, message, intent, userId) {
+  try {
+    const { getConversationManager } = require('../conversation/ConversationManager');
+    const conversationManager = getConversationManager();
+    
+    // 檢查 Redis 可用性
+    const healthCheck = await conversationManager.healthCheck();
+    if (healthCheck.status !== 'healthy') {
+      console.log('⚠️ 對話管理器不可用，跳過上下文增強');
+      return slots;
+    }
+    
+    // 取得對話上下文
+    const context = await conversationManager.getContext(userId);
+    if (!context) {
+      console.log('⚠️ 無對話上下文，跳過上下文增強');
+      return slots;
+    }
+
+    console.log('🧠 使用對話上下文增強 slots 提取');
+    
+    // 從上下文中補充缺失的實體
+    const enhancedSlots = { ...slots };
+    
+    // 補充學生名稱
+    if (!enhancedSlots.studentName && context.state.mentionedEntities.students.length > 0) {
+      // 使用最近提及的學生
+      enhancedSlots.studentName = context.state.mentionedEntities.students[context.state.mentionedEntities.students.length - 1];
+      console.log('📝 從上下文補充學生名稱:', enhancedSlots.studentName);
+    }
+    
+    // 補充課程名稱
+    if (!enhancedSlots.courseName && context.state.mentionedEntities.courses.length > 0) {
+      // 使用最近提及的課程
+      enhancedSlots.courseName = context.state.mentionedEntities.courses[context.state.mentionedEntities.courses.length - 1];
+      console.log('📝 從上下文補充課程名稱:', enhancedSlots.courseName);
+    }
+    
+    // 補充時間資訊
+    if (!enhancedSlots.scheduleTime && context.state.mentionedEntities.times.length > 0) {
+      enhancedSlots.scheduleTime = context.state.mentionedEntities.times[context.state.mentionedEntities.times.length - 1];
+      console.log('📝 從上下文補充時間:', enhancedSlots.scheduleTime);
+    }
+    
+    // 補充日期資訊
+    if (!enhancedSlots.courseDate && context.state.mentionedEntities.dates.length > 0) {
+      enhancedSlots.courseDate = context.state.mentionedEntities.dates[context.state.mentionedEntities.dates.length - 1];
+      console.log('📝 從上下文補充日期:', enhancedSlots.courseDate);
+    }
+    
+    // 處理操作性意圖的特殊情況
+    if (['confirm_action', 'modify_action', 'cancel_action'].includes(intent)) {
+      // 從最近的操作中繼承所有必要資料
+      const lastAction = await conversationManager.getLastAction(userId);
+      if (lastAction && lastAction.slots) {
+        Object.keys(lastAction.slots).forEach(key => {
+          if (lastAction.slots[key] && !enhancedSlots[key]) {
+            enhancedSlots[key] = lastAction.slots[key];
+            console.log(`📝 從最近操作繼承 ${key}:`, enhancedSlots[key]);
+          }
+        });
+      }
+    }
+    
+    // 處理修改意圖的特殊邏輯
+    if (intent === 'modify_action') {
+      // 識別用戶想要修改的具體欄位
+      enhancedSlots.modificationTarget = identifyModificationTarget(message);
+      console.log('📝 識別修改目標:', enhancedSlots.modificationTarget);
+    }
+    
+    return enhancedSlots;
+    
+  } catch (error) {
+    console.error('❌ 上下文增強失敗:', error);
+    return slots; // 失敗時回傳原始 slots
+  }
+}
+
+/**
+ * 識別用戶想要修改的目標欄位
+ * @param {string} message - 用戶訊息
+ * @returns {string|null} 修改目標
+ */
+function identifyModificationTarget(message) {
+  const targets = {
+    時間: ['時間', '點', '點半', '小時', '分鐘'],
+    日期: ['日期', '天', '今天', '明天', '昨天'],
+    課程: ['課程', '課', '科目'],
+    學生: ['學生', '小朋友', '孩子'],
+    內容: ['內容', '記錄', '說明'],
+    提醒: ['提醒', '通知']
+  };
+  
+  for (const [target, keywords] of Object.entries(targets)) {
+    if (keywords.some(keyword => message.includes(keyword))) {
+      return target;
+    }
+  }
+  
+  return null;
+}

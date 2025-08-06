@@ -191,18 +191,34 @@ async function parseIntentByAI(message) {
 }
 
 /**
- * 主要意圖解析函式
+ * 主要意圖解析函式（支援上下文感知）
+ * @param {string} message - 用戶訊息
+ * @param {string} userId - 用戶 ID（用於取得對話上下文）
+ * @returns {Promise<string>} 識別的意圖
  */
-async function parseIntent(message) {
+async function parseIntent(message, userId = null) {
   if (!message || typeof message !== 'string') {
     return 'unknown';
   }
 
   const cleanMessage = message.trim();
-  console.log('🎯 開始解析意圖:', cleanMessage);
+  console.log('🎯 開始解析意圖:', cleanMessage, userId ? `(用戶: ${userId})` : '');
 
   // 第一階段：規則匹配
   const ruleBasedIntent = parseIntentByRules(cleanMessage);
+  
+  // 檢查是否需要對話上下文
+  if (ruleBasedIntent && userId) {
+    const needsContext = await checkIfNeedsContext(ruleBasedIntent, cleanMessage);
+    if (needsContext) {
+      const contextAwareIntent = await parseIntentWithContext(ruleBasedIntent, cleanMessage, userId);
+      if (contextAwareIntent) {
+        console.log('✅ 上下文感知識別成功:', contextAwareIntent);
+        return contextAwareIntent;
+      }
+    }
+  }
+  
   if (ruleBasedIntent) {
     console.log('✅ 規則匹配成功:', ruleBasedIntent);
     return ruleBasedIntent;
@@ -219,6 +235,89 @@ async function parseIntent(message) {
 
   console.log('❓ 無法識別意圖');
   return 'unknown';
+}
+
+/**
+ * 檢查意圖是否需要對話上下文
+ * @param {string} intent - 意圖名稱
+ * @param {string} message - 用戶訊息
+ * @returns {Promise<boolean>}
+ */
+async function checkIfNeedsContext(intent, message) {
+  const rules = loadIntentRules();
+  const rule = rules[intent];
+  
+  // 檢查意圖規則中是否標記為需要上下文
+  if (rule && rule.requires_context) {
+    return true;
+  }
+  
+  // 檢查是否為操作性意圖
+  const contextRequiredIntents = [
+    'confirm_action', 'modify_action', 'cancel_action', 
+    'restart_input', 'correction_intent'
+  ];
+  
+  return contextRequiredIntents.includes(intent);
+}
+
+/**
+ * 基於上下文的意圖識別
+ * @param {string} intent - 初步識別的意圖
+ * @param {string} message - 用戶訊息
+ * @param {string} userId - 用戶 ID
+ * @returns {Promise<string|null>}
+ */
+async function parseIntentWithContext(intent, message, userId) {
+  try {
+    const { getConversationManager } = require('../conversation/ConversationManager');
+    const conversationManager = getConversationManager();
+    
+    // 取得對話上下文
+    const context = await conversationManager.getContext(userId);
+    if (!context) {
+      console.log('⚠️ 無對話上下文，無法進行上下文感知識別');
+      return null;
+    }
+    
+    console.log('📋 對話上下文狀態:', {
+      currentFlow: context.state.currentFlow,
+      expectingInput: context.state.expectingInput,
+      lastActionsCount: Object.keys(context.state.lastActions).length
+    });
+    
+    // 處理操作性意圖
+    if (['confirm_action', 'modify_action', 'cancel_action'].includes(intent)) {
+      // 檢查是否有等待處理的操作
+      const hasLastActions = Object.keys(context.state.lastActions).length > 0;
+      const isExpectingOperation = context.state.expectingInput.some(input => 
+        ['confirmation', 'modification', 'cancellation'].includes(input)
+      );
+      
+      if (!hasLastActions && !isExpectingOperation) {
+        console.log('⚠️ 沒有可操作的上下文，降級處理');
+        return 'unknown'; // 沒有操作上下文時，這些意圖無效
+      }
+      
+      return intent; // 有上下文，保持原意圖
+    }
+    
+    // 處理糾錯意圖
+    if (intent === 'correction_intent') {
+      const hasRecentAction = Object.keys(context.state.lastActions).length > 0;
+      if (!hasRecentAction) {
+        console.log('⚠️ 沒有可糾正的操作，降級處理');
+        return 'unknown';
+      }
+      return intent;
+    }
+    
+    return intent; // 其他情況保持原意圖
+    
+  } catch (error) {
+    console.error('❌ 上下文感知識別失敗:', error);
+    return null;
+  }
 }
 
 module.exports = {
