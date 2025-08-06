@@ -5,6 +5,7 @@
 
 const firebaseService = require('../services/firebaseService');
 const googleCalendarService = require('../services/googleCalendarService');
+const { getConversationManager } = require('../conversation/ConversationManager');
 
 /**
  * 驗證必要的 slots
@@ -119,9 +120,33 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     // 1. 驗證必要參數
     const missingFields = validateSlots(slots);
     if (missingFields.length > 0) {
+      const conversationManager = getConversationManager();
+      
+      // 建立期待輸入類型陣列
+      const expectedInputs = [];
+      if (missingFields.includes('學生姓名')) expectedInputs.push('student_name_input');
+      if (missingFields.includes('課程名稱')) expectedInputs.push('course_name_input');
+      if (missingFields.includes('上課時間')) expectedInputs.push('schedule_time_input');
+      if (missingFields.includes('課程日期')) expectedInputs.push('course_date_input');
+      if (missingFields.includes('星期幾')) expectedInputs.push('day_of_week_input');
+      
+      // 設定期待輸入狀態，保存當前已有的 slots
+      await conversationManager.setExpectedInput(
+        userId, 
+        'course_creation', 
+        expectedInputs, 
+        {
+          intent: 'add_course',
+          existingSlots: slots,
+          missingFields: missingFields
+        }
+      );
+      
       return {
-        success: false,
+        success: false, // 仍然是 false，因為任務未完成
         message: `❓ 請提供以下資訊：${missingFields.join('、')}\n\n範例：「小明每週三下午3點數學課」`,
+        expectingInput: true, // 標示正在等待輸入
+        missingFields: missingFields
       };
     }
 

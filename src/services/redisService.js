@@ -18,6 +18,13 @@ class RedisService {
     this.connectionAttempts = 0;
     this.maxConnectionAttempts = 3;
     
+    // 檢查是否有 Redis 配置
+    if (!process.env.REDIS_URL && !process.env.REDIS_HOST) {
+      console.warn('⚠️ Redis 環境變數未設定，多輪對話功能將不可用');
+      this.config = null;
+      return;
+    }
+    
     // 優先使用 Redis URL，否則使用分別參數
     if (process.env.REDIS_URL) {
       this.config = process.env.REDIS_URL;
@@ -48,6 +55,11 @@ class RedisService {
   async connect() {
     if (this.isConnected) {
       return true;
+    }
+    
+    // 如果沒有配置，直接返回失敗
+    if (!this.config) {
+      return false;
     }
     
     try {
@@ -103,6 +115,15 @@ class RedisService {
    */
   async healthCheck() {
     try {
+      // 如果沒有配置，返回不可用狀態
+      if (!this.config) {
+        return {
+          status: 'unavailable',
+          message: 'Redis 未配置，降級為無狀態處理',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -143,6 +164,11 @@ class RedisService {
    */
   async set(key, value, ttl = 1800) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return false;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -169,6 +195,11 @@ class RedisService {
    */
   async get(key, parseJson = true) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return null;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -206,6 +237,11 @@ class RedisService {
    */
   async delete(key) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return false;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -230,6 +266,11 @@ class RedisService {
    */
   async exists(key) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return false;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -253,6 +294,11 @@ class RedisService {
    */
   async getTTL(key) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，回傳不存在
+        return -2;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -276,6 +322,11 @@ class RedisService {
    */
   async extend(key, ttl) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return false;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -299,6 +350,11 @@ class RedisService {
    */
   async setBatch(items) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，靜默失敗
+        return false;
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {
@@ -330,6 +386,11 @@ class RedisService {
    */
   async scan(pattern) {
     try {
+      if (!this.config) {
+        // 無 Redis 配置，回傳空陣列
+        return [];
+      }
+      
       if (!this.isConnected) {
         const connected = await this.connect();
         if (!connected) {

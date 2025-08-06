@@ -204,6 +204,25 @@ async function parseIntent(message, userId = null) {
   const cleanMessage = message.trim();
   console.log('🎯 開始解析意圖:', cleanMessage, userId ? `(用戶: ${userId})` : '');
 
+  // 優先檢查期待輸入狀態（補充缺失資訊）
+  if (userId) {
+    const { getConversationManager } = require('../conversation/ConversationManager');
+    const conversationManager = getConversationManager();
+    
+    const context = await conversationManager.getContext(userId);
+    if (context && context.state.expectingInput.length > 0) {
+      console.log('🧠 檢測到期待輸入狀態:', context.state.expectingInput);
+      console.log('📋 待補充資料:', context.state.pendingData);
+      
+      // 處理補充缺失資訊的情況
+      const supplementIntent = await handleSupplementInput(cleanMessage, context);
+      if (supplementIntent) {
+        console.log('✅ 補充資訊識別成功:', supplementIntent);
+        return supplementIntent;
+      }
+    }
+  }
+
   // 第一階段：規則匹配
   const ruleBasedIntent = parseIntentByRules(cleanMessage);
   
@@ -259,6 +278,72 @@ async function checkIfNeedsContext(intent, message) {
   ];
   
   return contextRequiredIntents.includes(intent);
+}
+
+/**
+ * 處理補充缺失資訊的輸入
+ * @param {string} message - 用戶訊息
+ * @param {object} context - 對話上下文
+ * @returns {Promise<string|null>}
+ */
+async function handleSupplementInput(message, context) {
+  try {
+    const { expectingInput, pendingData } = context.state;
+    
+    if (!pendingData || !pendingData.slots || !pendingData.slots.intent) {
+      console.log('⚠️ 無待處理的意圖資料');
+      return null;
+    }
+    
+    // 檢查期待的輸入類型
+    if (expectingInput.includes('student_name_input')) {
+      // 假設用戶輸入的是學生姓名（簡單的姓名檢查）
+      if (message.length >= 1 && message.length <= 10 && !message.includes('？') && !message.includes('?')) {
+        console.log('✅ 識別為學生姓名補充:', message);
+        return 'supplement_student_name';
+      }
+    }
+    
+    if (expectingInput.includes('course_name_input')) {
+      // 假設用戶輸入的是課程名稱
+      if (message.length >= 1 && message.length <= 20) {
+        console.log('✅ 識別為課程名稱補充:', message);
+        return 'supplement_course_name';
+      }
+    }
+    
+    if (expectingInput.includes('schedule_time_input')) {
+      // 檢查是否包含時間相關詞彙
+      if (message.includes('點') || message.includes(':') || /\d+/.test(message)) {
+        console.log('✅ 識別為上課時間補充:', message);
+        return 'supplement_schedule_time';
+      }
+    }
+    
+    if (expectingInput.includes('course_date_input')) {
+      // 檢查是否包含日期相關詞彙
+      if (message.includes('明天') || message.includes('後天') || message.includes('今天') || 
+          message.includes('月') || message.includes('日') || /\d+/.test(message)) {
+        console.log('✅ 識別為課程日期補充:', message);
+        return 'supplement_course_date';
+      }
+    }
+    
+    if (expectingInput.includes('day_of_week_input')) {
+      // 檢查是否包含星期相關詞彙
+      if (message.includes('週') || message.includes('星期') || message.includes('禮拜')) {
+        console.log('✅ 識別為星期補充:', message);
+        return 'supplement_day_of_week';
+      }
+    }
+    
+    console.log('⚠️ 無法識別為期待的補充資訊類型');
+    return null;
+    
+  } catch (error) {
+    console.error('❌ 處理補充輸入失敗:', error);
+    return null;
+  }
 }
 
 /**

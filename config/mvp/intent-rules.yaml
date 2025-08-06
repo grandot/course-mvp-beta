@@ -343,3 +343,63 @@ modify_course_content:
     - "更改作業描述"
     - "調整學習筆記"
     - "編輯課堂記錄"
+
+# ===============================
+# 補充資訊意圖 (Supplement Missing Information)
+# ===============================
+
+# 補充學生姓名
+supplement_student_name:
+  keywords: []  # 不依賴關鍵詞，由上下文判斷
+  priority: 25  # 高優先級，僅在期待輸入時啟用
+  patterns: []  # 不依賴模式，由補充邏輯判斷
+  requires_context: true
+  examples:
+    - "小明"
+    - "Lumi"
+    - "王小華"
+
+# 補充課程名稱
+supplement_course_name:
+  keywords: []
+  priority: 25
+  patterns: []
+  requires_context: true
+  examples:
+    - "數學課"
+    - "英文課"
+    - "鋼琴課"
+    - "吃麥當勞"
+
+# 補充上課時間
+supplement_schedule_time:
+  keywords: []
+  priority: 25
+  patterns: []
+  requires_context: true
+  examples:
+    - "下午3點"
+    - "14:30"
+    - "晚上7點半"
+
+# 補充課程日期
+supplement_course_date:
+  keywords: []
+  priority: 25
+  patterns: []
+  requires_context: true
+  examples:
+    - "明天"
+    - "後天"
+    - "8月7日"
+
+# 補充星期幾
+supplement_day_of_week:
+  keywords: []
+  priority: 25
+  patterns: []
+  requires_context: true
+  examples:
+    - "週五"
+    - "星期三"
+    - "禮拜二"

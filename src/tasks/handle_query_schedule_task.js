@@ -101,7 +101,7 @@ function formatTime(timeString) {
 
   const [hour, minute] = timeString.split(':');
   const h = parseInt(hour);
-  const m = minute === '00' ? '' : `:${minute}`;
+  const m = `:${minute}`;
 
   if (h === 0) return `午夜12${m}`;
   if (h < 12) return `上午${h}${m}`;

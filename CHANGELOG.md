@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **修復 WRONGPASS 錯誤**: 移除錯誤的 username 參數，使用 REDIS_URL 連接
 - **統一連接配置**: 所有模組使用相同的 Redis 連接方式
 - **優雅降級**: Redis 不可用時自動降級為無狀態處理
+- **修復生產環境連接問題**: 防止 Redis 在未配置時嘗試連接 localhost
+  - 所有 Redis 操作方法新增配置檢查
+  - 避免 `connect ECONNREFUSED 127.0.0.1:6379` 錯誤
+  - 無配置時靜默失敗，不影響主要功能
 
 ### 🔧 Technical Improvements
 

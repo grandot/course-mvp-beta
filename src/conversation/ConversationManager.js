@@ -270,6 +270,34 @@ class ConversationManager {
   }
   
   /**
+   * 設定期待輸入狀態（用於缺失資訊補充）
+   * @param {string} userId - 用戶 ID  
+   * @param {string} currentFlow - 當前對話流程
+   * @param {Array<string>} inputTypes - 期待的輸入類型
+   * @param {object} pendingSlots - 待補充的 slots 資料
+   * @returns {Promise<boolean>} 是否成功
+   */
+  async setExpectedInput(userId, currentFlow, inputTypes, pendingSlots = {}) {
+    try {
+      const context = await this.getContext(userId);
+      
+      context.state.currentFlow = currentFlow;
+      context.state.expectingInput = inputTypes;
+      context.state.pendingData = {
+        ...context.state.pendingData,
+        slots: pendingSlots,
+        timestamp: Date.now()
+      };
+      
+      return await this.saveContext(userId, context);
+      
+    } catch (error) {
+      console.error('❌ 設定期待輸入失敗:', error.message);
+      return false;
+    }
+  }
+  
+  /**
    * 取得最近的操作上下文
    * @param {string} userId - 用戶 ID
    * @param {string} intentType - 意圖類型（選填）
