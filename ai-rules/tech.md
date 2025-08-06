@@ -1,6 +1,6 @@
-# 架構設計文件
+# 技術架構與實作指南
 
-本文件說明系統的架構設計決策、技術選型理由，以及未來的演進規劃。
+本文件說明系統的架構設計決策、技術選型理由、開發環境限制，以及實作細節。
 
 ## 1. 核心設計決策
 
@@ -39,9 +39,194 @@
 - 使用 Firebase Scheduled Functions 可以精確控制提醒邏輯
 - 便於加入自定義的提醒規則（如只提醒標記的課程）
 
-## 2. 系統架構演進規劃
+## 2. 開發環境限制（必讀）⚠️
 
-### 🎯 Phase 1: MVP 基礎架構（當前階段）
+### 部署環境本質
+**我們的部署環境：Render（無狀態 Serverless）**
+
+#### 環境特性（第一性原則）
+1. **無狀態**：每個 HTTP 請求可能由不同的實例處理
+2. **短生命週期**：實例隨時可能被終止和重啟
+3. **無持久記憶體**：程序記憶體會隨實例消失
+4. **水平擴展**：多個實例同時運行，無法共享記憶體
+
+| 特性 | 說明 | 影響 |
+|------|------|------|
+| **無狀態** | 每個請求可能由不同實例處理 | 不能依賴程序記憶體 |
+| **自動休眠** | 15分鐘無活動後休眠 | 冷啟動延遲 |
+| **隨機重啟** | 部署、更新、故障時重啟 | 記憶體資料遺失 |
+| **水平擴展** | 可能同時運行多個實例 | 實例間無法共享狀態 |
+
+#### ❌ 絕對不可使用的方案
+- **Map() / Object**：存在記憶體中，重啟就消失
+- **全域變數**：每個實例有自己的副本，無法同步
+- **本地檔案系統**：檔案系統是臨時的，會被清除
+- **SQLite**：需要本地檔案，不適合無狀態環境
+
+```javascript
+// 錯誤：使用記憶體儲存
+const cache = new Map();
+const users = {};
+let globalState = null;
+
+// 錯誤：使用本地檔案
+const fs = require('fs');
+fs.writeFileSync('./data.json', data);
+
+// 錯誤：假設單一實例
+class Singleton {
+  static instance = null;
+}
+```
+
+#### ✅ 必須使用的方案
+- **Redis**：短期狀態管理（對話上下文、快取）
+- **Firebase Firestore**：業務資料持久化儲存
+- **Firebase Storage**：檔案和圖片儲存
+- **Google Calendar**：時間邏輯和排程管理
+
+```javascript
+// 正確：使用 Redis
+const redis = new Redis(process.env.REDIS_URL);
+await redis.set('key', value);
+
+// 正確：使用資料庫
+await firebaseService.saveData(data);
+
+// 正確：無狀態設計
+function processRequest(input) {
+  // 每次都從外部獲取狀態
+  const state = await redis.get(userId);
+  // 處理邏輯
+  await redis.set(userId, newState);
+}
+```
+
+### 架構設計檢查清單
+在設計任何功能前，必須確認：
+- [ ] 是否需要跨請求保存狀態？
+- [ ] 狀態儲存是否獨立於應用實例？
+- [ ] 服務重啟後功能是否正常？
+- [ ] 多實例並行時是否會有競爭條件？
+- [ ] 是否有適當的錯誤處理和降級方案？
+
+### 必要的外部服務
+
+1. **Redis**（對話狀態管理）
+   - 用途：暫存對話上下文
+   - 服務：Upstash 或 Redis Labs
+   - TTL：30分鐘自動過期
+
+2. **Firebase**（業務資料）
+   - 用途：課程、用戶、記錄
+   - 持久化：永久儲存
+
+3. **Google Calendar**（時間邏輯）
+   - 用途：排程、重複規則
+   - API：無狀態呼叫
+
+## 3. 環境變數配置
+
+### 基本配置
+```bash
+# Redis（必需）- Upstash 格式
+REDIS_HOST=xxx.upstash.io
+REDIS_PORT=6379
+REDIS_PASSWORD=default:your_upstash_token_here
+REDIS_TLS=true
+
+# Firebase（必需）
+FIREBASE_PROJECT_ID=xxx
+FIREBASE_CLIENT_EMAIL=xxx
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# LINE Bot（必需）
+LINE_CHANNEL_ACCESS_TOKEN=xxx
+LINE_CHANNEL_SECRET=xxx
+
+# 部署環境
+NODE_ENV=production
+PORT=3000
+```
+
+### Upstash Redis 連接配置 ⚠️ 重要
+
+Upstash 需要特殊的認證格式：
+
+```javascript
+const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT),
+  username: 'default',  // Upstash 固定使用 'default'
+  password: process.env.REDIS_PASSWORD.replace('default:', ''),  // 移除前綴
+  tls: {},  // Upstash 必需 TLS
+  family: 4,
+  retryStrategy: (times) => Math.min(times * 50, 2000)
+});
+```
+
+**環境變數格式**：
+- ✅ 正確：`REDIS_PASSWORD=default:ATpyAAI...`（保留前綴）
+- ❌ 錯誤：`REDIS_PASSWORD=ATpyAAI...`（不要手動移除前綴）
+
+### 開發時注意事項
+
+1. **本地開發 vs 生產環境**
+   ```javascript
+   // ❌ 錯誤：開發環境絕對不能用 Map
+   // 因為部署環境是無狀態的，本地測試必須與生產一致
+   const storage = new RedisStorage();  // 永遠使用 Redis
+   ```
+
+2. **錯誤處理**
+   ```javascript
+   // 外部服務可能失敗，需要降級
+   try {
+     const context = await redis.get(key);
+   } catch (error) {
+     console.error('Redis failed, degrading...');
+     // 降級為無狀態處理
+   }
+   ```
+
+3. **冷啟動優化**
+   ```javascript
+   // 延遲初始化，避免啟動時連接所有服務
+   let redis;
+   function getRedis() {
+     if (!redis) redis = new Redis();
+     return redis;
+   }
+   ```
+
+### 部署前檢查清單
+
+- [ ] 沒有使用 Map() 或全域變數儲存狀態
+- [ ] 沒有依賴本地檔案系統
+- [ ] 所有狀態都儲存在外部服務
+- [ ] 有適當的錯誤處理和降級方案
+- [ ] 環境變數都已正確設定
+- [ ] 考慮了冷啟動的影響
+
+### 常見錯誤案例
+
+1. **對話管理器使用 Map**
+   - 問題：服務重啟後對話上下文消失
+   - 解法：改用 Redis
+
+2. **檔案上傳到本地**
+   - 問題：檔案會被清除
+   - 解法：直接上傳到 Firebase Storage
+
+3. **使用 setTimeout 做定時任務**
+   - 問題：服務可能在執行前重啟
+   - 解法：使用 Firebase Scheduled Functions
+
+## 4. 系統架構
+
+### 🎯 核心架構
 
 **目標**：快速上線，驗證產品概念
 
@@ -57,54 +242,12 @@ LINE Bot → Express Server → Intent Parser → Task Handler → Google Calend
                                                          Firebase
 ```
 
-### 🔄 Phase 2: 企業級對話管理（6個月後）
+### Feature Flag 策略
 
-**目標**：提升對話體驗，支援複雜互動
-
-**新增功能**：
-- Slot Template 系統：企業級多輪對話管理
-- 對話狀態持久化：支援中斷後繼續
-- 動態意圖配置：不需重啟即可更新
-
-**架構演進**：
-```
-/src/
-├── core/          # Phase 1 功能
-├── advanced/      
-│   ├── slot-template/    # 對話模板引擎
-│   ├── conversation/     # 狀態管理器
-│   └── analytics/        # 對話分析
-```
-
-**關鍵技術決策**：
-- 使用 Firestore 儲存對話狀態（支援即時同步）
-- 採用事件驅動架構處理對話流程
-
-### 📊 Phase 3: 智慧化與規模化（12個月後）
-
-**目標**：AI 驅動的個人化體驗
-
-**新增功能**：
-- 三層記憶系統（短期/中期/長期）
-- 智慧推薦（根據歷史行為）
-- 多租戶架構（支援機構版）
-
-**技術挑戰與解法**：
-1. **記憶系統設計**：
-   - Context Memory：Redis（快速存取）
-   - Session Memory：Firestore（持久化）
-   - Long-term Memory：BigQuery（分析查詢）
-
-2. **效能優化**：
-   - 採用 Cloud Functions 分散運算
-   - 實施快取策略減少 API 呼叫
-
-## 3. Feature Flag 策略
-
-### 設計理念
+#### 設計理念
 透過 Feature Flag 實現漸進式發布，降低風險。
 
-### 實作方式
+#### 實作方式
 ```javascript
 // src/config/features.js
 const FEATURES = {
@@ -117,17 +260,17 @@ const FEATURES = {
 };
 ```
 
-### 升級流程
+#### 升級流程
 1. **開發階段**：enabled = false，僅開發環境測試
 2. **灰度發布**：rolloutPercentage = 10，10% 用戶體驗新功能
 3. **全面發布**：enabled = true，所有用戶使用新功能
 
-## 4. 技術債務管理
+## 5. 技術債務管理
 
 ### 當前已知的技術債務
 1. **缺乏自動化測試**
    - 影響：重構風險高
-   - 計畫：Phase 2 加入單元測試和整合測試
+   - 計畫：加入單元測試和整合測試
 
 2. **錯誤處理不夠完善**
    - 影響：用戶體驗不佳
@@ -142,7 +285,14 @@ const FEATURES = {
 - 優先處理影響用戶體驗的項目
 - 建立技術債務追蹤看板
 
-## 5. 擴展性考量
+詳細的技術債記錄請參考 [technical-debt.md](../doc/technical-debt.md)
+
+主要技術債項目：
+1. **LINE Bot 圖片下載 404 錯誤** - 高優先級，影響圖片上傳功能
+2. **對話狀態持久化** - 中優先級，影響用戶體驗
+3. **錯誤恢復機制** - 中優先級，影響資料一致性
+
+## 6. 擴展性考量
 
 ### 垂直擴展
 - 當前架構支援到 ~1000 活躍用戶
@@ -158,7 +308,7 @@ const FEATURES = {
 - 實施 API 呼叫快取機制
 - 採用 Cloud Scheduler 取代高頻輪詢
 
-## 6. 安全性設計
+## 7. 安全性設計
 
 ### 當前實施
 - LINE Signature 驗證
@@ -170,27 +320,27 @@ const FEATURES = {
 - 用戶資料加密
 - 定期安全審計
 
-## 7. 監控與可觀測性
+## 8. 監控與可觀測性
 
-### Phase 1（基礎監控）
+### 基礎監控（當前）
 - Console 日誌
 - 基本錯誤追蹤
 
-### Phase 2（進階監控）
+### 進階監控（未來）
 - Application Performance Monitoring
 - 自定義指標儀表板
 - 告警機制
 
-### Phase 3（智慧運維）
+### 智慧運維（長期）
 - 預測性告警
 - 自動化問題診斷
 - SLA 監控
 
-## 8. 關鍵設計決策與實作細節
+## 9. 關鍵設計決策與實作細節
 
 本節澄清文檔間的矛盾，提供明確的實作指引。
 
-### 8.1 提醒系統架構
+### 9.1 提醒系統架構
 
 **決策：採用獨立 `/reminders` 集合**
 
@@ -211,14 +361,14 @@ const FEATURES = {
 }
 ```
 
-### 8.2 資料同步策略
+### 9.2 資料同步策略
 
 **決策：即時寫入為主，定時同步為輔**
 
 - **即時寫入**：新增/修改/刪除課程時同步更新兩邊
 - **定時同步**：每日凌晨校驗資料一致性，不覆蓋只標記
 
-### 8.3 統一命名規範
+### 9.3 統一命名規範
 
 | 概念 | 正確用詞 | 禁用詞 |
 |------|----------|---------|
@@ -226,12 +376,12 @@ const FEATURES = {
 | 課程 | course, courseName | lesson, class |
 | 時間 | scheduleTime | time, classTime |
 
-### 8.4 Calendar 識別碼澄清
+### 9.4 Calendar 識別碼澄清
 
 - **calendarId**：Google 自動生成（如 `x7i2...@group.calendar.google.com`）
 - **summary**：顯示名稱（如 "小明的課程表"）
 
-### 8.5 錯誤處理策略
+### 9.5 錯誤處理策略
 
 **圖片上傳失敗**：
 - 文字內容優先保存
@@ -242,28 +392,17 @@ const FEATURES = {
 - Google 成功 Firebase 失敗：重試3次
 - Firebase 成功 Google 失敗：回滾操作
 
-### 8.6 意圖優先級邏輯
+### 9.6 意圖優先級邏輯
 
 1. 關鍵詞匹配評分（越多越優先）
 2. 相同分數看 priority（數字越小越優先）
 3. 無法判斷時呼叫 OpenAI
 
-### 8.7 對話狀態管理（MVP）
-
-### 8.8 已知技術債
-
-詳細的技術債記錄請參考 [technical-debt.md](./technical-debt.md)
-
-主要技術債項目：
-1. **LINE Bot 圖片下載 404 錯誤** - 高優先級，影響圖片上傳功能
-2. **對話狀態持久化** - 中優先級，影響用戶體驗
-3. **錯誤恢復機制** - 中優先級，影響資料一致性
-
-### 8.9 原始對話狀態管理設計
+### 9.7 對話狀態管理設計
 
 **基礎結構**：
 ```javascript
-// 記憶體短期儲存，30分鐘超時
+// Redis 短期儲存，30分鐘超時
 const conversationState = new Map();
 
 // 完整的對話狀態結構
@@ -347,7 +486,7 @@ function handleExpiredContext(userId, newIntent) {
 }
 ```
 
-### 8.8 課程時間衝突處理
+### 9.8 課程時間衝突處理
 
 **衝突檢測規則**：
 ```javascript
@@ -465,9 +604,17 @@ async function checkRecurringConflicts(pattern, duration = 4) {
 ## 總結
 
 本架構設計遵循以下原則：
-1. **漸進式演進**：從 MVP 開始，逐步加入高級功能
+1. **無狀態優先**：所有狀態儲存在外部服務
 2. **技術債務可控**：定期評估和償還
 3. **成本效益平衡**：選擇合適的技術，而非最新的技術
 4. **可維護性優先**：代碼清晰比效能優化更重要（在合理範圍內）
 
-詳細的實作指南請參考 [Developer Guide](./developer-guide.md)。
+詳細的實作指南請參考 [Developer Guide](../doc/developer-guide.md)。
+
+---
+
+## 參考資料
+
+- [Render 文檔 - 無狀態應用](https://render.com/docs/web-services)
+- [Vercel 文檔 - Serverless Functions](https://vercel.com/docs/functions)
+- [Redis 最佳實踐](https://redis.io/docs/manual/patterns/)
