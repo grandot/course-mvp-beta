@@ -74,7 +74,7 @@ async function handleTextMessage(event) {
     console.log('📋 提取結果:', slots);
 
     // 第三步：執行任務
-    const result = await executeTask(intent, slots, userId);
+    const result = await executeTask(intent, slots, userId, event);
     console.log('✅ 任務結果:', result);
 
     // 第四步：記錄任務執行結果到對話上下文

@@ -79,9 +79,10 @@ function getTaskHandler(intent) {
  * @param {string} intent - 意圖名稱
  * @param {Object} slots - 提取的槽位資料
  * @param {string} userId - LINE 用戶ID
+ * @param {Object} event - LINE 事件對象 (supplement 處理器需要)
  * @returns {Object} 處理結果 { success: boolean, message: string }
  */
-async function executeTask(intent, slots, userId) {
+async function executeTask(intent, slots, userId, event = null) {
   try {
     const handler = getTaskHandler(intent);
     if (!handler) {
@@ -92,7 +93,24 @@ async function executeTask(intent, slots, userId) {
     }
 
     console.log(`🎯 執行任務: ${intent}`);
-    const result = await handler(slots, userId);
+    
+    // 檢查是否為 supplement 意圖，需要傳遞 event 參數
+    const supplementIntents = [
+      'supplement_student_name',
+      'supplement_course_name', 
+      'supplement_schedule_time',
+      'supplement_course_date',
+      'supplement_day_of_week'
+    ];
+    
+    let result;
+    if (supplementIntents.includes(intent) && event) {
+      // supplement 處理器需要 3 個參數
+      result = await handler(slots, userId, event);
+    } else {
+      // 標準處理器只需要 2 個參數
+      result = await handler(slots, userId);
+    }
 
     console.log('📊 任務執行結果:', result);
     return result;
