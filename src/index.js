@@ -34,15 +34,7 @@ app.post('/webhook', async (req, res) => {
     await handleWebhook(req, res);
   } catch (error) {
     console.error('Webhook processing error:', error);
-    // 臨時返回詳細錯誤信息用於診斷
-    res.status(500).json({ 
-      error: 'Internal server error',
-      debug: {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      }
-    });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -178,8 +170,7 @@ app.post('/test/redis', async (req, res) => {
     console.error('❌ Redis 測試錯誤:', error);
     res.status(500).json({
       status: 'error',
-      message: error.message,
-      stack: error.stack
+      message: 'Test failed'
     });
   }
 });
