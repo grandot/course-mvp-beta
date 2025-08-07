@@ -27,7 +27,15 @@
     "logs:render": "node tools/get-render-logs.js",
     "logs:render:follow": "node tools/get-render-logs.js --follow",
     "logs:render:analyze": "node tools/get-render-logs.js --analyze",
-    "health-check": "curl -f http://localhost:3000/health || echo 'Health check failed'"
+    "health-check": "curl -f http://localhost:3000/health || echo 'Health check failed'",
+    "qa:full": "node tools/qa-orchestrator.js full",
+    "qa:validate": "node tools/qa-orchestrator.js validate",
+    "qa:config": "node tools/qa-orchestrator.js config",
+    "qa:test": "node tools/qa-orchestrator.js test",
+    "qa:test:local": "node tools/qa-orchestrator.js test --mode local",
+    "qa:test:real": "node tools/qa-orchestrator.js test --mode real",
+    "qa:test:both": "node tools/qa-orchestrator.js test --mode both",
+    "qa:fix": "node tools/qa-orchestrator.js fix"
   },
   "keywords": [
     "line-bot",
@@ -45,6 +53,7 @@
     "googleapis": "^155.0.0",
     "ioredis": "^5.7.0",
     "js-yaml": "^4.1.0",
+    "node-fetch": "^2.7.0",
     "openai": "^5.10.2"
   },
   "devDependencies": {

@@ -9,7 +9,7 @@ phases:
     dependencies: []
     provides: ["basic_students", "basic_courses", "basic_calendar_events"]
     prerequisites: ["clean_environment"]
-    estimated_time_minutes: 90
+    estimated_time_minutes: 60
     
   group_b:
     name: "依賴功能測試"
@@ -17,7 +17,7 @@ phases:
     dependencies: ["basic_students", "basic_courses"]
     provides: ["course_records", "reminders", "query_results"]
     prerequisites: ["group_a_success"]
-    estimated_time_minutes: 120
+    estimated_time_minutes: 45
     
   group_c:
     name: "複雜操作測試"
@@ -25,7 +25,7 @@ phases:
     dependencies: ["basic_students", "basic_courses", "course_records", "reminders"]
     provides: ["modified_courses", "cancelled_courses", "system_stress_results"]
     prerequisites: ["group_a_success", "group_b_success"]
-    estimated_time_minutes: 60
+    estimated_time_minutes: 25
 
 # 測試用例分組配置
 test_groups:
@@ -34,7 +34,7 @@ test_groups:
   group_a_add_single_course:
     phase: "group_a"
     name: "新增單次課程測試"
-    test_count: 12
+    test_count: 9
     dependencies: []
     provides: ["test_student_xiaoming", "test_course_math", "single_course_events"]
     description: "測試新增單次課程的各種輸入格式和錯誤處理"
@@ -42,16 +42,16 @@ test_groups:
   group_a_add_recurring_course:
     phase: "group_a"
     name: "新增重複課程測試"
-    test_count: 15
+    test_count: 10
     dependencies: []
-    provides: ["test_student_lumi", "test_course_piano", "recurring_course_events"]
+    provides: ["test_student_lumi", "test_student_xiaoguang", "test_course_piano", "test_course_english", "test_course_morning_exercise", "test_course_yoga", "recurring_course_events"]
     description: "測試重複課程的創建，包含每週、每日等循環規則"
     known_issues: ["daily_recurring_not_implemented"]
     
   group_a_system_basic:
     phase: "group_a"
     name: "系統基礎功能測試"
-    test_count: 8
+    test_count: 4
     dependencies: []
     provides: ["intent_classification_validation", "error_recovery_patterns"]
     description: "測試意圖識別、錯誤處理等系統基礎能力"
@@ -60,15 +60,15 @@ test_groups:
   group_b_query_courses:
     phase: "group_b"
     name: "查詢課程功能測試"
-    test_count: 15
-    dependencies: ["test_student_xiaoming", "test_student_lumi", "test_course_math", "test_course_piano"]
+    test_count: 5
+    dependencies: ["test_student_xiaoming", "test_student_lumi", "test_student_xiaoguang", "test_course_math", "test_course_piano", "test_course_english", "test_course_morning_exercise", "test_course_yoga"]
     provides: ["query_validation", "schedule_display_formats"]
     description: "測試各種時間範圍的課程查詢功能"
     
   group_b_record_content:
     phase: "group_b"
     name: "記錄內容功能測試"
-    test_count: 15
+    test_count: 4
     dependencies: ["test_course_math", "test_course_piano", "single_course_events"]
     provides: ["course_records", "content_history"]
     description: "測試課程內容記錄和查詢功能"
@@ -76,7 +76,7 @@ test_groups:
   group_b_set_reminders:
     phase: "group_b"
     name: "設定提醒功能測試"
-    test_count: 10
+    test_count: 5
     dependencies: ["test_course_math", "test_course_piano"]
     provides: ["reminders", "reminder_settings"]
     description: "測試課程提醒的設定和管理"
@@ -85,23 +85,23 @@ test_groups:
   group_c_modify_courses:
     phase: "group_c"
     name: "修改課程功能測試"
-    test_count: 8
-    dependencies: ["test_course_math", "test_course_piano", "course_records"]
+    test_count: 3
+    dependencies: ["test_course_math", "test_course_morning_exercise", "course_records"]
     provides: ["modified_courses", "modification_history"]
     description: "測試課程資訊的修改功能"
     
   group_c_cancel_courses:
     phase: "group_c"
     name: "取消課程功能測試"
-    test_count: 7
-    dependencies: ["test_course_math", "recurring_course_events", "reminders"]
+    test_count: 4
+    dependencies: ["test_course_math", "test_course_morning_exercise", "recurring_course_events", "reminders"]
     provides: ["cancelled_courses", "cancellation_confirmations"]
     description: "測試課程取消功能，包含單次和重複課程"
     
   group_c_system_advanced:
     phase: "group_c"
     name: "系統級測試"
-    test_count: 5
+    test_count: 1
     dependencies: ["test_student_xiaoming", "test_student_lumi", "course_records", "reminders"]
     provides: ["system_stress_results", "concurrency_validation"]
     description: "測試併發處理、系統壓力等高級功能"
@@ -157,6 +157,26 @@ data_entities:
     student: "測試小光"
     schedule_time: "10:00"
     day_of_week: 1
+    is_recurring: true
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses"]
+    
+  test_course_morning_exercise:
+    type: "course"
+    name: "測試晨練課"
+    student: "測試小明"
+    schedule_time: "08:00"
+    recurrence_type: "daily"
+    is_recurring: true
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses", "group_c_modify_courses", "group_c_cancel_courses"]
+    
+  test_course_yoga:
+    type: "course"
+    name: "測試瑜伽課"
+    student: "測試Lumi"
+    schedule_time: "17:00"
+    recurrence_type: "daily"
     is_recurring: true
     created_by: ["group_a_add_recurring_course"]
     used_by: ["group_b_query_courses"]

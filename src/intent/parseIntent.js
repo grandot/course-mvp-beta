@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
+const { getConversationManager } = require('../conversation/ConversationManager');
 
 /**
  * 解析使用者意圖

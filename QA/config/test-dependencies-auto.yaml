@@ -1,0 +1,547 @@
+'# 測試依賴關係配置': null
+'# 自動生成，請勿手動編輯': null
+phases:
+  group_a:
+    name: 獨立功能測試
+    description: 不需要預置資料的基礎功能測試
+    dependencies: []
+    provides:
+      - basic_students
+      - basic_courses
+      - basic_calendar_events
+    prerequisites:
+      - clean_environment
+    estimated_time_minutes: 69
+  group_b:
+    name: 依賴功能測試
+    description: 基於Group A建立資料的功能測試
+    dependencies:
+      - basic_students
+      - basic_courses
+    provides:
+      - course_records
+      - reminders
+      - query_results
+    prerequisites:
+      - group_a_success
+    estimated_time_minutes: 42
+  group_c:
+    name: 複雜操作測試
+    description: 需要完整數據環境的高級功能測試
+    dependencies:
+      - basic_students
+      - basic_courses
+      - course_records
+      - reminders
+    provides:
+      - modified_courses
+      - cancelled_courses
+      - system_stress_results
+    prerequisites:
+      - group_a_success
+      - group_b_success
+    estimated_time_minutes: 20
+test_groups:
+  A1.1-A:
+    phase: group_a
+    name: 完整資訊輸入
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+      - basic_courses
+    description: 驗證標準格式解析
+  A1.1-B:
+    phase: group_a
+    name: 時間格式多樣性
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證時間解析器覆蓋率
+  A1.1-C:
+    phase: group_a
+    name: 中文數字時間
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證中文數字解析
+  A1.2-A:
+    phase: group_a
+    name: 缺少學生資訊
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證多輪對話補充
+  A1.2-B:
+    phase: group_a
+    name: 缺少時間資訊
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證時間補充機制
+  A1.2-C:
+    phase: group_a
+    name: 多輪對話完成流程
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證狀態持續性
+  A1.3-A:
+    phase: group_a
+    name: 無效時間格式
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證時間校驗
+  A1.3-B:
+    phase: group_a
+    name: 過去時間輸入
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證時間邏輯校驗
+  A1.3-C:
+    phase: group_a
+    name: 模糊語句處理
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證意圖識別邊界
+  A2.1-A:
+    phase: group_a
+    name: 每週重複課程
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_student_lumi
+      - test_course___
+    description: 驗證週循環功能
+  A2.1-B:
+    phase: group_a
+    name: 多天重複課程
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證複雜重複規則
+  A2.1-C:
+    phase: group_a
+    name: 每天重複課程
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證每日循環功能
+  A2.1-D:
+    phase: group_a
+    name: 每日重複變體測試
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_student_lumi
+      - test_course___
+    description: 驗證每日關鍵詞識別
+  A2.1-E:
+    phase: group_a
+    name: '每月重複課程 '
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證每月循環功能
+  A2.2-A:
+    phase: group_a
+    name: 重複關鍵詞識別
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證意圖分類準確性
+  A2.2-B:
+    phase: group_a
+    name: 模糊重複表達
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證自然語言理解
+  A2.2-C:
+    phase: group_a
+    name: 重複類型區分測試
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證 recurrenceType 識別準確性
+  A2.2-D:
+    phase: group_a
+    name: 功能開關測試
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證每日重複功能開關
+  A2.2-E:
+    phase: group_a
+    name: 重複課程時間衝突處理
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+      - test_course___
+    description: 驗證重複課程的衝突檢測
+  A3.1-A:
+    phase: group_a
+    name: 意圖邊界測試
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證意圖分類不混淆
+  A3.1-B:
+    phase: group_a
+    name: 複合意圖處理
+    test_count: 1
+    dependencies: []
+    provides:
+      - test_course___
+    description: 驗證複雜語句解析
+  A3.2-A:
+    phase: group_a
+    name: 系統錯誤恢復
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證服務故障處理
+  A3.2-B:
+    phase: group_a
+    name: 輸入修正流程
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證錯誤輸入處理
+  B1.1-A:
+    phase: group_b
+    name: 今日課程查詢
+    test_count: 1
+    dependencies:
+      - basic_courses
+    provides: []
+    description: 驗證當日課程顯示
+  B1.1-B:
+    phase: group_b
+    name: 明天課程查詢
+    test_count: 1
+    dependencies:
+      - test_student_lumi
+      - basic_courses
+    provides: []
+    description: 驗證次日課程顯示
+  B1.1-C:
+    phase: group_b
+    name: 本週課程查詢
+    test_count: 1
+    dependencies:
+      - basic_courses
+    provides: []
+    description: 驗證週期性課程顯示
+  B1.2-A:
+    phase: group_b
+    name: 無課程日查詢
+    test_count: 1
+    dependencies:
+      - basic_courses
+    provides: []
+    description: 驗證空結果處理
+  B1.3-A:
+    phase: group_b
+    name: 特定課程查詢
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證課程篩選功能
+  B1.3-B:
+    phase: group_b
+    name: 每日重複課程查詢
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證每日重複課程顯示
+  B1.3-C:
+    phase: group_b
+    name: 重複課程類型識別查詢
+    test_count: 1
+    dependencies:
+      - test_student_lumi
+      - basic_courses
+    provides: []
+    description: 驗證重複課程類型顯示
+  B2.1-A:
+    phase: group_b
+    name: 當日課程記錄
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證內容記錄功能
+  B2.1-B:
+    phase: group_b
+    name: 昨日課程補記錄
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證歷史記錄功能
+  B2.2-A:
+    phase: group_b
+    name: 查詢課程記錄
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證內容查詢功能
+  B2.3-A:
+    phase: group_b
+    name: 不存在課程記錄
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證數據校驗
+  B3.1-A:
+    phase: group_b
+    name: 標準課前提醒
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證提醒設定功能
+  B3.1-B:
+    phase: group_b
+    name: 自訂提醒時間
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides: []
+    description: 驗證提醒時間自訂
+  B3.2-A:
+    phase: group_b
+    name: 不存在課程提醒
+    test_count: 1
+    dependencies: []
+    provides: []
+    description: 驗證提醒設定校驗
+  C1.1-A:
+    phase: group_c
+    name: 修改課程時間
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides:
+      - modified_courses
+    description: 驗證時間修改功能
+  C1.1-B:
+    phase: group_c
+    name: 修改每日重複課程時間
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides:
+      - modified_courses
+    description: 驗證每日重複課程修改
+  C1.1-C:
+    phase: group_c
+    name: 修改重複課程類型
+    test_count: 1
+    dependencies:
+      - test_student_lumi
+      - test_course___
+    provides:
+      - modified_courses
+    description: 驗證重複規則修改
+  C2.1-A:
+    phase: group_c
+    name: 取消單次課程
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides:
+      - cancelled_courses
+    description: 驗證單次課程刪除
+  C2.1-B:
+    phase: group_c
+    name: 取消每日重複課程
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides:
+      - cancelled_courses
+    description: 驗證每日重複課程取消選項
+  C2.1-C:
+    phase: group_c
+    name: 取消部分每日重複課程
+    test_count: 1
+    dependencies:
+      - test_course___
+    provides:
+      - cancelled_courses
+    description: 驗證部分時間範圍取消
+  C2.1-D:
+    phase: group_c
+    name: 重複課程類型區分取消
+    test_count: 1
+    dependencies:
+      - test_student_lumi
+      - test_course___
+      - test_course___
+    provides:
+      - cancelled_courses
+    description: 驗證不同重複類型的取消處理
+  C3.1-A:
+    phase: group_c
+    name: 併發用戶操作
+    test_count: 1
+    dependencies: []
+    provides:
+      - modified_courses
+    description: 驗證併發處理能力
+data_entities:
+  test_course___:
+    type: course
+    created_by:
+      - A1.1-A
+      - A1.1-B
+      - A1.1-C
+      - A1.2-A
+      - A1.2-B
+      - A1.2-C
+      - A1.3-A
+      - A1.3-B
+      - A2.1-A
+      - A2.1-B
+      - A2.1-C
+      - A2.1-D
+      - A2.1-E
+      - A2.2-A
+      - A2.2-B
+      - A2.2-C
+      - A2.2-D
+      - A2.2-E
+      - A2.2-E
+      - A3.1-B
+    used_by:
+      - B1.3-A
+      - B1.3-B
+      - B2.1-A
+      - B2.1-B
+      - B2.2-A
+      - B3.1-A
+      - B3.1-B
+      - C1.1-A
+      - C1.1-B
+      - C1.1-C
+      - C2.1-A
+      - C2.1-B
+      - C2.1-C
+      - C2.1-D
+      - C2.1-D
+    is_recurring: false
+  basic_courses:
+    type: course
+    created_by:
+      - A1.1-A
+    used_by:
+      - B1.1-A
+      - B1.1-B
+      - B1.1-C
+      - B1.2-A
+      - B1.3-C
+    is_recurring: false
+  test_student_lumi:
+    type: student
+    created_by:
+      - A2.1-A
+      - A2.1-D
+    used_by:
+      - B1.1-B
+      - B1.3-C
+      - C1.1-C
+      - C2.1-D
+    test_id: test_student_lumi
+  modified_courses:
+    type: course
+    created_by:
+      - C1.1-A
+      - C1.1-B
+      - C1.1-C
+      - C3.1-A
+    used_by: []
+    is_recurring: false
+  cancelled_courses:
+    type: course
+    created_by:
+      - C2.1-A
+      - C2.1-B
+      - C2.1-C
+      - C2.1-D
+    used_by: []
+    is_recurring: false
+execution_rules:
+  phase_order:
+    - group_a
+    - group_b
+    - group_c
+  error_handling:
+    group_a_failure_threshold: 0.1
+    group_b_failure_threshold: 0.15
+    group_c_failure_threshold: 0.2
+  retry_policy:
+    max_retries: 2
+    retry_delay_seconds: 3
+    retry_on_network_error: true
+    retry_on_timeout: true
+  timing:
+    between_tests_seconds: 2.5
+    between_groups_seconds: 10
+    between_phases_seconds: 30
+  concurrency:
+    max_concurrent_tests: 1
+    allow_parallel_phases: false
+environment_checks:
+  required_services:
+    - firebase
+    - line_bot
+    - openai
+  optional_services:
+    - redis
+    - google_calendar
+  required_env_vars:
+    - LINE_CHANNEL_ACCESS_TOKEN
+    - LINE_CHANNEL_SECRET
+    - OPENAI_API_KEY
+    - FIREBASE_PROJECT_ID
+  test_data_constraints:
+    test_user_id: U_test_user_qa
+    test_student_prefix: 測試
+    test_course_prefix: 測試
+reporting:
+  output_format: json
+  detailed_logs: true
+  include_timing: true
+  include_dependencies: true
+  success_criteria:
+    group_a_pass_rate: 0.9
+    group_b_pass_rate: 0.85
+    group_c_pass_rate: 0.8
+    overall_pass_rate: 0.85
+  failure_analysis:
+    categorize_failures: true
+    track_regression: true
+    identify_bottlenecks: true

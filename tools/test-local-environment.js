@@ -1,6 +1,6 @@
 /**
- * 獲取機器人真實回覆內容的測試工具
- * 直接調用處理邏輯獲取實際輸出
+ * 本機環境邏輯測試工具
+ * 直接調用處理邏輯測試業務功能，跳過 webhook 和 LINE API
  */
 
 require('dotenv').config();
@@ -56,8 +56,8 @@ async function processMessageAndGetResponse(userId, message) {
 /**
  * 運行實際回覆測試
  */
-async function runActualResponseTests() {
-  console.log('🧪 開始真實回覆測試');
+async function runLocalLogicTests() {
+  console.log('🧪 開始本機邏輯測試');
   console.log('='.repeat(50));
   
   const testUserId = `U_test_actual_${Date.now()}`;
@@ -151,8 +151,8 @@ async function runActualResponseTests() {
 /**
  * 多輪對話測試
  */
-async function runMultiTurnResponseTest() {
-  console.log('\n🔄 多輪對話真實回覆測試');
+async function runMultiTurnLogicTest() {
+  console.log('\n🔄 多輪對話邏輯測試');
   console.log('='.repeat(50));
   
   const testUserId = `U_test_multiturn_${Date.now()}`;
@@ -215,7 +215,7 @@ async function runMultiTurnResponseTest() {
  * 生成測試報告
  */
 function generateDetailedReport(singleTests, multiTurnTests) {
-  console.log('\n📊 真實回覆測試報告');
+  console.log('\n📊 本機邏輯測試報告');
   console.log('='.repeat(60));
   
   // 單輪測試報告
@@ -263,8 +263,8 @@ function generateDetailedReport(singleTests, multiTurnTests) {
  */
 async function main() {
   try {
-    const singleTests = await runActualResponseTests();
-    const multiTurnTests = await runMultiTurnResponseTest();
+    const singleTests = await runLocalLogicTests();
+    const multiTurnTests = await runMultiTurnLogicTest();
     generateDetailedReport(singleTests, multiTurnTests);
   } catch (error) {
     console.error('❌ 測試執行失敗:', error);
@@ -275,4 +275,8 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { runActualResponseTests, runMultiTurnResponseTest };
+module.exports = { 
+  runLocalLogicTests, 
+  runMultiTurnLogicTest, 
+  processMessageAndGetResponse 
+};

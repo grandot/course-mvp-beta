@@ -1,0 +1,128 @@
+# QA 系統推理規則配置
+# 用於實體提取和依賴推導
+
+# 動作識別規則
+action_rules:
+  creates:
+    keywords: ['新增', '創建', '建立', '安排', '設定', '每週', '每天', '每月']
+    confidence: 0.9
+    
+  queries:
+    keywords: ['查詢', '查看', '顯示', '看一下', '有什麼課', '課表', '安排']
+    confidence: 0.8
+    
+  modifies:
+    keywords: ['修改', '更改', '調整', '改到', '改成']
+    confidence: 0.9
+    
+  deletes:
+    keywords: ['刪除', '取消', '移除', '停止', '不要']
+    confidence: 0.9
+    
+  confirms:
+    keywords: ['確認', '好的', '是的', '對']
+    confidence: 0.7
+
+# 實體識別模式
+entity_patterns:
+  students:
+    patterns:
+      - pattern: '測試(\w+)(?=的|每|要|明天|今天|昨天)'
+        confidence: 0.9
+      - pattern: '(\w+)(?=每週|每天|每月|的課程|今天|明天)'
+        confidence: 0.7
+    
+  courses:
+    patterns:
+      - pattern: '測試(\w+課)'
+        confidence: 0.9
+      - pattern: '(\w+課)(?=的|要|安排|時間)'
+        confidence: 0.8
+      - pattern: '(數學課|鋼琴課|英文課|游泳課|晨練課|瑜伽課|評鑑)'
+        confidence: 0.95
+    
+  time_expressions:
+    patterns:
+      - pattern: '(每週[一二三四五六日])'
+        confidence: 0.9
+      - pattern: '(每天|每日|天天)'
+        confidence: 0.9
+      - pattern: '(每月|每個月)'
+        confidence: 0.9
+      - pattern: '(明天|今天|昨天)'
+        confidence: 0.8
+      - pattern: '(上午|下午|晚上)\s*(\d+[：:]\d+|\d+點)'
+        confidence: 0.9
+
+# 依賴推導規則
+dependency_rules:
+  group_a:
+    description: "創建基礎實體"
+    default_action: creates
+    requires: []
+    provides_pattern: "test_{type}_{normalized_name}"
+    
+  group_b:
+    description: "使用基礎實體進行查詢操作"
+    default_action: queries
+    requires_pattern: "test_{type}_{normalized_name}"
+    provides: ["query_results"]
+    
+  group_c:
+    description: "修改或刪除實體"
+    default_action: modifies
+    requires_pattern: "test_{type}_{normalized_name}"
+    provides_conditions:
+      modifies: ["modified_courses"]
+      deletes: ["cancelled_courses"]
+
+# 信心度計算規則
+confidence_rules:
+  base_score: 0.0
+  explicit_annotations: 40  # 有明確標註
+  student_identified: 20    # 識別到學生
+  course_identified: 20     # 識別到課程
+  action_identified: 10     # 識別到動作
+  has_test_input: 10        # 有測試輸入
+  max_score: 100
+
+# 實體命名規則
+naming_rules:
+  student_prefix: "test_student_"
+  course_prefix: "test_course_"
+  normalization:
+    remove_prefixes: ["測試"]
+    remove_suffixes: ["課"]
+    to_lowercase: true
+    replace_spaces: "_"
+    
+# 關鍵詞提取規則
+keyword_extraction:
+  success_indicators: ['成功', '✅', '已安排', '完成', '確認']
+  course_indicators: ['課程', '數學課', '鋼琴課', '英文課']
+  student_indicators: ['小明', 'Lumi', '小光', '小美']
+  error_indicators: ['錯誤', '失敗', '無法', '不正確']
+  
+  default_keywords:
+    group_a: ['課程', '成功']  # 創建測試
+    group_b: ['課程']         # 查詢測試
+    group_c: ['課程']         # 修改測試
+
+# 驗證規則
+validation_rules:
+  required_entities:
+    min_creates_or_requires: 1
+    
+  naming_conventions:
+    entity_prefix_required: true
+    valid_prefixes: ['test_', 'basic_']
+    
+  confidence_thresholds:
+    minimum: 0.3
+    warning_below: 0.5
+    good_above: 0.7
+    
+  dependency_constraints:
+    no_cycles: true
+    phase_order_respected: true
+    valid_phases: ['group_a', 'group_b', 'group_c']

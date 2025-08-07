@@ -1,0 +1,172 @@
+# QA 系統測試模式配置
+
+# 測試執行模式
+test_modes:
+  local:
+    name: "本機邏輯測試"
+    description: "直接調用業務邏輯，跳過 webhook 和 LINE API"
+    tool_path: "../tools/test-local-environment.js"
+    advantages:
+      - "執行速度快"
+      - "不依賴網路"
+      - "適合開發調試"
+      - "可測試業務邏輯"
+    limitations:
+      - "無法測試 webhook 驗證"
+      - "無法測試部署環境"
+      - "無法測試真實 LINE 流程"
+    settings:
+      delay_between_tests: 500  # 毫秒
+      timeout: 30000           # 30秒
+      retry_attempts: 2
+      
+  real:
+    name: "真實環境測試"
+    description: "完整 webhook 流程，測試真實部署環境"
+    tool_path: "../tools/test-real-environment.js"
+    advantages:
+      - "測試完整流程"
+      - "驗證部署環境"
+      - "真實 LINE 體驗"
+      - "發現環境問題"
+    limitations:
+      - "執行較慢"
+      - "依賴網路穩定"
+      - "需要環境配置"
+      - "可能有 API 限制"
+    settings:
+      delay_between_tests: 3000  # 3秒
+      timeout: 60000             # 60秒
+      retry_attempts: 3
+      required_env_vars:
+        - "WEBHOOK_URL"
+        - "LINE_CHANNEL_SECRET"
+        - "RENDER_API_KEY"
+        - "RENDER_SERVICE_ID"
+        
+  both:
+    name: "雙模式對比測試"
+    description: "同時執行本機和線上測試，比較結果一致性"
+    advantages:
+      - "全面驗證"
+      - "發現環境差異"
+      - "提高測試信心"
+    limitations:
+      - "執行時間最長"
+      - "需要兩套環境"
+    settings:
+      execute_order: ["local", "real"]  # 執行順序
+      compare_results: true
+      consistency_threshold: 80  # 一致性百分比閾值
+
+# 執行策略配置
+execution_strategies:
+  development:
+    preferred_mode: "local"
+    description: "開發階段優先使用本機測試"
+    
+  staging:
+    preferred_mode: "real"
+    description: "預發布階段使用真實環境測試"
+    
+  production:
+    preferred_mode: "both"
+    description: "正式發布前使用雙模式全面測試"
+
+# 結果比較配置
+result_comparison:
+  enabled: true
+  compare_fields:
+    - "success_status"    # 成功狀態
+    - "output_keywords"   # 輸出關鍵詞
+    - "intent_detection"  # 意圖識別
+  
+  tolerance:
+    keyword_match: 0.8    # 關鍵詞匹配容忍度
+    response_similarity: 0.7  # 回應相似度
+    
+  difference_analysis:
+    categorize_differences: true
+    common_difference_types:
+      - "network_timeout"
+      - "environment_config"
+      - "api_response_format"
+      - "timing_issues"
+
+# 錯誤處理配置
+error_handling:
+  local_mode:
+    common_errors:
+      - type: "module_not_found"
+        action: "check_dependencies"
+      - type: "database_connection"
+        action: "verify_config"
+    
+  real_mode:
+    common_errors:
+      - type: "webhook_timeout"
+        action: "retry_with_delay"
+      - type: "signature_verification"
+        action: "check_secret"
+      - type: "api_rate_limit"
+        action: "increase_delay"
+        
+  retry_policies:
+    local:
+      max_retries: 2
+      delay_ms: 1000
+      exponential_backoff: false
+      
+    real:
+      max_retries: 3
+      delay_ms: 5000
+      exponential_backoff: true
+
+# 報告配置
+reporting:
+  local_report:
+    include_fields:
+      - "test_id"
+      - "input"
+      - "output"
+      - "intent"
+      - "success"
+      - "execution_time"
+      
+  real_report:
+    include_fields:
+      - "test_id"
+      - "input"
+      - "bot_reply"
+      - "webhook_status"
+      - "success"
+      - "render_logs"
+      
+  comparison_report:
+    include_fields:
+      - "test_id"
+      - "local_result"
+      - "real_result"
+      - "consistency"
+      - "differences"
+      - "analysis"
+      
+  output_formats: ["console", "json", "markdown"]
+  
+# 效能監控
+performance:
+  track_metrics:
+    - "execution_time"
+    - "memory_usage"
+    - "success_rate"
+    - "error_rate"
+    
+  thresholds:
+    local_max_time: 5000   # 5秒
+    real_max_time: 30000   # 30秒
+    memory_limit: 512      # MB
+    min_success_rate: 0.8  # 80%
+    
+  alerts:
+    slow_test_threshold: 10000  # 10秒
+    failure_rate_threshold: 0.2  # 20%
