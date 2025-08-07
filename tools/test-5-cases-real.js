@@ -16,38 +16,12 @@ async function testFiveReal() {
     // 初始化線上測試器
     const realTester = new RealEnvironmentTester();
     
-    let passed = 0;
-    let failed = 0;
+    // 使用完整的測試執行流程，包含增強的診斷日誌
+    console.log('🚀 開始執行測試...');
+    const results = await realTester.runAllTests(firstFive);
     
-    for (let i = 0; i < firstFive.length; i++) {
-      const testCase = firstFive[i];
-      console.log(`\n📝 測試 ${i+1}/5: ${testCase.id} - ${testCase.name}`);
-      console.log(`輸入: ${testCase.input}`);
-      
-      try {
-        const result = await realTester.runSingleTest(testCase);
-        
-        if (result.testPassed) {
-          console.log('✅ PASS');
-          passed++;
-        } else {
-          console.log('❌ FAIL');
-          console.log(`   原因: ${result.error || '未知錯誤'}`);
-          failed++;
-        }
-        
-      } catch (error) {
-        console.log('❌ ERROR: ' + error.message);
-        failed++;
-      }
-      
-      // 延遲避免過載線上服務
-      console.log('⏳ 等待 3 秒...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-    
-    console.log(`\n📊 線上測試結果: ${passed}/5 通過 (${Math.round(passed/5*100)}%)`);
-    
+    // 生成包含診斷日誌的完整報告
+    realTester.generateReport(results);
   } catch (error) {
     console.error('❌ 測試程序失敗:', error.message);
   }

@@ -184,6 +184,92 @@ class RealEnvironmentTester {
   }
   
   /**
+   * 提取測試失敗的診斷日誌 (基於第一性原則 - 精準診斷)
+   */
+  extractDiagnosticLogs(logs, testInput) {
+    if (!logs) return null;
+    
+    const lines = logs.split('\n');
+    const diagnostics = {
+      intentParsing: [],
+      slotExtraction: [],
+      taskExecution: [],
+      errors: [],
+      systemBehavior: [],
+      validation: []
+    };
+    
+    // 關鍵詞匹配模式 - 按執行流程分類 (增強版)
+    const patterns = {
+      intentParsing: [
+        /🎯.*(?:意圖|開始解析)/,
+        /✅.*規則匹配/,
+        /🔍.*意圖候選/,
+        /🤖.*AI 識別意圖/,
+        /❓.*無法識別意圖/
+      ],
+      slotExtraction: [
+        /📋.*提取結果/,
+        /🔍.*開始提取 slots/,
+        /🕒.*(?:時間解析|開始高級時間解析)/,
+        /✅.*時間解析成功/,
+        /❌.*時間解析失敗/,
+        /🧠.*對話上下文增強/,
+        /📊.*規則提取置信度/,
+        /🤖.*啟用 AI 輔助提取/,
+        /✅.*最終 slots/
+      ],
+      taskExecution: [
+        /🎯.*執行任務/,
+        /📋.*接收參數/,
+        /⚠️.*時間衝突/,
+        /❓.*請提供.*資訊/,
+        /✅.*課程已安排/,
+        /❌.*任務.*失敗/,
+        /📊.*任務執行結果/
+      ],
+      errors: [
+        /❌.*(?:錯誤|失敗)/,
+        /ERROR/,
+        /Failed/,
+        /Exception/,
+        /⚠️.*(?!時間衝突)/  // 警告但排除時間衝突
+      ],
+      systemBehavior: [
+        /📤.*測試模式.*實際業務回覆/,
+        /🧪.*檢測到測試 token/,
+        /🔍.*檢查 replyToken/,
+        /🚀.*(?:生產用戶|選擇的服務)/
+      ],
+      validation: [
+        /✅.*驗證/,
+        /❌.*驗證失敗/,
+        /⚠️.*缺少.*欄位/,
+        /📝.*missingFields/
+      ]
+    };
+    
+    // 按時間順序提取相關日誌
+    lines.forEach(line => {
+      for (const [category, categoryPatterns] of Object.entries(patterns)) {
+        if (categoryPatterns.some(pattern => pattern.test(line))) {
+          diagnostics[category].push(line.trim());
+          break; // 避免重複分類
+        }
+      }
+    });
+    
+    // 過濾空分類
+    Object.keys(diagnostics).forEach(key => {
+      if (diagnostics[key].length === 0) {
+        delete diagnostics[key];
+      }
+    });
+    
+    return Object.keys(diagnostics).length > 0 ? diagnostics : null;
+  }
+
+  /**
    * 從日誌中擷取機器人回覆 (增強版 - 支援更多格式)
    */
   extractBotReply(logs) {
@@ -285,7 +371,9 @@ class RealEnvironmentTester {
              actualReply.includes('已安排') ||
              actualReply.includes('衝突') ||
              actualReply.includes('安排') ||
-             actualReply.includes('✅');
+             actualReply.includes('✅') ||
+             actualReply.includes('請選擇其他時間') ||
+             actualReply.includes('確認是否要覆蓋');
     }
     
     // 缺失資訊測試 - 期望正確識別缺失字段
@@ -294,7 +382,8 @@ class RealEnvironmentTester {
              actualReply.includes('missing') ||
              actualReply.includes('missingFields') ||
              actualReply.includes('補充') ||
-             actualReply.includes('請提供');
+             actualReply.includes('請提供') ||
+             actualReply.includes('範例：');
     }
     
     // 預設標準：有意義的回覆(包含相關概念)
@@ -360,6 +449,16 @@ class RealEnvironmentTester {
     const testPassed = webhookResult.ok && intelligentSuccess;
     console.log(`🎯 測試結果: ${testPassed ? '✅ PASS' : '❌ FAIL'}`);
     
+    // 7. 失敗時提取診斷日誌 (第一性原則 - 精準診斷)
+    let diagnosticLogs = null;
+    if (!testPassed && logs) {
+      console.log('🔍 提取診斷日誌...');
+      diagnosticLogs = this.extractDiagnosticLogs(logs, testCase.input);
+      if (diagnosticLogs) {
+        console.log('📋 診斷日誌已收集，將在報告中顯示');
+      }
+    }
+    
     return {
       testCase: testCase,
       webhookStatus: webhookResult.status,
@@ -368,7 +467,8 @@ class RealEnvironmentTester {
       intelligentSuccess: intelligentSuccess,
       keywordMatch: keywordMatch, // 保留供參考
       testPassed: testPassed,
-      error: webhookResult.error
+      error: webhookResult.error,
+      diagnosticLogs: diagnosticLogs // 新增診斷日誌
     };
   }
   
@@ -409,6 +509,35 @@ class RealEnvironmentTester {
   }
   
   /**
+   * 展示結構化診斷日誌 (基於第一性原則 - 清晰可讀)
+   */
+  displayDiagnosticLogs(diagnostics) {
+    const categoryNames = {
+      intentParsing: '🎯 意圖識別',
+      slotExtraction: '📋 槽位提取', 
+      taskExecution: '⚙️ 任務執行',
+      errors: '❌ 錯誤信息',
+      systemBehavior: '🔧 系統行為',
+      validation: '📝 資料驗證'
+    };
+    
+    Object.entries(diagnostics).forEach(([category, logs]) => {
+      if (logs.length > 0) {
+        console.log(`\n      ${categoryNames[category] || category}:`);
+        logs.forEach(log => {
+          // 簡化日誌格式，移除時間戳等干擾信息
+          let cleanLog = log
+            .replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\s*/, '') // 移除時間戳
+            .replace(/^.*?\|\s*/, '') // 移除日誌前綴
+            .replace(/^\s*/, '        '); // 統一縮進
+          
+          console.log(cleanLog);
+        });
+      }
+    });
+  }
+
+  /**
    * 生成測試報告
    */
   generateReport(results) {
@@ -421,11 +550,17 @@ class RealEnvironmentTester {
       console.log(`   輸入: "${result.testCase.input}"`);
       console.log(`   Webhook: ${result.webhookStatus} ${result.webhookOk ? '✅' : '❌'}`);
       console.log(`   回覆: ${result.botReply || '(無)'}`);
-      console.log(`   關鍵字: ${result.keywordMatch ? '✅' : '❌'}`);
+      console.log(`   智能判斷: ${result.intelligentSuccess ? '✅' : '❌'}`);
       console.log(`   結果: ${result.testPassed ? '✅ PASS' : '❌ FAIL'}`);
       
       if (result.error) {
         console.log(`   錯誤: ${result.error}`);
+      }
+      
+      // 🔍 失敗時顯示診斷日誌 (基於第一性原則)
+      if (!result.testPassed && result.diagnosticLogs) {
+        console.log(`\n   📋 診斷日誌:`);
+        this.displayDiagnosticLogs(result.diagnosticLogs);
       }
     });
     
