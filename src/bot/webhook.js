@@ -139,8 +139,11 @@ async function handleImageMessage(event) {
     console.log('🖼️ 收到圖片訊息:', messageId);
     console.log('👤 用戶ID:', userId);
 
+    // 動態選擇 LINE Service
+    const currentLineService = getLineService(userId);
+
     // 下載圖片內容
-    const imageBuffer = await lineService.getMessageContent(messageId);
+    const imageBuffer = await currentLineService.getMessageContent(messageId);
 
     // 處理圖片上傳（記錄到課程內容）
     const handle_record_content_task = require('../tasks/handle_record_content_task');
@@ -161,13 +164,16 @@ async function handleImageMessage(event) {
       { label: '📅 查詢記錄', text: '查詢課程記錄' },
     ];
 
-    await lineService.replyMessage(replyToken, result.message, quickReply);
+    await currentLineService.replyMessage(replyToken, result.message, quickReply);
   } catch (error) {
     console.error('❌ 處理圖片訊息失敗:', error);
 
+    // 動態選擇 LINE Service 用於錯誤處理
+    const currentLineService = getLineService(event.source.userId);
+
     // 檢查是否為圖片內容過期（404 錯誤）
     if (error.response && error.response.status === 404) {
-      await lineService.replyMessage(
+      await currentLineService.replyMessage(
         event.replyToken,
         '📷 圖片上傳提醒\n'
         + '這張圖片無法下載，可能是因為 LINE 的限制：\n\n'
@@ -181,7 +187,7 @@ async function handleImageMessage(event) {
         + '感謝您的配合 🙏',
       );
     } else {
-      await lineService.replyMessage(
+      await currentLineService.replyMessage(
         event.replyToken,
         '處理圖片時發生錯誤，請稍後再試。',
       );
@@ -291,6 +297,9 @@ async function handlePostbackEvent(event) {
 
     console.log('🔘 收到 Postback 事件:', data);
 
+    // 動態選擇 LINE Service
+    const currentLineService = getLineService(userId);
+
     // 解析 postback 資料
     const params = new URLSearchParams(data);
     const action = params.get('action');
@@ -311,10 +320,12 @@ async function handlePostbackEvent(event) {
         responseMessage = '未知的操作';
     }
 
-    await lineService.replyMessage(replyToken, responseMessage);
+    await currentLineService.replyMessage(replyToken, responseMessage);
   } catch (error) {
     console.error('❌ 處理 Postback 事件失敗:', error);
-    await lineService.replyMessage(
+    // 動態選擇 LINE Service 用於錯誤處理
+    const currentLineService = getLineService(event.source.userId);
+    await currentLineService.replyMessage(
       event.replyToken,
       '處理操作時發生錯誤，請稍後再試。',
     );
@@ -331,8 +342,11 @@ async function handleFollowEvent(event) {
 
     console.log('👋 新用戶關注:', userId);
 
+    // 動態選擇 LINE Service
+    const currentLineService = getLineService(userId);
+
     // 取得用戶資料
-    const userProfile = await lineService.getUserProfile(userId);
+    const userProfile = await currentLineService.getUserProfile(userId);
     console.log('👤 用戶資料:', userProfile);
 
     // 建立或更新家長資料
@@ -341,10 +355,12 @@ async function handleFollowEvent(event) {
 
     const welcomeMessage = '👋 歡迎使用課程管理機器人！\n\n我可以幫您：\n📚 安排和管理課程\n📅 查詢課程時間表\n📝 記錄課程內容和照片\n⏰ 設定課程提醒\n\n試試對我說：「小明每週三下午3點數學課」';
 
-    await lineService.replyMessage(replyToken, welcomeMessage);
+    await currentLineService.replyMessage(replyToken, welcomeMessage);
   } catch (error) {
     console.error('❌ 處理關注事件失敗:', error);
-    await lineService.replyMessage(
+    // 動態選擇 LINE Service 用於錯誤處理
+    const currentLineService = getLineService(event.source.userId);
+    await currentLineService.replyMessage(
       event.replyToken,
       '歡迎使用課程管理機器人！',
     );
