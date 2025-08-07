@@ -20,18 +20,30 @@ class MockLineService {
   async replyMessage(replyToken, message, quickReply = null) {
     console.log('📤 Mock LINE API - 回覆訊息');
     console.log('🎫 Reply Token:', replyToken);
-    console.log('💬 訊息內容:', typeof message === 'string' ? message : JSON.stringify(message, null, 2));
+    
+    // 🏷️ 為訊息添加MOCK標記
+    let markedMessage;
+    if (typeof message === 'string') {
+      markedMessage = `[MOCK測試回應] ${message}`;
+    } else {
+      markedMessage = {
+        ...message,
+        text: `[MOCK測試回應] ${message.text || JSON.stringify(message)}`
+      };
+    }
+    
+    console.log('💬 訊息內容:', typeof markedMessage === 'string' ? markedMessage : JSON.stringify(markedMessage, null, 2));
     
     if (quickReply && quickReply.length > 0) {
       console.log('🔘 Quick Reply 選項:', quickReply.map(item => item.label || item.text).join(', '));
     }
 
-    // 模擬成功回應
+    // 模擬成功回應（包含標記後的訊息）
     const response = {
       success: true,
       mockResponse: true,
       data: {
-        sentMessages: [message],
+        sentMessages: [markedMessage],
         quickReply: quickReply || null,
         timestamp: new Date().toISOString()
       }
