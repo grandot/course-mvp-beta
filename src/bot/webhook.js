@@ -4,15 +4,26 @@ const { extractSlots } = require('../intent/extractSlots');
 const { executeTask, getSupportedIntents } = require('../tasks');
 const { getConversationManager } = require('../conversation/ConversationManager');
 
-// 🛡️ 安全的依賴注入：根據環境選擇 LINE Service
-let lineService;
+// 🛡️ 動態 LINE Service 選擇：根據用戶ID選擇服務
+const realLineService = require('../services/lineService');
+const mockLineService = require('../services/mockLineService');
 
-if (process.env.NODE_ENV === 'test' && process.env.USE_MOCK_LINE_SERVICE === 'true') {
-  console.log('🧪 載入 Mock LINE Service（測試模式）');
-  lineService = require('../services/mockLineService');
-} else {
-  console.log('🚀 載入真實 LINE Service（生產模式）');
-  lineService = require('../services/lineService');
+/**
+ * 根據用戶ID動態選擇 LINE Service
+ * @param {string} userId - LINE 用戶ID
+ * @returns {Object} 對應的 LINE Service 實例
+ */
+function getLineService(userId) {
+  // 🔥 核心邏輯：測試用戶自動用Mock，生產用戶用真實服務
+  const isTestUser = userId && userId.startsWith('U_test_');
+  
+  if (isTestUser) {
+    console.log('🧪 測試用戶，使用 Mock LINE Service');
+    return mockLineService;
+  } else {
+    console.log('🚀 生產用戶，使用真實 LINE Service');
+    return realLineService;
+  }
 }
 
 /**
@@ -41,15 +52,8 @@ async function handleTextMessage(event) {
     console.log('📝 收到文字訊息:', userMessage);
     console.log('👤 用戶ID:', userId);
 
-    // 🔥 核心邏輯：測試用戶自動用Mock
-    const isTestUser = userId.startsWith('U_test_');
-    const currentLineService = isTestUser
-      ? require('../services/mockLineService')
-      : lineService;
-
-    if (isTestUser) {
-      console.log('🧪 檢測到測試用戶，使用Mock Service');
-    }
+    // 🔥 核心邏輯：動態選擇 LINE Service  
+    const currentLineService = getLineService(userId);
 
     // 初始化對話管理器
     const conversationManager = getConversationManager();
