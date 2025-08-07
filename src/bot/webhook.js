@@ -51,9 +51,12 @@ async function handleTextMessage(event) {
 
     console.log('📝 收到文字訊息:', userMessage);
     console.log('👤 用戶ID:', userId);
+    console.log('🔍 用戶ID類型:', typeof userId);
+    console.log('🔍 是否測試用戶:', userId && userId.startsWith('U_test_'));
 
     // 🔥 核心邏輯：動態選擇 LINE Service  
     const currentLineService = getLineService(userId);
+    console.log('🔥 選擇的服務類型:', currentLineService.constructor.name || 'Object');
 
     // 初始化對話管理器
     const conversationManager = getConversationManager();
