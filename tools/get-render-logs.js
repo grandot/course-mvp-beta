@@ -38,8 +38,11 @@ async function getRenderLogs(options = {}) {
   console.log(`📊 限制: ${limit} 條日誌`);
 
   try {
+    // Render CLI 的最大限制是 100，超過會出錯
+    const actualLimit = Math.min(limit, 100);
+    
     // 構建 render logs 命令
-    let command = `render logs -r ${RENDER_CONFIG.SERVICE_ID} --limit ${limit}`;
+    let command = `render logs -r ${RENDER_CONFIG.SERVICE_ID} --limit ${actualLimit}`;
     
     if (output === 'json') {
       command += ' -o json';
@@ -166,7 +169,7 @@ async function getTestPeriodLogs(testStartTime, testEndTime = null) {
   
   return await getRenderLogs({
     since: logStartTime.toISOString(),
-    limit: 500,
+    limit: 100,  // 修正為最大允許值
     output: 'json',
     saveFile: true
   });

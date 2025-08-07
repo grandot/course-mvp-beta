@@ -21,7 +21,7 @@ const path = require('path');
 
 // 配置
 const CONFIG = {
-  TARGET_URL: process.env.TEST_TARGET_URL || 'https://course-mvp-beta.onrender.com/webhook',
+  TARGET_URL: process.env.TEST_TARGET_URL || 'http://localhost:3000/webhook',  // 改為本地測試
   TEST_USER_ID: 'U_test_with_logs_12345',
   RESULTS_DIR: './test-results/test-with-logs',
   LOG_ANALYSIS_ENABLED: true

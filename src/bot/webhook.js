@@ -41,6 +41,16 @@ async function handleTextMessage(event) {
     console.log('📝 收到文字訊息:', userMessage);
     console.log('👤 用戶ID:', userId);
 
+    // 🔥 核心邏輯：測試用戶自動用Mock
+    const isTestUser = userId.startsWith('U_test_');
+    const currentLineService = isTestUser ? 
+      require('../services/mockLineService') : 
+      lineService;
+      
+    if (isTestUser) {
+      console.log('🧪 檢測到測試用戶，使用Mock Service');
+    }
+
     // 初始化對話管理器
     const conversationManager = getConversationManager();
 
@@ -55,7 +65,7 @@ async function handleTextMessage(event) {
       const unknownMessage = '抱歉，我不太理解您的意思。\n\n您可以試試：\n• 「小明每週三下午3點數學課」\n• 「查詢小明今天的課程」\n• 「記錄昨天英文課的內容」\n• 「提醒我明天的鋼琴課」';
       
       await conversationManager.recordBotResponse(userId, unknownMessage);
-      await lineService.replyMessage(replyToken, unknownMessage);
+      await currentLineService.replyMessage(replyToken, unknownMessage);
       return;
     }
 
@@ -88,7 +98,7 @@ async function handleTextMessage(event) {
     await conversationManager.recordBotResponse(userId, responseMessage, { quickReply });
 
     // 回應用戶
-    await lineService.replyMessage(replyToken, responseMessage, quickReply);
+    await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
 
   } catch (error) {
     console.error('❌ 處理文字訊息失敗:', error);
@@ -96,12 +106,18 @@ async function handleTextMessage(event) {
     // 記錄錯誤到對話歷史
     try {
       const conversationManager = getConversationManager();
-      await conversationManager.recordBotResponse(userId, '處理訊息時發生錯誤，請稍後再試。');
+      await conversationManager.recordBotResponse(event.source.userId, '處理訊息時發生錯誤，請稍後再試。');
     } catch (logError) {
       console.error('❌ 記錄錯誤回應失敗:', logError);
     }
 
-    await lineService.replyMessage(
+    // 錯誤處理也要動態選擇服務
+    const isTestUser = event.source.userId.startsWith('U_test_');
+    const currentLineService = isTestUser ? 
+      require('../services/mockLineService') : 
+      lineService;
+
+    await currentLineService.replyMessage(
       event.replyToken,
       '處理訊息時發生錯誤，請稍後再試。',
     );
