@@ -601,6 +601,44 @@ async function checkRecurringConflicts(pattern, duration = 4) {
 }
 ```
 
+### 9.9 對話狀態管理設計原則
+
+#### LINE Chatbot 互動特性
+LINE是即時通訊工具，不是表單填寫系統，設計時必須考慮：
+
+**用戶行為模式**：
+- **知道資訊** → 立即回覆（30秒內）
+- **不知道資訊** → 離開LINE重新開始新對話
+- **中斷超過2分鐘** → 通常表示用戶已離開或遺忘上下文
+
+**2分鐘超時設計原則**：
+- ✅ **符合LINE使用習慣** - 即時互動，非長時間等待
+- ✅ **避免舊狀態干擾新對話** - 防止上下文污染  
+- ✅ **鼓勵用戶重新完整表達需求** - 提升對話品質
+- ✅ **降低系統記憶體負擔** - 及時釋放資源
+
+**實作要求**：
+```javascript
+// 期待輸入狀態超時檢查
+if (pendingData.timestamp && Date.now() - pendingData.timestamp > 2 * 60 * 1000) {
+  console.log('⏰ 期待輸入狀態已超時，清除狀態');
+  await conversationManager.clearExpectedInput(userId);
+  return null; // 進行正常意圖識別
+}
+
+// 意圖切換檢測（優先於補充判斷）
+const explicitIntents = ['課表', '查詢', '新增', '刪除', '取消', '設定', '記錄'];
+if (explicitIntents.some(intent => message.includes(intent))) {
+  await conversationManager.clearExpectedInput(userId);
+  return null; // 立即切換到新意圖
+}
+```
+
+**設計邏輯優先級**：
+1. **意圖切換檢測** - 用戶明確表達新需求
+2. **狀態超時檢查** - 自動清除過期狀態  
+3. **補充資訊處理** - 在有效上下文內補充
+
 ## 總結
 
 本架構設計遵循以下原則：
@@ -608,6 +646,7 @@ async function checkRecurringConflicts(pattern, duration = 4) {
 2. **技術債務可控**：定期評估和償還
 3. **成本效益平衡**：選擇合適的技術，而非最新的技術
 4. **可維護性優先**：代碼清晰比效能優化更重要（在合理範圍內）
+5. **即時互動優先**：LINE對話狀態管理符合用戶使用習慣
 
 詳細的實作指南請參考 [Developer Guide](../doc/developer-guide.md)。
 
