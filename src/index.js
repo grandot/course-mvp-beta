@@ -57,6 +57,55 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// Redis 連接測試端點
+app.post('/test/redis', async (req, res) => {
+  try {
+    console.log('🔍 開始測試 Redis 連接...');
+    
+    const { getRedisService } = require('./services/redisService');
+    const redisService = getRedisService();
+    
+    console.log('📋 Redis 配置存在:', !!redisService.config);
+    console.log('📋 Redis URL:', redisService.config ? 'configured' : 'not configured');
+    
+    // 嘗試連接並測試
+    const connected = await redisService.connect();
+    console.log('🔗 連接結果:', connected);
+    
+    if (connected && redisService.client) {
+      // 測試基本操作
+      const testKey = 'test:' + Date.now();
+      await redisService.set(testKey, 'test-value', 10);
+      const value = await redisService.get(testKey);
+      await redisService.delete(testKey);
+      
+      console.log('✅ Redis 測試成功');
+      res.json({
+        status: 'success',
+        message: 'Redis 連接和操作正常',
+        connected: true,
+        testResult: { key: testKey, value }
+      });
+    } else {
+      console.log('❌ Redis 連接失敗');
+      res.json({
+        status: 'failed',
+        message: 'Redis 連接失敗',
+        connected: false,
+        config: !!redisService.config
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Redis 測試錯誤:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // 依賴服務健康檢查端點
 app.get('/health/deps', async (req, res) => {
   const checks = {};
