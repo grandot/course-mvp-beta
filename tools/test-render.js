@@ -62,13 +62,13 @@ async function sendTestMessage(message, userId) {
     });
     
     console.log('✅ 回應狀態:', response.status);
-    console.log('📥 回應資料:', response.data);
+    console.log('📥 回應資料:', JSON.stringify(response.data, null, 2));
     
   } catch (error) {
     if (error.response) {
       console.error('❌ 伺服器回應錯誤:');
       console.error('  狀態碼:', error.response.status);
-      console.error('  錯誤訊息:', error.response.data);
+      console.error('  完整錯誤回應:', JSON.stringify(error.response.data, null, 2));
     } else if (error.request) {
       console.error('❌ 無法連接到伺服器:', error.message);
     } else {

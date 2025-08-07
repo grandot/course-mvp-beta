@@ -65,6 +65,35 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// LINE Service 選擇測試端點
+app.post('/test/lineservice', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    console.log('🔍 測試 LINE Service 選擇:', userId);
+    
+    const { getLineService } = require('./bot/webhook');
+    const lineService = getLineService(userId);
+    
+    console.log('📋 選擇的服務類型:', lineService.constructor.name);
+    console.log('📋 是否為測試用戶:', userId && userId.startsWith('U_test_'));
+    
+    res.json({
+      status: 'success',
+      userId: userId,
+      isTestUser: userId && userId.startsWith('U_test_'),
+      serviceType: lineService.constructor.name,
+      hasReplyMethod: typeof lineService.replyMessage === 'function'
+    });
+    
+  } catch (error) {
+    console.error('❌ LINE Service 測試錯誤:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
 // Redis 連接測試端點
 app.post('/test/redis', async (req, res) => {
   try {

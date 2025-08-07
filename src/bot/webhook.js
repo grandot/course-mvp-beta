@@ -458,4 +458,5 @@ module.exports = {
   handlePostbackEvent,
   handleFollowEvent,
   verifySignature,
+  getLineService,
 };
