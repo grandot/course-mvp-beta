@@ -309,8 +309,8 @@ async function handleSupplementInput(message, context, userId) {
       return null; // 返回null讓系統進行正常意圖識別
     }
 
-    // 🕒 檢查期待狀態是否超時（超過10分鐘自動清除）
-    if (pendingData.timestamp && Date.now() - pendingData.timestamp > 10 * 60 * 1000) {
+    // 🕒 檢查期待狀態是否超時（超過2分鐘自動清除）
+    if (pendingData.timestamp && Date.now() - pendingData.timestamp > 2 * 60 * 1000) {
       console.log('⏰ 期待輸入狀態已超時，清除狀態');
       
       // 清除超時的期待輸入狀態
