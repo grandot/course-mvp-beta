@@ -1,0 +1,105 @@
+{
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "passRate": "100.0%",
+    "duration": "8551ms",
+    "timestamp": "2025-08-07T03:59:17.130Z"
+  },
+  "results": [
+    {
+      "id": "error_001",
+      "name": "無法識別的意圖",
+      "steps": [
+        {
+          "message": "今天天氣如何？",
+          "expectKeywords": [
+            "不太理解",
+            "無法識別",
+            "請說"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "今天天氣如何？",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "不太理解",
+                  "無法識別",
+                  "請說"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:59:10.106Z"
+    },
+    {
+      "id": "error_002",
+      "name": "糾錯功能",
+      "steps": [
+        {
+          "message": "小明明天下午3點數學課",
+          "expectKeywords": [
+            "確認"
+          ]
+        },
+        {
+          "message": "不對，是4點",
+          "expectKeywords": [
+            "修改",
+            "4點"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認"
+                ],
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "不對，是4點",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "修改",
+                  "4點"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:59:17.129Z"
+    }
+  ]
+}

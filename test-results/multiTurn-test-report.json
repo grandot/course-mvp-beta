@@ -1,0 +1,283 @@
+{
+  "summary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "passRate": "100.0%",
+    "duration": "27978ms",
+    "timestamp": "2025-08-07T03:59:08.578Z"
+  },
+  "results": [
+    {
+      "id": "multi_001",
+      "name": "缺失學生名稱補充",
+      "steps": [
+        {
+          "message": "明天下午3點數學課",
+          "expectKeywords": [
+            "學生",
+            "哪位"
+          ]
+        },
+        {
+          "message": "小明",
+          "expectKeywords": [
+            "確認",
+            "小明",
+            "數學課"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "學生",
+                  "哪位"
+                ],
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "小明",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "小明",
+                  "數學課"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:43.858Z"
+    },
+    {
+      "id": "multi_002",
+      "name": "缺失課程名稱補充",
+      "steps": [
+        {
+          "message": "小明明天下午3點有課",
+          "expectKeywords": [
+            "課程",
+            "什麼課"
+          ]
+        },
+        {
+          "message": "英文課",
+          "expectKeywords": [
+            "確認",
+            "英文課"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天下午3點有課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "課程",
+                  "什麼課"
+                ],
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "英文課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "英文課"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:48.536Z"
+    },
+    {
+      "id": "multi_003",
+      "name": "Quick Reply 確認流程",
+      "steps": [
+        {
+          "message": "小明明天下午3點數學課",
+          "expectKeywords": [
+            "確認",
+            "修改"
+          ],
+          "expectQuickReply": true
+        },
+        {
+          "message": "確認",
+          "expectKeywords": [
+            "成功",
+            "已安排"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "修改"
+                ],
+                "passed": true
+              },
+              {
+                "type": "quickReply",
+                "expected": true,
+                "actual": true,
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "確認",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "成功",
+                  "已安排"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:56.102Z"
+    },
+    {
+      "id": "multi_004",
+      "name": "Quick Reply 修改流程",
+      "steps": [
+        {
+          "message": "小明明天下午3點數學課",
+          "expectKeywords": [
+            "確認",
+            "修改"
+          ],
+          "expectQuickReply": true
+        },
+        {
+          "message": "修改",
+          "expectKeywords": [
+            "修改",
+            "時間",
+            "課程"
+          ]
+        },
+        {
+          "message": "改成下午4點",
+          "expectKeywords": [
+            "確認",
+            "4點",
+            "16:00"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "修改"
+                ],
+                "passed": true
+              },
+              {
+                "type": "quickReply",
+                "expected": true,
+                "actual": true,
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "修改",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "修改",
+                  "時間",
+                  "課程"
+                ],
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "改成下午4點",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "4點",
+                  "16:00"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:59:08.577Z"
+    }
+  ]
+}

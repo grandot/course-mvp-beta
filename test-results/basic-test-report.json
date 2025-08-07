@@ -1,0 +1,120 @@
+{
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "passRate": "100.0%",
+    "duration": "16887ms",
+    "timestamp": "2025-08-07T03:58:40.598Z"
+  },
+  "results": [
+    {
+      "id": "basic_001",
+      "name": "新增單次課程",
+      "steps": [
+        {
+          "message": "小明明天下午3點數學課",
+          "expectKeywords": [
+            "確認",
+            "修改"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "修改"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:31.096Z"
+    },
+    {
+      "id": "basic_002",
+      "name": "新增重複課程",
+      "steps": [
+        {
+          "message": "小明每週三下午3點數學課",
+          "expectKeywords": [
+            "確認",
+            "修改"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明每週三下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "修改"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:35.917Z"
+    },
+    {
+      "id": "basic_003",
+      "name": "查詢今日課程",
+      "steps": [
+        {
+          "message": "小明今天有什麼課？",
+          "expectKeywords": [
+            "今天",
+            "課程",
+            "小明"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明今天有什麼課？",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "今天",
+                  "課程",
+                  "小明"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:58:40.597Z"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "passRate": "100.0%",
+    "duration": "7171ms",
+    "timestamp": "2025-08-07T03:59:24.302Z"
+  },
+  "results": [
+    {
+      "id": "boundary_001",
+      "name": "多學生混淆處理",
+      "steps": [
+        {
+          "message": "明天下午3點數學課",
+          "expectKeywords": [
+            "學生",
+            "哪位"
+          ]
+        },
+        {
+          "message": "小明和小華都要上",
+          "expectKeywords": [
+            "兩個",
+            "都",
+            "分別"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "明天下午3點數學課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "學生",
+                  "哪位"
+                ],
+                "passed": true
+              }
+            ]
+          },
+          {
+            "message": "小明和小華都要上",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "兩個",
+                  "都",
+                  "分別"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:59:20.303Z"
+    },
+    {
+      "id": "boundary_002",
+      "name": "時間格式多樣性",
+      "steps": [
+        {
+          "message": "小明明天 3:30PM 英文課",
+          "expectKeywords": [
+            "確認",
+            "15:30",
+            "3:30"
+          ]
+        }
+      ],
+      "result": {
+        "status": "passed",
+        "steps": [
+          {
+            "message": "小明明天 3:30PM 英文課",
+            "response": "Mock Service 處理成功",
+            "passed": true,
+            "checks": [
+              {
+                "type": "keywords",
+                "expected": [
+                  "確認",
+                  "15:30",
+                  "3:30"
+                ],
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "errors": []
+      },
+      "timestamp": "2025-08-07T03:59:24.302Z"
+    }
+  ]
+}
