@@ -58,7 +58,8 @@ async function replyMessage(replyToken, message, quickReply = null) {
     };
 
     // 🧪 測試環境檢查：如果是測試 token，直接返回模擬回應
-    if (replyToken && replyToken.startsWith('test-reply-token')) {
+    console.log('🔍 檢查 replyToken:', replyToken);
+    if (replyToken && replyToken.includes('test-reply-token')) {
       console.log('🧪 檢測到測試 token，跳過真實 LINE API 調用');
       return {
         status: 200,
