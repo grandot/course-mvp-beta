@@ -64,9 +64,14 @@ app.get('/health/deps', async (req, res) => {
   try {
     // 檢查 Redis 連接
     try {
-      const { redisClient } = require('./services/redisService');
-      await redisClient.ping();
-      checks.redis = { status: 'ok', message: 'Redis連接正常' };
+      const { getRedisService } = require('./services/redisService');
+      const redisService = getRedisService();
+      if (redisService && redisService.client) {
+        await redisService.client.ping();
+        checks.redis = { status: 'ok', message: 'Redis連接正常' };
+      } else {
+        checks.redis = { status: 'warning', message: 'Redis服務未初始化' };
+      }
     } catch (error) {
       checks.redis = { status: 'error', message: error.message };
     }
@@ -74,7 +79,7 @@ app.get('/health/deps', async (req, res) => {
     // 檢查 Firebase 連接
     try {
       const firebaseService = require('./services/firebaseService');
-      const testResult = await firebaseService.healthCheck();
+      const testResult = await firebaseService.testConnection();
       checks.firebase = { status: 'ok', message: 'Firebase連接正常', data: testResult };
     } catch (error) {
       checks.firebase = { status: 'error', message: error.message };
