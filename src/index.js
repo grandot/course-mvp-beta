@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === 'production' && process.env.USE_MOCK_LINE_SERVICE =
 }
 
 // 顯示當前環境配置
-console.log(`🚀 應用程式啟動中...`);
+console.log('🚀 應用程式啟動中...');
 console.log(`📍 環境: ${process.env.NODE_ENV || 'development'}`);
 console.log(`🤖 LINE Service: ${process.env.USE_MOCK_LINE_SERVICE === 'true' ? 'Mock (測試)' : 'Real (生產)'}`);
 if (process.env.USE_MOCK_LINE_SERVICE === 'true') {

@@ -1,7 +1,7 @@
 /**
  * Mock LINE Messaging API 服務
  * 專用於測試環境，模擬 LINE API 回應
- * 
+ *
  * 重要：此檔案只在測試環境中使用，不會影響生產環境
  */
 
@@ -20,7 +20,7 @@ class MockLineService {
   async replyMessage(replyToken, message, quickReply = null) {
     console.log('📤 Mock LINE API - 回覆訊息');
     console.log('🎫 Reply Token:', replyToken);
-    
+
     // 🏷️ 為訊息添加MOCK標記
     let markedMessage;
     if (typeof message === 'string') {
@@ -28,14 +28,14 @@ class MockLineService {
     } else {
       markedMessage = {
         ...message,
-        text: `[MOCK測試回應] ${message.text || JSON.stringify(message)}`
+        text: `[MOCK測試回應] ${message.text || JSON.stringify(message)}`,
       };
     }
-    
+
     console.log('💬 訊息內容:', typeof markedMessage === 'string' ? markedMessage : JSON.stringify(markedMessage, null, 2));
-    
+
     if (quickReply && quickReply.length > 0) {
-      console.log('🔘 Quick Reply 選項:', quickReply.map(item => item.label || item.text).join(', '));
+      console.log('🔘 Quick Reply 選項:', quickReply.map((item) => item.label || item.text).join(', '));
     }
 
     // 模擬成功回應（包含標記後的訊息）
@@ -45,13 +45,13 @@ class MockLineService {
       data: {
         sentMessages: [markedMessage],
         quickReply: quickReply || null,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
     // 模擬網路延遲（可選）
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     console.log('✅ Mock 回覆成功');
     return response;
   }
@@ -71,13 +71,13 @@ class MockLineService {
       data: {
         userId,
         sentMessages: [message],
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
     // 模擬網路延遲
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
     console.log('✅ Mock 推播成功');
     return response;
   }
@@ -96,12 +96,12 @@ class MockLineService {
       data: {
         groupId,
         sentMessages: [message],
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
-    await new Promise(resolve => setTimeout(resolve, 120));
-    
+    await new Promise((resolve) => setTimeout(resolve, 120));
+
     console.log('✅ Mock 群組推播成功');
     return response;
   }
@@ -123,12 +123,12 @@ class MockLineService {
         mediaType,
         mediaUrl,
         altText,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     console.log('✅ Mock 多媒體回覆成功');
     return response;
   }
@@ -146,17 +146,17 @@ class MockLineService {
       displayName: `測試用戶_${userId.slice(-4)}`,
       pictureUrl: 'https://example.com/mock-avatar.jpg',
       statusMessage: '這是測試用戶的狀態訊息',
-      language: 'zh-TW'
+      language: 'zh-TW',
     };
 
     const response = {
       success: true,
       mockResponse: true,
-      data: mockProfile
+      data: mockProfile,
     };
 
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     console.log('✅ Mock 用戶資料獲取成功:', mockProfile.displayName);
     return response;
   }
@@ -170,7 +170,7 @@ class MockLineService {
       mode: 'testing',
       callCount: this.callCount || 0,
       lastCall: this.lastCall || null,
-      enabled: true
+      enabled: true,
     };
   }
 
@@ -179,13 +179,13 @@ class MockLineService {
    */
   async healthCheck() {
     console.log('🏥 Mock LINE Service 健康檢查');
-    
+
     return {
       status: 'healthy',
       service: 'mockLineService',
       version: '1.0.0',
       mockMode: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -196,7 +196,7 @@ class MockLineService {
     if (process.env.NODE_ENV === 'production' && process.env.USE_MOCK_LINE_SERVICE === 'true') {
       throw new Error('❌ 錯誤：生產環境不能使用 Mock LINE Service');
     }
-    
+
     if (!process.env.USE_MOCK_LINE_SERVICE) {
       console.warn('⚠️ 警告：USE_MOCK_LINE_SERVICE 未設定，建議明確指定');
     }

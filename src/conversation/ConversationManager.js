@@ -1,7 +1,7 @@
 /**
  * 對話管理器 (ConversationManager)
  * 使用 Redis 儲存對話狀態，支援多輪對話功能
- * 
+ *
  * 主要功能：
  * - 對話狀態管理（30分鐘 TTL）
  * - 操作性意圖上下文追蹤
@@ -18,7 +18,7 @@ class ConversationManager {
     this.maxHistoryLength = 5; // 保留最近5輪對話
     this.isRedisAvailable = null; // 快取 Redis 可用狀態
   }
-  
+
   /**
    * 檢查 Redis 可用性
    * @returns {Promise<boolean>}
@@ -27,18 +27,18 @@ class ConversationManager {
     if (this.isRedisAvailable !== null) {
       return this.isRedisAvailable;
     }
-    
+
     const health = await this.redisService.healthCheck();
     this.isRedisAvailable = health.status === 'healthy';
-    
+
     // 每5分鐘重新檢查一次
     setTimeout(() => {
       this.isRedisAvailable = null;
     }, 300000);
-    
+
     return this.isRedisAvailable;
   }
-  
+
   /**
    * 建立對話上下文鍵名
    * @param {string} userId - 用戶 ID
@@ -47,7 +47,7 @@ class ConversationManager {
   getContextKey(userId) {
     return `conversation:${userId}`;
   }
-  
+
   /**
    * 取得對話上下文
    * @param {string} userId - 用戶 ID
@@ -60,14 +60,14 @@ class ConversationManager {
         console.warn('⚠️ Redis 不可用，回傳空對話上下文');
         return this.createEmptyContext(userId);
       }
-      
+
       const key = this.getContextKey(userId);
       const context = await this.redisService.get(key);
-      
+
       if (!context) {
         return this.createEmptyContext(userId);
       }
-      
+
       // 檢查上下文是否過期（雙重保險）
       const now = Date.now();
       const timeDiff = now - context.lastActivity;
@@ -76,15 +76,14 @@ class ConversationManager {
         await this.clearContext(userId);
         return this.createEmptyContext(userId);
       }
-      
+
       return context;
-      
     } catch (error) {
       console.error('❌ 取得對話上下文失敗:', error.message);
       return this.createEmptyContext(userId);
     }
   }
-  
+
   /**
    * 儲存對話上下文
    * @param {string} userId - 用戶 ID
@@ -98,24 +97,23 @@ class ConversationManager {
         console.warn('⚠️ Redis 不可用，對話上下文儲存失敗');
         return false;
       }
-      
+
       // 更新最後活動時間
       context.lastActivity = Date.now();
-      
+
       // 限制對話歷史長度
       if (context.state.history.length > this.maxHistoryLength) {
         context.state.history = context.state.history.slice(-this.maxHistoryLength);
       }
-      
+
       const key = this.getContextKey(userId);
       return await this.redisService.set(key, context, this.defaultTTL);
-      
     } catch (error) {
       console.error('❌ 儲存對話上下文失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 清理對話上下文
    * @param {string} userId - 用戶 ID
@@ -128,16 +126,15 @@ class ConversationManager {
         console.warn('⚠️ Redis 不可用，對話上下文清理失敗');
         return false;
       }
-      
+
       const key = this.getContextKey(userId);
       return await this.redisService.delete(key);
-      
     } catch (error) {
       console.error('❌ 清理對話上下文失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 建立空的對話上下文
    * @param {string} userId - 用戶 ID
@@ -145,7 +142,7 @@ class ConversationManager {
    */
   createEmptyContext(userId) {
     return {
-      userId: userId,
+      userId,
       lastActivity: Date.now(),
       state: {
         currentFlow: null, // null | course_creation | course_modification | content_recording
@@ -157,12 +154,12 @@ class ConversationManager {
           students: [],
           courses: [],
           dates: [],
-          times: []
-        }
-      }
+          times: [],
+        },
+      },
     };
   }
-  
+
   /**
    * 記錄用戶訊息到對話歷史
    * @param {string} userId - 用戶 ID
@@ -174,28 +171,27 @@ class ConversationManager {
   async recordUserMessage(userId, message, intent, slots = {}) {
     try {
       const context = await this.getContext(userId);
-      
+
       const userRecord = {
         role: 'user',
-        message: message,
-        intent: intent,
-        slots: slots,
-        timestamp: Date.now()
+        message,
+        intent,
+        slots,
+        timestamp: Date.now(),
       };
-      
+
       context.state.history.push(userRecord);
-      
+
       // 更新提及的實體
       this.updateMentionedEntities(context, slots);
-      
+
       return await this.saveContext(userId, context);
-      
     } catch (error) {
       console.error('❌ 記錄用戶訊息失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 記錄機器人回應到對話歷史
    * @param {string} userId - 用戶 ID
@@ -206,24 +202,23 @@ class ConversationManager {
   async recordBotResponse(userId, message, options = {}) {
     try {
       const context = await this.getContext(userId);
-      
+
       const botRecord = {
         role: 'assistant',
-        message: message,
+        message,
         timestamp: Date.now(),
-        ...options // quickReply, actions 等
+        ...options, // quickReply, actions 等
       };
-      
+
       context.state.history.push(botRecord);
-      
+
       return await this.saveContext(userId, context);
-      
     } catch (error) {
       console.error('❌ 記錄機器人回應失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 記錄任務執行結果到對話上下文
    * @param {string} userId - 用戶 ID
@@ -235,19 +230,19 @@ class ConversationManager {
   async recordTaskResult(userId, intent, slots, result) {
     try {
       const context = await this.getContext(userId);
-      
+
       // 記錄最近的操作
       context.state.lastActions[intent] = {
-        intent: intent,
-        slots: slots,
-        result: result,
-        timestamp: Date.now()
+        intent,
+        slots,
+        result,
+        timestamp: Date.now(),
       };
-      
+
       // 如果任務成功，設定期待的輸入類型
       if (result.success) {
         context.state.expectingInput = ['confirmation', 'modification'];
-        
+
         // 根據意圖設定對話流程
         switch (intent) {
           case 'add_course':
@@ -260,18 +255,17 @@ class ConversationManager {
             context.state.currentFlow = null;
         }
       }
-      
+
       return await this.saveContext(userId, context);
-      
     } catch (error) {
       console.error('❌ 記錄任務結果失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 設定期待輸入狀態（用於缺失資訊補充）
-   * @param {string} userId - 用戶 ID  
+   * @param {string} userId - 用戶 ID
    * @param {string} currentFlow - 當前對話流程
    * @param {Array<string>} inputTypes - 期待的輸入類型
    * @param {object} pendingSlots - 待補充的 slots 資料
@@ -280,23 +274,22 @@ class ConversationManager {
   async setExpectedInput(userId, currentFlow, inputTypes, pendingSlots = {}) {
     try {
       const context = await this.getContext(userId);
-      
+
       context.state.currentFlow = currentFlow;
       context.state.expectingInput = inputTypes;
       context.state.pendingData = {
         ...context.state.pendingData,
         slots: pendingSlots,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      
+
       return await this.saveContext(userId, context);
-      
     } catch (error) {
       console.error('❌ 設定期待輸入失敗:', error.message);
       return false;
     }
   }
-  
+
   /**
    * 取得最近的操作上下文
    * @param {string} userId - 用戶 ID
@@ -306,27 +299,24 @@ class ConversationManager {
   async getLastAction(userId, intentType = null) {
     try {
       const context = await this.getContext(userId);
-      
+
       if (!context.state.lastActions || Object.keys(context.state.lastActions).length === 0) {
         return null;
       }
-      
+
       if (intentType && context.state.lastActions[intentType]) {
         return context.state.lastActions[intentType];
       }
-      
+
       // 回傳最近的操作（按時間戳排序）
       const actions = Object.values(context.state.lastActions);
-      return actions.reduce((latest, current) => 
-        current.timestamp > latest.timestamp ? current : latest
-      );
-      
+      return actions.reduce((latest, current) => (current.timestamp > latest.timestamp ? current : latest));
     } catch (error) {
       console.error('❌ 取得最近操作失敗:', error.message);
       return null;
     }
   }
-  
+
   /**
    * 檢查是否期待特定類型的輸入
    * @param {string} userId - 用戶 ID
@@ -342,7 +332,7 @@ class ConversationManager {
       return false;
     }
   }
-  
+
   /**
    * 清除期待的輸入狀態
    * @param {string} userId - 用戶 ID
@@ -359,7 +349,7 @@ class ConversationManager {
       return false;
     }
   }
-  
+
   /**
    * 更新提及的實體
    * @param {object} context - 對話上下文
@@ -367,51 +357,51 @@ class ConversationManager {
    */
   updateMentionedEntities(context, slots) {
     const entities = context.state.mentionedEntities;
-    
+
     if (slots.studentName && !entities.students.includes(slots.studentName)) {
       entities.students.push(slots.studentName);
     }
-    
+
     if (slots.courseName && !entities.courses.includes(slots.courseName)) {
       entities.courses.push(slots.courseName);
     }
-    
+
     if (slots.courseDate && !entities.dates.includes(slots.courseDate)) {
       entities.dates.push(slots.courseDate);
     }
-    
+
     if (slots.scheduleTime && !entities.times.includes(slots.scheduleTime)) {
       entities.times.push(slots.scheduleTime);
     }
-    
+
     // 限制陣列長度，保留最近的實體
     const maxEntityCount = 10;
-    Object.keys(entities).forEach(key => {
+    Object.keys(entities).forEach((key) => {
       if (entities[key].length > maxEntityCount) {
         entities[key] = entities[key].slice(-maxEntityCount);
       }
     });
   }
-  
+
   /**
    * 取得健康狀態
    * @returns {Promise<object>} 健康狀態資訊
    */
   async healthCheck() {
     const redisHealth = await this.redisService.healthCheck();
-    
+
     return {
       status: redisHealth.status === 'healthy' ? 'healthy' : 'degraded',
       redis: redisHealth,
       features: {
         multiTurnDialogue: redisHealth.status === 'healthy',
         quickReply: redisHealth.status === 'healthy',
-        contextAware: redisHealth.status === 'healthy'
+        contextAware: redisHealth.status === 'healthy',
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
-  
+
   /**
    * 批量清理過期的對話上下文（維護任務）
    * @returns {Promise<number>} 清理的數量
@@ -423,11 +413,11 @@ class ConversationManager {
         console.warn('⚠️ Redis 不可用，無法執行清理任務');
         return 0;
       }
-      
+
       const pattern = 'conversation:*';
       const keys = await this.redisService.scan(pattern);
       let cleanedCount = 0;
-      
+
       for (const key of keys) {
         const ttl = await this.redisService.getTTL(key);
         if (ttl === -2) { // 鍵不存在
@@ -440,13 +430,12 @@ class ConversationManager {
           }
         }
       }
-      
+
       if (cleanedCount > 0) {
         console.log(`🧹 清理過期對話上下文：${cleanedCount} 個`);
       }
-      
+
       return cleanedCount;
-      
     } catch (error) {
       console.error('❌ 清理過期對話上下文失敗:', error.message);
       return 0;
@@ -470,5 +459,5 @@ function getConversationManager() {
 
 module.exports = {
   ConversationManager,
-  getConversationManager
+  getConversationManager,
 };

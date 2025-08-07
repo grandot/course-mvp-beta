@@ -465,7 +465,7 @@ async function extractSlotsByAI(message, intent, existingSlots) {
 function validateExtractionResult(result, originalMessage, intent) {
   const issues = [];
   const cleaned = { ...result };
-  
+
   // 驗證學生姓名
   if (cleaned.studentName) {
     if (hasActionWords(cleaned.studentName)) {
@@ -473,12 +473,12 @@ function validateExtractionResult(result, originalMessage, intent) {
       cleaned.studentName = cleanStudentName(cleaned.studentName);
     }
   }
-  
+
   // 驗證課程名稱
   if (cleaned.courseName) {
     if (hasActionWords(cleaned.courseName)) {
       issues.push(`課程名稱包含動作詞: ${cleaned.courseName}`);
-      
+
       // 如果學生姓名為空，嘗試從課程名稱中提取
       if (!cleaned.studentName) {
         const extractedStudent = extractStudentFromCourseName(cleaned.courseName);
@@ -487,26 +487,26 @@ function validateExtractionResult(result, originalMessage, intent) {
           issues.push(`從課程名稱中提取學生姓名: ${extractedStudent}`);
         }
       }
-      
+
       cleaned.courseName = cleanCourseName(cleaned.courseName);
     }
   }
-  
+
   // 驗證邏輯一致性
   if (intent === 'record_content' && !cleaned.content) {
     issues.push('記錄內容意圖但未提取到內容');
   }
-  
+
   if (issues.length > 0) {
     console.log('🔧 自動修正提取結果:', issues);
   }
-  
+
   return { result: cleaned, issues };
 }
 
 function hasActionWords(text) {
   const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄'];
-  return actionWords.some(word => text.includes(word));
+  return actionWords.some((word) => text.includes(word));
 }
 
 function cleanStudentName(rawName) {
@@ -520,33 +520,33 @@ function cleanStudentName(rawName) {
 function extractStudentFromCourseName(rawCourse) {
   // 移除動作詞後，嘗試提取學生姓名
   const cleaned = rawCourse.replace(/^(設定|不要|取消|刪掉|查詢|記錄)/, '');
-  
+
   // 匹配 "學生姓名+課程名稱" 格式
   const nameMatch = cleaned.match(/^([小大]?[一-龥A-Za-z]{2,6})([一-龥A-Za-z]{2,6}課)$/);
   if (nameMatch && nameMatch[1]) {
     return nameMatch[1];
   }
-  
+
   return null;
 }
 
 function cleanCourseName(rawCourse) {
   // 移除動作詞，保留純課程名
-  let cleaned = rawCourse
+  const cleaned = rawCourse
     .replace(/^(設定|不要|取消|刪掉|查詢|記錄)/, '');
-  
+
   // 如果包含人名+課程的格式，提取課程部分
   const courseMatch = cleaned.match(/([小大]?[一-龥A-Za-z]{2,6})([一-龥A-Za-z]{2,6}課)$/);
   if (courseMatch && courseMatch[2]) {
     return courseMatch[2]; // 返回課程部分，如 "鋼琴課"
   }
-  
+
   // 如果是 "XXX課" 格式，直接返回
   const directCourseMatch = cleaned.match(/([一-龥A-Za-z]{2,6}課)$/);
   if (directCourseMatch) {
     return directCourseMatch[1];
   }
-  
+
   return cleaned.trim();
 }
 
@@ -556,37 +556,37 @@ function cleanCourseName(rawCourse) {
 function calculateConfidence(slots, intent) {
   let confidence = 0;
   let totalFields = 0;
-  
+
   // 定義每個意圖的期望欄位
   const expectedFields = {
-    'add_course': ['studentName', 'courseName'],
-    'create_recurring_course': ['studentName', 'courseName', 'dayOfWeek'],
-    'record_content': ['studentName', 'courseName', 'content'],
-    'add_course_content': ['studentName', 'courseName', 'content'],
-    'query_schedule': ['studentName', 'timeReference'],
-    'set_reminder': ['studentName', 'courseName', 'reminderTime'],
-    'cancel_course': ['studentName', 'courseName'],
-    'modify_course': ['studentName', 'courseName']
+    add_course: ['studentName', 'courseName'],
+    create_recurring_course: ['studentName', 'courseName', 'dayOfWeek'],
+    record_content: ['studentName', 'courseName', 'content'],
+    add_course_content: ['studentName', 'courseName', 'content'],
+    query_schedule: ['studentName', 'timeReference'],
+    set_reminder: ['studentName', 'courseName', 'reminderTime'],
+    cancel_course: ['studentName', 'courseName'],
+    modify_course: ['studentName', 'courseName'],
   };
-  
+
   const expected = expectedFields[intent] || [];
   if (expected.length === 0) {
     return 1.0; // 如果沒有期望欄位，返回高置信度
   }
-  
+
   // 計算填充率
-  expected.forEach(field => {
+  expected.forEach((field) => {
     totalFields++;
     if (slots[field] && slots[field] !== null && slots[field] !== '') {
       confidence++;
     }
   });
-  
+
   const fillRate = totalFields > 0 ? confidence / totalFields : 0;
-  
+
   // 額外的品質檢查
   let qualityScore = 1.0;
-  
+
   // 檢查學生姓名品質
   if (slots.studentName) {
     if (slots.studentName.length < 2 || slots.studentName.length > 6) {
@@ -596,7 +596,7 @@ function calculateConfidence(slots, intent) {
       qualityScore -= 0.3; // 姓名不應包含數字
     }
   }
-  
+
   // 檢查課程名稱品質
   if (slots.courseName) {
     if (slots.courseName.length < 2) {
@@ -606,7 +606,7 @@ function calculateConfidence(slots, intent) {
       qualityScore -= 0.4; // 課程名稱不應包含動作詞
     }
   }
-  
+
   return Math.max(0, fillRate * qualityScore);
 }
 
@@ -636,7 +636,7 @@ async function extractSlots(message, intent, userId = null) {
   if (process.env.ENABLE_AI_FALLBACK === 'true') {
     const confidence = calculateConfidence(slots, intent);
     console.log('📊 規則提取置信度:', confidence.toFixed(2));
-    
+
     // 如果規則提取信心度低，強制使用 AI
     if (confidence < 0.5) {
       console.log('🔄 規則提取信心度低，強制 AI 輔助...');
@@ -655,15 +655,13 @@ async function extractSlots(message, intent, userId = null) {
   if (process.env.ENABLE_AI_FALLBACK === 'true') {
     const validation = validateExtractionResult(slots, message, intent);
     slots = validation.result;
-    
+
     // 記錄低置信度案例用於持續優化
     const finalConfidence = calculateConfidence(slots, intent);
     if (finalConfidence < 0.7) {
       try {
         const errorCollectionService = require('../services/errorCollectionService');
-        await errorCollectionService.recordLowConfidenceCase(
-          message, intent, slots, finalConfidence, userId
-        );
+        await errorCollectionService.recordLowConfidenceCase(message, intent, slots, finalConfidence, userId);
       } catch (error) {
         console.warn('⚠️ 記錄低置信度案例失敗:', error.message);
       }
@@ -716,14 +714,14 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
   try {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
-    
+
     // 檢查 Redis 可用性
     const healthCheck = await conversationManager.healthCheck();
     if (healthCheck.status !== 'healthy') {
       console.log('⚠️ 對話管理器不可用，跳過上下文增強');
       return slots;
     }
-    
+
     // 取得對話上下文
     const context = await conversationManager.getContext(userId);
     if (!context) {
@@ -732,42 +730,42 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
     }
 
     console.log('🧠 使用對話上下文增強 slots 提取');
-    
+
     // 從上下文中補充缺失的實體
     const enhancedSlots = { ...slots };
-    
+
     // 補充學生名稱
     if (!enhancedSlots.studentName && context.state.mentionedEntities.students.length > 0) {
       // 使用最近提及的學生
       enhancedSlots.studentName = context.state.mentionedEntities.students[context.state.mentionedEntities.students.length - 1];
       console.log('📝 從上下文補充學生名稱:', enhancedSlots.studentName);
     }
-    
+
     // 補充課程名稱
     if (!enhancedSlots.courseName && context.state.mentionedEntities.courses.length > 0) {
       // 使用最近提及的課程
       enhancedSlots.courseName = context.state.mentionedEntities.courses[context.state.mentionedEntities.courses.length - 1];
       console.log('📝 從上下文補充課程名稱:', enhancedSlots.courseName);
     }
-    
+
     // 補充時間資訊
     if (!enhancedSlots.scheduleTime && context.state.mentionedEntities.times.length > 0) {
       enhancedSlots.scheduleTime = context.state.mentionedEntities.times[context.state.mentionedEntities.times.length - 1];
       console.log('📝 從上下文補充時間:', enhancedSlots.scheduleTime);
     }
-    
+
     // 補充日期資訊
     if (!enhancedSlots.courseDate && context.state.mentionedEntities.dates.length > 0) {
       enhancedSlots.courseDate = context.state.mentionedEntities.dates[context.state.mentionedEntities.dates.length - 1];
       console.log('📝 從上下文補充日期:', enhancedSlots.courseDate);
     }
-    
+
     // 處理操作性意圖的特殊情況
     if (['confirm_action', 'modify_action', 'cancel_action'].includes(intent)) {
       // 從最近的操作中繼承所有必要資料
       const lastAction = await conversationManager.getLastAction(userId);
       if (lastAction && lastAction.slots) {
-        Object.keys(lastAction.slots).forEach(key => {
+        Object.keys(lastAction.slots).forEach((key) => {
           if (lastAction.slots[key] && !enhancedSlots[key]) {
             enhancedSlots[key] = lastAction.slots[key];
             console.log(`📝 從最近操作繼承 ${key}:`, enhancedSlots[key]);
@@ -775,16 +773,15 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
         });
       }
     }
-    
+
     // 處理修改意圖的特殊邏輯
     if (intent === 'modify_action') {
       // 識別用戶想要修改的具體欄位
       enhancedSlots.modificationTarget = identifyModificationTarget(message);
       console.log('📝 識別修改目標:', enhancedSlots.modificationTarget);
     }
-    
+
     return enhancedSlots;
-    
   } catch (error) {
     console.error('❌ 上下文增強失敗:', error);
     return slots; // 失敗時回傳原始 slots
@@ -803,14 +800,14 @@ function identifyModificationTarget(message) {
     課程: ['課程', '課', '科目'],
     學生: ['學生', '小朋友', '孩子'],
     內容: ['內容', '記錄', '說明'],
-    提醒: ['提醒', '通知']
+    提醒: ['提醒', '通知'],
   };
-  
+
   for (const [target, keywords] of Object.entries(targets)) {
-    if (keywords.some(keyword => message.includes(keyword))) {
+    if (keywords.some((keyword) => message.includes(keyword))) {
       return target;
     }
   }
-  
+
   return null;
 }

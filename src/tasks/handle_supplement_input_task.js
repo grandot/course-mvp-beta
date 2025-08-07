@@ -51,26 +51,26 @@ async function handle_supplement_day_of_week_task(slots, userId, event) {
  */
 async function handleSupplementInput(userId, userInput, slotName, inputType) {
   console.log(`🔧 處理 ${slotName} 補充:`, userInput);
-  
+
   try {
     const conversationManager = getConversationManager();
-    
+
     // 取得對話上下文
     const context = await conversationManager.getContext(userId);
     if (!context || !context.state.pendingData) {
       return {
         success: false,
-        message: '❌ 找不到待處理的資訊，請重新開始。'
+        message: '❌ 找不到待處理的資訊，請重新開始。',
       };
     }
-    
+
     const { intent, existingSlots } = context.state.pendingData.slots;
     console.log('📋 原始意圖:', intent);
     console.log('📋 現有 slots:', existingSlots);
-    
+
     // 根據補充類型提取對應的值
     let supplementValue;
-    
+
     switch (slotName) {
       case 'studentName':
         supplementValue = userInput.trim();
@@ -93,48 +93,47 @@ async function handleSupplementInput(userId, userInput, slotName, inputType) {
       default:
         supplementValue = userInput.trim();
     }
-    
+
     // 更新 slots 資料
     const updatedSlots = {
       ...existingSlots,
-      [slotName]: supplementValue
+      [slotName]: supplementValue,
     };
-    
+
     console.log('✅ 更新後的 slots:', updatedSlots);
-    
+
     // 動態載入原始任務處理器
     const originalTaskHandler = require(`./handle_${intent}_task`);
-    
+
     // 清除期待輸入狀態
     await conversationManager.clearExpectedInput(userId);
-    
+
     // 重新執行原始任務
     console.log(`🔄 重新執行 ${intent} 任務`);
     const result = await originalTaskHandler(updatedSlots, userId, {
-      message: { text: `已補充 ${slotName}: ${supplementValue}` }
+      message: { text: `已補充 ${slotName}: ${supplementValue}` },
     });
-    
+
     // 如果還有缺失資訊，會再次設定期待輸入狀態
     if (!result.success && result.expectingInput) {
       return {
         success: false,
         message: result.message,
-        expectingInput: true
+        expectingInput: true,
       };
     }
-    
+
     return result;
-    
   } catch (error) {
     console.error(`❌ 處理 ${slotName} 補充失敗:`, error);
-    
+
     // 清除期待輸入狀態以防止卡住
     const conversationManager = getConversationManager();
     await conversationManager.clearExpectedInput(userId);
-    
+
     return {
       success: false,
-      message: '❌ 處理補充資訊時發生錯誤，請重新開始。'
+      message: '❌ 處理補充資訊時發生錯誤，請重新開始。',
     };
   }
 }
@@ -144,5 +143,5 @@ module.exports = {
   handle_supplement_course_name_task,
   handle_supplement_schedule_time_task,
   handle_supplement_course_date_task,
-  handle_supplement_day_of_week_task
+  handle_supplement_day_of_week_task,
 };

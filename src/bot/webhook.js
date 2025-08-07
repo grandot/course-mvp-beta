@@ -43,10 +43,10 @@ async function handleTextMessage(event) {
 
     // 🔥 核心邏輯：測試用戶自動用Mock
     const isTestUser = userId.startsWith('U_test_');
-    const currentLineService = isTestUser ? 
-      require('../services/mockLineService') : 
-      lineService;
-      
+    const currentLineService = isTestUser
+      ? require('../services/mockLineService')
+      : lineService;
+
     if (isTestUser) {
       console.log('🧪 檢測到測試用戶，使用Mock Service');
     }
@@ -63,7 +63,7 @@ async function handleTextMessage(event) {
 
     if (intent === 'unknown') {
       const unknownMessage = '抱歉，我不太理解您的意思。\n\n您可以試試：\n• 「小明每週三下午3點數學課」\n• 「查詢小明今天的課程」\n• 「記錄昨天英文課的內容」\n• 「提醒我明天的鋼琴課」';
-      
+
       await conversationManager.recordBotResponse(userId, unknownMessage);
       await currentLineService.replyMessage(replyToken, unknownMessage);
       return;
@@ -81,7 +81,7 @@ async function handleTextMessage(event) {
     await conversationManager.recordTaskResult(userId, intent, slots, result);
 
     // 第五步：處理回應和 Quick Reply
-    let responseMessage = result.message;
+    const responseMessage = result.message;
     let quickReply = null;
 
     if (result.success) {
@@ -99,10 +99,9 @@ async function handleTextMessage(event) {
 
     // 回應用戶
     await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
-
   } catch (error) {
     console.error('❌ 處理文字訊息失敗:', error);
-    
+
     // 記錄錯誤到對話歷史
     try {
       const conversationManager = getConversationManager();
@@ -113,9 +112,9 @@ async function handleTextMessage(event) {
 
     // 錯誤處理也要動態選擇服務
     const isTestUser = event.source.userId.startsWith('U_test_');
-    const currentLineService = isTestUser ? 
-      require('../services/mockLineService') : 
-      lineService;
+    const currentLineService = isTestUser
+      ? require('../services/mockLineService')
+      : lineService;
 
     await currentLineService.replyMessage(
       event.replyToken,
@@ -161,21 +160,21 @@ async function handleImageMessage(event) {
     await lineService.replyMessage(replyToken, result.message, quickReply);
   } catch (error) {
     console.error('❌ 處理圖片訊息失敗:', error);
-    
+
     // 檢查是否為圖片內容過期（404 錯誤）
     if (error.response && error.response.status === 404) {
       await lineService.replyMessage(
         event.replyToken,
-        '📷 圖片上傳提醒\n' +
-        '這張圖片無法下載，可能是因為 LINE 的限制：\n\n' +
-        '圖片只能在傳送後 1 小時內讓機器人存取\n\n' +
-        '🔁 如果您是從其他群組轉傳的舊圖片，請改用以下方式：\n\n' +
-        '👉 正確做法：\n\n' +
-        '打開手機的「相簿」App\n\n' +
-        '找到要上傳的照片\n\n' +
-        '點選「分享」→ 選擇 LINE → 傳送到這個對話視窗\n\n' +
-        '❌ 不要從 LINE 對話框內點照片圖示選擇圖片，那樣可能只是轉傳，Bot 會抓不到內容。\n\n' +
-        '感謝您的配合 🙏',
+        '📷 圖片上傳提醒\n'
+        + '這張圖片無法下載，可能是因為 LINE 的限制：\n\n'
+        + '圖片只能在傳送後 1 小時內讓機器人存取\n\n'
+        + '🔁 如果您是從其他群組轉傳的舊圖片，請改用以下方式：\n\n'
+        + '👉 正確做法：\n\n'
+        + '打開手機的「相簿」App\n\n'
+        + '找到要上傳的照片\n\n'
+        + '點選「分享」→ 選擇 LINE → 傳送到這個對話視窗\n\n'
+        + '❌ 不要從 LINE 對話框內點照片圖示選擇圖片，那樣可能只是轉傳，Bot 會抓不到內容。\n\n'
+        + '感謝您的配合 🙏',
       );
     } else {
       await lineService.replyMessage(

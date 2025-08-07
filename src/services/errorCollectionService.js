@@ -27,12 +27,12 @@ class ErrorCollectionService {
         messageLength: originalMessage.length,
         hasNumbers: /\d/.test(originalMessage),
         hasEnglish: /[a-zA-Z]/.test(originalMessage),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       const docRef = await this.firebaseService.addDocument('error_cases', errorRecord);
       console.log('📊 錯誤案例已記錄:', docRef.id);
-      
+
       return docRef.id;
     } catch (error) {
       console.error('❌ 記錄提取錯誤失敗:', error);
@@ -58,12 +58,12 @@ class ErrorCollectionService {
         messageLength: originalMessage.length,
         hasNumbers: /\d/.test(originalMessage),
         hasEnglish: /[a-zA-Z]/.test(originalMessage),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       const docRef = await this.firebaseService.addDocument('error_cases', errorRecord);
       console.log('📊 意圖錯誤已記錄:', docRef.id);
-      
+
       return docRef.id;
     } catch (error) {
       console.error('❌ 記錄意圖錯誤失敗:', error);
@@ -91,12 +91,12 @@ class ErrorCollectionService {
         messageLength: originalMessage.length,
         hasNumbers: /\d/.test(originalMessage),
         hasEnglish: /[a-zA-Z]/.test(originalMessage),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       const docRef = await this.firebaseService.addDocument('error_cases', record);
       console.log('📊 低置信度案例已記錄:', docRef.id);
-      
+
       return docRef.id;
     } catch (error) {
       console.error('❌ 記錄低置信度案例失敗:', error);
@@ -110,8 +110,9 @@ class ErrorCollectionService {
   async generateErrorReport(timeRange = '7d') {
     try {
       const startDate = this.getStartDate(timeRange);
-      const errors = await this.firebaseService.queryDocuments('error_cases', 
-        ['createdAt', '>=', startDate]
+      const errors = await this.firebaseService.queryDocuments(
+        'error_cases',
+        ['createdAt', '>=', startDate],
       );
 
       const report = {
@@ -120,7 +121,7 @@ class ErrorCollectionService {
         errorTypes: this.analyzeErrorTypes(errors),
         commonPatterns: this.identifyCommonPatterns(errors),
         recommendations: this.generateRecommendations(errors),
-        generatedAt: new Date().toISOString()
+        generatedAt: new Date().toISOString(),
       };
 
       console.log('📊 錯誤分析報告生成完成:', report);
@@ -148,13 +149,12 @@ class ErrorCollectionService {
 
     if (missingFields.length > 0 && incorrectFields.length > 0) {
       return 'mixed_errors';
-    } else if (missingFields.length > 0) {
+    } if (missingFields.length > 0) {
       return 'missing_fields';
-    } else if (incorrectFields.length > 0) {
+    } if (incorrectFields.length > 0) {
       return 'incorrect_fields';
-    } else {
-      return 'unknown_error';
     }
+    return 'unknown_error';
   }
 
   /**
@@ -163,11 +163,10 @@ class ErrorCollectionService {
   classifyIntentError(identified, expected) {
     if (!identified || identified === 'unknown') {
       return 'failed_identification';
-    } else if (this.areRelatedIntents(identified, expected)) {
+    } if (this.areRelatedIntents(identified, expected)) {
       return 'related_intent_confusion';
-    } else {
-      return 'completely_wrong_intent';
     }
+    return 'completely_wrong_intent';
   }
 
   /**
@@ -178,12 +177,10 @@ class ErrorCollectionService {
       ['add_course', 'create_recurring_course', 'modify_course'],
       ['record_content', 'add_course_content', 'query_course_content'],
       ['query_schedule', 'query_course_content'],
-      ['cancel_course', 'modify_course', 'stop_recurring_course']
+      ['cancel_course', 'modify_course', 'stop_recurring_course'],
     ];
 
-    return relatedGroups.some(group => 
-      group.includes(intent1) && group.includes(intent2)
-    );
+    return relatedGroups.some((group) => group.includes(intent1) && group.includes(intent2));
   }
 
   /**
@@ -222,7 +219,7 @@ class ErrorCollectionService {
    */
   analyzeErrorTypes(errors) {
     const typeCount = {};
-    errors.forEach(error => {
+    errors.forEach((error) => {
       const type = error.type || 'unknown';
       typeCount[type] = (typeCount[type] || 0) + 1;
     });
@@ -234,11 +231,11 @@ class ErrorCollectionService {
    */
   identifyCommonPatterns(errors) {
     const patterns = {};
-    
-    errors.forEach(error => {
+
+    errors.forEach((error) => {
       // 按訊息長度分組
-      const lengthGroup = error.messageLength < 10 ? 'short' : 
-                         error.messageLength < 20 ? 'medium' : 'long';
+      const lengthGroup = error.messageLength < 10 ? 'short'
+        : error.messageLength < 20 ? 'medium' : 'long';
       patterns[`length_${lengthGroup}`] = (patterns[`length_${lengthGroup}`] || 0) + 1;
 
       // 按意圖分組
@@ -258,9 +255,7 @@ class ErrorCollectionService {
 
     // 分析高頻錯誤類型
     const errorTypes = this.analyzeErrorTypes(errors);
-    const topErrorType = Object.keys(errorTypes).reduce((a, b) => 
-      errorTypes[a] > errorTypes[b] ? a : b
-    );
+    const topErrorType = Object.keys(errorTypes).reduce((a, b) => (errorTypes[a] > errorTypes[b] ? a : b));
 
     if (topErrorType === 'extraction_error') {
       recommendations.push('優化實體提取規則和 AI prompt');
@@ -271,7 +266,7 @@ class ErrorCollectionService {
     }
 
     // 分析置信度趨勢
-    const lowConfidenceCount = errors.filter(e => e.confidence < 0.5).length;
+    const lowConfidenceCount = errors.filter((e) => e.confidence < 0.5).length;
     if (lowConfidenceCount / errors.length > 0.3) {
       recommendations.push('考慮調整置信度閾值或改進提取策略');
     }

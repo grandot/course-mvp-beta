@@ -208,12 +208,12 @@ async function parseIntent(message, userId = null) {
   if (userId) {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
-    
+
     const context = await conversationManager.getContext(userId);
     if (context && context.state.expectingInput.length > 0) {
       console.log('🧠 檢測到期待輸入狀態:', context.state.expectingInput);
       console.log('📋 待補充資料:', context.state.pendingData);
-      
+
       // 處理補充缺失資訊的情況
       const supplementIntent = await handleSupplementInput(cleanMessage, context);
       if (supplementIntent) {
@@ -225,7 +225,7 @@ async function parseIntent(message, userId = null) {
 
   // 第一階段：規則匹配
   const ruleBasedIntent = parseIntentByRules(cleanMessage);
-  
+
   // 檢查是否需要對話上下文
   if (ruleBasedIntent && userId) {
     const needsContext = await checkIfNeedsContext(ruleBasedIntent, cleanMessage);
@@ -237,7 +237,7 @@ async function parseIntent(message, userId = null) {
       }
     }
   }
-  
+
   if (ruleBasedIntent) {
     console.log('✅ 規則匹配成功:', ruleBasedIntent);
     return ruleBasedIntent;
@@ -265,18 +265,18 @@ async function parseIntent(message, userId = null) {
 async function checkIfNeedsContext(intent, message) {
   const rules = loadIntentRules();
   const rule = rules[intent];
-  
+
   // 檢查意圖規則中是否標記為需要上下文
   if (rule && rule.requires_context) {
     return true;
   }
-  
+
   // 檢查是否為操作性意圖
   const contextRequiredIntents = [
-    'confirm_action', 'modify_action', 'cancel_action', 
-    'restart_input', 'correction_intent'
+    'confirm_action', 'modify_action', 'cancel_action',
+    'restart_input', 'correction_intent',
   ];
-  
+
   return contextRequiredIntents.includes(intent);
 }
 
@@ -289,12 +289,12 @@ async function checkIfNeedsContext(intent, message) {
 async function handleSupplementInput(message, context) {
   try {
     const { expectingInput, pendingData } = context.state;
-    
+
     if (!pendingData || !pendingData.slots || !pendingData.slots.intent) {
       console.log('⚠️ 無待處理的意圖資料');
       return null;
     }
-    
+
     // 檢查期待的輸入類型
     if (expectingInput.includes('student_name_input')) {
       // 假設用戶輸入的是學生姓名（簡單的姓名檢查）
@@ -303,7 +303,7 @@ async function handleSupplementInput(message, context) {
         return 'supplement_student_name';
       }
     }
-    
+
     if (expectingInput.includes('course_name_input')) {
       // 假設用戶輸入的是課程名稱
       if (message.length >= 1 && message.length <= 20) {
@@ -311,7 +311,7 @@ async function handleSupplementInput(message, context) {
         return 'supplement_course_name';
       }
     }
-    
+
     if (expectingInput.includes('schedule_time_input')) {
       // 檢查是否包含時間相關詞彙
       if (message.includes('點') || message.includes(':') || /\d+/.test(message)) {
@@ -319,16 +319,16 @@ async function handleSupplementInput(message, context) {
         return 'supplement_schedule_time';
       }
     }
-    
+
     if (expectingInput.includes('course_date_input')) {
       // 檢查是否包含日期相關詞彙
-      if (message.includes('明天') || message.includes('後天') || message.includes('今天') || 
-          message.includes('月') || message.includes('日') || /\d+/.test(message)) {
+      if (message.includes('明天') || message.includes('後天') || message.includes('今天')
+          || message.includes('月') || message.includes('日') || /\d+/.test(message)) {
         console.log('✅ 識別為課程日期補充:', message);
         return 'supplement_course_date';
       }
     }
-    
+
     if (expectingInput.includes('day_of_week_input')) {
       // 檢查是否包含星期相關詞彙
       if (message.includes('週') || message.includes('星期') || message.includes('禮拜')) {
@@ -336,10 +336,9 @@ async function handleSupplementInput(message, context) {
         return 'supplement_day_of_week';
       }
     }
-    
+
     console.log('⚠️ 無法識別為期待的補充資訊類型');
     return null;
-    
   } catch (error) {
     console.error('❌ 處理補充輸入失敗:', error);
     return null;
@@ -357,36 +356,34 @@ async function parseIntentWithContext(intent, message, userId) {
   try {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
-    
+
     // 取得對話上下文
     const context = await conversationManager.getContext(userId);
     if (!context) {
       console.log('⚠️ 無對話上下文，無法進行上下文感知識別');
       return null;
     }
-    
+
     console.log('📋 對話上下文狀態:', {
       currentFlow: context.state.currentFlow,
       expectingInput: context.state.expectingInput,
-      lastActionsCount: Object.keys(context.state.lastActions).length
+      lastActionsCount: Object.keys(context.state.lastActions).length,
     });
-    
+
     // 處理操作性意圖
     if (['confirm_action', 'modify_action', 'cancel_action'].includes(intent)) {
       // 檢查是否有等待處理的操作
       const hasLastActions = Object.keys(context.state.lastActions).length > 0;
-      const isExpectingOperation = context.state.expectingInput.some(input => 
-        ['confirmation', 'modification', 'cancellation'].includes(input)
-      );
-      
+      const isExpectingOperation = context.state.expectingInput.some((input) => ['confirmation', 'modification', 'cancellation'].includes(input));
+
       if (!hasLastActions && !isExpectingOperation) {
         console.log('⚠️ 沒有可操作的上下文，降級處理');
         return 'unknown'; // 沒有操作上下文時，這些意圖無效
       }
-      
+
       return intent; // 有上下文，保持原意圖
     }
-    
+
     // 處理糾錯意圖
     if (intent === 'correction_intent') {
       const hasRecentAction = Object.keys(context.state.lastActions).length > 0;
@@ -396,9 +393,8 @@ async function parseIntentWithContext(intent, message, userId) {
       }
       return intent;
     }
-    
+
     return intent; // 其他情況保持原意圖
-    
   } catch (error) {
     console.error('❌ 上下文感知識別失敗:', error);
     return null;

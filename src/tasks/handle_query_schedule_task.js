@@ -285,8 +285,8 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
       quickReply: [
         { label: '📅 新增課程', text: '新增課程' },
         { label: '📝 記錄內容', text: '記錄課程內容' },
-        { label: '⏰ 設定提醒', text: '設定提醒' }
-      ]
+        { label: '⏰ 設定提醒', text: '設定提醒' },
+      ],
     };
   } catch (error) {
     console.error('❌ 查詢課表任務失敗:', error);

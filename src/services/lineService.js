@@ -136,10 +136,10 @@ async function getMessageContent(messageId) {
     const headers = {
       Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
     };
-    
+
     console.log('🧪 使用中的 LINE Token 開頭:', process.env.LINE_CHANNEL_ACCESS_TOKEN?.slice(0, 30));
     console.log('📨 Message ID:', messageId);
-    
+
     const url = `${LINE_API_BASE}/message/${messageId}/content`;
     console.log('🔗 完整請求 URL:', url);
     console.log('📋 完整請求 Headers:', JSON.stringify(headers, null, 2));

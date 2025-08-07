@@ -14,43 +14,42 @@ const { getConversationManager } = require('../conversation/ConversationManager'
  */
 async function handle_restart_input_task(slots, userId) {
   console.log('🔄 執行重新輸入任務:', { slots, userId });
-  
+
   try {
     const conversationManager = getConversationManager();
-    
+
     // 取得當前對話上下文（用於日誌記錄）
     const context = await conversationManager.getContext(userId);
-    const currentFlow = context.state.currentFlow;
+    const { currentFlow } = context.state;
     const lastActions = Object.keys(context.state.lastActions);
-    
+
     console.log('🔄 重新開始前狀態:', {
       currentFlow,
       lastActions,
-      expectingInput: context.state.expectingInput
+      expectingInput: context.state.expectingInput,
     });
-    
+
     // 清除所有對話狀態
     await conversationManager.clearContext(userId);
-    
+
     // 提供友善的重新開始引導
-    const welcomeMessage = `🔄 好的！讓我們重新開始。\n\n我可以幫您：\n• 📅 新增課程安排\n• 📋 查詢課表\n• 📝 記錄課程內容\n• ⏰ 設定課程提醒\n• 🗑️ 取消課程\n\n請告訴我您想做什麼！`;
-    
+    const welcomeMessage = '🔄 好的！讓我們重新開始。\n\n我可以幫您：\n• 📅 新增課程安排\n• 📋 查詢課表\n• 📝 記錄課程內容\n• ⏰ 設定課程提醒\n• 🗑️ 取消課程\n\n請告訴我您想做什麼！';
+
     const quickReplyOptions = [
       { label: '新增課程', text: '我要新增課程' },
       { label: '查詢課表', text: '查詢今天課表' },
       { label: '記錄內容', text: '記錄課程內容' },
-      { label: '設定提醒', text: '設定課程提醒' }
+      { label: '設定提醒', text: '設定課程提醒' },
     ];
-    
+
     return {
       success: true,
       message: welcomeMessage,
-      quickReply: quickReplyOptions
+      quickReply: quickReplyOptions,
     };
-    
   } catch (error) {
     console.error('❌ 處理重新輸入失敗:', error);
-    
+
     // 即使發生錯誤，也要嘗試清除對話狀態
     try {
       const conversationManager = getConversationManager();
@@ -58,15 +57,15 @@ async function handle_restart_input_task(slots, userId) {
     } catch (clearError) {
       console.error('❌ 清除對話狀態失敗:', clearError);
     }
-    
+
     return {
       success: true,
       message: '🔄 已重新開始。請告訴我您想做什麼，例如新增課程、查詢課表或記錄內容。',
       quickReply: [
         { label: '新增課程', text: '我要新增課程' },
         { label: '查詢課表', text: '查詢課表' },
-        { label: '記錄內容', text: '記錄課程內容' }
-      ]
+        { label: '記錄內容', text: '記錄課程內容' },
+      ],
     };
   }
 }

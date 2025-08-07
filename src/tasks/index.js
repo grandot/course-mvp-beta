@@ -15,6 +15,15 @@ const handle_modify_action_task = require('./handle_modify_action_task');
 const handle_cancel_action_task = require('./handle_cancel_action_task');
 const handle_restart_input_task = require('./handle_restart_input_task');
 
+// 補充資訊處理器（多輪對話功能）
+const {
+  handle_supplement_student_name_task,
+  handle_supplement_course_name_task,
+  handle_supplement_schedule_time_task,
+  handle_supplement_course_date_task,
+  handle_supplement_day_of_week_task,
+} = require('./handle_supplement_input_task');
+
 /**
  * 任務處理器對應表
  * 意圖名稱 -> 處理器函式的映射
@@ -39,6 +48,16 @@ const taskHandlers = {
   modify_action: handle_modify_action_task,
   cancel_action: handle_cancel_action_task,
   restart_input: handle_restart_input_task,
+
+  // 修改課程意圖
+  modify_course: handle_modify_action_task,
+
+  // 補充資訊意圖（多輪對話功能）
+  supplement_student_name: handle_supplement_student_name_task,
+  supplement_course_name: handle_supplement_course_name_task,
+  supplement_schedule_time: handle_supplement_schedule_time_task,
+  supplement_course_date: handle_supplement_course_date_task,
+  supplement_day_of_week: handle_supplement_day_of_week_task,
 };
 
 /**
@@ -115,4 +134,11 @@ module.exports = {
   handle_modify_action_task,
   handle_cancel_action_task,
   handle_restart_input_task,
+
+  // 補充資訊處理器
+  handle_supplement_student_name_task,
+  handle_supplement_course_name_task,
+  handle_supplement_schedule_time_task,
+  handle_supplement_course_date_task,
+  handle_supplement_day_of_week_task,
 };
