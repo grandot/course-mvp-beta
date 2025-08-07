@@ -472,12 +472,18 @@ async function tryCompleteOriginalIntent(message, context, userId) {
       const conversationManager = getConversationManager();
       await conversationManager.clearExpectedInput(userId);
       
-      // 更新對話上下文的slots (使用現有的setPendingData方法)
-      await conversationManager.setPendingData(userId, {
-        intent: originalIntent,
-        existingSlots: mergedSlots,
-        missingFields: []
-      });
+      // 更新對話上下文的slots，直接更新context
+      const context = await conversationManager.getContext(userId);
+      context.state.pendingData = {
+        ...context.state.pendingData,
+        slots: {
+          intent: originalIntent,
+          existingSlots: mergedSlots,
+          missingFields: []
+        },
+        timestamp: Date.now()
+      };
+      await conversationManager.saveContext(userId, context);
       
       return originalIntent;
     }
