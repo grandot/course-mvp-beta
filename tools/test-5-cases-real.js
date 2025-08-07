@@ -27,7 +27,7 @@ async function testFiveReal() {
       try {
         const result = await realTester.runSingleTest(testCase);
         
-        if (result.success) {
+        if (result.testPassed) {
           console.log('✅ PASS');
           passed++;
         } else {

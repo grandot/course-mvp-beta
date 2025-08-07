@@ -57,13 +57,18 @@ async function replyMessage(replyToken, message, quickReply = null) {
       messages: [messageObject],
     };
 
-    // 🧪 測試環境檢查：如果是測試 token，直接返回模擬回應
+    // 🧪 測試環境檢查：如果是測試 token，記錄實際回覆但跳過 API 調用
     console.log('🔍 檢查 replyToken:', replyToken);
     if (replyToken && replyToken.includes('test-reply-token')) {
       console.log('🧪 檢測到測試 token，跳過真實 LINE API 調用');
+      
+      // 記錄實際要發送的業務回覆內容
+      const actualMessage = typeof message === 'string' ? message : JSON.stringify(message);
+      console.log('📤 [測試模式] 實際業務回覆:', actualMessage);
+      
       return {
         status: 200,
-        data: { message: 'Mock response for testing' },
+        data: { message: actualMessage },
       };
     }
 
