@@ -12,6 +12,16 @@
     "test:quick": "node tools/quick-test.js",
     "test:full": "node tools/test-full-workflow.js",
     "test:e2e": "node tools/test-full-workflow.js --verbose",
+    "test:line-bot": "node tools/test-line-bot-automation.js",
+    "test:line-bot:basic": "node tools/test-line-bot-automation.js --basic",
+    "test:line-bot:multi": "node tools/test-line-bot-automation.js --multi",
+    "test:line-bot:error": "node tools/test-line-bot-automation.js --error",
+    "test:line-bot:local": "TEST_TARGET_URL=http://localhost:3000/webhook node tools/test-line-bot-automation.js",
+    "test:line-bot:production": "TEST_TARGET_URL=https://course-mvp-beta.onrender.com/webhook node tools/test-line-bot-automation.js",
+    "test:render": "node tools/test-render-deployment.js",
+    "test:all": "node tools/run-all-tests.js",
+    "test:local-only": "node tools/run-all-tests.js --local-only",
+    "test:production-only": "node tools/run-all-tests.js --production-only",
     "health-check": "curl -f http://localhost:3000/health || echo 'Health check failed'"
   },
   "keywords": [

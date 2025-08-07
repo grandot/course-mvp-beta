@@ -34,10 +34,21 @@ Google Calendar 專精時間邏輯，Firebase 專精業務資料，兩者協作�
 - 快速開發優先，避免過度設計
 
 ## 詳細文檔
-- **環境限制：`/doc/ENVIRONMENT.md` (無狀態環境開發指南) ⚠️ 必讀**
-- 商業邏輯：`/doc/implement.md` (功能規格與使用情境)
-- 開發指南：`/doc/developer-guide.md` (給新進工程師的實作指南)
-- 架構設計：`/doc/technical.md` (設計決策、實作細節與未來規劃)
-- 任務規劃：`/doc/task.md` (Claude Code 執行任務的標準流程)
-- 配置組織：`/config/README.md` (分階段配置說明)
-- **專案進度：`/PROJECT_STATUS.md` (即時進度監控與里程碑追蹤)**
+
+### 🎯 核心指導文檔 (AI-Rules)
+- **產品定義：`/ai-rules/product.md`** - 商業邏輯、功能規格、使用情境
+- **技術實現：`/ai-rules/tech.md`** - 架構設計、開發環境、實作細節 ⚠️ 含環境限制必讀
+- **專案組織：`/ai-rules/structure.md`** - 文檔結構、開發流程、約定規範
+
+### 📚 開發文檔
+- **開發指南：`/doc/developer-guide.md`** - 新人入門必讀指南
+- **部署指南：`/doc/deployment-guide.md`** - 部署操作步驟
+- **技術債務：`/doc/technical-debt.md`** - 技術債務追蹤
+
+### 🔬 功能規格
+- **多輪對話：`/spec/multi-dialogue/`** - 多輪對話功能規格
+- **AI增強：`/spec/ai-enhance/`** - AI增強功能規格
+
+### ⚙️ 其他參考
+- **配置說明：`/config/README.md`** - 分階段配置管理
+- **專案進度：`/PROJECT_STATUS.md`** - 即時進度監控與里程碑追蹤
