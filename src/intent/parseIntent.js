@@ -215,7 +215,7 @@ async function parseIntent(message, userId = null) {
       console.log('📋 待補充資料:', context.state.pendingData);
 
       // 處理補充缺失資訊的情況
-      const supplementIntent = await handleSupplementInput(cleanMessage, context);
+      const supplementIntent = await handleSupplementInput(cleanMessage, context, userId);
       if (supplementIntent) {
         console.log('✅ 補充資訊識別成功:', supplementIntent);
         return supplementIntent;
@@ -284,14 +284,40 @@ async function checkIfNeedsContext(intent, message) {
  * 處理補充缺失資訊的輸入
  * @param {string} message - 用戶訊息
  * @param {object} context - 對話上下文
+ * @param {string} userId - 用戶ID
  * @returns {Promise<string|null>}
  */
-async function handleSupplementInput(message, context) {
+async function handleSupplementInput(message, context, userId) {
   try {
     const { expectingInput, pendingData } = context.state;
 
     if (!pendingData || !pendingData.slots || !pendingData.slots.intent) {
       console.log('⚠️ 無待處理的意圖資料');
+      return null;
+    }
+
+    // 🔍 檢查是否為明確的意圖切換（優先於補充判斷）
+    const explicitIntents = ['課表', '查詢', '新增', '刪除', '取消', '設定', '記錄'];
+    if (explicitIntents.some(intent => message.includes(intent))) {
+      console.log('🔄 檢測到明確意圖切換，清除期待狀態:', message);
+      
+      // 清除期待輸入狀態
+      const { getConversationManager } = require('../conversation/ConversationManager');
+      const conversationManager = getConversationManager();
+      await conversationManager.clearExpectedInput(userId);
+      
+      return null; // 返回null讓系統進行正常意圖識別
+    }
+
+    // 🕒 檢查期待狀態是否超時（超過10分鐘自動清除）
+    if (pendingData.timestamp && Date.now() - pendingData.timestamp > 10 * 60 * 1000) {
+      console.log('⏰ 期待輸入狀態已超時，清除狀態');
+      
+      // 清除超時的期待輸入狀態
+      const { getConversationManager } = require('../conversation/ConversationManager');
+      const conversationManager = getConversationManager();
+      await conversationManager.clearExpectedInput(userId);
+      
       return null;
     }
 
