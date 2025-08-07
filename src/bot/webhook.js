@@ -423,7 +423,15 @@ async function handleWebhook(req, res) {
     res.status(200).json({ status: 'ok' });
   } catch (error) {
     console.error('❌ Webhook 處理失敗:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // 臨時返回詳細錯誤信息用於診斷
+    res.status(500).json({ 
+      error: 'Internal server error',
+      debug: {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      }
+    });
   }
 }
 
