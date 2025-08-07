@@ -105,6 +105,9 @@ async function handleTextMessage(event) {
     await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
   } catch (error) {
     console.error('❌ 處理文字訊息失敗:', error);
+    console.error('❌ 錯誤堆疊:', error.stack);
+    console.error('❌ 用戶ID:', event.source.userId);
+    console.error('❌ 訊息內容:', event.message.text);
 
     // 記錄錯誤到對話歷史
     try {
@@ -114,11 +117,9 @@ async function handleTextMessage(event) {
       console.error('❌ 記錄錯誤回應失敗:', logError);
     }
 
-    // 錯誤處理也要動態選擇服務
-    const isTestUser = event.source.userId.startsWith('U_test_');
-    const currentLineService = isTestUser
-      ? require('../services/mockLineService')
-      : realLineService;
+    // 錯誤處理使用統一的服務選擇邏輯
+    const currentLineService = getLineService(event.source.userId);
+    console.log('🔧 錯誤處理選擇的服務:', currentLineService.constructor.name || 'Object');
 
     await currentLineService.replyMessage(
       event.replyToken,
