@@ -68,4 +68,17 @@
 ---
 
 ## 更新記錄
+
+### ✅ 2025-08-07: 修復 Render 服務 500 錯誤
+**問題**: Render 部署的 webhook 返回 500 錯誤，測試請求調用真實 LINE API 導致 400 錯誤
+**根本原因**: 測試環境隔離不足，測試 token 也觸發真實 API 調用
+**解決方案**: 
+- 在 `lineService.js` 中添加測試 token 檢查邏輯
+- 修復多個函數中的 `lineService` 未定義錯誤
+- 統一服務選擇邏輯，使用 `getLineService()` 動態選擇
+**修復的技術債**:
+- webhook.js 錯誤處理中的變數名錯誤（lineService → realLineService）
+- handleImageMessage、handlePostbackEvent、handleFollowEvent 缺少動態服務選擇
+- 建立了 /health/deps、/test/redis 等診斷端點
+
 - 2025-08-05: 初始化文件，記錄 LINE Bot 圖片下載問題
