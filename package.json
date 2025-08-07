@@ -22,6 +22,11 @@
     "test:all": "node tools/run-all-tests.js",
     "test:local-only": "node tools/run-all-tests.js --local-only",
     "test:production-only": "node tools/run-all-tests.js --production-only",
+    "test:with-logs": "node tools/test-with-logs.js",
+    "test:with-logs:multi": "node tools/test-with-logs.js --multi",
+    "logs:render": "node tools/get-render-logs.js",
+    "logs:render:follow": "node tools/get-render-logs.js --follow",
+    "logs:render:analyze": "node tools/get-render-logs.js --analyze",
     "health-check": "curl -f http://localhost:3000/health || echo 'Health check failed'"
   },
   "keywords": [

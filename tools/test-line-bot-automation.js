@@ -12,6 +12,14 @@
  */
 
 require('dotenv').config();
+
+// 🧪 設定測試環境變數
+process.env.NODE_ENV = 'test';
+process.env.USE_MOCK_LINE_SERVICE = 'true';
+
+console.log('🧪 測試環境初始化：');
+console.log('   NODE_ENV =', process.env.NODE_ENV);
+console.log('   USE_MOCK_LINE_SERVICE =', process.env.USE_MOCK_LINE_SERVICE);
 const axios = require('axios');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -107,8 +115,13 @@ class LineWebhookSimulator {
    */
   generateSignature(body) {
     if (!this.channelSecret) {
-      console.warn('⚠️ 未設定 LINE_CHANNEL_SECRET，跳過簽名驗證');
-      return '';
+      console.warn('⚠️ 未設定 LINE_CHANNEL_SECRET，使用預設值');
+      // 使用 .env 中的 LINE_CHANNEL_SECRET
+      const defaultSecret = process.env.LINE_CHANNEL_SECRET || '80f460b316f763dbf30e780a73dc2a76';
+      return crypto
+        .createHmac('SHA256', defaultSecret)
+        .update(body)
+        .digest('base64');
     }
     
     return crypto
@@ -199,12 +212,19 @@ class LineWebhookSimulator {
       
     } catch (error) {
       console.log(`❌ 錯誤: ${error.message}`);
+      console.log(`🔍 詳細錯誤:`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        code: error.code
+      });
       
       return {
         success: false,
         error: error.message,
         status: error.response?.status || 'timeout',
-        responseTime: Date.now() - Date.now()
+        responseTime: Date.now() - (startTime || Date.now()),
+        details: error.response?.data
       };
     }
   }

@@ -4,6 +4,22 @@ const dotenv = require('dotenv');
 // 載入環境變數
 dotenv.config();
 
+// 🛡️ 重要安全檢查：防止生產環境使用 Mock Service
+if (process.env.NODE_ENV === 'production' && process.env.USE_MOCK_LINE_SERVICE === 'true') {
+  console.error('❌ 嚴重錯誤：生產環境不能使用 Mock LINE Service');
+  console.error('   請檢查環境變數 USE_MOCK_LINE_SERVICE 設定');
+  console.error('   生產環境此變數應為空或 false');
+  process.exit(1);
+}
+
+// 顯示當前環境配置
+console.log(`🚀 應用程式啟動中...`);
+console.log(`📍 環境: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🤖 LINE Service: ${process.env.USE_MOCK_LINE_SERVICE === 'true' ? 'Mock (測試)' : 'Real (生產)'}`);
+if (process.env.USE_MOCK_LINE_SERVICE === 'true') {
+  console.log('🧪 測試模式：使用 Mock LINE Service');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 

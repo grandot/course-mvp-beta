@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "timestamp": "2025-08-07T02:33:15.315Z",
+    "testStartTime": "2025-08-07T02:33:05.240Z",
+    "testEndTime": "2025-08-07T02:33:15.266Z",
+    "duration": 10026,
+    "targetUrl": "https://course-mvp-beta.onrender.com/webhook"
+  },
+  "testResults": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "details": [
+      {
+        "id": "log_basic_001",
+        "name": "新增課程測試",
+        "steps": [
+          {
+            "message": "小明明天下午3點數學課",
+            "expectKeywords": [
+              "確認",
+              "修改"
+            ]
+          }
+        ],
+        "result": {
+          "status": "failed",
+          "steps": [
+            {
+              "message": "小明明天下午3點數學課",
+              "duration": 10024,
+              "passed": false,
+              "checks": [
+                {
+                  "type": "keywords",
+                  "expected": [
+                    "確認",
+                    "修改"
+                  ],
+                  "passed": false
+                }
+              ]
+            }
+          ],
+          "errors": [
+            "步驟 1 驗證失敗"
+          ]
+        },
+        "timestamp": "2025-08-07T02:33:15.266Z"
+      }
+    ]
+  },
+  "renderLogs": {
+    "success": false,
+    "logCount": 0,
+    "error": "Command failed: render logs -r srv-d21f9u15pdvs73frvns0 --limit 500 -o json --since \"2025-08-07T02:32:35.240Z\"\nError: unknown flag: --since\nUsage:\n  render logs [flags]\n\nFlags:\n      --direction enum        The direction to query the logs. Can be 'forward' or 'backward'\n      --end time              The end time of the logs to query\n  -h, --help                  help for logs\n      --host strings          A list of comma separated hosts to query\n      --instance strings      A list of comma separated instance IDs to query\n      --level enum            A list of comma separated log levels to query\n      --limit int             The maximum number of logs to return (default 100)\n      --method enum           A list of comma separated HTTP methods to query\n      --path strings          A list of comma separated paths to query\n  -r, --resources strings     A list of comma separated resource IDs to query. Required in non-interactive mode.\n      --start time            The start time of the logs to query\n      --status-code strings   A list of comma separated status codes to query\n      --tail                  Stream new logs\n      --text strings          A list of comma separated strings to search for in the logs\n      --type enum             A list of comma separated log types to query\n\nGlobal Flags:\n      --confirm         set to skip confirmation prompts\n  -o, --output string   interactive, json, yaml, or text (default \"interactive\")\n\n"
+  },
+  "logAnalysis": null,
+  "correlation": {
+    "available": false
+  }
+}

@@ -3,7 +3,17 @@ const { parseIntent } = require('../intent/parseIntent');
 const { extractSlots } = require('../intent/extractSlots');
 const { executeTask, getSupportedIntents } = require('../tasks');
 const { getConversationManager } = require('../conversation/ConversationManager');
-const lineService = require('../services/lineService');
+
+// 🛡️ 安全的依賴注入：根據環境選擇 LINE Service
+let lineService;
+
+if (process.env.NODE_ENV === 'test' && process.env.USE_MOCK_LINE_SERVICE === 'true') {
+  console.log('🧪 載入 Mock LINE Service（測試模式）');
+  lineService = require('../services/mockLineService');
+} else {
+  console.log('🚀 載入真實 LINE Service（生產模式）');
+  lineService = require('../services/lineService');
+}
 
 /**
  * LINE Bot Webhook 處理器
