@@ -214,7 +214,14 @@ async function parseIntent(message, userId = null) {
       console.log('🧠 檢測到期待輸入狀態:', context.state.expectingInput);
       console.log('📋 待補充資料:', context.state.pendingData);
 
-      // 處理補充缺失資訊的情況
+      // 🔄 優先嘗試在原意圖上下文中完整解析
+      const completeIntent = await tryCompleteOriginalIntent(cleanMessage, context, userId);
+      if (completeIntent) {
+        console.log('✅ 上下文完整解析成功:', completeIntent);
+        return completeIntent;
+      }
+
+      // 完整解析失敗，才進入補充模式
       const supplementIntent = await handleSupplementInput(cleanMessage, context, userId);
       if (supplementIntent) {
         console.log('✅ 補充資訊識別成功:', supplementIntent);
@@ -424,6 +431,93 @@ async function parseIntentWithContext(intent, message, userId) {
   } catch (error) {
     console.error('❌ 上下文感知識別失敗:', error);
     return null;
+  }
+}
+
+/**
+ * 嘗試在原意圖上下文中完整解析用戶輸入
+ * @param {string} message - 用戶訊息
+ * @param {object} context - 對話上下文
+ * @param {string} userId - 用戶ID
+ * @returns {Promise<string|null>}
+ */
+async function tryCompleteOriginalIntent(message, context, userId) {
+  try {
+    const { pendingData } = context.state;
+    
+    if (!pendingData || !pendingData.slots || !pendingData.slots.intent) {
+      console.log('⚠️ 無待處理的意圖資料');
+      return null;
+    }
+
+    const originalIntent = pendingData.slots.intent;
+    const existingSlots = pendingData.slots.existingSlots || {};
+    
+    console.log('🔄 嘗試在原意圖中完整解析:', originalIntent);
+    console.log('📋 現有 slots:', existingSlots);
+
+    // 重用現有的 extractSlots 函數在原意圖上下文中解析
+    const { extractSlots } = require('./extractSlots');
+    const newSlots = await extractSlots(message, originalIntent, userId);
+    
+    // 合併現有slots和新解析的slots
+    const mergedSlots = { ...existingSlots, ...newSlots };
+    console.log('🔗 合併後的 slots:', mergedSlots);
+
+    // 檢查是否包含足夠資訊執行原意圖
+    if (isCompleteForIntent(mergedSlots, originalIntent)) {
+      console.log('✅ 資訊完整，可執行原意圖');
+      
+      // 清除期待輸入狀態
+      const conversationManager = getConversationManager();
+      await conversationManager.clearExpectedInput(userId);
+      
+      // 更新對話上下文的slots (使用現有的setPendingData方法)
+      await conversationManager.setPendingData(userId, {
+        intent: originalIntent,
+        existingSlots: mergedSlots,
+        missingFields: []
+      });
+      
+      return originalIntent;
+    }
+    
+    console.log('📝 資訊仍不完整，繼續等待補充');
+    return null;
+    
+  } catch (error) {
+    console.error('❌ 原意圖完整解析失敗:', error);
+    return null;
+  }
+}
+
+/**
+ * 檢查slots是否足夠完整以執行指定意圖
+ * @param {object} slots - 槽位資料
+ * @param {string} intent - 意圖名稱
+ * @returns {boolean}
+ */
+function isCompleteForIntent(slots, intent) {
+  switch (intent) {
+    case 'add_course':
+      // 新增課程需要：學生姓名、課程名稱、時間資訊（scheduleTime或courseDate+dayOfWeek）
+      const hasStudent = slots.studentName && slots.studentName.trim();
+      const hasCourse = slots.courseName && slots.courseName.trim();
+      const hasTime = slots.scheduleTime || (slots.courseDate && slots.dayOfWeek);
+      
+      return hasStudent && hasCourse && hasTime;
+      
+    case 'query_schedule':
+      // 查詢課程只需要一個參數即可
+      return slots.studentName || slots.courseName || slots.courseDate;
+      
+    case 'record_content':
+      // 記錄內容需要學生姓名和課程名稱
+      return slots.studentName && slots.courseName;
+      
+    default:
+      // 其他意圖的完整性檢查
+      return Object.keys(slots).length > 0;
   }
 }
 
