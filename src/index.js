@@ -65,6 +65,47 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// Webhook 調試端點 - 檢查實際請求數據
+app.post('/debug/webhook', async (req, res) => {
+  try {
+    console.log('🔍 Webhook 調試請求:', JSON.stringify(req.body, null, 2));
+    
+    const { events } = req.body;
+    if (events && events.length > 0) {
+      const event = events[0];
+      const userId = event.source ? event.source.userId : 'unknown';
+      
+      console.log('📋 實際用戶ID:', userId);
+      console.log('📋 用戶ID類型:', typeof userId);
+      console.log('📋 是否以 U_test_ 開頭:', userId && userId.startsWith('U_test_'));
+      
+      const { getLineService } = require('./bot/webhook');
+      const lineService = getLineService(userId);
+      
+      console.log('📋 選擇的服務類型:', lineService.constructor.name || 'Object');
+      
+      res.json({
+        status: 'debug_success',
+        userId: userId,
+        userIdType: typeof userId,
+        isTestUser: userId && userId.startsWith('U_test_'),
+        serviceType: lineService.constructor.name || 'Object',
+        eventType: event.type,
+        messageText: event.message ? event.message.text : 'no_message'
+      });
+    } else {
+      res.json({ status: 'no_events', body: req.body });
+    }
+    
+  } catch (error) {
+    console.error('❌ Webhook 調試錯誤:', error);
+    res.status(500).json({
+      status: 'debug_error',
+      message: error.message
+    });
+  }
+});
+
 // LINE Service 選擇測試端點
 app.post('/test/lineservice', async (req, res) => {
   try {
