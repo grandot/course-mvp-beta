@@ -38,7 +38,7 @@ function createLineEvent(message, userId = 'TEST_USER_RENDER') {
 // 計算 LINE 簽名
 function calculateSignature(body) {
   const signature = crypto
-    .createHmac('SHA256', LINE_CHANNEL_SECRET)
+    .createHmac('sha256', LINE_CHANNEL_SECRET)
     .update(body)
     .digest('base64');
   return signature;

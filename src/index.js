@@ -57,6 +57,58 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// 依賴服務健康檢查端點
+app.get('/health/deps', async (req, res) => {
+  const checks = {};
+  
+  try {
+    // 檢查 Redis 連接
+    try {
+      const { redisClient } = require('./services/redisService');
+      await redisClient.ping();
+      checks.redis = { status: 'ok', message: 'Redis連接正常' };
+    } catch (error) {
+      checks.redis = { status: 'error', message: error.message };
+    }
+
+    // 檢查 Firebase 連接
+    try {
+      const firebaseService = require('./services/firebaseService');
+      const testResult = await firebaseService.healthCheck();
+      checks.firebase = { status: 'ok', message: 'Firebase連接正常', data: testResult };
+    } catch (error) {
+      checks.firebase = { status: 'error', message: error.message };
+    }
+
+    // 檢查 OpenAI 連接
+    try {
+      const openaiService = require('./services/openaiService');
+      if (openaiService.client) {
+        checks.openai = { status: 'ok', message: 'OpenAI服務已初始化' };
+      } else {
+        checks.openai = { status: 'warning', message: 'OpenAI服務未初始化' };
+      }
+    } catch (error) {
+      checks.openai = { status: 'error', message: error.message };
+    }
+
+    const overallStatus = Object.values(checks).some(check => check.status === 'error') ? 'error' : 'ok';
+    
+    res.json({
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      checks
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // 啟動服務器
 async function startServer() {
   try {
