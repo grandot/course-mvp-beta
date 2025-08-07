@@ -118,7 +118,7 @@ async function handleTextMessage(event) {
     const isTestUser = event.source.userId.startsWith('U_test_');
     const currentLineService = isTestUser
       ? require('../services/mockLineService')
-      : lineService;
+      : realLineService;
 
     await currentLineService.replyMessage(
       event.replyToken,
