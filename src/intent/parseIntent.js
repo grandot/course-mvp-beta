@@ -230,6 +230,21 @@ async function parseIntent(message, userId = null) {
     }
   }
 
+  // 檢查是否為確認關鍵詞（在期待輸入狀態下）
+  if (userId) {
+    const { getConversationManager } = require('../conversation/ConversationManager');
+    const conversationManager = getConversationManager();
+
+    const context = await conversationManager.getContext(userId);
+    if (context?.state?.expectingInput?.includes('confirmation')) {
+      const confirmKeywords = ['確認', '好', '是', 'yes', '同意', '對', 'ok', 'OK'];
+      if (confirmKeywords.some((keyword) => cleanMessage.toLowerCase().includes(keyword.toLowerCase()))) {
+        console.log('✅ 檢測到確認關鍵詞:', cleanMessage);
+        return 'confirm_action';
+      }
+    }
+  }
+
   // 第一階段：規則匹配
   const ruleBasedIntent = parseIntentByRules(cleanMessage);
 
@@ -305,26 +320,26 @@ async function handleSupplementInput(message, context, userId) {
 
     // 🔍 檢查是否為明確的意圖切換（優先於補充判斷）
     const explicitIntents = ['課表', '查詢', '新增', '刪除', '取消', '設定', '記錄'];
-    if (explicitIntents.some(intent => message.includes(intent))) {
+    if (explicitIntents.some((intent) => message.includes(intent))) {
       console.log('🔄 檢測到明確意圖切換，清除期待狀態:', message);
-      
+
       // 清除期待輸入狀態
       const { getConversationManager } = require('../conversation/ConversationManager');
       const conversationManager = getConversationManager();
       await conversationManager.clearExpectedInput(userId);
-      
+
       return null; // 返回null讓系統進行正常意圖識別
     }
 
     // 🕒 檢查期待狀態是否超時（超過2分鐘自動清除）
     if (pendingData.timestamp && Date.now() - pendingData.timestamp > 2 * 60 * 1000) {
       console.log('⏰ 期待輸入狀態已超時，清除狀態');
-      
+
       // 清除超時的期待輸入狀態
       const { getConversationManager } = require('../conversation/ConversationManager');
       const conversationManager = getConversationManager();
       await conversationManager.clearExpectedInput(userId);
-      
+
       return null;
     }
 
@@ -444,7 +459,7 @@ async function parseIntentWithContext(intent, message, userId) {
 async function tryCompleteOriginalIntent(message, context, userId) {
   try {
     const { pendingData } = context.state;
-    
+
     if (!pendingData || !pendingData.slots || !pendingData.slots.intent) {
       console.log('⚠️ 無待處理的意圖資料');
       return null;
@@ -452,14 +467,14 @@ async function tryCompleteOriginalIntent(message, context, userId) {
 
     const originalIntent = pendingData.slots.intent;
     const existingSlots = pendingData.slots.existingSlots || {};
-    
+
     console.log('🔄 嘗試在原意圖中完整解析:', originalIntent);
     console.log('📋 現有 slots:', existingSlots);
 
     // 重用現有的 extractSlots 函數在原意圖上下文中解析
     const { extractSlots } = require('./extractSlots');
     const newSlots = await extractSlots(message, originalIntent, userId);
-    
+
     // 合併現有slots和新解析的slots
     const mergedSlots = { ...existingSlots, ...newSlots };
     console.log('🔗 合併後的 slots:', mergedSlots);
@@ -467,11 +482,11 @@ async function tryCompleteOriginalIntent(message, context, userId) {
     // 檢查是否包含足夠資訊執行原意圖
     if (isCompleteForIntent(mergedSlots, originalIntent)) {
       console.log('✅ 資訊完整，可執行原意圖');
-      
+
       // 清除期待輸入狀態
       const conversationManager = getConversationManager();
       await conversationManager.clearExpectedInput(userId);
-      
+
       // 更新對話上下文的slots，直接更新context
       const context = await conversationManager.getContext(userId);
       context.state.pendingData = {
@@ -479,18 +494,17 @@ async function tryCompleteOriginalIntent(message, context, userId) {
         slots: {
           intent: originalIntent,
           existingSlots: mergedSlots,
-          missingFields: []
+          missingFields: [],
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
       await conversationManager.saveContext(userId, context);
-      
+
       return originalIntent;
     }
-    
+
     console.log('📝 資訊仍不完整，繼續等待補充');
     return null;
-    
   } catch (error) {
     console.error('❌ 原意圖完整解析失敗:', error);
     return null;
@@ -510,17 +524,17 @@ function isCompleteForIntent(slots, intent) {
       const hasStudent = slots.studentName && slots.studentName.trim();
       const hasCourse = slots.courseName && slots.courseName.trim();
       const hasTime = slots.scheduleTime || (slots.courseDate && slots.dayOfWeek);
-      
+
       return hasStudent && hasCourse && hasTime;
-      
+
     case 'query_schedule':
       // 查詢課程只需要一個參數即可
       return slots.studentName || slots.courseName || slots.courseDate;
-      
+
     case 'record_content':
       // 記錄內容需要學生姓名和課程名稱
       return slots.studentName && slots.courseName;
-      
+
     default:
       // 其他意圖的完整性檢查
       return Object.keys(slots).length > 0;

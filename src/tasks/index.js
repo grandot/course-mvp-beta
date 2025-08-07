@@ -8,6 +8,7 @@ const handle_query_schedule_task = require('./handle_query_schedule_task');
 const handle_record_content_task = require('./handle_record_content_task');
 const handle_set_reminder_task = require('./handle_set_reminder_task');
 const handle_cancel_course_task = require('./handle_cancel_course_task');
+const handle_unknown_task = require('./handle_unknown_task');
 
 // 操作性意圖處理器（多輪對話功能）
 const handle_confirm_action_task = require('./handle_confirm_action_task');
@@ -58,6 +59,9 @@ const taskHandlers = {
   supplement_schedule_time: handle_supplement_schedule_time_task,
   supplement_course_date: handle_supplement_course_date_task,
   supplement_day_of_week: handle_supplement_day_of_week_task,
+
+  // 未知意圖處理
+  unknown: handle_unknown_task,
 };
 
 /**
@@ -93,16 +97,16 @@ async function executeTask(intent, slots, userId, event = null) {
     }
 
     console.log(`🎯 執行任務: ${intent}`);
-    
+
     // 檢查是否為 supplement 意圖，需要傳遞 event 參數
     const supplementIntents = [
       'supplement_student_name',
-      'supplement_course_name', 
+      'supplement_course_name',
       'supplement_schedule_time',
       'supplement_course_date',
-      'supplement_day_of_week'
+      'supplement_day_of_week',
     ];
-    
+
     let result;
     if (supplementIntents.includes(intent) && event) {
       // supplement 處理器需要 3 個參數
@@ -146,6 +150,7 @@ module.exports = {
   handle_record_content_task,
   handle_set_reminder_task,
   handle_cancel_course_task,
+  handle_unknown_task,
 
   // 操作性意圖處理器
   handle_confirm_action_task,

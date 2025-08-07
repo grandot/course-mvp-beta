@@ -95,7 +95,7 @@ async function runActualResponseTests() {
       name: '未知意圖',
       input: '隨機無意義文字xyz123',
       expectedIntent: 'unknown',
-      expectedSuccess: false,
+      expectedSuccess: true,
       expectedKeywords: ['不太理解', '試試']
     }
   ];

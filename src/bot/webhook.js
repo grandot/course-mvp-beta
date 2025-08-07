@@ -16,14 +16,13 @@ const mockLineService = require('../services/mockLineService');
 function getLineService(userId) {
   // 🔥 核心邏輯：測試用戶自動用Mock，生產用戶用真實服務
   const isTestUser = userId && userId.startsWith('U_test_');
-  
+
   if (isTestUser) {
     console.log('🧪 測試用戶，使用 Mock LINE Service');
     return mockLineService;
-  } else {
-    console.log('🚀 生產用戶，使用真實 LINE Service');
-    return realLineService;
   }
+  console.log('🚀 生產用戶，使用真實 LINE Service');
+  return realLineService;
 }
 
 /**
@@ -54,7 +53,7 @@ async function handleTextMessage(event) {
     console.log('🔍 用戶ID類型:', typeof userId);
     console.log('🔍 是否測試用戶:', userId && userId.startsWith('U_test_'));
 
-    // 🔥 核心邏輯：動態選擇 LINE Service  
+    // 🔥 核心邏輯：動態選擇 LINE Service
     const currentLineService = getLineService(userId);
     console.log('🔥 選擇的服務類型:', currentLineService.constructor.name || 'Object');
 
@@ -69,10 +68,17 @@ async function handleTextMessage(event) {
     await conversationManager.recordUserMessage(userId, userMessage, intent);
 
     if (intent === 'unknown') {
-      const unknownMessage = '抱歉，我不太理解您的意思。\n\n您可以試試：\n• 「小明每週三下午3點數學課」\n• 「查詢小明今天的課程」\n• 「記錄昨天英文課的內容」\n• 「提醒我明天的鋼琴課」';
+      const result = await executeTask('unknown', {}, userId, event);
 
-      await conversationManager.recordBotResponse(userId, unknownMessage);
-      await currentLineService.replyMessage(replyToken, unknownMessage);
+      await conversationManager.recordBotResponse(userId, result.message, {
+        quickReply: result.quickReply,
+      });
+
+      if (result.quickReply) {
+        await currentLineService.replyMessageWithQuickReply(replyToken, result.message, result.quickReply);
+      } else {
+        await currentLineService.replyMessage(replyToken, result.message);
+      }
       return;
     }
 

@@ -63,7 +63,7 @@ async function replyMessage(replyToken, message, quickReply = null) {
       console.log('🧪 檢測到測試 token，跳過真實 LINE API 調用');
       return {
         status: 200,
-        data: { message: 'Mock response for testing' }
+        data: { message: 'Mock response for testing' },
       };
     }
 

@@ -115,24 +115,45 @@ function addHours(dateTimeString, hours = 1) {
 
 /**
  * 建立重複規則
+ * @param {boolean} recurring - 是否重複
+ * @param {string} recurrenceType - 重複類型: daily, weekly, monthly
+ * @param {number} dayOfWeek - 星期幾（仅每週重複需要）
+ * @returns {Array<string>} Google Calendar 重複規則陣列
  */
-function buildRecurrenceRule(recurring, dayOfWeek = null) {
+function buildRecurrenceRule(recurring, recurrenceType = null, dayOfWeek = null) {
   if (!recurring) return [];
 
-  const dayMapping = {
-    0: 'SU',
-    1: 'MO',
-    2: 'TU',
-    3: 'WE',
-    4: 'TH',
-    5: 'FR',
-    6: 'SA',
-  };
+  // 檢查環境變數控制
+  const enableDaily = process.env.ENABLE_DAILY_RECURRING === 'true';
 
-  if (dayOfWeek !== null && dayMapping[dayOfWeek]) {
-    return [`RRULE:FREQ=WEEKLY;BYDAY=${dayMapping[dayOfWeek]}`];
+  if (enableDaily && recurrenceType === 'daily') {
+    return ['RRULE:FREQ=DAILY'];
   }
 
+  if (recurrenceType === 'weekly' || !recurrenceType) {
+    // 每週重複（原有邏輯，預設行為）
+    const dayMapping = {
+      0: 'SU',
+      1: 'MO',
+      2: 'TU',
+      3: 'WE',
+      4: 'TH',
+      5: 'FR',
+      6: 'SA',
+    };
+
+    if (dayOfWeek !== null && dayMapping[dayOfWeek]) {
+      return [`RRULE:FREQ=WEEKLY;BYDAY=${dayMapping[dayOfWeek]}`];
+    }
+
+    return ['RRULE:FREQ=WEEKLY'];
+  }
+
+  if (recurrenceType === 'monthly') {
+    return ['RRULE:FREQ=MONTHLY'];
+  }
+
+  // 向下兼容：預設為每週重複
   return ['RRULE:FREQ=WEEKLY'];
 }
 
@@ -148,6 +169,7 @@ async function createEvent(calendarId, courseData) {
       courseDate,
       scheduleTime,
       recurring = false,
+      recurrenceType = null,
       dayOfWeek = null,
       studentName,
     } = courseData;
@@ -166,7 +188,7 @@ async function createEvent(calendarId, courseData) {
         dateTime: endDateTime,
         timeZone: 'Asia/Taipei',
       },
-      recurrence: buildRecurrenceRule(recurring, dayOfWeek),
+      recurrence: buildRecurrenceRule(recurring, recurrenceType, dayOfWeek),
       reminders: {
         useDefault: false,
         overrides: [], // 我們使用自己的提醒系統

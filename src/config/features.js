@@ -33,6 +33,15 @@ const FEATURES = {
     status: 'active',
   },
 
+  DAILY_RECURRING_COURSES: {
+    enabled: process.env.ENABLE_DAILY_RECURRING === 'true',
+    phase: 'Phase 1',
+    description: '每日重複課程功能',
+    status: process.env.ENABLE_DAILY_RECURRING === 'true' ? 'active' : 'disabled',
+    environmentVariable: 'ENABLE_DAILY_RECURRING',
+    defaultValue: 'false',
+  },
+
   // === Phase 2: 高級對話管理 (未來實現) ===
   SLOT_TEMPLATE_SYSTEM: {
     enabled: false,
@@ -102,7 +111,15 @@ function getFeaturesByPhase(phase) {
 
 // 檢查功能是否啟用
 function isFeatureEnabled(featureName) {
-  return FEATURES[featureName]?.enabled || false;
+  const feature = FEATURES[featureName];
+  if (!feature) return false;
+
+  // 如果功能依賴環境變數，動態檢查
+  if (featureName === 'DAILY_RECURRING_COURSES') {
+    return process.env.ENABLE_DAILY_RECURRING === 'true';
+  }
+
+  return feature.enabled || false;
 }
 
 // 取得開發路徑圖
@@ -122,10 +139,22 @@ function getRoadmap() {
   return phases;
 }
 
+// 取得環境變數狀態
+function getEnvironmentStatus() {
+  return {
+    ENABLE_DAILY_RECURRING: {
+      value: process.env.ENABLE_DAILY_RECURRING || 'false',
+      enabled: process.env.ENABLE_DAILY_RECURRING === 'true',
+      description: '每日重複課程功能開關',
+    },
+  };
+}
+
 module.exports = {
   FEATURES,
   getEnabledFeatures,
   getFeaturesByPhase,
   isFeatureEnabled,
   getRoadmap,
+  getEnvironmentStatus,
 };

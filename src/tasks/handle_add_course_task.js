@@ -28,8 +28,8 @@ function validateSlots(slots) {
     errors.push('課程日期');
   }
 
-  // 對於重複課程，需要星期幾
-  if (slots.recurring && slots.dayOfWeek === null && slots.dayOfWeek === undefined) {
+  // 對於重複課程，每週重複需要星期幾，每日重複不需要
+  if (slots.recurring && slots.recurrenceType === 'weekly' && (slots.dayOfWeek === null || slots.dayOfWeek === undefined)) {
     errors.push('星期幾');
   }
 
@@ -68,20 +68,44 @@ function resolveTimeReference(timeReference) {
 
 /**
  * 處理重複課程的日期計算
+ * @param {string} recurrenceType - 重複類型：daily, weekly, monthly
+ * @param {number} dayOfWeek - 星期幾（仅每週重複需要）
+ * @returns {string} 下次課程日期 YYYY-MM-DD
  */
-function calculateNextCourseDate(dayOfWeek) {
+function calculateNextCourseDate(recurrenceType, dayOfWeek = null) {
   const today = new Date();
-  const currentDay = today.getDay();
 
-  let daysUntilNext = dayOfWeek - currentDay;
-  if (daysUntilNext <= 0) {
-    daysUntilNext += 7; // 下週同一天
+  if (recurrenceType === 'daily') {
+    // 每日重複：如果現在時間已過，從明天開始
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
   }
 
-  const nextDate = new Date(today);
-  nextDate.setDate(today.getDate() + daysUntilNext);
+  if (recurrenceType === 'weekly' && dayOfWeek !== null) {
+    // 每週重複：原有邏輯
+    const currentDay = today.getDay();
+    let daysUntilNext = dayOfWeek - currentDay;
+    if (daysUntilNext <= 0) {
+      daysUntilNext += 7; // 下週同一天
+    }
 
-  return nextDate.toISOString().split('T')[0];
+    const nextDate = new Date(today);
+    nextDate.setDate(today.getDate() + daysUntilNext);
+    return nextDate.toISOString().split('T')[0];
+  }
+
+  if (recurrenceType === 'monthly') {
+    // 每月重複：下個月同一天
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+    return nextMonth.toISOString().split('T')[0];
+  }
+
+  // 預設回傳明天
+  const defaultDate = new Date(today);
+  defaultDate.setDate(today.getDate() + 1);
+  return defaultDate.toISOString().split('T')[0];
 }
 
 /**
@@ -157,8 +181,9 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       courseDate = resolveTimeReference(slots.timeReference);
     }
 
-    if (!courseDate && slots.recurring && slots.dayOfWeek !== null) {
-      courseDate = calculateNextCourseDate(slots.dayOfWeek);
+    if (!courseDate && slots.recurring) {
+      // 支援不同類型的重複課程
+      courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
     }
 
     if (!courseDate) {
@@ -196,6 +221,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       courseDate,
       scheduleTime: slots.scheduleTime,
       recurring: slots.recurring || false,
+      recurrenceType: slots.recurrenceType || null,
       dayOfWeek: slots.dayOfWeek,
       studentName: slots.studentName,
     };
@@ -217,6 +243,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       calendarEventId: calendarEvent.eventId,
       calendarId: student.calendarId,
       isRecurring: slots.recurring || false,
+      recurrenceType: slots.recurrenceType || null,
       duration: 60, // 預設1小時
       createdFrom: 'line_bot',
     };
@@ -244,16 +271,32 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     message += `📚 課程：${slots.courseName}\n`;
 
     if (slots.recurring) {
-      const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-      const dayName = days[slots.dayOfWeek];
-      message += `🔄 重複：每${dayName} ${timeDisplay}\n`;
+      let recurringDisplay = '';
+
+      if (slots.recurrenceType === 'daily') {
+        recurringDisplay = `🔄 重複：每天 ${timeDisplay}\n`;
+      } else if (slots.recurrenceType === 'weekly' && slots.dayOfWeek !== null) {
+        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        const dayName = days[slots.dayOfWeek];
+        recurringDisplay = `🔄 重複：每${dayName} ${timeDisplay}\n`;
+      } else if (slots.recurrenceType === 'monthly') {
+        recurringDisplay = `🔄 重複：每月 ${timeDisplay}\n`;
+      } else {
+        // 向下兼容：預設為每週
+        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        const dayName = slots.dayOfWeek !== null ? days[slots.dayOfWeek] : '不明';
+        recurringDisplay = `🔄 重複：每${dayName} ${timeDisplay}\n`;
+      }
+
+      message += recurringDisplay;
       message += `📅 下次上課：${courseDate}`;
     } else {
       message += `📅 日期：${courseDate}\n`;
       message += `🕐 時間：${timeDisplay}`;
     }
 
-    return {
+    // 設定期待確認狀態（簡化版）
+    const result = {
       success: true,
       message,
       data: {
@@ -266,6 +309,20 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         { label: '❌ 取消操作', text: '取消操作' },
       ],
     };
+
+    if (result.success && result.quickReply) {
+      const conversationManager = getConversationManager();
+
+      const context = await conversationManager.getContext(userId);
+      context.state.expectingInput = ['confirmation', 'modification'];
+      context.state.pendingData = {
+        lastOperation: { intent: 'add_course', slots, result },
+        timestamp: Date.now(),
+      };
+      await conversationManager.saveContext(userId, context);
+    }
+
+    return result;
   } catch (error) {
     console.error('❌ 新增課程任務失敗:', error);
 

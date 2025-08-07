@@ -21,27 +21,23 @@ async function handle_confirm_action_task(slots, userId, event) {
 
     // 取得最近的操作上下文
     const context = await conversationManager.getContext(userId);
-    if (!context || !context.state.lastActions) {
+    if (!context || !context.state.pendingData) {
       return {
         success: false,
         message: '❓ 沒有找到需要確認的操作。請重新輸入您的需求。',
       };
     }
 
-    // 找出最近的操作
-    const lastActionKeys = Object.keys(context.state.lastActions);
-    if (lastActionKeys.length === 0) {
+    // 取得待確認的操作
+    const { lastOperation } = context.state.pendingData;
+    if (!lastOperation) {
       return {
         success: false,
         message: '❓ 沒有找到需要確認的操作。',
       };
     }
 
-    // 取得最新的操作（按時間戳排序）
-    const lastAction = Object.values(context.state.lastActions)
-      .sort((a, b) => b.timestamp - a.timestamp)[0];
-
-    const { intent, slots: originalSlots, result: originalResult } = lastAction;
+    const { intent, slots: originalSlots, result: originalResult } = lastOperation;
 
     console.log('📝 確認操作詳情:', {
       intent,

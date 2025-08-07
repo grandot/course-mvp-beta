@@ -61,39 +61,38 @@ app.get('/debug/config', (req, res) => {
 app.post('/debug/webhook', async (req, res) => {
   try {
     console.log('🔍 Webhook 調試請求:', JSON.stringify(req.body, null, 2));
-    
+
     const { events } = req.body;
     if (events && events.length > 0) {
       const event = events[0];
       const userId = event.source ? event.source.userId : 'unknown';
-      
+
       console.log('📋 實際用戶ID:', userId);
       console.log('📋 用戶ID類型:', typeof userId);
       console.log('📋 是否以 U_test_ 開頭:', userId && userId.startsWith('U_test_'));
-      
+
       const { getLineService } = require('./bot/webhook');
       const lineService = getLineService(userId);
-      
+
       console.log('📋 選擇的服務類型:', lineService.constructor.name || 'Object');
-      
+
       res.json({
         status: 'debug_success',
-        userId: userId,
+        userId,
         userIdType: typeof userId,
         isTestUser: userId && userId.startsWith('U_test_'),
         serviceType: lineService.constructor.name || 'Object',
         eventType: event.type,
-        messageText: event.message ? event.message.text : 'no_message'
+        messageText: event.message ? event.message.text : 'no_message',
       });
     } else {
       res.json({ status: 'no_events', body: req.body });
     }
-    
   } catch (error) {
     console.error('❌ Webhook 調試錯誤:', error);
     res.status(500).json({
       status: 'debug_error',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -103,26 +102,25 @@ app.post('/test/lineservice', async (req, res) => {
   try {
     const { userId } = req.body;
     console.log('🔍 測試 LINE Service 選擇:', userId);
-    
+
     const { getLineService } = require('./bot/webhook');
     const lineService = getLineService(userId);
-    
+
     console.log('📋 選擇的服務類型:', lineService.constructor.name);
     console.log('📋 是否為測試用戶:', userId && userId.startsWith('U_test_'));
-    
+
     res.json({
       status: 'success',
-      userId: userId,
+      userId,
       isTestUser: userId && userId.startsWith('U_test_'),
       serviceType: lineService.constructor.name,
-      hasReplyMethod: typeof lineService.replyMessage === 'function'
+      hasReplyMethod: typeof lineService.replyMessage === 'function',
     });
-    
   } catch (error) {
     console.error('❌ LINE Service 測試錯誤:', error);
     res.status(500).json({
       status: 'error',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -131,30 +129,30 @@ app.post('/test/lineservice', async (req, res) => {
 app.post('/test/redis', async (req, res) => {
   try {
     console.log('🔍 開始測試 Redis 連接...');
-    
+
     const { getRedisService } = require('./services/redisService');
     const redisService = getRedisService();
-    
+
     console.log('📋 Redis 配置存在:', !!redisService.config);
     console.log('📋 Redis URL:', redisService.config ? 'configured' : 'not configured');
-    
+
     // 嘗試連接並測試
     const connected = await redisService.connect();
     console.log('🔗 連接結果:', connected);
-    
+
     if (connected && redisService.client) {
       // 測試基本操作
-      const testKey = 'test:' + Date.now();
+      const testKey = `test:${Date.now()}`;
       await redisService.set(testKey, 'test-value', 10);
       const value = await redisService.get(testKey);
       await redisService.delete(testKey);
-      
+
       console.log('✅ Redis 測試成功');
       res.json({
         status: 'success',
         message: 'Redis 連接和操作正常',
         connected: true,
-        testResult: { key: testKey, value }
+        testResult: { key: testKey, value },
       });
     } else {
       console.log('❌ Redis 連接失敗');
@@ -162,15 +160,14 @@ app.post('/test/redis', async (req, res) => {
         status: 'failed',
         message: 'Redis 連接失敗',
         connected: false,
-        config: !!redisService.config
+        config: !!redisService.config,
       });
     }
-    
   } catch (error) {
     console.error('❌ Redis 測試錯誤:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Test failed'
+      message: 'Test failed',
     });
   }
 });
@@ -178,7 +175,7 @@ app.post('/test/redis', async (req, res) => {
 // 依賴服務健康檢查端點
 app.get('/health/deps', async (req, res) => {
   const checks = {};
-  
+
   try {
     // 檢查 Redis 連接
     try {
@@ -215,19 +212,18 @@ app.get('/health/deps', async (req, res) => {
       checks.openai = { status: 'error', message: error.message };
     }
 
-    const overallStatus = Object.values(checks).some(check => check.status === 'error') ? 'error' : 'ok';
-    
+    const overallStatus = Object.values(checks).some((check) => check.status === 'error') ? 'error' : 'ok';
+
     res.json({
       status: overallStatus,
       timestamp: new Date().toISOString(),
-      checks
+      checks,
     });
-    
   } catch (error) {
     res.status(500).json({
       status: 'error',
       message: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });

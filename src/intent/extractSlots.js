@@ -107,6 +107,36 @@ function parseScheduleTime(message) {
   return null;
 }
 
+/**
+ * 識別重複類型：每日、每週、每月
+ * @param {string} message - 用戶訊息
+ * @returns {string|false} 重複類型或 false
+ */
+function identifyRecurrenceType(message) {
+  // 檢查環境變數控制
+  const enableDaily = process.env.ENABLE_DAILY_RECURRING === 'true';
+
+  // 每日重複關鍵詞
+  const dailyKeywords = ['每天', '每日', '天天', '日日', '每一天'];
+  if (enableDaily && dailyKeywords.some((keyword) => message.includes(keyword))) {
+    return 'daily';
+  }
+
+  // 每週重複關鍵詞
+  const weeklyKeywords = ['每週', '每周', '週週', '每星期'];
+  if (weeklyKeywords.some((keyword) => message.includes(keyword))) {
+    return 'weekly';
+  }
+
+  // 每月重複關鍵詞
+  const monthlyKeywords = ['每月', '每個月', '月月', '每月份'];
+  if (monthlyKeywords.some((keyword) => message.includes(keyword))) {
+    return 'monthly';
+  }
+
+  return false;
+}
+
 function parseDayOfWeek(message) {
   const dayMapping = {
     週一: 1,
@@ -149,11 +179,18 @@ function parseDayOfWeek(message) {
 }
 
 function checkRecurring(message) {
-  const recurringKeywords = ['每週', '每周', '每天', '每日', '每月', '重複', '定期', '固定', '循環', '週期性'];
+  // 優先使用新的重複類型識別
+  const recurrenceType = identifyRecurrenceType(message);
+  if (recurrenceType) {
+    return recurrenceType;
+  }
+
+  // 向下兼容：原有邏輯，預設回傳每週重複
+  const recurringKeywords = ['每週', '每周', '每月', '重複', '定期', '固定', '循環', '週期性'];
 
   // 明確的重複關鍵詞
   if (recurringKeywords.some((keyword) => message.includes(keyword))) {
-    return true;
+    return 'weekly';
   }
 
   // 如果包含星期詞彙且沒有明確的非重複指示，視為重複課程
@@ -167,8 +204,12 @@ function checkRecurring(message) {
   const nonRecurringKeywords = ['這次', '今天', '明天', '昨天', '下週一次', '單次', '一次性', '臨時'];
   const hasNonRecurringKeyword = nonRecurringKeywords.some((keyword) => message.includes(keyword));
 
-  // 如果包含星期但沒有非重複指示，視為重複課程
-  return hasDayKeyword && !hasNonRecurringKeyword;
+  // 如果包含星期但沒有非重複指示，預設為每週重複
+  if (hasDayKeyword && !hasNonRecurringKeyword) {
+    return 'weekly';
+  }
+
+  return false;
 }
 
 /**
@@ -311,7 +352,9 @@ async function extractSlotsByIntent(message, intent) {
       slots.scheduleTime = parseScheduleTime(message);
       slots.courseDate = parseSpecificDate(message);
       slots.dayOfWeek = parseDayOfWeek(message);
-      slots.recurring = checkRecurring(message);
+      const recurrenceResult = checkRecurring(message);
+      slots.recurring = !!recurrenceResult; // 轉換為布林值保持兼容性
+      slots.recurrenceType = recurrenceResult || null; // 新增重複類型資訊
       slots.timeReference = parseTimeReference(message);
       break;
 
@@ -697,6 +740,7 @@ module.exports = {
   parseSpecificDate,
   parseScheduleTime,
   parseDayOfWeek,
+  identifyRecurrenceType,
   extractStudentName,
   extractCourseName,
   enhanceSlotsWithContext,

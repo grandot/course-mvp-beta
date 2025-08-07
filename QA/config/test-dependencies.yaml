@@ -1,0 +1,273 @@
+# 測試依賴關係配置
+# 基於階段式測試架構，定義每個測試組的依賴關係
+
+# 測試階段配置
+phases:
+  group_a:
+    name: "獨立功能測試"
+    description: "不需要預置資料的基礎功能測試"
+    dependencies: []
+    provides: ["basic_students", "basic_courses", "basic_calendar_events"]
+    prerequisites: ["clean_environment"]
+    estimated_time_minutes: 90
+    
+  group_b:
+    name: "依賴功能測試"
+    description: "基於Group A建立資料的功能測試"
+    dependencies: ["basic_students", "basic_courses"]
+    provides: ["course_records", "reminders", "query_results"]
+    prerequisites: ["group_a_success"]
+    estimated_time_minutes: 120
+    
+  group_c:
+    name: "複雜操作測試"
+    description: "需要完整數據環境的高級功能測試"
+    dependencies: ["basic_students", "basic_courses", "course_records", "reminders"]
+    provides: ["modified_courses", "cancelled_courses", "system_stress_results"]
+    prerequisites: ["group_a_success", "group_b_success"]
+    estimated_time_minutes: 60
+
+# 測試用例分組配置
+test_groups:
+
+  # =================== GROUP A: 獨立功能測試 ===================
+  group_a_add_single_course:
+    phase: "group_a"
+    name: "新增單次課程測試"
+    test_count: 12
+    dependencies: []
+    provides: ["test_student_xiaoming", "test_course_math", "single_course_events"]
+    description: "測試新增單次課程的各種輸入格式和錯誤處理"
+    
+  group_a_add_recurring_course:
+    phase: "group_a"
+    name: "新增重複課程測試"
+    test_count: 15
+    dependencies: []
+    provides: ["test_student_lumi", "test_course_piano", "recurring_course_events"]
+    description: "測試重複課程的創建，包含每週、每日等循環規則"
+    known_issues: ["daily_recurring_not_implemented"]
+    
+  group_a_system_basic:
+    phase: "group_a"
+    name: "系統基礎功能測試"
+    test_count: 8
+    dependencies: []
+    provides: ["intent_classification_validation", "error_recovery_patterns"]
+    description: "測試意圖識別、錯誤處理等系統基礎能力"
+
+  # =================== GROUP B: 依賴功能測試 ===================
+  group_b_query_courses:
+    phase: "group_b"
+    name: "查詢課程功能測試"
+    test_count: 15
+    dependencies: ["test_student_xiaoming", "test_student_lumi", "test_course_math", "test_course_piano"]
+    provides: ["query_validation", "schedule_display_formats"]
+    description: "測試各種時間範圍的課程查詢功能"
+    
+  group_b_record_content:
+    phase: "group_b"
+    name: "記錄內容功能測試"
+    test_count: 15
+    dependencies: ["test_course_math", "test_course_piano", "single_course_events"]
+    provides: ["course_records", "content_history"]
+    description: "測試課程內容記錄和查詢功能"
+    
+  group_b_set_reminders:
+    phase: "group_b"
+    name: "設定提醒功能測試"
+    test_count: 10
+    dependencies: ["test_course_math", "test_course_piano"]
+    provides: ["reminders", "reminder_settings"]
+    description: "測試課程提醒的設定和管理"
+
+  # =================== GROUP C: 複雜操作測試 ===================
+  group_c_modify_courses:
+    phase: "group_c"
+    name: "修改課程功能測試"
+    test_count: 8
+    dependencies: ["test_course_math", "test_course_piano", "course_records"]
+    provides: ["modified_courses", "modification_history"]
+    description: "測試課程資訊的修改功能"
+    
+  group_c_cancel_courses:
+    phase: "group_c"
+    name: "取消課程功能測試"
+    test_count: 7
+    dependencies: ["test_course_math", "recurring_course_events", "reminders"]
+    provides: ["cancelled_courses", "cancellation_confirmations"]
+    description: "測試課程取消功能，包含單次和重複課程"
+    
+  group_c_system_advanced:
+    phase: "group_c"
+    name: "系統級測試"
+    test_count: 5
+    dependencies: ["test_student_xiaoming", "test_student_lumi", "course_records", "reminders"]
+    provides: ["system_stress_results", "concurrency_validation"]
+    description: "測試併發處理、系統壓力等高級功能"
+
+# 數據實體定義
+data_entities:
+  
+  # 測試學生
+  test_student_xiaoming:
+    type: "student"
+    name: "測試小明"
+    test_id: "test_student_001"
+    created_by: ["group_a_add_single_course"]
+    used_by: ["group_b_query_courses", "group_b_record_content", "group_c_modify_courses"]
+    
+  test_student_lumi:
+    type: "student"
+    name: "測試Lumi"
+    test_id: "test_student_002"
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses", "group_b_set_reminders", "group_c_cancel_courses"]
+    
+  test_student_xiaoguang:
+    type: "student"
+    name: "測試小光"
+    test_id: "test_student_003"
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses", "group_c_system_advanced"]
+    
+  # 測試課程
+  test_course_math:
+    type: "course"
+    name: "測試數學課"
+    student: "測試小明"
+    schedule_time: "14:00"
+    is_recurring: false
+    created_by: ["group_a_add_single_course"]
+    used_by: ["group_b_record_content", "group_b_set_reminders", "group_c_modify_courses"]
+    
+  test_course_piano:
+    type: "course"
+    name: "測試鋼琴課"
+    student: "測試Lumi"
+    schedule_time: "15:30"
+    day_of_week: 3
+    is_recurring: true
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses", "group_b_set_reminders", "group_c_cancel_courses"]
+    
+  test_course_english:
+    type: "course"
+    name: "測試英文課"
+    student: "測試小光"
+    schedule_time: "10:00"
+    day_of_week: 1
+    is_recurring: true
+    created_by: ["group_a_add_recurring_course"]
+    used_by: ["group_b_query_courses"]
+
+# 執行規則
+execution_rules:
+  
+  # 階段執行順序
+  phase_order: ["group_a", "group_b", "group_c"]
+  
+  # 錯誤處理
+  error_handling:
+    group_a_failure_threshold: 0.10  # Group A 失敗率超過10%則停止
+    group_b_failure_threshold: 0.15  # Group B 失敗率超過15%則停止  
+    group_c_failure_threshold: 0.20  # Group C 失敗率超過20%則停止
+    
+  # 重試策略
+  retry_policy:
+    max_retries: 2
+    retry_delay_seconds: 3
+    retry_on_network_error: true
+    retry_on_timeout: true
+    
+  # 測試間隔
+  timing:
+    between_tests_seconds: 2.5
+    between_groups_seconds: 10
+    between_phases_seconds: 30
+    
+  # 並行度控制
+  concurrency:
+    max_concurrent_tests: 1  # 序列執行確保數據一致性
+    allow_parallel_phases: false
+
+# 環境檢查配置
+environment_checks:
+  required_services:
+    - firebase
+    - line_bot
+    - openai
+    
+  optional_services:
+    - redis
+    - google_calendar
+    
+  required_env_vars:
+    - LINE_CHANNEL_ACCESS_TOKEN
+    - LINE_CHANNEL_SECRET
+    - OPENAI_API_KEY
+    - FIREBASE_PROJECT_ID
+    
+  test_data_constraints:
+    test_user_id: "U_test_user_qa"
+    test_student_prefix: "測試"
+    test_course_prefix: "測試"
+    
+# 報告配置
+reporting:
+  output_format: "json"
+  detailed_logs: true
+  include_timing: true
+  include_dependencies: true
+  
+  success_criteria:
+    group_a_pass_rate: 0.90
+    group_b_pass_rate: 0.85
+    group_c_pass_rate: 0.80
+    overall_pass_rate: 0.85
+    
+  failure_analysis:
+    categorize_failures: true
+    track_regression: true
+    identify_bottlenecks: true
+
+# 已知問題和限制
+known_issues:
+  daily_recurring_not_implemented:
+    description: "每日重複課程功能未完全實現"
+    affects: ["group_a_add_recurring_course"]
+    severity: "medium"
+    test_expectation: "expected_failure"
+    
+  image_upload_disabled:
+    description: "圖片上傳功能完全失效"
+    affects: []  # 已從測試中移除
+    severity: "high"
+    test_expectation: "skipped"
+    
+  redis_connection_latency:
+    description: "Redis連接延遲較高"
+    affects: ["all_groups"]
+    severity: "low"
+    test_expectation: "performance_degradation"
+
+# 擴展配置
+extensions:
+  
+  # 性能測試配置
+  performance_testing:
+    enabled: false
+    response_time_threshold_ms: 5000
+    concurrent_users: 3
+    
+  # 壓力測試配置  
+  stress_testing:
+    enabled: false
+    max_requests_per_minute: 20
+    duration_minutes: 5
+    
+  # 回歸測試配置
+  regression_testing:
+    enabled: false
+    baseline_results_path: "./test-results/baseline.json"
+    tolerance_percentage: 5

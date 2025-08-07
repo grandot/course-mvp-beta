@@ -224,7 +224,7 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
 
     // 1. 確定查詢的時間範圍
     const dateRange = calculateDateRange(
-      slots.timeReference || 'today',
+      slots.timeReference || 'this_week', // 改這一個字就夠了
       slots.specificDate,
     );
 
