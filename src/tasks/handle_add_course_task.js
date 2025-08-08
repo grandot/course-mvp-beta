@@ -191,6 +191,18 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
     }
 
+    // 若 courseDate 存在但不是 YYYY-MM-DD，視為無效並以 timeReference/recurring 推導
+    if (courseDate && !/^\d{4}-\d{2}-\d{2}$/.test(courseDate)) {
+      console.log(`⚠️ 無效的 courseDate 格式: ${courseDate}，嘗試以參考時間或重複規則推導`);
+      courseDate = null;
+      if (slots.timeReference) {
+        courseDate = resolveTimeReference(slots.timeReference);
+      }
+      if (!courseDate && slots.recurring) {
+        courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
+      }
+    }
+
     if (!courseDate) {
       return {
         success: false,

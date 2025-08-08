@@ -724,6 +724,12 @@ async function extractSlots(message, intent, userId = null) {
     }
   }
 
+  // 嚴格驗證日期欄位：避免將「每月1號」等自然語帶入下游服務
+  if (cleanedSlots.courseDate && !/^\d{4}-\d{2}-\d{2}$/.test(cleanedSlots.courseDate)) {
+    console.log(`⚠️ 移除無效的 courseDate: ${cleanedSlots.courseDate}`);
+    delete cleanedSlots.courseDate;
+  }
+
   console.log('✅ 最終 slots:', cleanedSlots);
   return cleanedSlots;
 }

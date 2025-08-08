@@ -17,16 +17,13 @@ async function handle_query_course_content_task(slots, userId) {
     };
   }
 
-  // 查詢最近一筆記錄
-  const snapshot = await firebaseService.getCollection('course_contents')
+  // 查詢：先用必要條件 where，再在記憶體排序，避免複合索引阻塞
+  const baseQuery = firebaseService.getCollection('course_contents')
     .where('userId', '==', userId)
     .where('studentName', '==', studentName)
-    .where('courseName', '==', courseName)
-    .orderBy('createdAt', 'desc')
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
+    .where('courseName', '==', courseName);
+  const querySnap = await baseQuery.get();
+  if (querySnap.empty) {
     return {
       success: false,
       code: 'NOT_FOUND',
@@ -34,8 +31,14 @@ async function handle_query_course_content_task(slots, userId) {
     };
   }
 
-  const doc = snapshot.docs[0];
-  const data = doc.data();
+  // 以 createdAt 字串排序（ISO 格式可字典序比較）
+  const docs = querySnap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
+    .reverse();
+  const latest = docs[0];
+
+  const data = latest;
   const content = data.content || '(無文字內容)';
   const date = data.recordDate || data.createdAt?.split('T')[0] || '';
 
@@ -43,7 +46,7 @@ async function handle_query_course_content_task(slots, userId) {
     success: true,
     code: 'QUERY_CONTENT_OK',
     message: `📘 最近一次的內容記錄\n👨‍🎓 學生：${studentName}\n📚 課程：${courseName}\n📅 日期：${date}\n💬 內容：${content}`,
-    data: { recordId: doc.id },
+    data: { recordId: latest.id },
   };
 }
 
