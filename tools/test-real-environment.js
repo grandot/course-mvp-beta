@@ -120,37 +120,83 @@ class RealEnvironmentTester {
   }
   
   /**
-   * 獲取 Render 日誌
+   * 獲取 Render 日誌 (分段獲取策略 - 基於第一性原則)
    */
   async fetchRenderLogs() {
     console.log('📋 獲取 Render 日誌...');
     
     try {
-      // 方法 1: 使用 Render CLI (推薦)
+      // 方法 1: 使用 Render CLI (分段獲取以突破限制)
       const { exec } = require('child_process');
       const { promisify } = require('util');
       const execAsync = promisify(exec);
       
       try {
-        const { stdout } = await execAsync(
-          `render logs -r ${this.renderServiceId} --limit 10 -o json`,
-          { timeout: 10000 }
+        let allLogs = [];
+        const attempts = 5; // 嘗試5次，每次獲取100條
+        const limitPerAttempt = 100; // 每次100條（已測試的最大安全值）
+        
+        console.log(`🔄 多次獲取日誌策略 (${attempts} 次，每次最多 ${limitPerAttempt} 條)`);
+        
+        // 策略：使用 backward 方向多次獲取，確保覆蓋更多日誌
+        for (let i = 0; i < attempts; i++) {
+          try {
+            let command;
+            if (i === 0) {
+              // 第一次：獲取最新的100條
+              command = `render logs -r ${this.renderServiceId} --limit ${limitPerAttempt} --direction backward -o json`;
+            } else {
+              // 後續：基於已獲取的最早時間繼續往前獲取
+              if (allLogs.length > 0) {
+                const oldestLog = allLogs[allLogs.length - 1];
+                const endTime = new Date(oldestLog.timestamp);
+                command = `render logs -r ${this.renderServiceId} --limit ${limitPerAttempt} --end "${endTime.toISOString()}" --direction backward -o json`;
+              } else {
+                // 如果前一次沒獲取到，跳過
+                break;
+              }
+            }
+            
+            const { stdout } = await execAsync(command, { timeout: 10000 });
+            
+            // 解析 JSON Lines 格式的日誌
+            const logLines = stdout.trim().split('\n').filter(line => line.trim());
+            const logs = logLines.map(line => {
+              try {
+                return JSON.parse(line);
+              } catch {
+                return { message: line, timestamp: new Date().toISOString() };
+              }
+            });
+            
+            // 添加到總日誌（會在最後去重）
+            allLogs.push(...logs);
+            console.log(`  📦 第 ${i+1}/${attempts} 次: 獲取 ${logs.length} 條`);
+            
+            // 如果獲取不到更多日誌，提前結束
+            if (logs.length === 0) {
+              console.log(`  ℹ️ 沒有更多日誌，結束獲取`);
+              break;
+            }
+            
+            // 短暫延遲避免速率限制
+            if (i < attempts - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          } catch (attemptError) {
+            console.log(`  ⚠️ 第 ${i+1} 次獲取失敗: ${attemptError.message}`);
+          }
+        }
+        
+        // 去重（基於時間戳和訊息內容）
+        const uniqueLogs = Array.from(
+          new Map(allLogs.map(log => [`${log.timestamp}-${log.message}`, log])).values()
         );
         
-        // 解析 JSON Lines 格式的日誌
-        const logLines = stdout.trim().split('\n').filter(line => line.trim());
-        const logs = logLines.map(line => {
-          try {
-            return JSON.parse(line);
-          } catch {
-            return { message: line, timestamp: new Date().toISOString() };
-          }
-        });
-        
-        console.log(`✅ 通過 CLI 獲取到 ${logs.length} 條日誌`);
+        console.log(`✅ 通過多次獲取策略，總共獲取到 ${uniqueLogs.length} 條唯一日誌（原始 ${allLogs.length} 條）`);
         
         // 組合所有日誌訊息
-        const logMessages = logs.map(entry => entry.message).join('\n');
+        const logMessages = uniqueLogs.map(entry => entry.message).join('\n');
         return logMessages;
         
       } catch (cliError) {
