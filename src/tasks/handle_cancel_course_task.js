@@ -42,6 +42,18 @@ function calculateDateFromReference(timeReference) {
   return `${targetYear}-${targetMonth}-${targetDay}`;
 }
 
+function getAlternateStudentNames(name) {
+  const names = new Set();
+  if (!name) return [];
+  names.add(name);
+  if (name.startsWith('測試')) {
+    names.add(name.replace(/^測試/, ''));
+  } else {
+    names.add(`測試${name}`);
+  }
+  return Array.from(names);
+}
+
 /**
  * 查找要取消的課程
  * @param {string} userId - 用戶ID
@@ -146,8 +158,15 @@ async function handle_cancel_course_task(slots, userId) {
 
     // 2. 若未指定範圍且疑似重複課，先提示選擇範圍
     if (!slots.scope) {
-      const courses = await firebaseService.getCoursesByStudent(userId, slots.studentName);
-      const hasRecurring = courses.some((c) => c.courseName === slots.courseName && c.isRecurring);
+      // 嘗試以多個候選學生名稱查詢，避免『測試』前綴不一致
+      const candidates = getAlternateStudentNames(slots.studentName);
+      let hasRecurring = false;
+      for (const candidate of candidates) {
+        const courses = await firebaseService.getCoursesByStudent(userId, candidate);
+        if (courses.some((c) => c.courseName === slots.courseName && c.isRecurring)) {
+          hasRecurring = true; break;
+        }
+      }
       if (hasRecurring) {
         return {
           success: false,
@@ -163,7 +182,7 @@ async function handle_cancel_course_task(slots, userId) {
     }
 
     // 3. 查找要取消的課程
-    const coursesToCancel = await findCoursesToCancel(
+    let coursesToCancel = await findCoursesToCancel(
       userId,
       slots.studentName,
       slots.courseName,
@@ -171,6 +190,21 @@ async function handle_cancel_course_task(slots, userId) {
       slots.timeReference,
       slots.scope || 'single',
     );
+    if ((!coursesToCancel || coursesToCancel.length === 0) && slots.studentName) {
+      // 使用候選名稱再嘗試一次
+      const altNames = getAlternateStudentNames(slots.studentName).filter(n => n !== slots.studentName);
+      for (const alt of altNames) {
+        coursesToCancel = await findCoursesToCancel(
+          userId,
+          alt,
+          slots.courseName,
+          slots.specificDate,
+          slots.timeReference,
+          slots.scope || 'single',
+        );
+        if (coursesToCancel && coursesToCancel.length > 0) break;
+      }
+    }
 
     if (!coursesToCancel || coursesToCancel.length === 0) {
       return {
