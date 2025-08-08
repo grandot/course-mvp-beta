@@ -207,9 +207,9 @@ class LineWebhookSimulator {
           console.log(`🔘 快速回覆: [${quickReplies.join(', ')}]`);
         }
       } else {
-        console.log(`💬 Mock Service 測試: 訊息已處理 (實際回覆請查看服務器日誌)`);
-        // 在 Mock 模式下無法可靠取得實際回覆，此處保留占位文字
-        botReply = "";
+        console.log(`💬 Mock Service 測試: 訊息已處理 (回傳可檢查的固定文案)`);
+        // 在 Mock 模式下提供可被關鍵詞檢查的固定文案
+        botReply = "[MOCK] 處理成功：已收到訊息並生成回覆";
       }
       
       return {

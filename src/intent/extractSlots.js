@@ -715,8 +715,12 @@ async function extractSlots(message, intent, userId = null) {
   // 第四階段：資料清理和驗證
   const cleanedSlots = {};
   for (const [key, value] of Object.entries(slots)) {
-    if (value !== null && value !== undefined && value !== '') {
-      cleanedSlots[key] = value;
+    // 正規化字串 'null' 為真正的空值
+    const normalized = (typeof value === 'string' && value.trim().toLowerCase() === 'null')
+      ? null
+      : value;
+    if (normalized !== null && normalized !== undefined && normalized !== '') {
+      cleanedSlots[key] = normalized;
     }
   }
 

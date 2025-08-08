@@ -291,24 +291,17 @@ class TestDataManager {
   }
 
   /**
-   * 準備 Phase A 數據（清理環境並建立基礎測試數據）
+   * 準備 Phase A 數據（只清理環境，不預置數據）
    */
   async setupPhaseAData() {
-    console.log('📋 Phase A: 獨立功能測試（清理並建立基礎數據）');
+    console.log('📋 Phase A: 獨立功能測試（無需預置數據）');
     
-    // 1. 清理現有測試數據
     const cleaned = await this.cleanupAllTestData();
     if (!cleaned) {
       return false;
     }
     
-    // 2. 建立基礎測試數據
-    const created = await this.createBasicStudentsAndCourses();
-    if (!created) {
-      return false;
-    }
-    
-    console.log('✅ Phase A 數據準備完成');
+    console.log('✅ Phase A 數據準備完成（環境已清理）');
     return true;
   }
 
