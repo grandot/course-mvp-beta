@@ -38,6 +38,7 @@ async function processMessageAndGetResponse(userId, message) {
       intent: intent,
       slots: slots,
       output: result.message,
+      code: result.code,
       success: result.success,
       quickReply: result.quickReply || null
     };
