@@ -315,8 +315,10 @@ class QAOrchestrator {
       local.results.forEach((r, idx) => {
         const caseId = r.testCase.id || `#${idx + 1}`;
         const caseName = r.testCase.name || '未命名測試';
+        const expected = r.testCase.expectedFinalOutput || r.testCase.expectedOutput || '';
         lines.push(`### 本機-${idx + 1}. [${caseId}] ${caseName}`);
         lines.push(`- **輸入**: ${r.testCase.input}`);
+        lines.push(`- **預期回覆**: ${expected ? safeInline(expected) : '(未定義)'}`);
         lines.push(`- **結果**: ${r.success ? '✅ PASS' : '❌ FAIL'}`);
         if (!r.success) {
           if (r.output) lines.push(`- **輸出**: ${safeInline(r.output)}`);
@@ -337,8 +339,10 @@ class QAOrchestrator {
       real.results.forEach((r, idx) => {
         const caseId = r.testCase.id || `#${idx + 1}`;
         const caseName = r.testCase.name || '未命名測試';
+        const expected = r.testCase.expectedFinalOutput || r.testCase.expectedOutput || '';
         lines.push(`### 線上-${idx + 1}. [${caseId}] ${caseName}`);
         lines.push(`- **輸入**: ${r.testCase.input}`);
+        lines.push(`- **預期回覆**: ${expected ? safeInline(expected) : '(未定義)'}`);
         lines.push(`- **Webhook**: ${r.webhookStatus} ${r.webhookOk ? '✅' : '❌'}`);
         lines.push(`- **回覆**: ${r.botReply ? safeInline(r.botReply) : '(無)'}`);
         lines.push(`- **結果**: ${r.testPassed ? '✅ PASS' : '❌ FAIL'}`);
@@ -390,6 +394,8 @@ class QAOrchestrator {
         const output = (r.output || '').toString();
         const error = r.error || '';
         const expectedHasStructure = (r.testCase && (r.testCase.expectedCode !== undefined || r.testCase.expectedSuccess !== undefined));
+        const expectedSuccess = (r.testCase && r.testCase.expectedSuccess);
+        const taskSuccess = r.taskSuccess;
 
         // 1) 測試情境設計問題：輸入為空（多半來自測試文檔格式不符解析規則）
         if (!input) {
@@ -397,6 +403,16 @@ class QAOrchestrator {
             category: '測試情境設計',
             secondary: ['測試系統'],
             reason: '測試文檔未按解析規格（缺少「測試輸入」或步驟「輸入：」），被解析為空輸入。建議統一使用「- 測試輸入：」或「- 測試序列」+ 每步「輸入：」。'
+          };
+        }
+
+        // 1.5) 預期為澄清/失敗（expectedSuccess=false），但實際成功或輸出包含成功語
+        if (expectedSuccess === false && (taskSuccess === true || /成功|已安排|✅/.test(output))) {
+          const hasResidue = /醒我|提醒我|幫我/.test(output);
+          return {
+            category: '測試系統',
+            secondary: ['主程序'],
+            reason: `此用例應提示補齊缺少資訊，但實際被判定為成功${hasResidue ? '，且輸出含殘留觸發詞（如「醒我」），疑似上下文污染導致槽位被自動補全' : ''}。建議：重置用例間上下文或停用缺槽時的上下文增強；同時加強提取清洗，缺關鍵槽位時應先澄清而非自動補全。`
           };
         }
 
@@ -438,9 +454,9 @@ class QAOrchestrator {
         }
         if (/醒我/.test(output)) {
           return {
-            category: '主程序',
-            secondary: ['測試系統'],
-            reason: '輸出中出現「醒我」等殘留字樣，疑似槽位被上下文污染或提取清洗不完整。建議重置用例間上下文並強化提取清洗規則。'
+            category: '測試系統',
+            secondary: ['主程序'],
+            reason: '輸出中出現「醒我」等殘留字樣，疑似上下文污染導致槽位被自動補全或提取清洗不完整。建議重置用例間上下文並強化提取清洗規則。'
           };
         }
 

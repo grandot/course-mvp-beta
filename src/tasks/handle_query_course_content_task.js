@@ -31,11 +31,16 @@ async function handle_query_course_content_task(slots, userId) {
     };
   }
 
-  // 以 createdAt 字串排序（ISO 格式可字典序比較）
+  // 轉為時間戳排序，缺失時回退 recordDate/updatedAt
+  const toTs = (doc) => {
+    const created = doc.createdAt ? Date.parse(doc.createdAt) : NaN;
+    const updated = doc.updatedAt ? Date.parse(doc.updatedAt) : NaN;
+    const record = doc.recordDate ? Date.parse(doc.recordDate) : NaN;
+    return [created, updated, record].find((v) => !Number.isNaN(v)) || 0;
+  };
   const docs = querySnap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
-    .reverse();
+    .sort((a, b) => toTs(b) - toTs(a));
   const latest = docs[0];
 
   const data = latest;

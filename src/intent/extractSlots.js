@@ -576,14 +576,14 @@ function validateExtractionResult(result, originalMessage, intent) {
 }
 
 function hasActionWords(text) {
-  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄'];
+  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我'];
   return actionWords.some((word) => text.includes(word));
 }
 
 function cleanStudentName(rawName) {
   // 移除常見的動作詞前綴
   const cleaned = rawName
-    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄)/, '')
+    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄|提醒|提醒我|醒我)/, '')
     .replace(/(的|之)$/, '');
   return cleaned.trim();
 }
@@ -722,11 +722,10 @@ async function extractSlots(message, intent, userId = null) {
     }
   }
 
-  // 第三階段：結果驗證與清理
+  // 第三階段：結果驗證與清理（無論是否啟用 AI Fallback 都執行清洗）
+  const validation = validateExtractionResult(slots, message, intent);
+  slots = validation.result;
   if (process.env.ENABLE_AI_FALLBACK === 'true') {
-    const validation = validateExtractionResult(slots, message, intent);
-    slots = validation.result;
-
     // 記錄低置信度案例用於持續優化
     const finalConfidence = calculateConfidence(slots, intent);
     if (finalConfidence < 0.7) {
@@ -808,6 +807,14 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
     const context = await conversationManager.getContext(userId);
     if (!context) {
       console.log('⚠️ 無對話上下文，跳過上下文增強');
+      return slots;
+    }
+
+    // 缺關鍵槽位時，避免用上下文自動補全，先走澄清流程
+    const disableAutoFill = process.env.DISABLE_CONTEXT_AUTO_FILL === 'true';
+    const isCriticalIntent = ['add_course', 'create_recurring_course', 'set_reminder', 'cancel_course', 'record_content', 'add_course_content', 'query_course_content'].includes(intent);
+    const missingCritical = (!slots.studentName || !slots.courseName) && isCriticalIntent;
+    if (disableAutoFill || missingCritical) {
       return slots;
     }
 

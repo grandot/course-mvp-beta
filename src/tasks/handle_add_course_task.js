@@ -211,6 +211,19 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       };
     }
 
+    // 2.1 非重複課：禁止建立過去時間
+    if (!slots.recurring) {
+      const dateTimeStr = `${courseDate}T${slots.scheduleTime || '00:00'}:00`;
+      const targetMs = Date.parse(dateTimeStr);
+      if (!Number.isNaN(targetMs) && targetMs < Date.now()) {
+        return {
+          success: false,
+          code: 'INVALID_PAST_TIME',
+          message: '❌ 無法建立過去時間的課程，請確認日期時間後重新輸入',
+        };
+      }
+    }
+
     // 3. 確保學生有對應的日曆
     const student = await ensureStudentCalendar(userId, slots.studentName);
     console.log('👤 學生日曆:', student.calendarId);

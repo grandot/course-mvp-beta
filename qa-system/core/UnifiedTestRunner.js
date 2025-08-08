@@ -63,6 +63,12 @@ class UnifiedTestRunner {
 
     for (const testCase of testCases) {
       try {
+        // 測試隔離：在每個案例前清空該測試用戶的對話上下文（不影響多步用例）
+        const { getConversationManager } = require('../../src/conversation/ConversationManager');
+        const conv = getConversationManager();
+        const userId = process.env.TEST_USER_ID || 'U_test_user_qa';
+        await conv.clearContext(userId);
+
         // 支援多輪：如有 steps，逐步送入，最後一步用於比對
         let result = null;
         if (Array.isArray(testCase.steps) && testCase.steps.length > 0) {
