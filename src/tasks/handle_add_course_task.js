@@ -339,6 +339,14 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         lastOperation: { intent: 'add_course', slots, result },
         timestamp: Date.now(),
       };
+      // 同步記錄至 lastActions 以供修改流程穩定讀取
+      context.state.lastActions = context.state.lastActions || {};
+      context.state.lastActions.add_course = {
+        intent: 'add_course',
+        slots,
+        result,
+        timestamp: Date.now(),
+      };
       await conversationManager.saveContext(userId, context);
     }
 

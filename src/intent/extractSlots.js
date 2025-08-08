@@ -346,6 +346,33 @@ async function extractSlotsByIntent(message, intent) {
   const slots = {};
 
   switch (intent) {
+    case 'add_homework':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      slots.timeReference = parseTimeReference(message);
+      slots.courseDate = parseSpecificDate(message);
+      // 作業/練習內容提取（與 record_content 相同規則）
+      {
+        const contentPatternsHw = [
+          /練習了(.+)/,
+          /作業[是為要:：](.+)/,
+          /複習了(.+)/,
+          /題目是(.+)/,
+          /內容[是:：](.+)/,
+        ];
+        for (const pattern of contentPatternsHw) {
+          const m = message.match(pattern);
+          if (m) { slots.content = m[1].trim(); break; }
+        }
+      }
+      break;
+
+    case 'query_course_content':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      slots.timeReference = parseTimeReference(message);
+      slots.courseDate = parseSpecificDate(message);
+      break;
     case 'add_course':
     case 'create_recurring_course':
       slots.studentName = extractStudentName(message);
