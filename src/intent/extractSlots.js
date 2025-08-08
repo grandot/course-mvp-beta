@@ -222,6 +222,9 @@ function extractStudentName(message) {
     // 最高精確度模式 - 明確的姓名結構（調整順序，優先精確匹配）
     /(?:新增|幫.*?新增)\s*([小大]?[一-龥A-Za-z]{2,6})的/, // 新增小明的、幫我新增小明的
     /(?:安排)\s*([小大]?[一-龥A-Za-z]{2,6})每週/, // 安排小華每週
+    /(?:安排)\s*([小大]?[一-龥A-Za-z]{2,6})每月/, // 安排小華每月
+    /^([小大]?[一-龥A-Za-z]{1,12})(?=固定)/, // 小明固定… / Lumi固定…
+    /^([小大]?[一-龥A-Za-z]{1,12})(?=每個?星期)/, // 小明每個星期…
     /([小大]?[一-龥A-Za-z]{2,6})的.*課/, // 小明的數學課
     /查詢([小大]?[一-龥A-Za-z]{2,6})[今昨明]天/, // 查詢小明今天
     /記錄([小大]?[一-龥A-Za-z]{2,6})[今昨明]天/, // 記錄小光昨天
@@ -292,6 +295,7 @@ function extractCourseName(message) {
     /(?:上|學|要上)([一-龥]{2,6})課?/, // 上數學、學英文、要上鋼琴
     /的([一-龥]{2,6})課/, // 的數學課 - 需要在通用課程模式之前
     /([一-龥]{2,6})課(?![學了])/, // 數學課 (但不是 "數學課學了")
+    /([一-龥]{2,6}評鑑)/, // 評鑑類型，如 測試評鑑
 
     // 高精確度模式 - 特定結構
     /([一-龥A-Za-z]{2,6})教學/, // XX教學
@@ -328,7 +332,8 @@ function extractCourseName(message) {
         if (!courseName.includes('課')
             && !courseName.endsWith('教學')
             && !courseName.endsWith('訓練')
-            && !courseName.endsWith('班')) {
+            && !courseName.endsWith('班')
+            && !courseName.endsWith('評鑑')) {
           courseName += '課';
         }
         return courseName;
@@ -391,6 +396,11 @@ async function extractSlotsByIntent(message, intent) {
       slots.timeReference = parseTimeReference(message);
       slots.specificDate = parseSpecificDate(message);
       slots.courseName = extractCourseName(message);
+      // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
+      if (!slots.studentName) {
+        const m = message.match(/(測試?[A-Za-z一-龥]{1,12})(?:的|今天|明天|這週|本週|下週)/);
+        if (m && m[1]) slots.studentName = stripTimeSuffixFromName(m[1]);
+      }
       break;
 
     case 'stop_recurring_course':
@@ -403,6 +413,11 @@ async function extractSlotsByIntent(message, intent) {
         slots.recurrenceType = 'daily';
       } else if (isWeekly) {
         slots.recurrenceType = 'weekly';
+      }
+      // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
+      if (!slots.studentName) {
+        const m2 = message.match(/(測試?[A-Za-z一-龥]{1,12})(?:的|每天|每週|每周|星期|週|周)/);
+        if (m2 && m2[1]) slots.studentName = stripTimeSuffixFromName(m2[1]);
       }
       break;
 
@@ -436,6 +451,19 @@ async function extractSlotsByIntent(message, intent) {
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
       // 判斷取消範圍（不預設 single，避免錯過重複課交互）
+      // 第一性原則：若含具體日期詞且未提及「全部/重複」，預設單次取消
+      const mentionsConcreteDay = /(今天|明天|昨天|後天|前天|\d{1,2}[\/\-]\d{1,2}|\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/.test(message);
+      const mentionsBulk = /(全部|所有|整個|重複|每週|每天|每月)/.test(message);
+      if (mentionsConcreteDay && !mentionsBulk) {
+        if (!slots.specificDate) {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          slots.specificDate = slots.timeReference ? parseSpecificDate(message) || `${y}-${m}-${d}` : `${y}-${m}-${d}`;
+        }
+        slots.scope = 'single';
+      }
       if (message.includes('只取消今天') || message.includes('只刪除今天') || message.includes('只今天')) {
         slots.scope = 'single';
         // 若未提供日期，預設今天
@@ -598,11 +626,25 @@ function validateExtractionResult(result, originalMessage, intent) {
     issues.push('記錄內容意圖但未提取到內容');
   }
 
+  // 補強：若課程名稱是問句殘片（如「課什麼時候上」「每天幾點」），視為無效
+  if (cleaned.courseName && /(什麼時候|幾點|如何|怎麼樣)/.test(cleaned.courseName)) {
+    issues.push(`移除無效課程名稱（問句殘片）: ${cleaned.courseName}`);
+    delete cleaned.courseName;
+  }
+
   if (issues.length > 0) {
     console.log('🔧 自動修正提取結果:', issues);
   }
 
   return { result: cleaned, issues };
+}
+
+function stripTimeSuffixFromName(name) {
+  if (!name) return name;
+  const stripped = name
+    .replace(/(今天|明天|昨天|這週|本週|下週|這周|本周|下周)$/,'')
+    .replace(/(每週[一二三四五六日]?|每周[一二三四五六日]?|星期[一二三四五六日]|週[一二三四五六日]|周[一二三四五六日]|每天)$/,'');
+  return stripped.trim();
 }
 
 function hasActionWords(text) {

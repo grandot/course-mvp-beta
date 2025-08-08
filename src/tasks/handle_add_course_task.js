@@ -145,6 +145,28 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     console.log('🎯 開始處理新增課程任務');
     console.log('📋 接收參數:', slots);
 
+    // -1. 極小回退：若缺時間/日期參照，嘗試從原始訊息補齊（提升多輪與自然語句容錯）
+    if (messageEvent && messageEvent.message && typeof messageEvent.message.text === 'string') {
+      const raw = messageEvent.message.text;
+      // 補時間
+      if (!slots.scheduleTime) {
+        try {
+          const { parseScheduleTime } = require('../intent/timeParser');
+          const t = parseScheduleTime(raw);
+          if (t) slots.scheduleTime = t;
+        } catch (_) {}
+      }
+      // 補日期/時間參照
+      if (!slots.courseDate && !slots.timeReference) {
+        try {
+          const { parseTimeReference, parseSpecificDate } = require('../intent/extractSlots');
+          const d = parseSpecificDate(raw);
+          const r = parseTimeReference(raw);
+          if (d) slots.courseDate = d; else if (r) slots.timeReference = r;
+        } catch (_) {}
+      }
+    }
+
     // 0. 先校驗時間格式（即使缺其他欄位也優先提示時間錯誤）
     if (slots.scheduleTime) {
       const timeOk = /^([01]\d|2[0-3]):([0-5]\d)$/.test(slots.scheduleTime);
@@ -232,6 +254,15 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       };
     }
 
+    // 2.2 月循環尚未支援：友善降級（MVP）
+    if (slots.recurring && slots.recurrenceType === 'monthly') {
+      return {
+        success: false,
+        code: 'NOT_IMPLEMENTED_MONTHLY',
+        message: '⚠️ 目前僅支援「每天」與「每週」的重複課程，每月重複將在後續版本提供。',
+      };
+    }
+
     // 2.1 非重複課：禁止建立過去時間
     if (!slots.recurring) {
       const dateTimeStr = `${courseDate}T${slots.scheduleTime || '00:00'}:00`;
@@ -311,12 +342,12 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
     // 7. 格式化成功訊息
     const timeDisplay = slots.scheduleTime.replace(/(\d{2}):(\d{2})/, (match, hour, minute) => {
-      const h = parseInt(hour);
-      const m = minute === '00' ? '' : `:${minute}`;
-      if (h === 0) return `午夜12${m}`;
-      if (h < 12) return `上午${h}${m}:00`;
-      if (h === 12) return `中午12${m}:00`;
-      return `下午${h - 12}${m}:00`;
+      const h = parseInt(hour, 10);
+      const mm = minute.padStart(2, '0');
+      if (h === 0) return `上午12:${mm}`; // 00:xx → 上午12:xx
+      if (h < 12) return `上午${h}:${mm}`;
+      if (h === 12) return `中午12:${mm}`;
+      return `下午${h - 12}:${mm}`;
     });
 
     let message = '✅ 課程已安排成功！\n\n';

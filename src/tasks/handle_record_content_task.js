@@ -163,6 +163,16 @@ async function handle_record_content_task(slots, userId = null) {
       }
     }
 
+    // 嚴格模式：要求必須關聯既有課程（對齊產品第一性：內容屬於具體課程）
+    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE === 'true';
+    if (!matchingCourse && strictRequiresCourse) {
+      return {
+        success: false,
+        code: 'NOT_FOUND',
+        message: `❌ 找不到 ${slots.studentName || '該學生'} 的 ${slots.courseName || '指定課程'}（日期：${targetDate}）。請先建立對應課程後再記錄內容。`,
+      };
+    }
+
     // 準備記錄資料
     const contentRecord = {
       content: slots.content || '',
