@@ -119,6 +119,8 @@ class MarkdownParser {
           } else if (key === 'expectedSuccess') {
             const v = value.trim().toLowerCase();
             currentTestCase.expectedSuccess = (v === 'true' || v === '1' || v === 'yes');
+          } else if (key === 'expectedCode') {
+            currentTestCase.expectedCode = value.trim();
           } else {
             currentTestCase.annotations[key] = value;
           }

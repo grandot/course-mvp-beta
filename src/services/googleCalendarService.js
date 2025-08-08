@@ -28,7 +28,27 @@ function initializeGoogleCalendar() {
         scopes: ['https://www.googleapis.com/auth/calendar'],
       });
 
-      calendar = google.calendar({ version: 'v3', auth });
+      // 測試模式可禁用外呼（本機 QA）
+      if (process.env.USE_MOCK_CALENDAR === 'true') {
+        calendar = {
+          calendars: {
+            insert: async () => ({ data: { id: `mock-calendar-${Date.now()}` } }),
+          },
+          events: {
+            insert: async () => ({ data: { id: `mock-event-${Date.now()}` } }),
+            delete: async () => ({}),
+            list: async () => ({ data: { items: [] } }),
+            get: async () => ({ data: { id: `mock-event-${Date.now()}` } }),
+            update: async ({ eventId }) => ({ data: { id: eventId || `mock-event-${Date.now()}` } }),
+          },
+          calendarList: {
+            list: async () => ({ data: { items: [] } }),
+          },
+        };
+        console.log('🧪 使用 Mock Calendar 服務');
+      } else {
+        calendar = google.calendar({ version: 'v3', auth });
+      }
       console.log('✅ Google Calendar 服務初始化完成');
     } catch (error) {
       console.error('❌ Google Calendar 初始化失敗:', error);
