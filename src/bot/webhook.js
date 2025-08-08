@@ -13,11 +13,15 @@ const mockLineService = require('../services/mockLineService');
  * @param {string} userId - LINE 用戶ID
  * @returns {Object} 對應的 LINE Service 實例
  */
-function getLineService(userId) {
+function getLineService(userId, req = null) {
   // 🔥 核心邏輯：測試用戶自動用Mock，生產用戶用真實服務
   const isTestUser = userId && userId.startsWith('U_test_');
+  // QA 覆寫：允許透過 header 強制走真實服務
+  const forceReal = (req && (req.headers['x-qa-mode'] === 'real' || req.headers['x-qa-mode'] === 'REAL'))
+    || (req && req.query && (req.query.qaMode === 'real' || req.query.qaMode === 'REAL'))
+    || process.env.QA_FORCE_REAL === 'true';
 
-  if (isTestUser) {
+  if (isTestUser && !forceReal) {
     console.log('🧪 測試用戶，使用 Mock LINE Service');
     return mockLineService;
   }
@@ -42,7 +46,7 @@ async function executeTaskLegacy(intent, slots, userId, messageEvent) {
 /**
  * 處理文字訊息（多輪對話版本）
  */
-async function handleTextMessage(event) {
+async function handleTextMessage(event, req = null) {
   try {
     const userMessage = event.message.text;
     const { userId } = event.source;
@@ -54,7 +58,7 @@ async function handleTextMessage(event) {
     console.log('🔍 是否測試用戶:', userId && userId.startsWith('U_test_'));
 
     // 🔥 核心邏輯：動態選擇 LINE Service
-    const currentLineService = getLineService(userId);
+    const currentLineService = getLineService(userId, req);
     console.log('🔥 選擇的服務類型:', currentLineService.constructor.name || 'Object');
 
     // 初始化對話管理器
@@ -127,7 +131,7 @@ async function handleTextMessage(event) {
     }
 
     // 錯誤處理使用統一的服務選擇邏輯
-    const currentLineService = getLineService(event.source.userId);
+    const currentLineService = getLineService(event.source.userId, req);
     console.log('🔧 錯誤處理選擇的服務:', currentLineService.constructor.name || 'Object');
 
     await currentLineService.replyMessage(
@@ -140,7 +144,7 @@ async function handleTextMessage(event) {
 /**
  * 處理圖片訊息
  */
-async function handleImageMessage(event) {
+async function handleImageMessage(event, req = null) {
   try {
     const messageId = event.message.id;
     const { userId } = event.source;
@@ -150,7 +154,7 @@ async function handleImageMessage(event) {
     console.log('👤 用戶ID:', userId);
 
     // 動態選擇 LINE Service
-    const currentLineService = getLineService(userId);
+    const currentLineService = getLineService(userId, req);
 
     // 下載圖片內容
     const imageBuffer = await currentLineService.getMessageContent(messageId);
@@ -179,7 +183,7 @@ async function handleImageMessage(event) {
     console.error('❌ 處理圖片訊息失敗:', error);
 
     // 動態選擇 LINE Service 用於錯誤處理
-    const currentLineService = getLineService(event.source.userId);
+    const currentLineService = getLineService(event.source.userId, req);
 
     // 檢查是否為圖片內容過期（404 錯誤）
     if (error.response && error.response.status === 404) {
@@ -299,7 +303,7 @@ function getQuickReplyForIntent(intent, result = null) {
 /**
  * 處理 Postback 事件（按鈕點擊）
  */
-async function handlePostbackEvent(event) {
+async function handlePostbackEvent(event, req = null) {
   try {
     const { data } = event.postback;
     const { userId } = event.source;
@@ -308,7 +312,7 @@ async function handlePostbackEvent(event) {
     console.log('🔘 收到 Postback 事件:', data);
 
     // 動態選擇 LINE Service
-    const currentLineService = getLineService(userId);
+    const currentLineService = getLineService(userId, req);
 
     // 解析 postback 資料
     const params = new URLSearchParams(data);
@@ -334,7 +338,7 @@ async function handlePostbackEvent(event) {
   } catch (error) {
     console.error('❌ 處理 Postback 事件失敗:', error);
     // 動態選擇 LINE Service 用於錯誤處理
-    const currentLineService = getLineService(event.source.userId);
+    const currentLineService = getLineService(event.source.userId, req);
     await currentLineService.replyMessage(
       event.replyToken,
       '處理操作時發生錯誤，請稍後再試。',
@@ -420,17 +424,17 @@ async function handleWebhook(req, res) {
       switch (event.type) {
         case 'message':
           if (event.message.type === 'text') {
-            await handleTextMessage(event);
+            await handleTextMessage(event, req);
           } else if (event.message.type === 'image') {
             console.log('📸 圖片訊息完整資料:', JSON.stringify(event.message, null, 2));
-            await handleImageMessage(event);
+            await handleImageMessage(event, req);
           } else {
             console.log('❓ 不支援的訊息類型:', event.message.type);
           }
           break;
 
         case 'postback':
-          await handlePostbackEvent(event);
+          await handlePostbackEvent(event, req);
           break;
 
         case 'follow':

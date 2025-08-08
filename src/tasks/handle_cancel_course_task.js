@@ -42,6 +42,18 @@ function calculateDateFromReference(timeReference) {
   return `${targetYear}-${targetMonth}-${targetDay}`;
 }
 
+function getAlternateStudentNames(name) {
+  const names = new Set();
+  if (!name) return [];
+  names.add(name);
+  if (name.startsWith('測試')) {
+    names.add(name.replace(/^測試/, ''));
+  } else {
+    names.add(`測試${name}`);
+  }
+  return Array.from(names);
+}
+
 /**
  * 查找要取消的課程
  * @param {string} userId - 用戶ID
@@ -65,6 +77,10 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
       // 取消單次課程
       const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
       return course ? [course] : [];
+    } if (scope === 'future') {
+      // 取消明天起所有課程
+      const courses = await firebaseService.getCoursesByStudent(userId, studentName, { startDate: calculateDateFromReference('tomorrow') });
+      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
     } if (scope === 'recurring' || scope === 'all') {
       // 取消重複課程或所有課程
       const courses = await firebaseService.getCoursesByStudent(userId, studentName);
@@ -127,6 +143,7 @@ async function handle_cancel_course_task(slots, userId) {
     if (!slots.studentName) {
       return {
         success: false,
+        code: 'MISSING_STUDENT',
         message: '❌ 請提供學生姓名，例如：「取消小明的數學課」',
       };
     }
@@ -134,12 +151,38 @@ async function handle_cancel_course_task(slots, userId) {
     if (!slots.courseName) {
       return {
         success: false,
+        code: 'MISSING_COURSE',
         message: '❌ 請提供課程名稱，例如：「取消小明的數學課」',
       };
     }
 
-    // 2. 查找要取消的課程
-    const coursesToCancel = await findCoursesToCancel(
+    // 2. 若未指定範圍且疑似重複課，先提示選擇範圍
+    if (!slots.scope) {
+      // 嘗試以多個候選學生名稱查詢，避免『測試』前綴不一致
+      const candidates = getAlternateStudentNames(slots.studentName);
+      let hasRecurring = false;
+      for (const candidate of candidates) {
+        const courses = await firebaseService.getCoursesByStudent(userId, candidate);
+        if (courses.some((c) => c.courseName === slots.courseName && c.isRecurring)) {
+          hasRecurring = true; break;
+        }
+      }
+      if (hasRecurring) {
+        return {
+          success: false,
+          code: 'RECURRING_CANCEL_OPTIONS',
+          message: '請問是要取消哪個範圍？\n\n🔘 只取消今天\n🔘 取消明天起所有課程\n🔘 刪除整個重複課程',
+          quickReply: [
+            { label: '只取消今天', text: '只取消今天' },
+            { label: '取消之後全部', text: '取消之後全部' },
+            { label: '刪除整個重複', text: '刪除整個重複' },
+          ],
+        };
+      }
+    }
+
+    // 3. 查找要取消的課程
+    let coursesToCancel = await findCoursesToCancel(
       userId,
       slots.studentName,
       slots.courseName,
@@ -147,15 +190,31 @@ async function handle_cancel_course_task(slots, userId) {
       slots.timeReference,
       slots.scope || 'single',
     );
+    if ((!coursesToCancel || coursesToCancel.length === 0) && slots.studentName) {
+      // 使用候選名稱再嘗試一次
+      const altNames = getAlternateStudentNames(slots.studentName).filter(n => n !== slots.studentName);
+      for (const alt of altNames) {
+        coursesToCancel = await findCoursesToCancel(
+          userId,
+          alt,
+          slots.courseName,
+          slots.specificDate,
+          slots.timeReference,
+          slots.scope || 'single',
+        );
+        if (coursesToCancel && coursesToCancel.length > 0) break;
+      }
+    }
 
     if (!coursesToCancel || coursesToCancel.length === 0) {
       return {
         success: false,
+        code: 'NOT_FOUND',
         message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否存在`,
       };
     }
 
-    // 3. 執行取消操作
+    // 4. 執行取消操作
     const cancelResults = [];
     let successCount = 0;
     let failCount = 0;
@@ -195,7 +254,7 @@ async function handle_cancel_course_task(slots, userId) {
       }
     }
 
-    // 4. 生成回應訊息
+    // 5. 生成回應訊息
     let message = '';
 
     if (successCount > 0) {
@@ -215,7 +274,7 @@ async function handle_cancel_course_task(slots, userId) {
       message += `⚠️ 有 ${failCount} 堂課程取消失敗，請稍後再試`;
     }
 
-    // 5. 如果有成功取消的課程，提供相關提示
+    // 6. 如果有成功取消的課程，提供相關提示
     if (successCount > 0) {
       message += '\n\n💡 提示：已取消的課程仍保留在記錄中，可隨時查看歷史資料';
     }
@@ -224,12 +283,14 @@ async function handle_cancel_course_task(slots, userId) {
 
     return {
       success: successCount > 0,
+      code: successCount > 0 ? 'COURSE_CANCEL_OK' : 'COURSE_CANCEL_FAILED_PARTIAL',
       message,
     };
   } catch (error) {
     console.error('❌ 取消課程失敗:', error);
     return {
       success: false,
+      code: 'COURSE_CANCEL_FAILED',
       message: '❌ 取消課程失敗，請稍後再試',
     };
   }

@@ -79,10 +79,20 @@ async function handleSupplementInput(userId, userInput, slotName, inputType) {
         supplementValue = userInput.trim();
         break;
       case 'scheduleTime':
-        // 使用時間解析器處理時間
-        const { parseTime } = require('../intent/timeParser');
-        const timeResult = parseTime(userInput);
-        supplementValue = timeResult.output || userInput.trim();
+        // 使用時間解析器處理時間，並同時嘗試解析日期/時間參照
+        const { parseScheduleTime } = require('../intent/timeParser');
+        const { parseTimeReference, parseSpecificDate } = require('../intent/extractSlots');
+        const formatted = parseScheduleTime(userInput);
+        supplementValue = formatted || userInput.trim();
+        // 額外解析：若使用者在同一句提供了「今天/明天/8/9」等，補上對應欄位
+        const inferredRef = parseTimeReference(userInput);
+        const inferredDate = parseSpecificDate(userInput);
+        if (inferredDate) {
+          // 具體日期優先生效
+          if (!existingSlots.courseDate) existingSlots.courseDate = inferredDate;
+        } else if (inferredRef) {
+          if (!existingSlots.timeReference) existingSlots.timeReference = inferredRef;
+        }
         break;
       case 'courseDate':
         supplementValue = userInput.trim();

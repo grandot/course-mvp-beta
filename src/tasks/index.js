@@ -6,6 +6,8 @@
 const handle_add_course_task = require('./handle_add_course_task');
 const handle_query_schedule_task = require('./handle_query_schedule_task');
 const handle_record_content_task = require('./handle_record_content_task');
+const handle_add_homework_task = require('./handle_add_homework_task');
+const handle_query_course_content_task = require('./handle_query_course_content_task');
 const handle_set_reminder_task = require('./handle_set_reminder_task');
 const handle_cancel_course_task = require('./handle_cancel_course_task');
 const handle_unknown_task = require('./handle_unknown_task');
@@ -40,6 +42,8 @@ const taskHandlers = {
   // 內容記錄
   record_content: handle_record_content_task,
   add_course_content: handle_record_content_task, // 內容記錄使用相同處理器
+  add_homework: handle_add_homework_task,
+  query_course_content: handle_query_course_content_task,
 
   // 提醒設定
   set_reminder: handle_set_reminder_task,
@@ -92,7 +96,8 @@ async function executeTask(intent, slots, userId, event = null) {
     if (!handler) {
       return {
         success: false,
-        message: `❌ 目前不支援「${intent}」功能，請稍後再試`,
+      code: 'NOT_IMPLEMENTED',
+      message: `❌ 目前不支援「${intent}」功能，請稍後再試`,
       };
     }
 

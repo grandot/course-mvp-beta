@@ -115,6 +115,7 @@ async function handle_record_content_task(slots, userId = null) {
     if (validationErrors.length > 0) {
       return {
         success: false,
+        code: 'MISSING_CONTENT',
         message: `請提供以下必要資訊：${validationErrors.join('、')}`,
       };
     }
@@ -160,6 +161,16 @@ async function handle_record_content_task(slots, userId = null) {
         console.error('❌ 圖片上傳失敗:', uploadError);
         // 圖片上傳失敗不影響文字記錄，繼續處理
       }
+    }
+
+    // 嚴格模式：要求必須關聯既有課程（對齊產品第一性：內容屬於具體課程）
+    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE === 'true';
+    if (!matchingCourse && strictRequiresCourse) {
+      return {
+        success: false,
+        code: 'NOT_FOUND',
+        message: `❌ 找不到 ${slots.studentName || '該學生'} 的 ${slots.courseName || '指定課程'}（日期：${targetDate}）。請先建立對應課程後再記錄內容。`,
+      };
     }
 
     // 準備記錄資料
@@ -217,6 +228,7 @@ async function handle_record_content_task(slots, userId = null) {
 
     return {
       success: true,
+      code: 'RECORD_CONTENT_OK',
       message: responseMessage,
       data: {
         recordId: docRef.id,
@@ -228,6 +240,7 @@ async function handle_record_content_task(slots, userId = null) {
     console.error('❌ 記錄課程內容失敗:', error);
     return {
       success: false,
+      code: 'RECORD_CONTENT_FAILED',
       message: `記錄課程內容時發生錯誤：${error.message}`,
     };
   }

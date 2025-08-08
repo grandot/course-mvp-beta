@@ -51,6 +51,10 @@ function resolveTimeReference(timeReference) {
       targetDate = new Date(today);
       targetDate.setDate(today.getDate() + 1);
       break;
+    case 'day_after_tomorrow':
+      targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + 2);
+      break;
     case 'yesterday':
       targetDate = new Date(today);
       targetDate.setDate(today.getDate() - 1);
@@ -141,6 +145,49 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     console.log('🎯 開始處理新增課程任務');
     console.log('📋 接收參數:', slots);
 
+    // -1. 極小回退：若缺時間/日期參照，嘗試從原始訊息補齊（提升多輪與自然語句容錯）
+    if (messageEvent && messageEvent.message && typeof messageEvent.message.text === 'string') {
+      const raw = messageEvent.message.text;
+      // 補時間
+      if (!slots.scheduleTime) {
+        try {
+          const { parseScheduleTime } = require('../intent/timeParser');
+          const t = parseScheduleTime(raw);
+          if (t) slots.scheduleTime = t;
+        } catch (_) {}
+      }
+      // 補日期/時間參照
+      if (!slots.courseDate && !slots.timeReference) {
+        try {
+          const { parseTimeReference, parseSpecificDate } = require('../intent/extractSlots');
+          const d = parseSpecificDate(raw);
+          const r = parseTimeReference(raw);
+          if (d) slots.courseDate = d; else if (r) slots.timeReference = r;
+        } catch (_) {}
+      }
+    }
+
+    // 0. 先校驗時間格式（即使缺其他欄位也優先提示時間錯誤）
+    if (slots.scheduleTime) {
+      const timeOk = /^([01]\d|2[0-3]):([0-5]\d)$/.test(slots.scheduleTime);
+      if (!timeOk) {
+        const conversationManager = getConversationManager();
+        await conversationManager.setExpectedInput(
+          userId,
+          'course_creation',
+          ['schedule_time_input'],
+          { intent: 'add_course', existingSlots: slots, missingFields: ['上課時間'] },
+        );
+        return {
+          success: false,
+          code: 'INVALID_TIME',
+          message: '❌ 時間格式不正確，請重新輸入正確的時間（例如：下午2點 或 14:00）',
+          expectingInput: true,
+          missingFields: ['上課時間'],
+        };
+      }
+    }
+
     // 1. 驗證必要參數
     const missingFields = validateSlots(slots);
     if (missingFields.length > 0) {
@@ -167,9 +214,10 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       );
 
       return {
-        success: false, // 仍然是 false，因為任務未完成
+        success: false,
+        code: 'MISSING_FIELDS',
         message: `❓ 請提供以下資訊：${missingFields.join('、')}\n\n範例：「小明每週三下午3點數學課」`,
-        expectingInput: true, // 標示正在等待輸入
+        expectingInput: true,
         missingFields,
       };
     }
@@ -186,11 +234,46 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
     }
 
+    // 若 courseDate 存在但不是 YYYY-MM-DD，視為無效並以 timeReference/recurring 推導
+    if (courseDate && !/^\d{4}-\d{2}-\d{2}$/.test(courseDate)) {
+      console.log(`⚠️ 無效的 courseDate 格式: ${courseDate}，嘗試以參考時間或重複規則推導`);
+      courseDate = null;
+      if (slots.timeReference) {
+        courseDate = resolveTimeReference(slots.timeReference);
+      }
+      if (!courseDate && slots.recurring) {
+        courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
+      }
+    }
+
     if (!courseDate) {
       return {
         success: false,
+        code: 'MISSING_DATE',
         message: '❓ 請指定課程的具體日期或時間（如：明天、週三等）',
       };
+    }
+
+    // 2.2 月循環尚未支援：友善降級（MVP）
+    if (slots.recurring && slots.recurrenceType === 'monthly') {
+      return {
+        success: false,
+        code: 'NOT_IMPLEMENTED_MONTHLY',
+        message: '⚠️ 目前僅支援「每天」與「每週」的重複課程，每月重複將在後續版本提供。',
+      };
+    }
+
+    // 2.1 非重複課：禁止建立過去時間
+    if (!slots.recurring) {
+      const dateTimeStr = `${courseDate}T${slots.scheduleTime || '00:00'}:00`;
+      const targetMs = Date.parse(dateTimeStr);
+      if (!Number.isNaN(targetMs) && targetMs < Date.now()) {
+        return {
+          success: false,
+          code: 'INVALID_PAST_TIME',
+          message: '❌ 無法建立過去時間的課程，請確認日期時間後重新輸入',
+        };
+      }
     }
 
     // 3. 確保學生有對應的日曆
@@ -211,6 +294,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
       return {
         success: false,
+        code: 'TIME_CONFLICT',
         message: `⚠️ 時間衝突\n\n${courseDate} ${slots.scheduleTime} 已有以下課程：\n${conflictInfo}\n\n請選擇其他時間或確認是否要覆蓋。`,
       };
     }
@@ -258,12 +342,12 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
     // 7. 格式化成功訊息
     const timeDisplay = slots.scheduleTime.replace(/(\d{2}):(\d{2})/, (match, hour, minute) => {
-      const h = parseInt(hour);
-      const m = minute === '00' ? '' : `:${minute}`;
-      if (h === 0) return `午夜12${m}`;
-      if (h < 12) return `上午${h}${m}:00`;
-      if (h === 12) return `中午12${m}:00`;
-      return `下午${h - 12}${m}:00`;
+      const h = parseInt(hour, 10);
+      const mm = minute.padStart(2, '0');
+      if (h === 0) return `上午12:${mm}`; // 00:xx → 上午12:xx
+      if (h < 12) return `上午${h}:${mm}`;
+      if (h === 12) return `中午12:${mm}`;
+      return `下午${h - 12}:${mm}`;
     });
 
     let message = '✅ 課程已安排成功！\n\n';
@@ -298,6 +382,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     // 設定期待確認狀態（簡化版）
     const result = {
       success: true,
+      code: 'ADD_COURSE_OK',
       message,
       data: {
         courseId: savedCourse.courseId,
@@ -319,6 +404,14 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         lastOperation: { intent: 'add_course', slots, result },
         timestamp: Date.now(),
       };
+      // 同步記錄至 lastActions 以供修改流程穩定讀取
+      context.state.lastActions = context.state.lastActions || {};
+      context.state.lastActions.add_course = {
+        intent: 'add_course',
+        slots,
+        result,
+        timestamp: Date.now(),
+      };
       await conversationManager.saveContext(userId, context);
     }
 
@@ -330,16 +423,19 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     if (error.message.includes('Calendar')) {
       return {
         success: false,
+        code: 'CALENDAR_UNAVAILABLE',
         message: '❌ 日曆服務暫時無法使用，請稍後再試。',
       };
     } if (error.message.includes('Firebase') || error.message.includes('Firestore')) {
       return {
         success: false,
+        code: 'FIREBASE_ERROR',
         message: '❌ 資料儲存失敗，請稍後再試。',
       };
     }
     return {
       success: false,
+      code: 'ADD_COURSE_FAILED',
       message: '❌ 新增課程失敗，請檢查輸入資訊並稍後再試。',
     };
   }

@@ -29,8 +29,20 @@ async function handle_modify_action_task(slots, userId, event) {
     }
 
     // 取得最新的操作（按時間戳排序）
-    const lastAction = Object.values(context.state.lastActions)
-      .sort((a, b) => b.timestamp - a.timestamp)[0];
+    let lastAction = null;
+    const lastActions = context.state.lastActions || {};
+    if (Object.keys(lastActions).length > 0) {
+      lastAction = Object.values(lastActions).sort((a, b) => b.timestamp - a.timestamp)[0];
+    }
+    if (!lastAction && context.state.pendingData && context.state.pendingData.lastOperation) {
+      lastAction = context.state.pendingData.lastOperation;
+    }
+    if (!lastAction) {
+      return {
+        success: false,
+        message: '❓ 沒有可供修改的最近操作。',
+      };
+    }
 
     const { intent, slots: originalSlots } = lastAction;
 

@@ -105,6 +105,7 @@ async function handle_set_reminder_task(slots, userId) {
     if (!slots.studentName) {
       return {
         success: false,
+        code: 'MISSING_STUDENT',
         message: '❌ 請提供學生姓名，例如：「提醒我小明的數學課」',
       };
     }
@@ -112,6 +113,7 @@ async function handle_set_reminder_task(slots, userId) {
     if (!slots.courseName) {
       return {
         success: false,
+        code: 'MISSING_COURSE',
         message: '❌ 請提供課程名稱，例如：「提醒我小明的數學課」',
       };
     }
@@ -128,6 +130,7 @@ async function handle_set_reminder_task(slots, userId) {
     if (!course) {
       return {
         success: false,
+        code: 'NOT_FOUND',
         message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否已安排`,
       };
     }
@@ -139,6 +142,7 @@ async function handle_set_reminder_task(slots, userId) {
     if (courseDateTime < now) {
       return {
         success: false,
+        code: 'PAST_COURSE',
         message: `❌ ${slots.studentName} 的 ${slots.courseName} (${course.courseDate} ${course.scheduleTime}) 已經過了，無法設定提醒`,
       };
     }
@@ -153,6 +157,7 @@ async function handle_set_reminder_task(slots, userId) {
     if (triggerTime < now) {
       return {
         success: false,
+        code: 'PAST_REMINDER_TIME',
         message: `❌ 提醒時間已過，無法設定 ${reminderTime} 分鐘前的提醒`,
       };
     }
@@ -203,12 +208,14 @@ async function handle_set_reminder_task(slots, userId) {
 
     return {
       success: true,
+      code: 'REMINDER_SET_OK',
       message,
     };
   } catch (error) {
     console.error('❌ 設定提醒失敗:', error);
     return {
       success: false,
+      code: 'REMINDER_SET_FAILED',
       message: '❌ 提醒設定失敗，請稍後再試',
     };
   }

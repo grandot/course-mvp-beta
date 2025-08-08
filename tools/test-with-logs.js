@@ -9,7 +9,8 @@ require('dotenv').config();
 
 // 🧪 設定測試環境變數
 process.env.NODE_ENV = 'test';
-process.env.USE_MOCK_LINE_SERVICE = 'true';
+// 預設改為非 Mock，避免只檢查 HTTP 200 導致漏測；如需 Mock 可用環境變數覆寫
+process.env.USE_MOCK_LINE_SERVICE = process.env.USE_MOCK_LINE_SERVICE || 'false';
 
 console.log('🧪 整合日誌測試環境初始化：');
 console.log('   NODE_ENV =', process.env.NODE_ENV);
@@ -214,7 +215,7 @@ async function runTestCaseWithLogs(simulator, testCase, collector) {
 
       // 檢查關鍵詞
       if (step.expectKeywords && step.expectKeywords.length > 0) {
-        const keywordCheck = step.expectKeywords.some(keyword => 
+        const keywordCheck = step.expectKeywords.every(keyword => 
           response.botReply && response.botReply.includes(keyword)
         );
         stepResult.checks.push({

@@ -10,6 +10,7 @@ function parseTimeReference(message) {
   const timeReferences = {
     今天: 'today',
     明天: 'tomorrow',
+    後天: 'day_after_tomorrow',
     昨天: 'yesterday',
     前天: 'day_before_yesterday',
     這週: 'this_week',
@@ -221,6 +222,9 @@ function extractStudentName(message) {
     // 最高精確度模式 - 明確的姓名結構（調整順序，優先精確匹配）
     /(?:新增|幫.*?新增)\s*([小大]?[一-龥A-Za-z]{2,6})的/, // 新增小明的、幫我新增小明的
     /(?:安排)\s*([小大]?[一-龥A-Za-z]{2,6})每週/, // 安排小華每週
+    /(?:安排)\s*([小大]?[一-龥A-Za-z]{2,6})每月/, // 安排小華每月
+    /^([小大]?[一-龥A-Za-z]{1,12})(?=固定)/, // 小明固定… / Lumi固定…
+    /^([小大]?[一-龥A-Za-z]{1,12})(?=每個?星期)/, // 小明每個星期…
     /([小大]?[一-龥A-Za-z]{2,6})的.*課/, // 小明的數學課
     /查詢([小大]?[一-龥A-Za-z]{2,6})[今昨明]天/, // 查詢小明今天
     /記錄([小大]?[一-龥A-Za-z]{2,6})[今昨明]天/, // 記錄小光昨天
@@ -291,6 +295,7 @@ function extractCourseName(message) {
     /(?:上|學|要上)([一-龥]{2,6})課?/, // 上數學、學英文、要上鋼琴
     /的([一-龥]{2,6})課/, // 的數學課 - 需要在通用課程模式之前
     /([一-龥]{2,6})課(?![學了])/, // 數學課 (但不是 "數學課學了")
+    /([一-龥]{2,6}評鑑)/, // 評鑑類型，如 測試評鑑
 
     // 高精確度模式 - 特定結構
     /([一-龥A-Za-z]{2,6})教學/, // XX教學
@@ -327,7 +332,8 @@ function extractCourseName(message) {
         if (!courseName.includes('課')
             && !courseName.endsWith('教學')
             && !courseName.endsWith('訓練')
-            && !courseName.endsWith('班')) {
+            && !courseName.endsWith('班')
+            && !courseName.endsWith('評鑑')) {
           courseName += '課';
         }
         return courseName;
@@ -345,6 +351,33 @@ async function extractSlotsByIntent(message, intent) {
   const slots = {};
 
   switch (intent) {
+    case 'add_homework':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      slots.timeReference = parseTimeReference(message);
+      slots.courseDate = parseSpecificDate(message);
+      // 作業/練習內容提取（與 record_content 相同規則）
+      {
+        const contentPatternsHw = [
+          /練習了(.+)/,
+          /作業[是為要:：](.+)/,
+          /複習了(.+)/,
+          /題目是(.+)/,
+          /內容[是:：](.+)/,
+        ];
+        for (const pattern of contentPatternsHw) {
+          const m = message.match(pattern);
+          if (m) { slots.content = m[1].trim(); break; }
+        }
+      }
+      break;
+
+    case 'query_course_content':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      slots.timeReference = parseTimeReference(message);
+      slots.courseDate = parseSpecificDate(message);
+      break;
     case 'add_course':
     case 'create_recurring_course':
       slots.studentName = extractStudentName(message);
@@ -363,6 +396,29 @@ async function extractSlotsByIntent(message, intent) {
       slots.timeReference = parseTimeReference(message);
       slots.specificDate = parseSpecificDate(message);
       slots.courseName = extractCourseName(message);
+      // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
+      if (!slots.studentName) {
+        const m = message.match(/(測試?[A-Za-z一-龥]{1,12})(?:的|今天|明天|這週|本週|下週)/);
+        if (m && m[1]) slots.studentName = stripTimeSuffixFromName(m[1]);
+      }
+      break;
+
+    case 'stop_recurring_course':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      // 類型推斷：每天/每週
+      const isDaily = /(每天|每日)/.test(message);
+      const isWeekly = /(每週|每周|星期|週[一二三四五六日]|周[一二三四五六日])/.test(message);
+      if (isDaily) {
+        slots.recurrenceType = 'daily';
+      } else if (isWeekly) {
+        slots.recurrenceType = 'weekly';
+      }
+      // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
+      if (!slots.studentName) {
+        const m2 = message.match(/(測試?[A-Za-z一-龥]{1,12})(?:的|每天|每週|每周|星期|週|周)/);
+        if (m2 && m2[1]) slots.studentName = stripTimeSuffixFromName(m2[1]);
+      }
       break;
 
     case 'set_reminder':
@@ -371,9 +427,16 @@ async function extractSlotsByIntent(message, intent) {
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
       // 提取提醒時間（提前多久）
-      const reminderMatch = message.match(/(\d+)\s*分鐘/);
-      if (reminderMatch) {
-        slots.reminderTime = parseInt(reminderMatch[1]);
+      let reminderTime = null;
+      const minuteMatch = message.match(/(\d+)\s*分鐘/);
+      const hourMatch = message.match(/(\d+)\s*小時/);
+      if (minuteMatch) {
+        reminderTime = parseInt(minuteMatch[1], 10);
+      } else if (hourMatch) {
+        reminderTime = parseInt(hourMatch[1], 10) * 60;
+      }
+      if (reminderTime !== null && !Number.isNaN(reminderTime)) {
+        slots.reminderTime = reminderTime;
       }
       // 提取提醒內容
       const noteMatch = message.match(/記得(.+)/);
@@ -387,13 +450,36 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
-      // 判斷取消範圍
-      if (message.includes('全部') || message.includes('所有') || message.includes('整個')) {
-        slots.scope = 'all';
-      } else if (message.includes('重複') || message.includes('每週')) {
-        slots.scope = 'recurring';
-      } else {
+      // 判斷取消範圍（不預設 single，避免錯過重複課交互）
+      // 第一性原則：若含具體日期詞且未提及「全部/重複」，預設單次取消
+      const mentionsConcreteDay = /(今天|明天|昨天|後天|前天|\d{1,2}[\/\-]\d{1,2}|\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})/.test(message);
+      const mentionsBulk = /(全部|所有|整個|重複|每週|每天|每月)/.test(message);
+      if (mentionsConcreteDay && !mentionsBulk) {
+        if (!slots.specificDate) {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          slots.specificDate = slots.timeReference ? parseSpecificDate(message) || `${y}-${m}-${d}` : `${y}-${m}-${d}`;
+        }
         slots.scope = 'single';
+      }
+      if (message.includes('只取消今天') || message.includes('只刪除今天') || message.includes('只今天')) {
+        slots.scope = 'single';
+        // 若未提供日期，預設今天
+        if (!slots.specificDate) {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          slots.specificDate = `${y}-${m}-${d}`;
+        }
+      } else if (message.includes('取消之後全部') || message.includes('取消明天起所有') || message.includes('明天起所有')) {
+        slots.scope = 'future';
+      } else if (message.includes('全部') || message.includes('所有') || message.includes('整個')) {
+        slots.scope = 'all';
+      } else if (message.includes('重複') || message.includes('每週') || message.includes('每天')) {
+        slots.scope = 'recurring';
       }
       break;
 
@@ -540,6 +626,12 @@ function validateExtractionResult(result, originalMessage, intent) {
     issues.push('記錄內容意圖但未提取到內容');
   }
 
+  // 補強：若課程名稱是問句殘片（如「課什麼時候上」「每天幾點」），視為無效
+  if (cleaned.courseName && /(什麼時候|幾點|如何|怎麼樣)/.test(cleaned.courseName)) {
+    issues.push(`移除無效課程名稱（問句殘片）: ${cleaned.courseName}`);
+    delete cleaned.courseName;
+  }
+
   if (issues.length > 0) {
     console.log('🔧 自動修正提取結果:', issues);
   }
@@ -547,15 +639,23 @@ function validateExtractionResult(result, originalMessage, intent) {
   return { result: cleaned, issues };
 }
 
+function stripTimeSuffixFromName(name) {
+  if (!name) return name;
+  const stripped = name
+    .replace(/(今天|明天|昨天|這週|本週|下週|這周|本周|下周)$/,'')
+    .replace(/(每週[一二三四五六日]?|每周[一二三四五六日]?|星期[一二三四五六日]|週[一二三四五六日]|周[一二三四五六日]|每天)$/,'');
+  return stripped.trim();
+}
+
 function hasActionWords(text) {
-  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄'];
+  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我'];
   return actionWords.some((word) => text.includes(word));
 }
 
 function cleanStudentName(rawName) {
   // 移除常見的動作詞前綴
   const cleaned = rawName
-    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄)/, '')
+    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄|提醒|提醒我|醒我)/, '')
     .replace(/(的|之)$/, '');
   return cleaned.trim();
 }
@@ -680,10 +780,10 @@ async function extractSlots(message, intent, userId = null) {
     const confidence = calculateConfidence(slots, intent);
     console.log('📊 規則提取置信度:', confidence.toFixed(2));
 
-    // 如果規則提取信心度低，強制使用 AI
+    // 如果規則提取信心度低，使用 AI 增強（不是替換）
     if (confidence < 0.5) {
-      console.log('🔄 規則提取信心度低，強制 AI 輔助...');
-      slots = await extractSlotsByAI(message, intent, {});
+      console.log('🔄 規則提取信心度低，AI 輔助增強...');
+      slots = await extractSlotsByAI(message, intent, slots);
     } else {
       // 信心度中等，檢查是否有缺失欄位
       const hasEmptySlots = Object.values(slots).some((value) => !value);
@@ -694,11 +794,10 @@ async function extractSlots(message, intent, userId = null) {
     }
   }
 
-  // 第三階段：結果驗證與清理
+  // 第三階段：結果驗證與清理（無論是否啟用 AI Fallback 都執行清洗）
+  const validation = validateExtractionResult(slots, message, intent);
+  slots = validation.result;
   if (process.env.ENABLE_AI_FALLBACK === 'true') {
-    const validation = validateExtractionResult(slots, message, intent);
-    slots = validation.result;
-
     // 記錄低置信度案例用於持續優化
     const finalConfidence = calculateConfidence(slots, intent);
     if (finalConfidence < 0.7) {
@@ -714,9 +813,19 @@ async function extractSlots(message, intent, userId = null) {
   // 第四階段：資料清理和驗證
   const cleanedSlots = {};
   for (const [key, value] of Object.entries(slots)) {
-    if (value !== null && value !== undefined && value !== '') {
-      cleanedSlots[key] = value;
+    // 正規化字串 'null' 為真正的空值
+    const normalized = (typeof value === 'string' && value.trim().toLowerCase() === 'null')
+      ? null
+      : value;
+    if (normalized !== null && normalized !== undefined && normalized !== '') {
+      cleanedSlots[key] = normalized;
     }
+  }
+
+  // 嚴格驗證日期欄位：避免將「每月1號」等自然語帶入下游服務
+  if (cleanedSlots.courseDate && !/^\d{4}-\d{2}-\d{2}$/.test(cleanedSlots.courseDate)) {
+    console.log(`⚠️ 移除無效的 courseDate: ${cleanedSlots.courseDate}`);
+    delete cleanedSlots.courseDate;
   }
 
   console.log('✅ 最終 slots:', cleanedSlots);
@@ -770,6 +879,14 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
     const context = await conversationManager.getContext(userId);
     if (!context) {
       console.log('⚠️ 無對話上下文，跳過上下文增強');
+      return slots;
+    }
+
+    // 缺關鍵槽位時，避免用上下文自動補全，先走澄清流程
+    const disableAutoFill = process.env.DISABLE_CONTEXT_AUTO_FILL === 'true';
+    const isCriticalIntent = ['add_course', 'create_recurring_course', 'set_reminder', 'cancel_course', 'record_content', 'add_course_content', 'query_course_content'].includes(intent);
+    const missingCritical = (!slots.studentName || !slots.courseName) && isCriticalIntent;
+    if (disableAutoFill || missingCritical) {
       return slots;
     }
 
