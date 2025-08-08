@@ -393,6 +393,19 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       break;
 
+    case 'stop_recurring_course':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      // 類型推斷：每天/每週
+      const isDaily = /(每天|每日)/.test(message);
+      const isWeekly = /(每週|每周|星期|週[一二三四五六日]|周[一二三四五六日])/.test(message);
+      if (isDaily) {
+        slots.recurrenceType = 'daily';
+      } else if (isWeekly) {
+        slots.recurrenceType = 'weekly';
+      }
+      break;
+
     case 'set_reminder':
       slots.studentName = extractStudentName(message);
       slots.courseName = extractCourseName(message);

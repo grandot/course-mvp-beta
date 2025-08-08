@@ -25,7 +25,7 @@ async function processMessageAndGetResponse(userId, message) {
     console.log(`📋 提取實體: ${JSON.stringify(slots)}`);
     
     // 3. 執行任務
-    const result = await executeTask(intent, slots, userId);
+    const result = await executeTask(intent, slots, userId, { message: { text: message } });
     console.log(`📤 機器人回覆: "${result.message}"`);
     
     // 4. 記錄到對話管理器
