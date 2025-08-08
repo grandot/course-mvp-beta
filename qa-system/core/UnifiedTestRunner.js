@@ -154,7 +154,9 @@ class UnifiedTestRunner {
           success: final,
           output: result.output,
           intent: result.intent,
-          keywordMatch: true
+          keywordMatch: true,
+          code: result.code,
+          taskSuccess: result.success
         };
       }
 
@@ -204,7 +206,9 @@ class UnifiedTestRunner {
         success: finalSuccess,
         output: result.output,
         intent: result.intent,
-        keywordMatch: keywordMatch
+        keywordMatch: keywordMatch,
+        code: result.code,
+        taskSuccess: result.success
       };
       
     } catch (error) {

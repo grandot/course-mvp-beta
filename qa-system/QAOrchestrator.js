@@ -313,12 +313,20 @@ class QAOrchestrator {
     if (local) {
       lines.push(`## 詳細案例 - 本機`);
       local.results.forEach((r, idx) => {
-        lines.push(`### 本機-${idx + 1}. ${r.testCase.name || r.testCase.id || '未命名測試'}`);
+        const caseId = r.testCase.id || `#${idx + 1}`;
+        const caseName = r.testCase.name || '未命名測試';
+        lines.push(`### 本機-${idx + 1}. [${caseId}] ${caseName}`);
         lines.push(`- **輸入**: ${r.testCase.input}`);
         lines.push(`- **結果**: ${r.success ? '✅ PASS' : '❌ FAIL'}`);
         if (!r.success) {
           if (r.output) lines.push(`- **輸出**: ${safeInline(r.output)}`);
           if (r.error) lines.push(`- **錯誤**: ${safeInline(r.error)}`);
+          const analysis = analyzeLocalFailure(r);
+          if (analysis) {
+            const secondary = analysis.secondary && analysis.secondary.length ? `（次要：${analysis.secondary.join('、')}）` : '';
+            lines.push(`- **分類**: ${analysis.category}${secondary}`);
+            lines.push(`- **失敗原因**: ${analysis.reason}`);
+          }
         }
         lines.push('');
       });
@@ -327,7 +335,9 @@ class QAOrchestrator {
     if (real) {
       lines.push(`## 詳細案例 - 線上`);
       real.results.forEach((r, idx) => {
-        lines.push(`### 線上-${idx + 1}. ${r.testCase.name || r.testCase.id || '未命名測試'}`);
+        const caseId = r.testCase.id || `#${idx + 1}`;
+        const caseName = r.testCase.name || '未命名測試';
+        lines.push(`### 線上-${idx + 1}. [${caseId}] ${caseName}`);
         lines.push(`- **輸入**: ${r.testCase.input}`);
         lines.push(`- **Webhook**: ${r.webhookStatus} ${r.webhookOk ? '✅' : '❌'}`);
         lines.push(`- **回覆**: ${r.botReply ? safeInline(r.botReply) : '(無)'}`);
@@ -342,6 +352,12 @@ class QAOrchestrator {
                 lines.push(`    - ${safeInline(line)}`);
               });
             });
+          }
+          const analysis = analyzeRealFailure(r);
+          if (analysis) {
+            const secondary = analysis.secondary && analysis.secondary.length ? `（次要：${analysis.secondary.join('、')}）` : '';
+            lines.push(`- **分類**: ${analysis.category}${secondary}`);
+            lines.push(`- **失敗原因**: ${analysis.reason}`);
           }
         }
         lines.push('');
@@ -365,6 +381,121 @@ class QAOrchestrator {
     function safeInline(text) {
       if (!text) return '';
       return String(text).replace(/\r?\n/g, ' ').slice(0, 2000);
+    }
+
+    // 失敗分類（本機）
+    function analyzeLocalFailure(r) {
+      try {
+        const input = (r.testCase && r.testCase.input) ? String(r.testCase.input).trim() : '';
+        const output = (r.output || '').toString();
+        const error = r.error || '';
+        const expectedHasStructure = (r.testCase && (r.testCase.expectedCode !== undefined || r.testCase.expectedSuccess !== undefined));
+
+        // 1) 測試情境設計問題：輸入為空（多半來自測試文檔格式不符解析規則）
+        if (!input) {
+          return {
+            category: '測試情境設計',
+            secondary: ['測試系統'],
+            reason: '測試文檔未按解析規格（缺少「測試輸入」或步驟「輸入：」），被解析為空輸入。建議統一使用「- 測試輸入：」或「- 測試序列」+ 每步「輸入：」。'
+          };
+        }
+
+        // 2) 主程序問題：執行期錯誤
+        if (error) {
+          return {
+            category: '主程序',
+            secondary: [],
+            reason: `執行過程出現錯誤：${error}`
+          };
+        }
+
+        // 3) 主程序問題：與結構化預期不一致
+        if (expectedHasStructure) {
+          // 我們無法直接取得 code 比對細節，據失敗本身推定為行為/回傳結構未對齊
+          return {
+            category: '主程序',
+            secondary: [],
+            reason: '與結構化預期（expected.code / expected.success）不一致。建議檢查任務處理器是否回傳正確的 success/code。'
+          };
+        }
+
+        // 4) 測試系統問題：關鍵字匹配（僵硬）導致失敗
+        if (r.hasOwnProperty('keywordMatch') && r.keywordMatch === false) {
+          return {
+            category: '測試系統',
+            secondary: [],
+            reason: '關鍵詞匹配未通過，規則過於僵硬。建議改用結構化判定（expected.code/expected.success）。'
+          };
+        }
+
+        // 5) 主程序或上下文污染：看起來與輸入無關的輸出/殘留名稱
+        if (/不太理解您/.test(output)) {
+          return {
+            category: '主程序',
+            secondary: [],
+            reason: '意圖辨識或澄清策略未能理解此輸入，回傳了通用引導訊息。建議針對泛問句先做澄清提問。'
+          };
+        }
+        if (/醒我/.test(output)) {
+          return {
+            category: '主程序',
+            secondary: ['測試系統'],
+            reason: '輸出中出現「醒我」等殘留字樣，疑似槽位被上下文污染或提取清洗不完整。建議重置用例間上下文並強化提取清洗規則。'
+          };
+        }
+
+        // 6) 預設：歸為主程序，提示檢查意圖/槽位/規則
+        return {
+          category: '主程序',
+          secondary: [],
+          reason: '行為與預期不一致。請檢查意圖辨識、槽位提取與商業規則（時間/日期、過去時間、重複課程處理）。'
+        };
+      } catch (e) {
+        return {
+          category: '測試系統',
+          secondary: [],
+          reason: `報告分類器內部錯誤：${e.message}`
+        };
+      }
+    }
+
+    // 失敗分類（線上）
+    function analyzeRealFailure(r) {
+      try {
+        if (r.webhookOk === false) {
+          return {
+            category: '測試系統',
+            secondary: [],
+            reason: `Webhook 失敗（狀態：${r.webhookStatus}）。請檢查測試環境與 QA 模式（X-QA-Mode 標頭、QA_FORCE_REAL）。`
+          };
+        }
+        const reply = (r.botReply || '').toString();
+        if (!reply) {
+          return {
+            category: '主程序',
+            secondary: ['測試系統'],
+            reason: '未取得機器人回覆。請檢查主系統是否正確處理事件，及測試工具是否取得最新 Render Logs。'
+          };
+        }
+        if (/Mock/.test(reply) && process.env.QA_FORCE_REAL === 'true') {
+          return {
+            category: '測試系統',
+            secondary: [],
+            reason: '發現 Mock 回覆，疑似被錯誤切換到 Mock 模式。請檢查 webhook real/Mock 切換邏輯與測試用 userId。'
+          };
+        }
+        return {
+          category: '主程序',
+          secondary: [],
+          reason: '回覆與預期不一致。請檢查主程序行為與結構化回傳（success/code）是否對齊測試預期。'
+        };
+      } catch (e) {
+        return {
+          category: '測試系統',
+          secondary: [],
+          reason: `報告分類器內部錯誤：${e.message}`
+        };
+      }
     }
   }
   
