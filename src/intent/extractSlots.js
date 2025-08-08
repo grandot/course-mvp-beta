@@ -399,9 +399,16 @@ async function extractSlotsByIntent(message, intent) {
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
       // 提取提醒時間（提前多久）
-      const reminderMatch = message.match(/(\d+)\s*分鐘/);
-      if (reminderMatch) {
-        slots.reminderTime = parseInt(reminderMatch[1]);
+      let reminderTime = null;
+      const minuteMatch = message.match(/(\d+)\s*分鐘/);
+      const hourMatch = message.match(/(\d+)\s*小時/);
+      if (minuteMatch) {
+        reminderTime = parseInt(minuteMatch[1], 10);
+      } else if (hourMatch) {
+        reminderTime = parseInt(hourMatch[1], 10) * 60;
+      }
+      if (reminderTime !== null && !Number.isNaN(reminderTime)) {
+        slots.reminderTime = reminderTime;
       }
       // 提取提醒內容
       const noteMatch = message.match(/記得(.+)/);
@@ -415,13 +422,11 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
-      // 判斷取消範圍
+      // 判斷取消範圍（不預設 single，避免錯過重複課交互）
       if (message.includes('全部') || message.includes('所有') || message.includes('整個')) {
         slots.scope = 'all';
-      } else if (message.includes('重複') || message.includes('每週')) {
+      } else if (message.includes('重複') || message.includes('每週') || message.includes('每天')) {
         slots.scope = 'recurring';
-      } else {
-        slots.scope = 'single';
       }
       break;
 

@@ -145,6 +145,27 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     console.log('🎯 開始處理新增課程任務');
     console.log('📋 接收參數:', slots);
 
+    // 0. 先校驗時間格式（即使缺其他欄位也優先提示時間錯誤）
+    if (slots.scheduleTime) {
+      const timeOk = /^([01]\d|2[0-3]):([0-5]\d)$/.test(slots.scheduleTime);
+      if (!timeOk) {
+        const conversationManager = getConversationManager();
+        await conversationManager.setExpectedInput(
+          userId,
+          'course_creation',
+          ['schedule_time_input'],
+          { intent: 'add_course', existingSlots: slots, missingFields: ['上課時間'] },
+        );
+        return {
+          success: false,
+          code: 'INVALID_TIME',
+          message: '❌ 時間格式不正確，請重新輸入正確的時間（例如：下午2點 或 14:00）',
+          expectingInput: true,
+          missingFields: ['上課時間'],
+        };
+      }
+    }
+
     // 1. 驗證必要參數
     const missingFields = validateSlots(slots);
     if (missingFields.length > 0) {
