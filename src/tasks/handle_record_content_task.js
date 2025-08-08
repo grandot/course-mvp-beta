@@ -115,6 +115,7 @@ async function handle_record_content_task(slots, userId = null) {
     if (validationErrors.length > 0) {
       return {
         success: false,
+        code: 'MISSING_CONTENT',
         message: `請提供以下必要資訊：${validationErrors.join('、')}`,
       };
     }
@@ -217,6 +218,7 @@ async function handle_record_content_task(slots, userId = null) {
 
     return {
       success: true,
+      code: 'RECORD_CONTENT_OK',
       message: responseMessage,
       data: {
         recordId: docRef.id,
@@ -228,6 +230,7 @@ async function handle_record_content_task(slots, userId = null) {
     console.error('❌ 記錄課程內容失敗:', error);
     return {
       success: false,
+      code: 'RECORD_CONTENT_FAILED',
       message: `記錄課程內容時發生錯誤：${error.message}`,
     };
   }

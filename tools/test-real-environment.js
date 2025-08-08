@@ -13,11 +13,16 @@ const fetch = require('node-fetch');
  * 真實環境測試器
  */
 class RealEnvironmentTester {
-  constructor() {
+  constructor(options = {}) {
     this.webhookUrl = process.env.WEBHOOK_URL;
     this.lineChannelSecret = process.env.LINE_CHANNEL_SECRET;
     this.renderApiKey = process.env.RENDER_API_KEY;
     this.renderServiceId = process.env.RENDER_SERVICE_ID;
+    
+    // 可配置的測試用戶 ID
+    // 注意：以 'U_test_' 開頭的 userId 會在 webhook 被視為測試用戶並切到 Mock
+    // 為了在真實環境測試時使用真實 LINE Service，預設採用非 'U_test_' 開頭的 ID
+    this.testUserId = options.testUserId || process.env.TEST_USER_ID || 'U_test_user_qa';
     
     this.validateConfig();
   }
@@ -64,7 +69,7 @@ class RealEnvironmentTester {
           text: message
         },
         source: {
-          userId: 'U_real_env_test',
+          userId: this.testUserId,
           type: 'user'
         },
         replyToken: 'test-reply-token-' + Date.now(),
@@ -90,7 +95,9 @@ class RealEnvironmentTester {
         headers: {
           'Content-Type': 'application/json',
           'X-Line-Signature': signature,
-          'User-Agent': 'LineBotWebhook/2.0'
+          'User-Agent': 'LineBotWebhook/2.0',
+          // QA 覆寫：強制 webhook 使用真實 LINE Service
+          'X-QA-Mode': 'real'
         },
         body: bodyString,
         timeout: 15000 // 15秒超時
@@ -120,7 +127,51 @@ class RealEnvironmentTester {
   }
   
   /**
-   * 獲取 Render 日誌 (分段獲取策略 - 基於第一性原則)
+   * 獲取基本日誌 (快速模式 - 僅用於提取機器人回覆)
+   */
+  async fetchBasicLogs() {
+    console.log('📋 快速獲取基本日誌...');
+    
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      try {
+        const { stdout } = await execAsync(
+          `render logs -r ${this.renderServiceId} --limit 100 --direction backward -o json`,
+          { timeout: 8000 }
+        );
+        
+        // 解析 JSON Lines 格式的日誌
+        const logLines = stdout.trim().split('\n').filter(line => line.trim());
+        const logs = logLines.map(line => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return { message: line, timestamp: new Date().toISOString() };
+          }
+        });
+        
+        console.log(`✅ 快速獲取到 ${logs.length} 條基本日誌`);
+        
+        // 組合所有日誌訊息
+        const logMessages = logs.map(entry => entry.message).join('\n');
+        return logMessages;
+        
+      } catch (error) {
+        console.log(`⚠️ 快速獲取失敗: ${error.message}`);
+        return null;
+      }
+      
+    } catch (error) {
+      console.log(`❌ 獲取基本日誌失敗: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * 獲取 Render 日誌 (多次獲取策略 - 用於完整診斷)
    */
   async fetchRenderLogs() {
     console.log('📋 獲取 Render 日誌...');
@@ -279,7 +330,7 @@ class RealEnvironmentTester {
         /ERROR/,
         /Failed/,
         /Exception/,
-        /⚠️.*(?!時間衝突)/  // 警告但排除時間衝突
+        /⚠️(?!.*時間衝突).*/  // 正確的負向先行斷言：警告但排除時間衝突
       ],
       systemBehavior: [
         /📤.*測試模式.*實際業務回覆/,
@@ -369,6 +420,7 @@ class RealEnvironmentTester {
     
     // 第三階段：從日誌行中找包含關鍵訊息的內容
     const lines = logs.split('\n');
+    const reversedLines = [...lines].reverse(); // 複製並反轉，避免多次修改原數組
     const keywordPatterns = [
       /❓.*請提供/,
       /❌.*失敗/,
@@ -378,7 +430,7 @@ class RealEnvironmentTester {
       /缺少.*欄位/
     ];
     
-    for (const line of lines.reverse()) { // 從最新的開始找
+    for (const line of reversedLines) { // 從最新的開始找
       for (const pattern of keywordPatterns) {
         if (pattern.test(line)) {
           const cleaned = line.replace(/^\s*"message":\s*"?/, '').replace(/"?\s*,?\s*$/, '').trim();
@@ -389,8 +441,8 @@ class RealEnvironmentTester {
       }
     }
     
-    // 最後階段：找任何包含課程相關的行
-    for (const line of lines.reverse()) {
+    // 最後階段：找任何包含課程相關的行（使用同一個反轉數組）
+    for (const line of reversedLines) {
       if ((line.includes('成功') || line.includes('安排') || line.includes('課程') || line.includes('學生')) && line.length > 10) {
         return line.trim();
       }
@@ -400,51 +452,112 @@ class RealEnvironmentTester {
   }
   
   /**
-   * 智能評估測試成功 (基於第一性原則)
+   * 語義對齊評估測試成功 (基於測試目的和預期回覆)
    */
   evaluateTestSuccess(testCase, actualReply) {
     if (!actualReply) {
       return false;
     }
     
-    // 基於測試案例名稱和內容智能判斷
+    // 🎯 核心修復：基於測試目的和預期回覆進行語義對齊判斷
+    const testPurpose = testCase.purpose || '';
+    const expectedReply = testCase.expected || testCase.expectedKeywords || [];
     const testName = testCase.name || '';
-    const testInput = testCase.input || '';
     
-    // 完整資訊輸入測試 - 期望成功或合理錯誤(如衝突)
-    if (testName.includes('完整資訊') || testName.includes('標準格式') || testName.includes('時間格式') || testName.includes('中文數字')) {
-      return actualReply.includes('成功') || 
-             actualReply.includes('已安排') ||
-             actualReply.includes('衝突') ||
-             actualReply.includes('安排') ||
-             actualReply.includes('✅') ||
-             actualReply.includes('請選擇其他時間') ||
-             actualReply.includes('確認是否要覆蓋');
+    console.log(`🎯 語義對齊評估 - 目的: ${testPurpose}`);
+    console.log(`🎯 預期回覆關鍵詞: ${Array.isArray(expectedReply) ? expectedReply.join('|') : expectedReply}`);
+    
+    // 明確識別系統錯誤（始終失敗）
+    const hasSystemError = actualReply.includes('系統錯誤') || 
+                          actualReply.includes('internal error') ||
+                          actualReply.includes('undefined');
+    
+    if (hasSystemError) {
+      console.log(`❌ 系統錯誤，測試失敗`);
+      return false;
     }
     
-    // 缺失資訊測試 - 期望正確識別缺失字段
-    if (testName.includes('缺少') || testName.includes('缺失')) {
-      return actualReply.includes('缺少') || 
-             actualReply.includes('missing') ||
-             actualReply.includes('missingFields') ||
-             actualReply.includes('補充') ||
-             actualReply.includes('請提供') ||
-             actualReply.includes('範例：');
+    // 基於測試目的進行語義判斷
+    if (testPurpose.includes('驗證') || testPurpose.includes('測試')) {
+      
+      // 解析目的：如果目的是驗證某個功能，期望該功能成功執行
+      if (testPurpose.includes('時間解析') || testPurpose.includes('格式解析') || 
+          testPurpose.includes('數字解析') || testPurpose.includes('標準格式')) {
+        
+        // 對於解析類測試：期望成功解析並完成任務
+        const expectsSuccess = expectedReply.includes && expectedReply.includes('成功') ||
+                              (typeof expectedReply === 'string' && expectedReply.includes('成功'));
+        
+        if (expectsSuccess) {
+          // 如果預期成功，但實際要求補充資訊 = 解析失敗
+          const isRequestingInfo = actualReply.includes('請提供') || 
+                                  actualReply.includes('缺少') ||
+                                  actualReply.includes('missing') ||
+                                  actualReply.includes('範例：') ||
+                                  actualReply.includes('❓');
+          
+          if (isRequestingInfo) {
+            console.log(`❌ 解析測試失敗：系統無法解析，要求補充資訊`);
+            return false;
+          }
+          
+          // 檢查是否達到預期成功狀態
+          const achievedSuccess = actualReply.includes('成功') || 
+                                 actualReply.includes('已安排') ||
+                                 actualReply.includes('安排') ||
+                                 actualReply.includes('✅');
+          
+          // 或者合理的衝突（也算成功解析）
+          const hasReasonableConflict = actualReply.includes('衝突') ||
+                                       actualReply.includes('請選擇其他時間') ||
+                                       actualReply.includes('確認是否要覆蓋');
+          
+          const semanticAlignment = achievedSuccess || hasReasonableConflict;
+          console.log(`🎯 語義對齊結果: ${semanticAlignment ? '✅ 對齊' : '❌ 不對齊'}`);
+          return semanticAlignment;
+        }
+      }
+      
+      // 對於缺失資訊測試：期望系統正確識別缺失
+      if (testPurpose.includes('缺失') || testPurpose.includes('缺少') ||
+          testName.includes('缺少') || testName.includes('缺失')) {
+        
+        const correctlyIdentifiedMissing = actualReply.includes('請提供') || 
+                                         actualReply.includes('缺少') ||
+                                         actualReply.includes('missing') ||
+                                         actualReply.includes('範例：') ||
+                                         actualReply.includes('❓');
+        
+        console.log(`🎯 缺失識別測試: ${correctlyIdentifiedMissing ? '✅ 正確識別' : '❌ 未識別'}`);
+        return correctlyIdentifiedMissing;
+      }
     }
     
-    // 預設標準：有意義的回覆(包含相關概念)
-    const hasRelevantConcepts = actualReply.includes('課程') || 
-                               actualReply.includes('學生') ||
-                               actualReply.includes('時間') ||
-                               actualReply.includes('日期');
+    // 默認語義對齊：檢查實際回覆是否與預期語義一致（統一使用 every）
+    if (Array.isArray(expectedReply)) {
+      // 修復：空數組情況
+      if (expectedReply.length === 0) {
+        console.log(`🎯 默認語義檢查: ❌ 無預期關鍵詞，無法評估`);
+        return false;
+      }
+      
+      const hasAllExpectedElements = expectedReply.every(keyword => 
+        actualReply.includes(keyword)
+      );
+      console.log(`🎯 默認語義檢查: ${hasAllExpectedElements ? '✅ 全部命中關鍵詞' : '❌ 缺少必要關鍵詞'}`);
+      return hasAllExpectedElements;
+    }
     
-    // 不是系統錯誤或測試跳過
-    const notSystemError = !actualReply.includes('系統錯誤') && 
-                          !actualReply.includes('internal error') &&
-                          !actualReply.includes('undefined') &&
-                          !actualReply.includes('檢測到測試 token');
+    // 字串預期：嚴格包含預期內容
+    if (typeof expectedReply === 'string' && expectedReply) {
+      const semanticMatch = actualReply.includes(expectedReply);
+      console.log(`🎯 字符串語義檢查: ${semanticMatch ? '✅ 嚴格匹配' : '❌ 未匹配預期字串'}`);
+      return semanticMatch;
+    }
     
-    return hasRelevantConcepts && notSystemError;
+    // 移除過度寬鬆的備援標準，避免掩蓋真實問題
+    console.log(`🎯 無明確評估標準，測試失敗`);
+    return false;
   }
   
   /**
@@ -461,7 +574,7 @@ class RealEnvironmentTester {
   }
   
   /**
-   * 執行單個測試
+   * 執行單個測試 (優化版 - 僅失敗時獲取日誌)
    */
   async runSingleTest(testCase) {
     console.log('\n' + '='.repeat(60));
@@ -475,11 +588,12 @@ class RealEnvironmentTester {
     console.log('⏳ 等待 3 秒讓服務處理...');
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // 2. 獲取日誌
-    const logs = await this.fetchRenderLogs();
+    // 2. 先嘗試快速獲取基本日誌以提取回覆
+    console.log('📋 獲取基本日誌...');
+    const basicLogs = await this.fetchBasicLogs(); // 只獲取最新100條
     
     // 3. 擷取機器人回覆
-    const botReply = this.extractBotReply(logs);
+    const botReply = this.extractBotReply(basicLogs);
     console.log(`🤖 機器人回覆: ${botReply || '(未找到回覆)'}`);
     
     // 4. 智能評估測試成功 (第一性原則)
@@ -495,13 +609,18 @@ class RealEnvironmentTester {
     const testPassed = webhookResult.ok && intelligentSuccess;
     console.log(`🎯 測試結果: ${testPassed ? '✅ PASS' : '❌ FAIL'}`);
     
-    // 7. 失敗時提取診斷日誌 (第一性原則 - 精準診斷)
+    // 7. 失敗時獲取完整日誌並提取診斷信息 (第一性原則 - 精準診斷)
     let diagnosticLogs = null;
-    if (!testPassed && logs) {
-      console.log('🔍 提取診斷日誌...');
-      diagnosticLogs = this.extractDiagnosticLogs(logs, testCase.input);
-      if (diagnosticLogs) {
-        console.log('📋 診斷日誌已收集，將在報告中顯示');
+    if (!testPassed) {
+      console.log('❌ 測試失敗，獲取完整診斷日誌...');
+      const fullLogs = await this.fetchRenderLogs(); // 使用多次獲取策略
+      
+      if (fullLogs) {
+        console.log('🔍 提取診斷日誌...');
+        diagnosticLogs = this.extractDiagnosticLogs(fullLogs, testCase.input);
+        if (diagnosticLogs) {
+          console.log('📋 診斷日誌已收集，將在報告中顯示');
+        }
       }
     }
     

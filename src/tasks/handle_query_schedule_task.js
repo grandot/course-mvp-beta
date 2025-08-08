@@ -266,6 +266,7 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
 
       return {
         success: true,
+        code: 'QUERY_OK_EMPTY',
         message: suggestionMessage,
         data: {
           courseCount: 0,
@@ -276,6 +277,7 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
 
     return {
       success: true,
+      code: 'QUERY_OK',
       message,
       data: {
         courses,
@@ -295,11 +297,13 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
     if (error.message.includes('Firebase') || error.message.includes('Firestore')) {
       return {
         success: false,
+        code: 'FIREBASE_ERROR',
         message: '❌ 資料查詢失敗，請稍後再試。',
       };
     }
     return {
       success: false,
+      code: 'QUERY_FAILED',
       message: '❌ 查詢課表失敗，請檢查學生姓名並稍後再試。',
     };
   }

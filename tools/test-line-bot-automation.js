@@ -438,7 +438,7 @@ async function runTestCase(simulator, testCase, collector) {
           keywordCheck = response.success && response.status === 200;
           console.log(`🔍 Mock 測試: 期望關鍵詞 [${step.expectKeywords.join(', ')}] - ${keywordCheck ? '通過' : '失敗'}`);
         } else {
-          keywordCheck = step.expectKeywords.some(keyword => 
+          keywordCheck = step.expectKeywords.every(keyword => 
             response.botReply && response.botReply.includes(keyword)
           );
         }

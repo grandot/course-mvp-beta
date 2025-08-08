@@ -49,208 +49,230 @@ class TestDataManager {
       }
     ];
     
-    this.createdData = {
-      students: new Set(),
-      courses: new Set(),
-      reminders: new Set(),
-      conversations: new Set()
-    };
+    this.initFirebase();
   }
-
+  
   /**
-   * 初始化 Firebase 連接（如果尚未初始化）
+   * 初始化 Firebase
    */
-  async initializeFirebase() {
+  initFirebase() {
     try {
-      if (!admin.apps.length) {
-        // 使用環境變數或服務帳戶密鑰初始化
-        if (process.env.FIREBASE_PROJECT_ID) {
-          admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: process.env.FIREBASE_PROJECT_ID,
-          });
-        } else {
-          throw new Error('Firebase 配置缺失');
-        }
+      // 檢查是否已經初始化
+      if (admin.apps.length > 0) {
+        this.firestore = admin.firestore();
+        return;
       }
+      
+      // 從環境變數讀取配置
+      const projectId = process.env.FIREBASE_PROJECT_ID;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      
+      if (!projectId || !privateKey || !clientEmail) {
+        throw new Error('Firebase 環境變數未設定完整');
+      }
+      
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          privateKey,
+          clientEmail
+        }),
+        projectId
+      });
       
       this.firestore = admin.firestore();
-      this.storage = admin.storage();
+      console.log('🔥 Firebase Admin SDK 初始化完成');
       
-      console.log('✅ Firebase 初始化成功');
-      return true;
     } catch (error) {
-      console.error('❌ Firebase 初始化失敗:', error.message);
-      return false;
+      console.error('❌ Firebase 初始化失敗:', error);
+      throw error;
     }
   }
-
+  
   /**
-   * 檢查測試環境狀態
+   * 建立基礎學生和課程數據
    */
-  async checkTestEnvironment() {
-    console.log('🔍 檢查測試環境...');
-    
-    const checks = {
-      firebase: false,
-      redis: false,
-      lineBot: false,
-      openai: false
-    };
-    
+  async createBasicStudentsAndCourses() {
     try {
-      // Firebase 檢查
-      checks.firebase = await this.initializeFirebase();
+      console.log('📚 建立基礎測試數據...');
       
-      // Redis 檢查
-      try {
-        const { getRedisService } = require('../../src/services/redisService');
-        const redisService = getRedisService();
-        if (redisService && redisService.client) {
-          await redisService.client.ping();
-          checks.redis = true;
-        }
-      } catch (error) {
-        console.warn('⚠️ Redis 連接檢查失敗:', error.message);
+      // 1. 建立測試家長
+      const parentRef = this.firestore.collection('parents').doc(this.testUserId);
+      const parentData = {
+        lineUserId: this.testUserId,
+        displayName: '測試家長',
+        students: [],
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      
+      await parentRef.set(parentData);
+      console.log('✅ 建立測試家長:', this.testUserId);
+      
+      // 2. 建立測試學生 (不設定 calendarId，讓系統自動創建真實的)
+      const students = [];
+      for (const studentTemplate of this.standardStudents) {
+        const student = {
+          studentName: studentTemplate.name,
+          // calendarId 移除，讓 ensureStudentCalendar() 自動創建真實的
+          createdAt: new Date(),
+          testId: studentTemplate.testId
+        };
+        students.push(student);
       }
       
-      // LINE Bot 檢查
-      checks.lineBot = !!process.env.LINE_CHANNEL_ACCESS_TOKEN;
+      // 更新家長文檔，添加學生
+      await parentRef.update({
+        students: admin.firestore.FieldValue.arrayUnion(...students),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
       
-      // OpenAI 檢查
-      checks.openai = !!process.env.OPENAI_API_KEY;
+      console.log(`✅ 建立 ${students.length} 個測試學生`);
+      
+      // 3. 建立測試課程
+      let courseCount = 0;
+      const coursesRef = this.firestore.collection('courses');
+      
+      for (const courseTemplate of this.standardCourses) {
+        const courseData = {
+          userId: this.testUserId,
+          studentName: courseTemplate.studentName,
+          courseName: courseTemplate.courseName,
+          scheduleTime: courseTemplate.scheduleTime,
+          recurring: courseTemplate.isRecurring,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          testData: true
+        };
+        
+        // 添加日期或重複信息
+        if (courseTemplate.timeReference) {
+          courseData.timeReference = courseTemplate.timeReference;
+          courseData.courseDate = this.resolveTimeReference(courseTemplate.timeReference);
+        }
+        
+        if (courseTemplate.dayOfWeek) {
+          courseData.dayOfWeek = courseTemplate.dayOfWeek;
+        }
+        
+        const docRef = await coursesRef.add(courseData);
+        await docRef.update({ courseId: docRef.id });
+        
+        courseCount++;
+      }
+      
+      console.log(`✅ 建立 ${courseCount} 個測試課程`);
+      
+      // 4. 驗證數據建立成功
+      const summary = await this.getTestDataSummary();
+      console.log('📊 測試數據摘要:', summary);
+      
+      return true;
       
     } catch (error) {
-      console.error('❌ 環境檢查失敗:', error);
-    }
-    
-    console.log('📊 環境檢查結果:', checks);
-    
-    const criticalServices = ['firebase', 'lineBot', 'openai'];
-    const criticalFailed = criticalServices.some(service => !checks[service]);
-    
-    if (criticalFailed) {
-      console.error('❌ 關鍵服務未就緒，無法執行測試');
+      console.error('❌ 建立基礎測試數據失敗:', error);
       return false;
     }
-    
-    console.log('✅ 測試環境檢查通過');
-    return true;
   }
-
+  
+  /**
+   * 解析時間參考為具體日期
+   */
+  resolveTimeReference(timeReference) {
+    const today = new Date();
+    let targetDate;
+    
+    switch (timeReference) {
+      case 'today':
+        targetDate = today;
+        break;
+      case 'tomorrow':
+        targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + 1);
+        break;
+      case 'day_after_tomorrow':
+        targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + 2);
+        break;
+      case 'yesterday':
+        targetDate = new Date(today);
+        targetDate.setDate(today.getDate() - 1);
+        break;
+      default:
+        return null;
+    }
+    
+    return targetDate.toISOString().split('T')[0]; // YYYY-MM-DD 格式
+  }
+  
   /**
    * 清理所有測試數據
    */
   async cleanupAllTestData() {
-    console.log('🧹 開始清理測試數據...');
-    
-    if (!this.firestore) {
-      console.error('❌ Firestore 未初始化');
-      return false;
-    }
-    
     try {
-      let totalCleaned = 0;
+      console.log('🧹 清理所有測試數據...');
       
-      // 清理測試用戶的對話狀態
-      console.log('🗑️ 清理對話狀態...');
-      const conversationsRef = this.firestore.collection('conversations');
-      const conversationQuery = conversationsRef.where('userId', '>=', this.testUserPrefix)
-                                                .where('userId', '<', this.testUserPrefix + 'z');
+      let cleanedCount = 0;
       
-      const conversationSnapshot = await conversationQuery.get();
-      const conversationBatch = this.firestore.batch();
+      // 1. 清理測試家長數據
+      const parentsRef = this.firestore.collection('parents');
+      const parentQuery = parentsRef.where('lineUserId', '==', this.testUserId);
+      const parentSnapshot = await parentQuery.get();
       
-      conversationSnapshot.docs.forEach(doc => {
-        conversationBatch.delete(doc.ref);
-        totalCleaned++;
-      });
-      
-      if (conversationSnapshot.docs.length > 0) {
-        await conversationBatch.commit();
-        console.log(`✅ 清理對話狀態: ${conversationSnapshot.docs.length} 筆`);
+      if (!parentSnapshot.empty) {
+        const batch = this.firestore.batch();
+        parentSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        cleanedCount += parentSnapshot.size;
+        console.log(`🗑️ 清理家長數據: ${parentSnapshot.size} 筆`);
       }
       
-      // 清理測試課程
-      console.log('🗑️ 清理測試課程...');
+      // 2. 清理測試課程數據
       const coursesRef = this.firestore.collection('courses');
       const courseQuery = coursesRef.where('userId', '==', this.testUserId);
-      
       const courseSnapshot = await courseQuery.get();
-      const courseBatch = this.firestore.batch();
       
-      courseSnapshot.docs.forEach(doc => {
-        courseBatch.delete(doc.ref);
-        totalCleaned++;
-      });
-      
-      if (courseSnapshot.docs.length > 0) {
-        await courseBatch.commit();
-        console.log(`✅ 清理測試課程: ${courseSnapshot.docs.length} 筆`);
+      if (!courseSnapshot.empty) {
+        const batch = this.firestore.batch();
+        courseSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        cleanedCount += courseSnapshot.size;
+        console.log(`🗑️ 清理課程數據: ${courseSnapshot.size} 筆`);
       }
       
-      // 清理測試學生
-      console.log('🗑️ 清理測試學生...');
-      const parentsRef = this.firestore.collection('parents').doc(this.testUserId);
-      const parentDoc = await parentsRef.get();
-      
-      if (parentDoc.exists) {
-        await parentsRef.delete();
-        totalCleaned++;
-        console.log('✅ 清理測試學生資料');
-      }
-      
-      // 清理測試提醒
-      console.log('🗑️ 清理測試提醒...');
+      // 3. 清理測試提醒數據
       const remindersRef = this.firestore.collection('reminders');
       const reminderQuery = remindersRef.where('userId', '==', this.testUserId);
-      
       const reminderSnapshot = await reminderQuery.get();
-      const reminderBatch = this.firestore.batch();
       
-      reminderSnapshot.docs.forEach(doc => {
-        reminderBatch.delete(doc.ref);
-        totalCleaned++;
-      });
-      
-      if (reminderSnapshot.docs.length > 0) {
-        await reminderBatch.commit();
-        console.log(`✅ 清理測試提醒: ${reminderSnapshot.docs.length} 筆`);
+      if (!reminderSnapshot.empty) {
+        const batch = this.firestore.batch();
+        reminderSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        cleanedCount += reminderSnapshot.size;
+        console.log(`🗑️ 清理提醒數據: ${reminderSnapshot.size} 筆`);
       }
       
-      // 清理 Redis 測試數據
-      try {
-        const { getRedisService } = require('../../src/services/redisService');
-        const redisService = getRedisService();
-        
-        if (redisService && redisService.client) {
-          const testKeys = await redisService.client.keys(`*${this.testUserId}*`);
-          if (testKeys.length > 0) {
-            await redisService.client.del(...testKeys);
-            console.log(`✅ 清理 Redis 測試數據: ${testKeys.length} 筆`);
-            totalCleaned += testKeys.length;
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ Redis 清理跳過:', error.message);
-      }
-      
-      console.log(`🎉 測試數據清理完成，共清理 ${totalCleaned} 筆資料`);
-      
-      // 重置追蹤記錄
-      Object.keys(this.createdData).forEach(key => {
-        this.createdData[key].clear();
-      });
-      
+      console.log(`✅ 清理完成，共清理 ${cleanedCount} 筆數據`);
       return true;
+      
     } catch (error) {
       console.error('❌ 清理測試數據失敗:', error);
       return false;
     }
   }
-
+  
   /**
-   * 為指定階段準備測試數據
+   * 準備指定階段的數據
+   */
+  async setupPhase(phase) {
+    console.log(`🚀 準備 Phase ${phase} 測試環境...`);
+    return await this.setupPhaseData(phase);
+  }
+  
+  /**
+   * 根據階段設置數據
    */
   async setupPhaseData(phase) {
     console.log(`📋 準備 Phase ${phase} 測試數據...`);
@@ -269,14 +291,20 @@ class TestDataManager {
   }
 
   /**
-   * 準備 Phase A 數據（無需預置數據，只需環境檢查）
+   * 準備 Phase A 數據（清理環境並建立基礎測試數據）
    */
   async setupPhaseAData() {
-    console.log('📋 Phase A: 獨立功能測試（無需預置數據）');
+    console.log('📋 Phase A: 獨立功能測試（清理並建立基礎數據）');
     
-    // Phase A 不需要預置數據，只需要確保環境乾淨
+    // 1. 清理現有測試數據
     const cleaned = await this.cleanupAllTestData();
     if (!cleaned) {
+      return false;
+    }
+    
+    // 2. 建立基礎測試數據
+    const created = await this.createBasicStudentsAndCourses();
+    if (!created) {
       return false;
     }
     
@@ -298,25 +326,31 @@ class TestDataManager {
       return false;
     }
     
-    console.log('✅ Phase B 數據準備完成（已驗證 Phase A 數據存在）');
+    // Phase B 特定的額外數據準備（如課程記錄、提醒等）
+    // TODO: 根據需要添加 Phase B 特定的數據準備邏輯
+    
+    console.log('✅ Phase B 數據準備完成');
     return true;
   }
 
   /**
-   * 準備 Phase C 數據（需要 Phase A + B 的完整數據）
+   * 準備 Phase C 數據（需要 Phase A & B 的數據）
    */
   async setupPhaseCData() {
-    console.log('📋 Phase C: 複雜操作測試（基於完整數據環境）');
+    console.log('📋 Phase C: 複合功能測試（基於 Phase A&B 數據）');
     
-    // Phase C 需要驗證前面階段的數據
-    const hasCompleteData = await this.verifyPhaseBResults();
+    const hasPhaseAData = await this.verifyPhaseAResults();
+    const hasPhaseBData = await this.verifyPhaseBResults();
     
-    if (!hasCompleteData) {
-      console.error('❌ Phase B 數據不完整，無法執行 Phase C');
+    if (!hasPhaseAData || !hasPhaseBData) {
+      console.error('❌ Phase A 或 Phase B 數據不完整，無法執行 Phase C');
       return false;
     }
     
-    console.log('✅ Phase C 數據準備完成（已驗證完整數據環境）');
+    // Phase C 特定的數據準備
+    // TODO: 根據需要添加 Phase C 特定的數據準備邏輯
+    
+    console.log('✅ Phase C 數據準備完成');
     return true;
   }
 
@@ -325,33 +359,24 @@ class TestDataManager {
    */
   async verifyPhaseAResults() {
     try {
-      // 檢查是否有測試用戶建立的學生資料
-      const parentsRef = this.firestore.collection('parents').doc(this.testUserId);
-      const parentDoc = await parentsRef.get();
+      // 檢查是否有測試學生數據
+      const parentRef = this.firestore.collection('parents').doc(this.testUserId);
+      const parentDoc = await parentRef.get();
       
       if (!parentDoc.exists) {
-        console.log('⚠️ Phase A 未建立學生資料');
         return false;
       }
       
       const parentData = parentDoc.data();
-      if (!parentData.students || parentData.students.length === 0) {
-        console.log('⚠️ Phase A 未建立學生列表');
-        return false;
-      }
+      const hasStudents = parentData.students && parentData.students.length > 0;
       
-      // 檢查是否有建立的課程
+      // 檢查是否有測試課程數據
       const coursesRef = this.firestore.collection('courses');
       const courseQuery = coursesRef.where('userId', '==', this.testUserId);
       const courseSnapshot = await courseQuery.get();
+      const hasCourses = courseSnapshot.size > 0;
       
-      if (courseSnapshot.empty) {
-        console.log('⚠️ Phase A 未建立課程');
-        return false;
-      }
-      
-      console.log(`✅ Phase A 驗證通過: ${parentData.students.length} 個學生, ${courseSnapshot.size} 門課程`);
-      return true;
+      return hasStudents && hasCourses;
       
     } catch (error) {
       console.error('❌ Phase A 結果驗證失敗:', error);
@@ -360,35 +385,12 @@ class TestDataManager {
   }
 
   /**
-   * 驗證 Phase B 執行結果
+   * 驗證 Phase B 執行結果  
    */
   async verifyPhaseBResults() {
     try {
-      // 首先驗證 Phase A 的結果
-      const hasPhaseA = await this.verifyPhaseAResults();
-      if (!hasPhaseA) {
-        return false;
-      }
-      
-      // 檢查是否有課程內容記錄
-      const coursesRef = this.firestore.collection('courses');
-      const courseQuery = coursesRef.where('userId', '==', this.testUserId);
-      const courseSnapshot = await courseQuery.get();
-      
-      let hasRecords = false;
-      courseSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.courseRecord && (data.courseRecord.notes || data.courseRecord.photos)) {
-          hasRecords = true;
-        }
-      });
-      
-      // 檢查是否有設定的提醒
-      const remindersRef = this.firestore.collection('reminders');
-      const reminderQuery = remindersRef.where('userId', '==', this.testUserId);
-      const reminderSnapshot = await reminderQuery.get();
-      
-      console.log(`✅ Phase B 驗證: 課程記錄=${hasRecords}, 提醒數=${reminderSnapshot.size}`);
+      // Phase B 的驗證邏輯
+      // TODO: 根據具體的 Phase B 測試內容來實現
       return true;
       
     } catch (error) {
@@ -431,133 +433,13 @@ class TestDataManager {
       const reminderSnapshot = await reminderQuery.get();
       summary.reminders = reminderSnapshot.size;
       
-      // 對話狀態
-      const conversationsRef = this.firestore.collection('conversations');
-      const conversationQuery = conversationsRef.where('userId', '==', this.testUserId);
-      const conversationSnapshot = await conversationQuery.get();
-      summary.conversations = conversationSnapshot.size;
-      
       return summary;
+      
     } catch (error) {
       console.error('❌ 獲取測試數據摘要失敗:', error);
       return null;
     }
   }
-
-  /**
-   * 驗證測試前置條件
-   */
-  async verifyPrerequisites(testCase) {
-    const { phase, dependencies = [] } = testCase;
-    
-    if (dependencies.length === 0) {
-      return true; // 無依賴的測試用例
-    }
-    
-    // 根據依賴類型檢查
-    for (const dep of dependencies) {
-      switch (dep) {
-        case 'basic_students':
-          const hasStudents = await this.verifyPhaseAResults();
-          if (!hasStudents) {
-            console.log(`❌ 前置條件未滿足: ${dep}`);
-            return false;
-          }
-          break;
-          
-        case 'basic_courses':
-          // 已在 verifyPhaseAResults 中檢查
-          break;
-          
-        case 'course_records':
-          const hasRecords = await this.verifyPhaseBResults();
-          if (!hasRecords) {
-            console.log(`❌ 前置條件未滿足: ${dep}`);
-            return false;
-          }
-          break;
-          
-        default:
-          console.warn(`⚠️ 未知的依賴類型: ${dep}`);
-      }
-    }
-    
-    return true;
-  }
-
-  /**
-   * 測試結束後的清理
-   */
-  async postTestCleanup() {
-    console.log('🧹 執行測試結束清理...');
-    
-    // 保留最近的測試數據摘要用於分析
-    const summary = await this.getTestDataSummary();
-    if (summary) {
-      console.log('📊 最終測試數據摘要:', summary);
-    }
-    
-    // 執行完整清理
-    return await this.cleanupAllTestData();
-  }
 }
 
-// 建立全域實例
-const testDataManager = new TestDataManager();
-
-// 匯出主要方法
-module.exports = {
-  TestDataManager,
-  
-  // 便利方法
-  checkEnvironment: () => testDataManager.checkTestEnvironment(),
-  cleanupAll: () => testDataManager.cleanupAllTestData(),
-  setupPhase: (phase) => testDataManager.setupPhaseData(phase),
-  verifyPrerequisites: (testCase) => testDataManager.verifyPrerequisites(testCase),
-  getSummary: () => testDataManager.getTestDataSummary(),
-  postCleanup: () => testDataManager.postTestCleanup(),
-  
-  // 測試數據常數
-  TEST_USER_ID: testDataManager.testUserId,
-  TEST_STUDENT_PREFIX: testDataManager.testStudentPrefix,
-  TEST_COURSE_PREFIX: testDataManager.testCoursePrefix,
-};
-
-// 如果直接執行此腳本
-if (require.main === module) {
-  async function runTestDataManagerCLI() {
-    const args = process.argv.slice(2);
-    const command = args[0];
-    
-    switch (command) {
-      case 'check':
-        await testDataManager.checkTestEnvironment();
-        break;
-        
-      case 'clean':
-        await testDataManager.cleanupAllTestData();
-        break;
-        
-      case 'setup':
-        const phase = args[1] || 'A';
-        await testDataManager.setupPhaseData(phase);
-        break;
-        
-      case 'summary':
-        const summary = await testDataManager.getTestDataSummary();
-        console.log('📊 測試數據摘要:', JSON.stringify(summary, null, 2));
-        break;
-        
-      default:
-        console.log(`
-使用方法:
-  node test-data-manager.js check   # 檢查測試環境
-  node test-data-manager.js clean   # 清理測試數據
-  node test-data-manager.js setup A # 準備階段數據 (A/B/C)
-  node test-data-manager.js summary # 查看數據摘要
-        `);
-    }
-  }
-  
-  runTestDataManagerCLI().catch(console.error);
-}
+module.exports = { TestDataManager };

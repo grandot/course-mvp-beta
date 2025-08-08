@@ -214,7 +214,7 @@ async function runTestCaseWithLogs(simulator, testCase, collector) {
 
       // 檢查關鍵詞
       if (step.expectKeywords && step.expectKeywords.length > 0) {
-        const keywordCheck = step.expectKeywords.some(keyword => 
+        const keywordCheck = step.expectKeywords.every(keyword => 
           response.botReply && response.botReply.includes(keyword)
         );
         stepResult.checks.push({

@@ -37,6 +37,10 @@ class QAOrchestrator {
       console.log('\n🚀 開始完整 QA 流程...');
       console.log('='.repeat(80));
       
+      // Phase 0: 自動準備測試數據 (新增)
+      console.log('\n📚 Phase 0: 自動準備測試數據');
+      await this.setupTestData();
+      
       // Phase 1: 解析測試計劃
       console.log('\n📖 Phase 1: 解析測試計劃');
       const testCases = await this.parseTestPlan();
@@ -198,6 +202,32 @@ class QAOrchestrator {
   }
   
   /**
+   * 自動準備測試數據
+   */
+  async setupTestData() {
+    try {
+      // 載入 TestDataManager 
+      const { TestDataManager } = require('../QA/scripts/test-data-manager');
+      const dataManager = new TestDataManager();
+      
+      console.log('🧹 清理並準備 Phase A 測試數據...');
+      const setupSuccess = await dataManager.setupPhase('A');
+      
+      if (setupSuccess) {
+        const summary = await dataManager.getTestDataSummary();
+        console.log('✅ 測試數據準備完成');
+        console.log(`📊 數據摘要: 學生${summary.students}個, 課程${summary.courses}個`);
+      } else {
+        console.warn('⚠️ 測試數據準備失敗，繼續執行但可能影響測試結果');
+      }
+      
+    } catch (error) {
+      console.error('❌ 測試數據準備異常:', error.message);
+      console.warn('⚠️ 繼續執行測試，但某些依賴數據的測試可能失敗');
+    }
+  }
+  
+  /**
    * 生成詳細報告
    */
   async generateReport(testResults, dependencyInfo) {
@@ -214,20 +244,128 @@ class QAOrchestrator {
       testResults: testResults
     };
     
-    // 保存報告到文件
-    const reportPath = path.join(__dirname, '../QA/reports', `test-report-${Date.now()}.json`);
-    const reportDir = path.dirname(reportPath);
+    // 保存報告到文件（JSON + Markdown）
+    const timestamp = Date.now();
+    const reportsDir = path.join(__dirname, '../QA/reports');
+    const jsonPath = path.join(reportsDir, `test-report-${timestamp}.json`);
+    const mdPath = path.join(reportsDir, `test-report-${timestamp}.md`);
     
     try {
       const fs = require('fs').promises;
-      await fs.mkdir(reportDir, { recursive: true });
-      await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
-      console.log(`📄 詳細報告已保存: ${reportPath}`);
+      await fs.mkdir(reportsDir, { recursive: true });
+      // JSON 報告（給工具/AI 用）
+      await fs.writeFile(jsonPath, JSON.stringify(report, null, 2));
+      console.log(`📄 JSON 報告已保存: ${jsonPath}`);
+      
+      // Markdown 報告（給人讀）
+      const md = this.buildMarkdownReport(report);
+      await fs.writeFile(mdPath, md);
+      console.log(`📄 Markdown 報告已保存: ${mdPath}`);
     } catch (error) {
       console.warn(`⚠️  無法保存報告: ${error.message}`);
     }
     
     return report;
+  }
+
+  /**
+   * 生成 Markdown 報告內容
+   */
+  buildMarkdownReport(report) {
+    const lines = [];
+    const mode = report.mode;
+    const depStats = report.summary.dependencyValidation?.statistics || {};
+    const local = report.testResults.local;
+    const real = report.testResults.real;
+    const cmp = report.testResults.comparison;
+
+    lines.push(`# 統一 QA 測試報告`);
+    lines.push('');
+    lines.push(`- **時間**: ${report.timestamp}`);
+    lines.push(`- **模式**: ${mode}`);
+    lines.push(`- **測試案例數**: ${depStats.totalTests ?? 'N/A'}`);
+    lines.push('');
+
+    if (local) {
+      lines.push(`## 本機測試`);
+      lines.push(`- **總數**: ${local.total}`);
+      lines.push(`- **通過**: ${local.passed}`);
+      lines.push(`- **失敗**: ${local.failed}`);
+      lines.push('');
+    }
+
+    if (real) {
+      lines.push(`## 線上測試`);
+      lines.push(`- **總數**: ${real.total}`);
+      lines.push(`- **通過**: ${real.passed}`);
+      lines.push(`- **失敗**: ${real.failed}`);
+      lines.push('');
+    }
+
+    if (cmp) {
+      lines.push(`## 本機 vs 線上`);
+      lines.push(`- **一致性**: ${cmp.consistency}%`);
+      lines.push(`- **差異數**: ${cmp.differences.length}`);
+      lines.push('');
+    }
+
+    // 詳細案例列表
+    if (local) {
+      lines.push(`## 詳細案例 - 本機`);
+      local.results.forEach((r, idx) => {
+        lines.push(`### 本機-${idx + 1}. ${r.testCase.name || r.testCase.id || '未命名測試'}`);
+        lines.push(`- **輸入**: ${r.testCase.input}`);
+        lines.push(`- **結果**: ${r.success ? '✅ PASS' : '❌ FAIL'}`);
+        if (!r.success) {
+          if (r.output) lines.push(`- **輸出**: ${safeInline(r.output)}`);
+          if (r.error) lines.push(`- **錯誤**: ${safeInline(r.error)}`);
+        }
+        lines.push('');
+      });
+    }
+
+    if (real) {
+      lines.push(`## 詳細案例 - 線上`);
+      real.results.forEach((r, idx) => {
+        lines.push(`### 線上-${idx + 1}. ${r.testCase.name || r.testCase.id || '未命名測試'}`);
+        lines.push(`- **輸入**: ${r.testCase.input}`);
+        lines.push(`- **Webhook**: ${r.webhookStatus} ${r.webhookOk ? '✅' : '❌'}`);
+        lines.push(`- **回覆**: ${r.botReply ? safeInline(r.botReply) : '(無)'}`);
+        lines.push(`- **結果**: ${r.testPassed ? '✅ PASS' : '❌ FAIL'}`);
+        if (!r.testPassed) {
+          if (r.error) lines.push(`- **錯誤**: ${safeInline(r.error)}`);
+          if (r.diagnosticLogs) {
+            lines.push(`- **診斷日誌**:`);
+            Object.entries(r.diagnosticLogs).forEach(([cat, logs]) => {
+              lines.push(`  - ${cat}:`);
+              logs.slice(0, 10).forEach(line => {
+                lines.push(`    - ${safeInline(line)}`);
+              });
+            });
+          }
+        }
+        lines.push('');
+      });
+    }
+
+    if (cmp && cmp.differences?.length) {
+      lines.push(`## 差異詳情`);
+      cmp.differences.forEach((d, idx) => {
+        lines.push(`### 差異-${idx + 1}. ${d.testCase}`);
+        lines.push(`- **本機**: ${d.local}`);
+        lines.push(`- **線上**: ${d.real}`);
+        if (d.localOutput) lines.push(`- **本機輸出**: ${safeInline(d.localOutput)}`);
+        if (d.realOutput) lines.push(`- **線上輸出**: ${safeInline(d.realOutput)}`);
+        lines.push('');
+      });
+    }
+
+    return lines.join('\n');
+
+    function safeInline(text) {
+      if (!text) return '';
+      return String(text).replace(/\r?\n/g, ' ').slice(0, 2000);
+    }
   }
   
   /**

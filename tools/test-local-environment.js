@@ -60,7 +60,7 @@ async function runLocalLogicTests() {
   console.log('🧪 開始本機邏輯測試');
   console.log('='.repeat(50));
   
-  const testUserId = `U_test_actual_${Date.now()}`;
+  const testUserId = process.env.TEST_USER_ID || 'U_test_user_qa';
   
   const testCases = [
     {
@@ -155,7 +155,7 @@ async function runMultiTurnLogicTest() {
   console.log('\n🔄 多輪對話邏輯測試');
   console.log('='.repeat(50));
   
-  const testUserId = `U_test_multiturn_${Date.now()}`;
+  const testUserId = process.env.TEST_USER_ID || 'U_test_user_qa';
   
   const conversation = [
     {

@@ -10,6 +10,9 @@ class MarkdownParser {
     this.testCasePattern = /^##### ([ABC]\d\.\d-[A-Z])\s+(.+?)(?:\s+✅|⚠️)?\s*（測試目的：(.+?)）$/;
     this.inputPattern = /- \*\*測試輸入\*\*[：:]?\s*[「"]([^」"]+)[」"]/;
     this.expectedPattern = /- \*\*預期回覆\*\*[：:]?\s*[「"]([^」"]+)[」"]/;
+    this.expectedFinalPattern = /- \*\*預期最終回覆\*\*[：:]?\s*[「"]([^」"]+)[」"]/;
+    this.sequenceStartPattern = /^- \*\*測試序列\*\*/;
+    this.sequenceStepPattern = /^(?:\d+)[\.\)]\s*(?:輸入|input)[：:]?\s*[「"]([^」"]+)[」"]/i;
     this.annotationPattern = /<!-- @(\w+):\s*(.+?) -->/g;
   }
   
@@ -61,7 +64,10 @@ class MarkdownParser {
           annotations: {},
           input: '',
           expectedOutput: '',
-          expectedKeywords: []
+          expectedFinalOutput: '',
+          expectedKeywords: [],
+          expectedSuccess: null,
+          steps: []
         };
         currentSection = 'content';
         continue;
@@ -81,8 +87,25 @@ class MarkdownParser {
         const expectedMatch = line.match(this.expectedPattern);
         if (expectedMatch) {
           currentTestCase.expectedOutput = expectedMatch[1];
-          // 自動提取關鍵詞
           currentTestCase.expectedKeywords = this.extractKeywords(expectedMatch[1]);
+        }
+
+        // 提取預期最終回覆（多輪）
+        const expectedFinalMatch = line.match(this.expectedFinalPattern);
+        if (expectedFinalMatch) {
+          currentTestCase.expectedFinalOutput = expectedFinalMatch[1];
+        }
+
+        // 解析測試序列起始
+        if (this.sequenceStartPattern.test(line)) {
+          currentSection = 'sequence';
+        }
+        // 解析測試序列步驟
+        if (currentSection === 'sequence') {
+          const stepMatch = line.match(this.sequenceStepPattern);
+          if (stepMatch) {
+            currentTestCase.steps.push({ input: stepMatch[1] });
+          }
         }
         
         // 提取標註
@@ -93,6 +116,9 @@ class MarkdownParser {
           
           if (key === 'creates' || key === 'requires') {
             currentTestCase.annotations[key] = value.split(',').map(s => s.trim());
+          } else if (key === 'expectedSuccess') {
+            const v = value.trim().toLowerCase();
+            currentTestCase.expectedSuccess = (v === 'true' || v === '1' || v === 'yes');
           } else {
             currentTestCase.annotations[key] = value;
           }
@@ -117,9 +143,19 @@ class MarkdownParser {
       testCase.expectedKeywords = this.inferKeywordsFromPurpose(testCase.purpose);
     }
     
-    // 確保至少有基本的預期關鍵詞
+    // 預估 expectedSuccess （若未由標註給定）
+    if (testCase.expectedSuccess === null) {
+      const exp = testCase.expectedFinalOutput || testCase.expectedOutput || '';
+      const successHints = ['成功', '✅', '已安排', '設定完成', '已取消', '完成'];
+      const failureHints = ['❓', '請提供', '錯誤', '無法', '失敗'];
+      if (successHints.some(k => exp.includes(k))) testCase.expectedSuccess = true;
+      else if (failureHints.some(k => exp.includes(k))) testCase.expectedSuccess = false;
+      else testCase.expectedSuccess = null; // 未知，交由語義規則判定
+    }
+
+    // 若仍無關鍵詞，給預設（但不強制成功類用詞）
     if (testCase.expectedKeywords.length === 0) {
-      testCase.expectedKeywords = this.getDefaultKeywords(testCase.group);
+      testCase.expectedKeywords = this.getDefaultKeywords(testCase.group, testCase.expectedSuccess);
     }
     
     return testCase;
@@ -131,12 +167,18 @@ class MarkdownParser {
   extractKeywords(expectedOutput) {
     const keywords = [];
     
-    // 常見的成功指標
-    const successPatterns = ['成功', '✅', '已安排', '完成', '確認'];
+    // 常見的成功/失敗指標
+    const successPatterns = ['成功', '✅', '已安排', '完成', '確認', '設定完成', '已取消'];
+    const failurePatterns = ['❓', '請提供', '錯誤', '無法', '失敗', '時間衝突'];
     const coursePatterns = ['課程', '數學課', '鋼琴課', '英文課'];
     const studentPatterns = ['小明', 'Lumi', '小光', '小美'];
     
     successPatterns.forEach(pattern => {
+      if (expectedOutput.includes(pattern)) {
+        keywords.push(pattern);
+      }
+    });
+    failurePatterns.forEach(pattern => {
       if (expectedOutput.includes(pattern)) {
         keywords.push(pattern);
       }
@@ -185,13 +227,16 @@ class MarkdownParser {
   /**
    * 獲取預設關鍵詞
    */
-  getDefaultKeywords(group) {
+  getDefaultKeywords(group, expectedSuccess = null) {
+    // 若明確預期失敗/提示，使用非成功類的關鍵詞
+    if (expectedSuccess === false) {
+      return ['❓', '請提供'];
+    }
     const defaultKeywords = {
-      'A': ['課程', '成功'], // Group A 通常是創建測試
-      'B': ['課程'], // Group B 通常是查詢測試
-      'C': ['課程'] // Group C 通常是修改測試
+      'A': ['課程'], // 避免默認強制 "成功"
+      'B': ['課程'],
+      'C': ['課程']
     };
-    
     return defaultKeywords[group] || ['課程'];
   }
   

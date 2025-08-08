@@ -59,7 +59,7 @@ async function replyMessage(replyToken, message, quickReply = null) {
 
     // 🧪 測試環境檢查：如果是測試 token，記錄實際回覆但跳過 API 調用
     console.log('🔍 檢查 replyToken:', replyToken);
-    if (replyToken && replyToken.includes('test-reply-token')) {
+    if (replyToken && replyToken.includes('test-reply-token') && process.env.QA_FORCE_REAL !== 'true') {
       console.log('🧪 檢測到測試 token，跳過真實 LINE API 調用');
       
       // 記錄實際要發送的業務回覆內容

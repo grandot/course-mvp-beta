@@ -10,6 +10,7 @@ function parseTimeReference(message) {
   const timeReferences = {
     今天: 'today',
     明天: 'tomorrow',
+    後天: 'day_after_tomorrow',
     昨天: 'yesterday',
     前天: 'day_before_yesterday',
     這週: 'this_week',
@@ -680,10 +681,10 @@ async function extractSlots(message, intent, userId = null) {
     const confidence = calculateConfidence(slots, intent);
     console.log('📊 規則提取置信度:', confidence.toFixed(2));
 
-    // 如果規則提取信心度低，強制使用 AI
+    // 如果規則提取信心度低，使用 AI 增強（不是替換）
     if (confidence < 0.5) {
-      console.log('🔄 規則提取信心度低，強制 AI 輔助...');
-      slots = await extractSlotsByAI(message, intent, {});
+      console.log('🔄 規則提取信心度低，AI 輔助增強...');
+      slots = await extractSlotsByAI(message, intent, slots);
     } else {
       // 信心度中等，檢查是否有缺失欄位
       const hasEmptySlots = Object.values(slots).some((value) => !value);

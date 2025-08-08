@@ -127,6 +127,7 @@ async function handle_cancel_course_task(slots, userId) {
     if (!slots.studentName) {
       return {
         success: false,
+        code: 'MISSING_STUDENT',
         message: '❌ 請提供學生姓名，例如：「取消小明的數學課」',
       };
     }
@@ -134,6 +135,7 @@ async function handle_cancel_course_task(slots, userId) {
     if (!slots.courseName) {
       return {
         success: false,
+        code: 'MISSING_COURSE',
         message: '❌ 請提供課程名稱，例如：「取消小明的數學課」',
       };
     }
@@ -151,6 +153,7 @@ async function handle_cancel_course_task(slots, userId) {
     if (!coursesToCancel || coursesToCancel.length === 0) {
       return {
         success: false,
+        code: 'NOT_FOUND',
         message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否存在`,
       };
     }
@@ -224,12 +227,14 @@ async function handle_cancel_course_task(slots, userId) {
 
     return {
       success: successCount > 0,
+      code: successCount > 0 ? 'COURSE_CANCEL_OK' : 'COURSE_CANCEL_FAILED_PARTIAL',
       message,
     };
   } catch (error) {
     console.error('❌ 取消課程失敗:', error);
     return {
       success: false,
+      code: 'COURSE_CANCEL_FAILED',
       message: '❌ 取消課程失敗，請稍後再試',
     };
   }

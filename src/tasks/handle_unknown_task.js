@@ -17,6 +17,7 @@ async function handle_unknown_task(slots, userId, messageEvent = null) {
 
     return {
       success: true,
+      code: 'UNKNOWN_HELP',
       message: helpMessage,
       quickReply: [
         { label: '📅 新增課程', text: '新增課程' },
@@ -29,6 +30,7 @@ async function handle_unknown_task(slots, userId, messageEvent = null) {
     console.error('❌ 處理unknown意圖失敗:', error);
     return {
       success: false,
+      code: 'UNKNOWN_FAILED',
       message: '😅 系統暫時無法理解您的需求，請稍後再試。',
     };
   }

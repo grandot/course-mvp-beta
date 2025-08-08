@@ -51,6 +51,10 @@ function resolveTimeReference(timeReference) {
       targetDate = new Date(today);
       targetDate.setDate(today.getDate() + 1);
       break;
+    case 'day_after_tomorrow':
+      targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + 2);
+      break;
     case 'yesterday':
       targetDate = new Date(today);
       targetDate.setDate(today.getDate() - 1);
@@ -167,9 +171,10 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       );
 
       return {
-        success: false, // 仍然是 false，因為任務未完成
+        success: false,
+        code: 'MISSING_FIELDS',
         message: `❓ 請提供以下資訊：${missingFields.join('、')}\n\n範例：「小明每週三下午3點數學課」`,
-        expectingInput: true, // 標示正在等待輸入
+        expectingInput: true,
         missingFields,
       };
     }
@@ -189,6 +194,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     if (!courseDate) {
       return {
         success: false,
+        code: 'MISSING_DATE',
         message: '❓ 請指定課程的具體日期或時間（如：明天、週三等）',
       };
     }
@@ -211,6 +217,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
       return {
         success: false,
+        code: 'TIME_CONFLICT',
         message: `⚠️ 時間衝突\n\n${courseDate} ${slots.scheduleTime} 已有以下課程：\n${conflictInfo}\n\n請選擇其他時間或確認是否要覆蓋。`,
       };
     }
@@ -298,6 +305,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     // 設定期待確認狀態（簡化版）
     const result = {
       success: true,
+      code: 'ADD_COURSE_OK',
       message,
       data: {
         courseId: savedCourse.courseId,
@@ -330,16 +338,19 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     if (error.message.includes('Calendar')) {
       return {
         success: false,
+        code: 'CALENDAR_UNAVAILABLE',
         message: '❌ 日曆服務暫時無法使用，請稍後再試。',
       };
     } if (error.message.includes('Firebase') || error.message.includes('Firestore')) {
       return {
         success: false,
+        code: 'FIREBASE_ERROR',
         message: '❌ 資料儲存失敗，請稍後再試。',
       };
     }
     return {
       success: false,
+      code: 'ADD_COURSE_FAILED',
       message: '❌ 新增課程失敗，請檢查輸入資訊並稍後再試。',
     };
   }
