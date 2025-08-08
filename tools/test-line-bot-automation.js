@@ -15,7 +15,8 @@ require('dotenv').config();
 
 // 🧪 設定測試環境變數
 process.env.NODE_ENV = 'test';
-process.env.USE_MOCK_LINE_SERVICE = 'true';
+// 預設改為非 Mock，避免只檢查 HTTP 200 導致漏測；如需 Mock 可用環境變數覆寫
+process.env.USE_MOCK_LINE_SERVICE = process.env.USE_MOCK_LINE_SERVICE || 'false';
 
 console.log('🧪 測試環境初始化：');
 console.log('   NODE_ENV =', process.env.NODE_ENV);
@@ -167,7 +168,8 @@ class LineWebhookSimulator {
     const headers = {
       'Content-Type': 'application/json',
       'x-line-signature': `${signature}`,
-      'User-Agent': 'LineBotSdk/1.0 LineBot-Automation-Test'
+      'User-Agent': 'LineBotSdk/1.0 LineBot-Automation-Test',
+      'X-QA-Mode': 'real'
     };
     
     const startTime = Date.now(); // 移到 try 外面
@@ -187,13 +189,8 @@ class LineWebhookSimulator {
       let botReply = null;
       let quickReplies = null;
       
-      // 對於 Mock Service，回覆訊息不會在 HTTP 回應中返回
-      // 而是在服務器端的控制台中記錄
-      // 在測試模式下，我們認為 200 狀態就是成功
-      if (process.env.USE_MOCK_LINE_SERVICE === 'true') {
-        console.log(`💬 Mock Service 測試: 訊息已處理 (實際回覆請查看服務器日誌)`);
-        botReply = "Mock Service 處理成功"; // 模擬回覆用於測試驗證
-      } else {
+      // 在非 Mock（真實）模式下嘗試解析回覆內容
+      if (process.env.USE_MOCK_LINE_SERVICE !== 'true') {
         // 真實 LINE API 模式（當前不適用於測試）
         if (response.data && response.data.length > 0) {
           const firstReply = response.data[0];
@@ -209,6 +206,10 @@ class LineWebhookSimulator {
         if (quickReplies && quickReplies.length > 0) {
           console.log(`🔘 快速回覆: [${quickReplies.join(', ')}]`);
         }
+      } else {
+        console.log(`💬 Mock Service 測試: 訊息已處理 (實際回覆請查看服務器日誌)`);
+        // 在 Mock 模式下無法可靠取得實際回覆，此處保留占位文字
+        botReply = "";
       }
       
       return {
@@ -430,18 +431,9 @@ async function runTestCase(simulator, testCase, collector) {
       
       // 檢查關鍵詞
       if (step.expectKeywords && step.expectKeywords.length > 0) {
-        let keywordCheck = false;
-        
-        if (process.env.USE_MOCK_LINE_SERVICE === 'true') {
-          // 在 Mock Service 模式下，如果收到 200 回應就認為成功處理了
-          // 實際的關鍵詞檢查需要查看服務器日誌
-          keywordCheck = response.success && response.status === 200;
-          console.log(`🔍 Mock 測試: 期望關鍵詞 [${step.expectKeywords.join(', ')}] - ${keywordCheck ? '通過' : '失敗'}`);
-        } else {
-          keywordCheck = step.expectKeywords.every(keyword => 
-            response.botReply && response.botReply.includes(keyword)
-          );
-        }
+        const keywordCheck = step.expectKeywords.every(keyword => 
+          response.botReply && response.botReply.includes(keyword)
+        );
         
         stepResult.checks.push({
           type: 'keywords',
@@ -453,15 +445,7 @@ async function runTestCase(simulator, testCase, collector) {
       
       // 檢查 Quick Reply
       if (step.expectQuickReply) {
-        let quickReplyCheck = false;
-        
-        if (process.env.USE_MOCK_LINE_SERVICE === 'true') {
-          // 在 Mock Service 模式下，假設成功處理就有 Quick Reply
-          quickReplyCheck = response.success && response.status === 200;
-          console.log(`🔍 Mock 測試: 期望 Quick Reply - ${quickReplyCheck ? '通過' : '失敗'}`);
-        } else {
-          quickReplyCheck = response.quickReplies && response.quickReplies.length > 0;
-        }
+        const quickReplyCheck = response.quickReplies && response.quickReplies.length > 0;
         
         stepResult.checks.push({
           type: 'quickReply',
