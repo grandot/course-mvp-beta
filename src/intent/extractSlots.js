@@ -436,7 +436,19 @@ async function extractSlotsByIntent(message, intent) {
       slots.specificDate = parseSpecificDate(message);
       slots.timeReference = parseTimeReference(message);
       // 判斷取消範圍（不預設 single，避免錯過重複課交互）
-      if (message.includes('全部') || message.includes('所有') || message.includes('整個')) {
+      if (message.includes('只取消今天') || message.includes('只刪除今天') || message.includes('只今天')) {
+        slots.scope = 'single';
+        // 若未提供日期，預設今天
+        if (!slots.specificDate) {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          slots.specificDate = `${y}-${m}-${d}`;
+        }
+      } else if (message.includes('取消之後全部') || message.includes('取消明天起所有') || message.includes('明天起所有')) {
+        slots.scope = 'future';
+      } else if (message.includes('全部') || message.includes('所有') || message.includes('整個')) {
         slots.scope = 'all';
       } else if (message.includes('重複') || message.includes('每週') || message.includes('每天')) {
         slots.scope = 'recurring';

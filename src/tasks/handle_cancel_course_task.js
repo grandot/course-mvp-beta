@@ -65,6 +65,10 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
       // 取消單次課程
       const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
       return course ? [course] : [];
+    } if (scope === 'future') {
+      // 取消明天起所有課程
+      const courses = await firebaseService.getCoursesByStudent(userId, studentName, { startDate: calculateDateFromReference('tomorrow') });
+      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
     } if (scope === 'recurring' || scope === 'all') {
       // 取消重複課程或所有課程
       const courses = await firebaseService.getCoursesByStudent(userId, studentName);
