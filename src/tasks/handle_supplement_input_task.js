@@ -80,9 +80,9 @@ async function handleSupplementInput(userId, userInput, slotName, inputType) {
         break;
       case 'scheduleTime':
         // 使用時間解析器處理時間
-        const { parseTime } = require('../intent/timeParser');
-        const timeResult = parseTime(userInput);
-        supplementValue = timeResult.output || userInput.trim();
+        const { parseScheduleTime } = require('../intent/timeParser');
+        const formatted = parseScheduleTime(userInput);
+        supplementValue = formatted || userInput.trim();
         break;
       case 'courseDate':
         supplementValue = userInput.trim();
