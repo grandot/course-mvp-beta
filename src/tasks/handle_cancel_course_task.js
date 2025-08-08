@@ -140,7 +140,25 @@ async function handle_cancel_course_task(slots, userId) {
       };
     }
 
-    // 2. 查找要取消的課程
+    // 2. 若未指定範圍且疑似重複課，先提示選擇範圍
+    if (!slots.scope) {
+      const courses = await firebaseService.getCoursesByStudent(userId, slots.studentName);
+      const hasRecurring = courses.some((c) => c.courseName === slots.courseName && c.isRecurring);
+      if (hasRecurring) {
+        return {
+          success: false,
+          code: 'RECURRING_CANCEL_OPTIONS',
+          message: '請問是要取消哪個範圍？\n\n🔘 只取消今天\n🔘 取消明天起所有課程\n🔘 刪除整個重複課程',
+          quickReply: [
+            { label: '只取消今天', text: '只取消今天' },
+            { label: '取消之後全部', text: '取消之後全部' },
+            { label: '刪除整個重複', text: '刪除整個重複' },
+          ],
+        };
+      }
+    }
+
+    // 3. 查找要取消的課程
     const coursesToCancel = await findCoursesToCancel(
       userId,
       slots.studentName,
@@ -158,7 +176,7 @@ async function handle_cancel_course_task(slots, userId) {
       };
     }
 
-    // 3. 執行取消操作
+    // 4. 執行取消操作
     const cancelResults = [];
     let successCount = 0;
     let failCount = 0;
@@ -198,7 +216,7 @@ async function handle_cancel_course_task(slots, userId) {
       }
     }
 
-    // 4. 生成回應訊息
+    // 5. 生成回應訊息
     let message = '';
 
     if (successCount > 0) {
@@ -218,7 +236,7 @@ async function handle_cancel_course_task(slots, userId) {
       message += `⚠️ 有 ${failCount} 堂課程取消失敗，請稍後再試`;
     }
 
-    // 5. 如果有成功取消的課程，提供相關提示
+    // 6. 如果有成功取消的課程，提供相關提示
     if (successCount > 0) {
       message += '\n\n💡 提示：已取消的課程仍保留在記錄中，可隨時查看歷史資料';
     }
