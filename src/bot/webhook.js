@@ -51,22 +51,23 @@ async function handleTextMessage(event, req = null) {
     const userMessage = event.message.text;
     const { userId } = event.source;
     const { replyToken } = event;
+    const { info, error: logError, generateTraceId } = require('../utils/logger');
+    const traceId = generateTraceId('line');
 
-    console.log('📝 收到文字訊息:', userMessage);
-    console.log('👤 用戶ID:', userId);
+    // inbound log (single-line JSON)
+    info({ direction: 'inbound', channel: 'line', traceId, userId, textIn: userMessage });
     console.log('🔍 用戶ID類型:', typeof userId);
     console.log('🔍 是否測試用戶:', userId && userId.startsWith('U_test_'));
 
     // 🔥 核心邏輯：動態選擇 LINE Service
     const currentLineService = getLineService(userId, req);
-    console.log('🔥 選擇的服務類型:', currentLineService.constructor.name || 'Object');
 
     // 初始化對話管理器
     const conversationManager = getConversationManager();
 
     // 第一步：上下文感知的意圖識別
     const intent = await parseIntent(userMessage, userId);
-    console.log('🎯 識別意圖:', intent);
+    info({ stage: 'nlp', traceId, userId, intent });
 
     // 記錄用戶訊息到對話歷史（先記錄，後續需要slots補充）
     await conversationManager.recordUserMessage(userId, userMessage, intent);
@@ -78,21 +79,19 @@ async function handleTextMessage(event, req = null) {
         quickReply: result.quickReply,
       });
 
-      if (result.quickReply) {
-        await currentLineService.replyMessageWithQuickReply(replyToken, result.message, result.quickReply);
-      } else {
-        await currentLineService.replyMessage(replyToken, result.message);
-      }
+      await currentLineService.replyMessage(replyToken, result.message, result.quickReply || null);
       return;
     }
 
     // 第二步：實體提取
     const slots = await extractSlots(userMessage, intent, userId);
-    console.log('📋 提取結果:', slots);
+    info({ stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots) });
 
     // 第三步：執行任務
+    const t0 = Date.now();
     const result = await executeTask(intent, slots, userId, event);
-    console.log('✅ 任務結果:', result);
+    const latencyMs = Date.now() - t0;
+    info({ stage: 'task', traceId, userId, intent, success: !!result?.success, code: result?.code || null, latencyMs });
 
     // 第四步：記錄任務執行結果到對話上下文
     await conversationManager.recordTaskResult(userId, intent, slots, result);
@@ -116,11 +115,11 @@ async function handleTextMessage(event, req = null) {
 
     // 回應用戶
     await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
+    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage, quickReply: !!quickReply });
   } catch (error) {
-    console.error('❌ 處理文字訊息失敗:', error);
-    console.error('❌ 錯誤堆疊:', error.stack);
-    console.error('❌ 用戶ID:', event.source.userId);
-    console.error('❌ 訊息內容:', event.message.text);
+    const { error: logError, generateTraceId } = require('../utils/logger');
+    const traceId = generateTraceId('err');
+    logError({ direction: 'inbound', channel: 'line', traceId, userId: event?.source?.userId, textIn: event?.message?.text, error: error?.message || String(error) });
 
     // 記錄錯誤到對話歷史
     try {
@@ -132,7 +131,7 @@ async function handleTextMessage(event, req = null) {
 
     // 錯誤處理使用統一的服務選擇邏輯
     const currentLineService = getLineService(event.source.userId, req);
-    console.log('🔧 錯誤處理選擇的服務:', currentLineService.constructor.name || 'Object');
+    
 
     await currentLineService.replyMessage(
       event.replyToken,
@@ -149,9 +148,10 @@ async function handleImageMessage(event, req = null) {
     const messageId = event.message.id;
     const { userId } = event.source;
     const { replyToken } = event;
+    const { info } = require('../utils/logger');
+    const traceId = require('../utils/logger').generateTraceId('line');
 
-    console.log('🖼️ 收到圖片訊息:', messageId);
-    console.log('👤 用戶ID:', userId);
+    info({ direction: 'inbound', channel: 'line', traceId, userId, imageMessageId: messageId });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId, req);
@@ -169,7 +169,10 @@ async function handleImageMessage(event, req = null) {
       timeReference: 'today', // 預設為今天
     };
 
+    const t0 = Date.now();
     const result = await handle_record_content_task(slots, userId, event);
+    const latencyMs = Date.now() - t0;
+    info({ stage: 'task', traceId, userId, intent: 'record_content', success: !!result?.success, code: result?.code || null, latencyMs });
 
     // 提供圖片相關的快捷回覆按鈕
     const quickReply = [
@@ -179,6 +182,7 @@ async function handleImageMessage(event, req = null) {
     ];
 
     await currentLineService.replyMessage(replyToken, result.message, quickReply);
+    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: result.message, quickReply: !!quickReply });
   } catch (error) {
     console.error('❌ 處理圖片訊息失敗:', error);
 
@@ -308,8 +312,10 @@ async function handlePostbackEvent(event, req = null) {
     const { data } = event.postback;
     const { userId } = event.source;
     const { replyToken } = event;
+    const { info } = require('../utils/logger');
+    const traceId = require('../utils/logger').generateTraceId('line');
 
-    console.log('🔘 收到 Postback 事件:', data);
+    info({ direction: 'inbound', channel: 'line', traceId, userId, postbackData: data });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId, req);
@@ -335,6 +341,7 @@ async function handlePostbackEvent(event, req = null) {
     }
 
     await currentLineService.replyMessage(replyToken, responseMessage);
+    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage });
   } catch (error) {
     console.error('❌ 處理 Postback 事件失敗:', error);
     // 動態選擇 LINE Service 用於錯誤處理
@@ -353,8 +360,10 @@ async function handleFollowEvent(event) {
   try {
     const { userId } = event.source;
     const { replyToken } = event;
+    const { info } = require('../utils/logger');
+    const traceId = require('../utils/logger').generateTraceId('line');
 
-    console.log('👋 新用戶關注:', userId);
+    info({ direction: 'inbound', channel: 'line', traceId, userId, event: 'follow' });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId);
@@ -370,6 +379,7 @@ async function handleFollowEvent(event) {
     const welcomeMessage = '👋 歡迎使用課程管理機器人！\n\n我可以幫您：\n📚 安排和管理課程\n📅 查詢課程時間表\n📝 記錄課程內容和照片\n⏰ 設定課程提醒\n\n試試對我說：「小明每週三下午3點數學課」';
 
     await currentLineService.replyMessage(replyToken, welcomeMessage);
+    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: welcomeMessage });
   } catch (error) {
     console.error('❌ 處理關注事件失敗:', error);
     // 動態選擇 LINE Service 用於錯誤處理
@@ -420,6 +430,18 @@ async function handleWebhook(req, res) {
     for (const event of events) {
       console.log('📋 事件類型:', event.type);
       console.log('🔍 完整事件 JSON:', JSON.stringify(event, null, 2));
+
+      // QA 測試支援：允許透過標頭請求在測試用例之間重置對話上下文，避免上下文干擾
+      try {
+        const needReset = req.headers['x-qa-reset-context'] === 'true' || req.headers['x-qa-reset-context'] === 'TRUE';
+        if (needReset && event?.source?.userId) {
+          console.log('🧹 檢測到 QA 重置上下文請求，清理用戶上下文:', event.source.userId);
+          const conversationManager = getConversationManager();
+          await conversationManager.clearContext(event.source.userId);
+        }
+      } catch (e) {
+        console.warn('⚠️ 重置上下文處理失敗:', e?.message || e);
+      }
 
       switch (event.type) {
         case 'message':

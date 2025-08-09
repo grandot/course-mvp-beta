@@ -389,6 +389,21 @@ async function extractSlotsByIntent(message, intent) {
       slots.recurring = !!recurrenceResult; // 轉換為布林值保持兼容性
       slots.recurrenceType = recurrenceResult || null; // 新增重複類型資訊
       slots.timeReference = parseTimeReference(message);
+
+      // 額外偵測：若訊息中包含「看似時間」但數值超界（如 25點、13:99），標記為 invalidTime
+      // 目的：優先回覆「時間格式錯誤」而非要求其它缺失欄位，提升真實用戶體驗
+      try {
+        const timeTokenMatch = message.match(/(上午|早上|下午|晚上|夜間|中午|AM|PM|am|pm)?\s*(\d{1,2})\s*[點时:：]?\s*(\d{0,2})?/);
+        if (timeTokenMatch) {
+          const rawHour = parseInt(timeTokenMatch[2], 10);
+          const rawMinute = timeTokenMatch[3] ? parseInt(timeTokenMatch[3], 10) : 0;
+          if (!Number.isNaN(rawHour) && (rawHour >= 24 || rawHour < 0 || rawMinute >= 60 || rawMinute < 0)) {
+            slots.invalidTime = true;
+          }
+        }
+      } catch (_) {
+        // 忽略偵測異常，保持穩定
+      }
       break;
 
     case 'query_schedule':

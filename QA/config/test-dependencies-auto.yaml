@@ -145,7 +145,6 @@ test_groups:
     test_count: 1
     dependencies: []
     provides:
-      - test_student_lumi
       - test_course___
     description: 驗證每日關鍵詞識別
   A2.1-E:
@@ -280,7 +279,6 @@ test_groups:
     name: 重複課程類型識別查詢
     test_count: 1
     dependencies:
-      - test_student_lumi
       - basic_courses
     provides: []
     description: 驗證重複課程類型顯示
@@ -361,7 +359,6 @@ test_groups:
     name: 修改重複課程類型
     test_count: 1
     dependencies:
-      - test_student_lumi
       - test_course___
     provides:
       - modified_courses
@@ -468,11 +465,8 @@ data_entities:
     type: student
     created_by:
       - A2.1-A
-      - A2.1-D
     used_by:
       - B1.1-B
-      - B1.3-C
-      - C1.1-C
       - C2.1-D
     test_id: test_student_lumi
   modified_courses:

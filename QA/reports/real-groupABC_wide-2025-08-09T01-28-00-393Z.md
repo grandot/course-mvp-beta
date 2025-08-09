@@ -1,0 +1,454 @@
+# 線上真環境（Mock GCal）批次測試報告
+
+- 批次: groupABC_wide
+- 產出時間: 2025-08-09T01:28:00.393Z
+- 測試數: 42 | 通過: 27 | 失敗: 15 | 通過率: 64%
+
+### 測試-1. [A1.1-A] 完整資訊輸入
+- 輸入: 測試小明明天下午2點要上測試數學課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-2. [A1.1-B] 時間格式多樣性
+- 輸入: 測試Lumi後天晚上八點半要上測試鋼琴課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-3. [A1.1-C] 中文數字時間
+- 輸入: 測試小光明天上午十點三十分測試英文課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-4. [A1.2-A] 缺少學生資訊
+- 輸入: 明天下午3點要上測試數學課
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名 
+- 結果: ✅ PASS
+
+### 測試-5. [A1.2-B] 缺少時間資訊
+- 輸入: 測試小明要上測試數學課
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：上課時間、課程日期 
+- 結果: ✅ PASS
+
+### 測試-6. [A1.2-C] 多輪對話完成流程
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名、課程名稱 
+- 結果: ✅ PASS
+
+### 測試-7. [A1.3-A] 無效時間格式
+- 輸入: 測試小明明天25點上測試數學課
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名、課程名稱 
+- 結果: ❌ FAIL
+- 診斷：
+  - slotExtraction:
+    - "message": "📊 規則提取置信度: 1.00",
+    - "message": "🤖 啟用 AI 輔助提取...",
+    - "message": "✅ 最終 slots: {",
+    - "message": "📋 提取結果: {",
+  - taskExecution:
+    - "message": "🎯 執行任務: add_course",
+    - "message": "📋 接收參數: {",
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702346878",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: ❌ 時間格式不正確，請重新輸入正確的時間（例如：下午2點 或 14:00）",
+
+### 測試-8. [A1.3-B] 過去時間輸入
+- 輸入: 測試小明昨天下午2點上測試數學課
+- Webhook: 200 ✅
+- 回覆: ❌ 無法建立過去時間的課程，請確認日期時間後重新輸入 
+- 結果: ✅ PASS
+
+### 測試-9. [A1.3-C] 模糊語句處理
+- 輸入: 我想要什麼時候上課來著
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名、上課時間、課程日期 
+- 結果: ✅ PASS
+
+### 測試-10. [A2.1-A] 每週重複課程
+- 輸入: 測試Lumi每週三下午3點要上測試鋼琴課
+- Webhook: 200 ✅
+- 回覆: ❌ 無法建立過去時間的課程，請確認日期時間後重新輸入 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "📊 任務執行結果: {",
+    - "message": "  message: '✅ 課程已安排成功！\\n\\n👦 學生：測試Lumi\\n📚 課程：測試鋼琴課\\n🔄 重複：每週三 下午3:00\\n📅 下次上課：2025-08-13',",
+    - "message": "  message: '✅ 課程已安排成功！\\n\\n👦 學生：測試Lumi\\n📚 課程：測試鋼琴課\\n🔄 重複：每週三 下午3:00\\n📅 下次上課：2025-08-13',",
+    - "message": "📤 [測試模式] 實際業務回覆: ✅ 課程已安排成功！",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702410132",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+
+### 測試-11. [A2.1-B] 多天重複課程
+- 輸入: 測試小光每週一三五上午10點測試英文課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-12. [A2.1-C] 每天重複課程
+- 輸入: 測試小明每天早上8點測試晨練課
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：課程日期 
+- 結果: ❌ FAIL
+- 診斷：
+  - slotExtraction:
+    - "message": "📊 規則提取置信度: 0.50",
+    - "message": "🤖 啟用 AI 輔助提取...",
+    - "message": "✅ 最終 slots: {",
+    - "message": "📋 提取結果: {",
+  - taskExecution:
+    - "message": "🎯 執行任務: add_course",
+    - "message": "📋 接收參數: {",
+    - "message": "📊 任務執行結果: {",
+    - "message": "  message: '❓ 請提供以下資訊：課程日期\\n\\n範例：「小明每週三下午3點數學課」',",
+    - "message": "  message: '❓ 請提供以下資訊：課程日期\\n\\n範例：「小明每週三下午3點數學課」',",
+    - "message": "📤 [測試模式] 實際業務回覆: ❓ 請提供以下資訊：課程日期",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702440360",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+
+### 測試-13. [A2.1-D] 每日重複變體測試
+- 輸入: 安排測試Lumi每日下午5點測試瑜伽課
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：課程日期 
+- 結果: ❌ FAIL
+- 診斷：
+  - slotExtraction:
+    - "message": "📊 規則提取置信度: 0.00",
+    - "message": "✅ 最終 slots: {",
+    - "message": "📋 提取結果: {",
+  - taskExecution:
+    - "message": "🎯 執行任務: add_course",
+    - "message": "📋 接收參數: {",
+    - "message": "📊 任務執行結果: {",
+    - "message": "  message: '❓ 請提供以下資訊：課程日期\\n\\n範例：「小明每週三下午3點數學課」',",
+    - "message": "  message: '❓ 請提供以下資訊：課程日期\\n\\n範例：「小明每週三下午3點數學課」',",
+    - "message": "📤 [測試模式] 實際業務回覆: ❓ 請提供以下資訊：課程日期",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702457647",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+
+### 測試-14. [A2.2-A] 重複關鍵詞識別
+- 輸入: 安排測試小明定期游泳課每週二晚上7點
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-15. [A2.2-B] 模糊重複表達
+- 輸入: 測試Lumi固定每個星期四下午兩點鋼琴課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ✅ PASS
+
+### 測試-16. [A2.2-C] 重複類型區分測試
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: ⚠️ 目前僅支援「每天」與「每週」的重複課程，每月重複將在後續版本提供。 
+- 結果: ✅ PASS
+
+### 測試-17. [A2.2-D] 功能開關測試
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: ⚠️ 目前僅支援「每天」與「每週」的重複課程，每月重複將在後續版本提供。 
+- 結果: ✅ PASS
+
+### 測試-18. [A3.1-A] 意圖邊界測試
+- 輸入: 我想了解一下課程安排的情況
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名、上課時間、課程日期 
+- 結果: ✅ PASS
+
+### 測試-19. [A3.1-B] 複合意圖處理
+- 輸入: 幫我安排測試小明數學課，然後查詢一下他今天有什麼課
+- Webhook: 200 ✅
+- 回覆: 📅 小明今天的課程安排 
+- 結果: ✅ PASS
+
+### 測試-20. [A3.2-A] 系統錯誤恢復
+- 輸入: （觸發系統錯誤的占位輸入）
+- Webhook: 200 ✅
+- 回覆: ❌ 目前不支援「correction_intent」功能，請稍後再試 
+- 結果: ❌ FAIL
+- 診斷：
+  - intentParsing:
+    - "message": "🎯 識別意圖: correction_intent",
+  - slotExtraction:
+    - "message": "🔍 開始提取 slots - 意圖: add_course (用戶: U_test_user_qa)",
+    - "message": "🕒 開始高級時間解析: （觸發系統錯誤的占位輸入）",
+    - "message": "❌ 時間解析失敗: （觸發系統錯誤的占位輸入）",
+    - "message": "📊 規則提取置信度: 0.00",
+    - "message": "✅ 最終 slots: { recurring: false }",
+    - "message": "🔍 開始提取 slots - 意圖: correction_intent (用戶: U_test_user_qa)",
+  - errors:
+    - "message": "⚠️ 無法識別為期待的補充資訊類型",
+    - "message": "⚠️ 找不到意圖 \"correction_intent\" 的任務處理器",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702562795",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: ❌ 目前不支援「correction_intent」功能，請稍後再試",
+
+### 測試-21. [A3.2-B] 輸入修正流程
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：課程名稱 
+- 結果: ✅ PASS
+
+### 測試-22. [B1.1-A] 今日課程查詢
+- 輸入: 測試小明今天有什麼課？
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：課程名稱 
+- 結果: ✅ PASS
+
+### 測試-23. [B1.1-B] 明天課程查詢
+- 輸入: 查詢測試Lumi明天的課表
+- Webhook: 200 ✅
+- 回覆: 📅 測試Lumi明天的課程安排 
+- 結果: ✅ PASS
+
+### 測試-24. [B1.1-C] 本週課程查詢
+- 輸入: 看一下測試小光這週的安排
+- Webhook: 200 ✅
+- 回覆: 📅 測試小光本週的課程安排 
+- 結果: ✅ PASS
+
+### 測試-25. [B1.2-A] 無課程日查詢
+- 輸入: 測試小王今天有什麼課？
+- Webhook: 200 ✅
+- 回覆: 📅 測試小王今天沒有安排課程 
+- 結果: ✅ PASS
+
+### 測試-26. [B1.3-A] 特定課程查詢
+- 輸入: 測試小明的測試數學課什麼時候上？
+- Webhook: 200 ✅
+- 回覆: 📅 測試小明本週的課程安排 
+- 結果: ✅ PASS
+
+### 測試-27. [B1.3-B] 每日重複課程查詢
+- 輸入: 測試小明的測試晨練課每天幾點？
+- Webhook: 200 ✅
+- 回覆: 📅 測試小明本週沒有安排課程 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702652905",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 📅 測試小明本週沒有安排課程",
+
+### 測試-28. [B1.3-C] 重複課程類型識別查詢
+- 輸入: 查詢測試Lumi的重複課程
+- Webhook: 200 ✅
+- 回覆: 📅 測試小明本週沒有安排課程 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702670243",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 📅 測試Lumi本週沒有安排課程",
+
+### 測試-29. [B2.1-A] 當日課程記錄
+- 輸入: 今天測試小明的測試數學課學了分數加減法
+- Webhook: 200 ✅
+- 回覆: 📅 測試Lumi本週沒有安排課程 
+- 結果: ❌ FAIL
+- 診斷：
+  - slotExtraction:
+    - "message": "📋 提取結果: {",
+  - taskExecution:
+    - "message": "🎯 執行任務: record_content",
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702686593",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: ✅ 課程內容已成功記錄！",
+
+### 測試-30. [B2.1-B] 昨日課程補記錄
+- 輸入: 補記一下昨天測試Lumi測試鋼琴課的內容，練習了小星星
+- Webhook: 200 ✅
+- 回覆: ❓ 請提供以下資訊：學生姓名 
+- 結果: ✅ PASS
+
+### 測試-31. [B2.2-A] 查詢課程記錄
+- 輸入: 測試小明昨天測試數學課學了什麼？
+- Webhook: 200 ✅
+- 回覆: ❌ 找不到 測試小明 的 數學課 內容記錄 
+- 結果: ✅ PASS
+
+### 測試-32. [B2.3-A] 不存在課程記錄
+- 輸入: 記錄測試小明今天測試化學課的內容
+- Webhook: 200 ✅
+- 回覆: ✅ 課程內容已成功記錄！ 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702725336",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: ✅ 課程內容已成功記錄！",
+
+### 測試-33. [B3.1-A] 標準課前提醒
+- 輸入: 提醒我測試小明的測試數學課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程內容已成功記錄！ 
+- 結果: ✅ PASS
+
+### 測試-34. [B3.1-B] 自訂提醒時間
+- 輸入: 測試Lumi測試鋼琴課前1小時提醒我
+- Webhook: 200 ✅
+- 回覆: ❌ 請提供學生姓名，例如：「提醒我小明的數學課」 
+- 結果: ✅ PASS
+
+### 測試-35. [B3.2-A] 不存在課程提醒
+- 輸入: 提醒我測試小明的測試物理課
+- Webhook: 200 ✅
+- 回覆: ❌ 找不到 測試小明 的 測試物理課，請確認課程是否已安排 
+- 結果: ✅ PASS
+
+### 測試-36. [C1.1-A] 修改課程時間
+- 輸入: 測試小明的測試數學課改到下午4點
+- Webhook: 200 ✅
+- 回覆: 📝 請告訴我您要修改什麼： 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702775698",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 📝 請告訴我您要修改什麼：",
+
+### 測試-37. [C1.1-C] 修改重複課程類型
+- 輸入: 測試Lumi的測試鋼琴課改成每天下午3點
+- Webhook: 200 ✅
+- 回覆: 📝 請告訴我您要修改什麼： 
+- 結果: ❌ FAIL
+- 診斷：
+  - taskExecution:
+    - "message": "  message: '✅ 課程已安排成功！\\n' +",
+    - "message": "  message: '✅ 課程已安排成功！\\n' +",
+    - "message": "📤 [測試模式] 實際業務回覆: ✅ 課程已安排成功！",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702792093",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+
+### 測試-38. [C2.1-A] 取消單次課程
+- 輸入: 取消測試小明明天的測試數學課
+- Webhook: 200 ✅
+- 回覆: ✅ 課程已安排成功！ 
+- 結果: ❌ FAIL
+- 診斷：
+  - intentParsing:
+    - "message": "✅ 規則匹配成功: create_recurring_course",
+    - "message": "🎯 識別意圖: create_recurring_course",
+    - "message": "✅ 規則匹配成功: create_recurring_course",
+    - "message": "🎯 識別意圖: create_recurring_course",
+    - "message": "✅ 規則匹配成功: create_recurring_course",
+    - "message": "🎯 識別意圖: create_recurring_course",
+  - slotExtraction:
+    - "message": "🔍 開始提取 slots - 意圖: create_recurring_course (用戶: U_test_user_qa)",
+    - "message": "🕒 開始高級時間解析: 測試Lumi的測試鋼琴課改成每天下午3點",
+    - "message": "✅ 時間解析成功: {",
+    - "message": "🧠 使用對話上下文增強 slots 提取",
+    - "message": "📊 規則提取置信度: 0.67",
+    - "message": "🤖 啟用 AI 輔助提取...",
+  - taskExecution:
+    - "message": "      message: '✅ 課程已安排成功！\\n\\n👦 學生：測試小明\\n📚 課程：測試小明今天有什麼課？\\n📅 日期：2025-08-10\\n🕐 時間：下午2:00',",
+    - "message": "🎯 執行任務: create_recurring_course",
+    - "message": "📋 接收參數: {",
+    - "message": "📊 任務執行結果: {",
+    - "message": "  message: '✅ 課程已安排成功！\\n' +",
+    - "message": "  message: '✅ 課程已安排成功！\\n' +",
+  - errors:
+    - "message": "⚠️ 無待處理的意圖資料",
+    - "message": "⚠️ 無待處理的意圖資料",
+    - "message": "⚠️ 無待處理的意圖資料",
+    - "message": "⚠️ 無待處理的意圖資料",
+    - "message": "⚠️ 無待處理的意圖資料",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702792093",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702792093",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702792093",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+
+### 測試-39. [C2.1-B] 取消每日重複課程
+- 輸入: 取消測試小明的測試晨練課
+- Webhook: 200 ✅
+- 回覆: 請問是要取消哪個範圍？ 
+- 結果: ❌ FAIL
+- 診斷：
+  - intentParsing:
+    - "message": "✅ 規則匹配成功: cancel_course",
+    - "message": "🎯 識別意圖: cancel_course",
+  - slotExtraction:
+    - "message": "🔍 開始提取 slots - 意圖: cancel_course (用戶: U_test_user_qa)",
+    - "message": "🧠 使用對話上下文增強 slots 提取",
+    - "message": "📊 規則提取置信度: 1.00",
+    - "message": "🤖 啟用 AI 輔助提取...",
+    - "message": "✅ 最終 slots: { studentName: '測試小明', courseName: '測試晨練課' }",
+    - "message": "📋 提取結果: { studentName: '測試小明', courseName: '測試晨練課' }",
+  - taskExecution:
+    - "message": "🎯 執行任務: cancel_course",
+    - "message": "📊 任務執行結果: {",
+  - errors:
+    - "message": "⚠️ 無待處理的意圖資料",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702823879",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 請問是要取消哪個範圍？",
+
+### 測試-40. [C2.1-C] 取消部分每日重複課程
+- 輸入: 取消測試小明下週的測試晨練課
+- Webhook: 200 ✅
+- 回覆: ✅ 已取消 測試小明 的 測試數學課 
+- 結果: ✅ PASS
+
+### 測試-41. [C2.1-D] 重複課程類型區分取消
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: 請問是要取消哪個範圍？ 
+- 結果: ❌ FAIL
+- 診斷：
+  - slotExtraction:
+    - "message": "📋 提取結果: {",
+  - taskExecution:
+    - "message": "🎯 執行任務: stop_recurring_course",
+    - "message": "📊 任務執行結果: {",
+  - systemBehavior:
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702854298",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 請問是要取消哪個範圍？",
+
+### 測試-42. [C3.1-A] 併發用戶操作
+- 輸入: 
+- Webhook: 200 ✅
+- 回覆: 請問是要取消哪個範圍？ 
+- 結果: ❌ FAIL
+- 診斷：
+  - intentParsing:
+    - "message": "🎯 識別意圖: unknown",
+  - taskExecution:
+    - "message": "🎯 執行任務: unknown",
+    - "message": "📊 任務執行結果: {",
+  - errors:
+    - "message": "❌ 處理文字訊息失敗: TypeError: currentLineService.replyMessageWithQuickReply is not a function",
+    - "message": "❌ 錯誤堆疊: TypeError: currentLineService.replyMessageWithQuickReply is not a function",
+  - systemBehavior:
+    - "message": "🚀 生產用戶，使用真實 LINE Service",
+    - "message": "🚀 生產用戶，使用真實 LINE Service",
+    - "message": "🔍 檢查 replyToken: test-reply-token-1754702870719",
+    - "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+    - "message": "📤 [測試模式] 實際業務回覆: 處理訊息時發生錯誤，請稍後再試。",

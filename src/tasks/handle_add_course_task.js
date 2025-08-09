@@ -168,8 +168,8 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     }
 
     // 0. 先校驗時間格式（即使缺其他欄位也優先提示時間錯誤）
-    if (slots.scheduleTime) {
-      const timeOk = /^([01]\d|2[0-3]):([0-5]\d)$/.test(slots.scheduleTime);
+    if (slots.scheduleTime || slots.invalidTime) {
+      const timeOk = slots.scheduleTime ? /^([01]\d|2[0-3]):([0-5]\d)$/.test(slots.scheduleTime) : false;
       if (!timeOk) {
         const conversationManager = getConversationManager();
         await conversationManager.setExpectedInput(
@@ -250,7 +250,9 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       return {
         success: false,
         code: 'MISSING_DATE',
-        message: '❓ 請指定課程的具體日期或時間（如：明天、週三等）',
+        message: '❓ 請提供以下資訊：課程日期\n\n範例：「小明每週三下午3點數學課」',
+        expectingInput: true,
+        missingFields: ['課程日期'],
       };
     }
 

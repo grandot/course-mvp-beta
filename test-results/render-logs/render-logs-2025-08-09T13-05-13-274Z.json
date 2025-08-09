@@ -1,0 +1,2201 @@
+{
+  "id": "de617862-882d-4711-8a72-1d7101cdd772",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:02.742077224Z"
+}{
+  "id": "b30e0d32-db4d-4960-9afe-1906c5d84224",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📊 規則提取置信度: 0.00",
+  "timestamp": "2025-08-09T13:05:02.890827095Z"
+}{
+  "id": "f3bfa9f4-b112-4c3c-a5a7-bbceef2d10f2",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔄 規則提取信心度低，AI 輔助增強...",
+  "timestamp": "2025-08-09T13:05:02.890853576Z"
+}{
+  "id": "7fde9ebe-c665-4d32-87f7-89e2f639ddca",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 最終 slots: {",
+  "timestamp": "2025-08-09T13:05:03.98117589Z"
+}{
+  "id": "66675287-482d-45a0-983d-8b6ddc6a2b6a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  studentName: '小明',",
+  "timestamp": "2025-08-09T13:05:03.98120116Z"
+}{
+  "id": "d875be94-07c3-4b33-81a5-afc68e680941",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  courseName: '游泳課',",
+  "timestamp": "2025-08-09T13:05:03.981204681Z"
+}{
+  "id": "44c65196-0a4b-46f6-9e3c-faa95ca16de0",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  scheduleTime: '19:00',",
+  "timestamp": "2025-08-09T13:05:03.981207551Z"
+}{
+  "id": "a726a28d-a3c5-4960-a901-1e5114a67560",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  dayOfWeek: 2,",
+  "timestamp": "2025-08-09T13:05:03.981210301Z"
+}{
+  "id": "fd6e53c5-568f-4531-ac7a-4b9e3944a422",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurring: true,",
+  "timestamp": "2025-08-09T13:05:03.981212711Z"
+}{
+  "id": "595fe935-621c-4575-8adc-15dce3c8afef",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurrenceType: 'weekly'",
+  "timestamp": "2025-08-09T13:05:03.981215411Z"
+}{
+  "id": "05482714-8aa2-4f34-8268-950e0ea9ee3a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:03.981217961Z"
+}{
+  "id": "979ddbb0-277c-44bf-87f1-7473419338bb",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔗 合併後的 slots: {",
+  "timestamp": "2025-08-09T13:05:03.981220731Z"
+}{
+  "id": "331734e0-2d8b-4914-a4bf-b2c57865a964",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  studentName: '小明',",
+  "timestamp": "2025-08-09T13:05:03.981223441Z"
+}{
+  "id": "859bf012-6f67-484e-a623-ad939511bb20",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  scheduleTime: '19:00',",
+  "timestamp": "2025-08-09T13:05:03.981226341Z"
+}{
+  "id": "fef6b844-6d04-4f00-ba27-bcfc3bca26ff",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  dayOfWeek: 2,",
+  "timestamp": "2025-08-09T13:05:03.981229031Z"
+}{
+  "id": "bb7f1df2-db98-4321-9ff6-7267634ea8ed",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurring: true,",
+  "timestamp": "2025-08-09T13:05:03.981232021Z"
+}{
+  "id": "06aa3421-4042-481c-ae2a-e622470fc52f",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurrenceType: 'weekly',",
+  "timestamp": "2025-08-09T13:05:03.981234901Z"
+}{
+  "id": "18ecf51a-2df9-4314-ada1-cdf02fe515e4",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  timeReference: '每月第一個週一上午',",
+  "timestamp": "2025-08-09T13:05:03.981237561Z"
+}{
+  "id": "4cd77621-c307-4168-bf79-9a0705e4fed7",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  content: '評鑑',",
+  "timestamp": "2025-08-09T13:05:03.981240272Z"
+}{
+  "id": "fa0fe5de-107b-4b73-86a8-14dca7de4052",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  courseName: '游泳課'",
+  "timestamp": "2025-08-09T13:05:03.981243042Z"
+}{
+  "id": "76190b97-c140-4b7a-bf99-d7b2d7b68db2",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:03.981245662Z"
+}{
+  "id": "fccade09-d69a-43a6-9052-803efd27f08a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 資訊完整，可執行原意圖",
+  "timestamp": "2025-08-09T13:05:03.981258352Z"
+}{
+  "id": "3c8153f3-3422-48d9-be2e-bc7213ec47af",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 上下文完整解析成功: add_course",
+  "timestamp": "2025-08-09T13:05:04.258310232Z"
+}{
+  "id": "4d4fe6f0-8c76-4bfd-bfc5-3561d5e71e8d",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🎯 識別意圖: add_course",
+  "timestamp": "2025-08-09T13:05:04.258351154Z"
+}{
+  "id": "05bc0c3a-327b-412c-a4a0-b9a1e012d91c",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔍 開始提取 slots - 意圖: add_course (用戶: U_test_user_qa)",
+  "timestamp": "2025-08-09T13:05:04.398513862Z"
+}{
+  "id": "a98eb8c8-9938-42cc-a845-53fcae92efb0",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🕒 開始高級時間解析: 安排小明定期游泳課每週二晚上7點",
+  "timestamp": "2025-08-09T13:05:04.39877753Z"
+}{
+  "id": "c459507d-6201-417d-a5ec-946c1331dde6",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 時間解析成功: {",
+  "timestamp": "2025-08-09T13:05:04.399002806Z"
+}{
+  "id": "98d82107-0d0a-4cfd-ba3f-80c326f60a2f",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  input: '安排小明定期游泳課每週二晚上7點',",
+  "timestamp": "2025-08-09T13:05:04.399012937Z"
+}{
+  "id": "a4651633-8e74-4262-ad08-552d0aad87e4",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  output: '19:00',",
+  "timestamp": "2025-08-09T13:05:04.399018437Z"
+}{
+  "id": "28daeabc-a1f8-4638-be40-743fa396809f",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  details: { hour: 19, minute: 0, matchType: 'arabic_period', periodInfo: '晚上' }",
+  "timestamp": "2025-08-09T13:05:04.399023027Z"
+}{
+  "id": "21de59b2-b1d7-4eed-bea6-5ecfae412dda",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:04.399026887Z"
+}{
+  "id": "0f414230-b922-456a-b79c-7bc3b8602bee",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📊 規則提取置信度: 0.00",
+  "timestamp": "2025-08-09T13:05:04.537548857Z"
+}{
+  "id": "55085383-c1b3-401e-bbc2-68fd350bf15e",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔄 規則提取信心度低，AI 輔助增強...",
+  "timestamp": "2025-08-09T13:05:04.537568918Z"
+}{
+  "id": "8c03dc82-6d66-4f4a-99ea-b15d1f08a91b",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 最終 slots: {",
+  "timestamp": "2025-08-09T13:05:05.731157523Z"
+}{
+  "id": "bffe2bb5-a4ef-4fe9-9b6f-6d79c99ec0f5",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  studentName: '小明',",
+  "timestamp": "2025-08-09T13:05:05.731180243Z"
+}{
+  "id": "402ee7dd-01c9-4c97-9544-6cd0e83ba548",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  courseName: '游泳課',",
+  "timestamp": "2025-08-09T13:05:05.731184914Z"
+}{
+  "id": "7e2f582e-f8f6-4c7d-8d40-0cba22ab5310",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  scheduleTime: '19:00',",
+  "timestamp": "2025-08-09T13:05:05.731200284Z"
+}{
+  "id": "78bf9a05-b130-406a-87c0-341df8e9ad0d",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  dayOfWeek: 2,",
+  "timestamp": "2025-08-09T13:05:05.731205874Z"
+}{
+  "id": "68be25d8-0a51-4210-bd21-c134c2900e40",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurring: true,",
+  "timestamp": "2025-08-09T13:05:05.731210184Z"
+}{
+  "id": "58ea1cab-df4f-4104-9589-0c5ae3fec759",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurrenceType: 'weekly'",
+  "timestamp": "2025-08-09T13:05:05.731214255Z"
+}{
+  "id": "9a20a2e0-c113-4583-a3a3-af927f2c3082",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:05.731218675Z"
+}{
+  "id": "27cb7c7b-f21a-47a5-a24d-5fe5bc03b4df",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📋 提取結果: {",
+  "timestamp": "2025-08-09T13:05:05.731223025Z"
+}{
+  "id": "c08dda39-9f08-45b1-94ae-36dea39b9710",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  studentName: '小明',",
+  "timestamp": "2025-08-09T13:05:05.731227135Z"
+}{
+  "id": "cb850397-5d27-4c37-b2b7-47a874e36af8",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  courseName: '游泳課',",
+  "timestamp": "2025-08-09T13:05:05.731230865Z"
+}{
+  "id": "d31b38f5-8ee4-430d-9692-ee75ded56271",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  scheduleTime: '19:00',",
+  "timestamp": "2025-08-09T13:05:05.731234715Z"
+}{
+  "id": "62935a7c-bd1e-4c5b-913a-cc7f31cb13e6",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  dayOfWeek: 2,",
+  "timestamp": "2025-08-09T13:05:05.731238535Z"
+}{
+  "id": "3061671b-7906-4100-92a1-bccc0d14f883",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurring: true,",
+  "timestamp": "2025-08-09T13:05:05.731242375Z"
+}{
+  "id": "953b5b4d-d951-457a-9d4d-1e3db0a5e0f0",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurrenceType: 'weekly'",
+  "timestamp": "2025-08-09T13:05:05.731246135Z"
+}{
+  "id": "b66a4844-ed29-4b72-a45e-cc99700ff1c1",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:05.731249936Z"
+}{
+  "id": "d4fb0277-ee83-418f-8a8c-3d24a1b30cf6",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🎯 執行任務: add_course",
+  "timestamp": "2025-08-09T13:05:05.731360759Z"
+}{
+  "id": "3352bdce-6637-4e8d-add1-c5302c80b24c",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🎯 開始處理新增課程任務",
+  "timestamp": "2025-08-09T13:05:05.731368669Z"
+}{
+  "id": "c1a51d69-ef45-4f27-ba98-f17ef60da622",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📋 接收參數: {",
+  "timestamp": "2025-08-09T13:05:05.731373089Z"
+}{
+  "id": "72d1fb78-2187-4ca1-8200-e50f0e21a6e4",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  studentName: '小明',",
+  "timestamp": "2025-08-09T13:05:05.731377019Z"
+}{
+  "id": "ed56a2da-6421-4d57-ae12-4673c7425212",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  courseName: '游泳課',",
+  "timestamp": "2025-08-09T13:05:05.731380699Z"
+}{
+  "id": "f5bd9d16-c394-4c5e-899f-1a00966dcdbe",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  scheduleTime: '19:00',",
+  "timestamp": "2025-08-09T13:05:05.7313844Z"
+}{
+  "id": "e2b0e0fe-90d7-4dab-a70e-5a8aa8d271ef",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  dayOfWeek: 2,",
+  "timestamp": "2025-08-09T13:05:05.731388289Z"
+}{
+  "id": "75e604bd-7c7f-40ca-91b0-2a34fd769786",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurring: true,",
+  "timestamp": "2025-08-09T13:05:05.7313922Z"
+}{
+  "id": "2da7bed1-299a-4690-bb7a-5d84621189b5",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  recurrenceType: 'weekly'",
+  "timestamp": "2025-08-09T13:05:05.73142203Z"
+}{
+  "id": "e5a3bd3c-afae-4d74-8be1-40ff0e3617ed",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:05.731427491Z"
+}{
+  "id": "c39d1f86-4df2-4794-b1ff-09b6fb94ab33",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "👤 學生日曆: b9bf786ee6f0002a0cbe843b8e27184082718a0ab1875873280de3be93e4a481@group.calendar.google.com",
+  "timestamp": "2025-08-09T13:05:05.795542349Z"
+}{
+  "id": "df7d06cc-b9e6-4cb3-bfdd-6457808bbad1",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 已創建課程事件: mock-event-1754744705795",
+  "timestamp": "2025-08-09T13:05:05.7955664Z"
+}{
+  "id": "fba58a4b-b141-40e5-b1d7-7e2a93643199",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📅 Google Calendar 事件已創建: mock-event-1754744705795",
+  "timestamp": "2025-08-09T13:05:05.79557127Z"
+}{
+  "id": "b10abec8-946e-4daf-8f0c-16f6a8e4a9cb",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 課程資料已儲存: EAm1Avi7XsVKGTr9uinw",
+  "timestamp": "2025-08-09T13:05:05.963839236Z"
+}{
+  "id": "747a1d7e-b136-4c96-8eca-6e8306c26a13",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "💾 Firebase 課程資料已儲存: EAm1Avi7XsVKGTr9uinw",
+  "timestamp": "2025-08-09T13:05:05.963871677Z"
+}{
+  "id": "c1048aad-1160-479c-b3a0-f3956860716a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📊 任務執行結果: {",
+  "timestamp": "2025-08-09T13:05:06.102632774Z"
+}{
+  "id": "8357259e-1934-4cc9-b111-2c63c954dc9d",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  success: true,",
+  "timestamp": "2025-08-09T13:05:06.102658555Z"
+}{
+  "id": "58fec0d1-e702-4072-b9f5-528863ffcea4",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  code: 'ADD_COURSE_OK',",
+  "timestamp": "2025-08-09T13:05:06.102664845Z"
+}{
+  "id": "deaab598-2437-4128-9c26-04d01c6b25cc",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  message: '✅ 課程已安排成功！\\n\\n👦 學生：小明\\n📚 課程：游泳課\\n🔄 重複：每週二 下午7:00\\n📅 下次上課：2025-08-12',",
+  "timestamp": "2025-08-09T13:05:06.102669285Z"
+}{
+  "id": "ea048e7d-8bb7-45c0-aa67-df3d491fbe4f",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  data: {",
+  "timestamp": "2025-08-09T13:05:06.102672245Z"
+}{
+  "id": "cbda1828-6d4a-4e5d-8dc7-d9c9634d24e5",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    courseId: 'EAm1Avi7XsVKGTr9uinw',",
+  "timestamp": "2025-08-09T13:05:06.102675485Z"
+}{
+  "id": "9e0e0105-213f-4ee9-8cf7-54afae23bde7",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    eventId: 'mock-event-1754744705795'",
+  "timestamp": "2025-08-09T13:05:06.102678205Z"
+}{
+  "id": "7cd330d9-8422-404b-81ac-f40b758a28df",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  },",
+  "timestamp": "2025-08-09T13:05:06.102680865Z"
+}{
+  "id": "5ab0383c-63ff-42a9-b786-d3346a924219",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  quickReply: [",
+  "timestamp": "2025-08-09T13:05:06.102683645Z"
+}{
+  "id": "73bf10c7-4b6e-498d-8ddb-283714437328",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '✅ 確認', text: '確認' },",
+  "timestamp": "2025-08-09T13:05:06.102686576Z"
+}{
+  "id": "f28c1d17-84b1-428c-88c5-4bf933bcef8a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '✏️ 修改', text: '修改' },",
+  "timestamp": "2025-08-09T13:05:06.102689286Z"
+}{
+  "id": "dbef85ca-4504-4bdd-ba71-d8fc8e43843e",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '❌ 取消操作', text: '取消操作' }",
+  "timestamp": "2025-08-09T13:05:06.102692566Z"
+}{
+  "id": "aa5dafb3-2d56-46a5-b8d0-22e0ce1213eb",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  ]",
+  "timestamp": "2025-08-09T13:05:06.102705176Z"
+}{
+  "id": "c16e4d6f-9abd-4df5-87ed-f64b5741e6ad",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:06.102707096Z"
+}{
+  "id": "77d37506-37d8-4c8b-83bb-124741258b4b",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "✅ 任務結果: {",
+  "timestamp": "2025-08-09T13:05:06.102708796Z"
+}{
+  "id": "3f580559-1d49-4104-8595-f900c0bef8cb",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  success: true,",
+  "timestamp": "2025-08-09T13:05:06.102710446Z"
+}{
+  "id": "762a7983-0371-4149-af24-f5d1cdd3899c",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  code: 'ADD_COURSE_OK',",
+  "timestamp": "2025-08-09T13:05:06.102712096Z"
+}{
+  "id": "34e4917c-6718-43fa-8c21-e02a7838b12b",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  message: '✅ 課程已安排成功！\\n\\n👦 學生：小明\\n📚 課程：游泳課\\n🔄 重複：每週二 下午7:00\\n📅 下次上課：2025-08-12',",
+  "timestamp": "2025-08-09T13:05:06.102713826Z"
+}{
+  "id": "c4ea4cf2-f627-45a5-9f94-25f2e0a77a2a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  data: {",
+  "timestamp": "2025-08-09T13:05:06.102715466Z"
+}{
+  "id": "95e17050-d17e-45c7-a81e-96bee7600e51",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    courseId: 'EAm1Avi7XsVKGTr9uinw',",
+  "timestamp": "2025-08-09T13:05:06.102717417Z"
+}{
+  "id": "76f6139b-ed37-4630-bf85-c0be6bce8f25",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    eventId: 'mock-event-1754744705795'",
+  "timestamp": "2025-08-09T13:05:06.102719117Z"
+}{
+  "id": "e90644b3-d448-4b38-9fc6-27b5abe393ad",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  },",
+  "timestamp": "2025-08-09T13:05:06.102720746Z"
+}{
+  "id": "de49f4ca-0d12-4a4c-b13b-78c208002cba",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  quickReply: [",
+  "timestamp": "2025-08-09T13:05:06.102722426Z"
+}{
+  "id": "4e2a424f-4eff-4010-a658-63f69e29d9b1",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '✅ 確認', text: '確認' },",
+  "timestamp": "2025-08-09T13:05:06.102724087Z"
+}{
+  "id": "a1a6fb06-7dca-4b10-b093-fec27f504a4c",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '✏️ 修改', text: '修改' },",
+  "timestamp": "2025-08-09T13:05:06.102725727Z"
+}{
+  "id": "20aa9737-f4be-4973-9076-43d52e929473",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "    { label: '❌ 取消操作', text: '取消操作' }",
+  "timestamp": "2025-08-09T13:05:06.102727447Z"
+}{
+  "id": "cb58daeb-1ef5-4da7-899e-d0179370c811",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "  ]",
+  "timestamp": "2025-08-09T13:05:06.102729087Z"
+}{
+  "id": "3de8c1ef-e30d-4a7f-b0a0-05ec0f55438f",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "}",
+  "timestamp": "2025-08-09T13:05:06.102730747Z"
+}{
+  "id": "e28b01ed-7556-4620-97a9-9060205440e0",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔍 檢查 replyToken: test-reply-token-1754744702413",
+  "timestamp": "2025-08-09T13:05:06.37989345Z"
+}{
+  "id": "3e32b0d3-a243-402b-a5c7-80eadffb75b7",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🧪 檢測到測試 token，跳過真實 LINE API 調用",
+  "timestamp": "2025-08-09T13:05:06.379912951Z"
+}{
+  "id": "88dfba6b-a113-40c2-85cb-783fcf797003",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📤 [測試模式] 實際業務回覆: ✅ 課程已安排成功！",
+  "timestamp": "2025-08-09T13:05:06.379916781Z"
+}{
+  "id": "4b135061-2558-49f4-b688-7b2248126993",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "",
+  "timestamp": "2025-08-09T13:05:06.379919061Z"
+}{
+  "id": "c9e8b0ca-03a1-458c-acf1-1de72d9ace3a",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "👦 學生：小明",
+  "timestamp": "2025-08-09T13:05:06.379922321Z"
+}{
+  "id": "2a769df8-0ca4-470f-8689-cb232f48805d",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📚 課程：游泳課",
+  "timestamp": "2025-08-09T13:05:06.379924491Z"
+}{
+  "id": "8b3c0b24-e167-45b1-9b04-813d6af40bb5",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "🔄 重複：每週二 下午7:00",
+  "timestamp": "2025-08-09T13:05:06.379927281Z"
+}{
+  "id": "f1c0599b-5933-4866-83b9-f94c476ad9c9",
+  "labels": [
+    {
+      "name": "resource",
+      "value": "srv-d21f9u15pdvs73frvns0"
+    },
+    {
+      "name": "instance",
+      "value": "srv-d21f9u15pdvs73frvns0-nz4xx"
+    },
+    {
+      "name": "level",
+      "value": "info"
+    },
+    {
+      "name": "type",
+      "value": "app"
+    }
+  ],
+  "message": "📅 下次上課：2025-08-12",
+  "timestamp": "2025-08-09T13:05:06.379929911Z"
+}

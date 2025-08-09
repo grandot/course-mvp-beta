@@ -56,9 +56,9 @@ async function getRenderLogs(options = {}) {
 
     let logs;
     if (follow) {
-      // 持續監聽模式
+      // 持續監聽模式（Render CLI 使用 --tail）
       console.log('👁️  開始持續監聽日誌 (Ctrl+C 停止)...');
-      const followCommand = command + ' --follow';
+      const followCommand = command + ' --tail';
       
       const child = spawn('sh', ['-c', followCommand], {
         stdio: 'pipe'
@@ -311,7 +311,7 @@ async function main() {
   }
 
   try {
-    if (args.includes('--follow')) {
+    if (args.includes('--follow') || args.includes('--tail')) {
       await getRenderLogs({ follow: true });
       
     } else if (args.includes('--search')) {
