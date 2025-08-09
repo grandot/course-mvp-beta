@@ -20,29 +20,29 @@ class TestDataManager {
     
     // 標準測試數據模板
     this.standardStudents = [
-      { name: '測試小明', testId: 'test_student_001' },
-      { name: '測試Lumi', testId: 'test_student_002' },
-      { name: '測試小光', testId: 'test_student_003' }
+      { name: '小明', testId: 'test_student_001' },
+      { name: 'Lumi', testId: 'test_student_002' },
+      { name: '小光', testId: 'test_student_003' }
     ];
     
     this.standardCourses = [
       {
-        studentName: '測試小明',
-        courseName: '測試數學課',
+        studentName: '小明',
+        courseName: '數學課',
         scheduleTime: '14:00',
         timeReference: 'tomorrow',
         isRecurring: false
       },
       {
-        studentName: '測試Lumi',
-        courseName: '測試鋼琴課',
+        studentName: 'Lumi',
+        courseName: '鋼琴課',
         scheduleTime: '15:30',
         dayOfWeek: 3, // 週三
         isRecurring: true
       },
       {
-        studentName: '測試小光',
-        courseName: '測試英文課',
+        studentName: '小光',
+        courseName: '英文課',
         scheduleTime: '10:00',
         dayOfWeek: 1, // 週一
         isRecurring: true
