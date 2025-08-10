@@ -32,6 +32,11 @@ async function main() {
     runNode(require.resolve('./suites/redis/cases/test-redis-render.js'));
     ok = runNode(require.resolve('./suites/redis/cases/test-production-redis.js')) && ok;
   }
+  // 自動包含從 MD 生成的用例（若存在）
+  try {
+    const gen = require.resolve('./suites/redis/cases/generated/generated-from-md.js');
+    ok = runNode(gen) && ok;
+  } catch (_) {}
   process.exit(ok ? 0 : 1);
 }
 

@@ -3,8 +3,8 @@
  */
 
 const path = require('path');
-const { runLocalLogicTests } = require('../../tools/test-local-environment');
-const { RealEnvironmentTester } = require('../../tools/test-real-environment');
+const { runLocalLogicTests, processMessageAndGetResponse } = require('../../tools/suites/misc/test-local-environment');
+const { RealEnvironmentTester } = require('../../tools/suites/misc/test-real-environment');
 
 class UnifiedTestRunner {
   constructor(options = {}) {
@@ -133,7 +133,7 @@ class UnifiedTestRunner {
    * 執行單個本機測試案例
    */
   async executeLocalTestCase(testCase) {
-    const { processMessageAndGetResponse } = require('../../tools/test-local-environment');
+    // 已於頂部導入 processMessageAndGetResponse（修正路徑）
     
     try {
       const userId = process.env.TEST_USER_ID || 'U_test_user_qa';

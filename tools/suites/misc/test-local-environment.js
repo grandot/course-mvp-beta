@@ -4,10 +4,10 @@
  */
 
 require('dotenv').config();
-const { parseIntent } = require('../src/intent/parseIntent');
-const { extractSlots } = require('../src/intent/extractSlots'); 
-const { executeTask } = require('../src/tasks');
-const { getConversationManager } = require('../src/conversation/ConversationManager');
+const { parseIntent } = require('../../../src/intent/parseIntent');
+const { extractSlots } = require('../../../src/intent/extractSlots'); 
+const { executeTask } = require('../../../src/tasks');
+const { getConversationManager } = require('../../../src/conversation/ConversationManager');
 
 /**
  * 執行完整的消息處理並返回真實回覆

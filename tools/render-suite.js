@@ -47,6 +47,12 @@ async function main() {
     // 依賴檢查已包含於 deployment 測試或環境檢查
   }
 
+  // 自動包含從 MD 生成的用例（若存在）
+  try {
+    const gen = require.resolve('./suites/render/cases/generated/generated-from-md.js');
+    ok = runNode(gen) && ok;
+  } catch (_) {}
+
   process.exit(ok ? 0 : 1);
 }
 

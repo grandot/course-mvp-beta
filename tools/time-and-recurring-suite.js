@@ -23,6 +23,11 @@ async function main() {
     ok = runNode(require.resolve('./suites/time/cases/test-daily-recurring.js')) && ok;
     runNode(require.resolve('./suites/time/cases/verify-daily-recurring.js'));
   }
+  // 自動包含從 MD 生成的用例（若存在）
+  try {
+    const gen = require.resolve('./suites/time/cases/generated/generated-from-md.js');
+    ok = runNode(gen) && ok;
+  } catch (_) {}
   process.exit(ok ? 0 : 1);
 }
 

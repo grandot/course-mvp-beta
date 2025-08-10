@@ -26,6 +26,12 @@ async function main() {
   if (runE2E) {
     if (!runNode(require.resolve('./suites/quick/cases/test-full-workflow.js'))) process.exit(1);
   }
+
+  // 自動包含從 MD 生成的用例（若存在）
+  try {
+    const gen = require.resolve('./suites/quick/cases/generated/generated-from-md.js');
+    runNode(gen);
+  } catch (_) {}
 }
 
 if (require.main === module) main();
