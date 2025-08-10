@@ -279,7 +279,13 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     }
 
     // 3. 確保學生有對應的日曆
-    const student = await ensureStudentCalendar(userId, slots.studentName);
+    let student;
+    try {
+      student = await ensureStudentCalendar(userId, slots.studentName);
+    } catch (e) {
+      console.warn('⚠️ 確保學生日曆失敗，將採用 Firebase 先落地的降級策略:', e?.message || e);
+      student = { calendarId: null, studentName: slots.studentName };
+    }
     console.log('👤 學生日曆:', student.calendarId);
 
     // 4. 檢查時間衝突
@@ -312,12 +318,21 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       studentName: slots.studentName,
     };
 
-    const calendarEvent = await googleCalendarService.createEvent(
-      student.calendarId,
-      eventData,
-    );
-
-    console.log('📅 Google Calendar 事件已創建:', calendarEvent.eventId);
+    let calendarEvent = { eventId: null };
+    try {
+      if (student.calendarId) {
+        calendarEvent = await googleCalendarService.createEvent(
+          student.calendarId,
+          eventData,
+        );
+        console.log('📅 Google Calendar 事件已創建:', calendarEvent.eventId);
+      } else {
+        console.warn('⚠️ 無學生 calendarId，跳過 GCal 事件建立，將僅寫入 Firebase');
+      }
+    } catch (e) {
+      console.warn('⚠️ 建立 GCal 事件失敗，採用 Firebase 降級策略:', e?.message || e);
+      // calendarEvent 仍為 { eventId: null }
+    }
 
     // 6. 同步資料到 Firebase
     const courseData = {
@@ -353,6 +368,9 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     });
 
     let message = '✅ 課程已安排成功！\n\n';
+    if (!calendarEvent.eventId) {
+      message = '✅ 課程已暫存成功（日曆稍後同步）！\n\n';
+    }
     message += `👦 學生：${slots.studentName}\n`;
     message += `📚 課程：${slots.courseName}\n`;
 
