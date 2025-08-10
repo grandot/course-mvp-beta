@@ -8,6 +8,7 @@
 - 一、快速開始（給趕時間的人）
 - 二、共用前置條件
 - 三、工具清單（依模板撰寫）
+  - 3.0 測試套件統一入口（新增）
   - 3.1 export-render-logs-range.js（Render 日誌分頁擷取）
   - 3.2 generate-trace-summaries.js（互動回合摘要）
   - 3.3 save-context.js（一鍵生成摘要）
@@ -21,6 +22,33 @@
 ### 一、快速開始（給趕時間的人）
 
 ```bash
+# Render 測試（統一入口）
+node tools/render-suite.js --basic        # 健檢（健康/冷啟動/Redis/併發）
+node tools/render-suite.js --all          # 含 multi/persistence/api/deps
+
+# Redis 測試（統一入口）
+node tools/redis-suite.js --conn --config # 連線+設定（預設）
+node tools/redis-suite.js --perf          # 效能
+node tools/redis-suite.js --render        # 與 Render 整合
+
+# 多輪測試（統一入口）
+node tools/multi-turn-suite.js --supplement  # 補問/槽位補齊（預設）
+node tools/multi-turn-suite.js --render      # Render 多輪
+
+# 時間與重複規則（統一入口）
+node tools/time-and-recurring-suite.js --parser --daily  # 預設
+node tools/time-and-recurring-suite.js --format          # 格式修正
+
+# 回歸與風險
+node tools/regression-suite.js --risk
+node tools/regression-suite.js --fix "quick reply"
+node tools/regression-suite.js --all
+
+# 快速冒煙/端到端
+node tools/quick-suite.js --target prod      # 5 cases（線上）
+node tools/quick-suite.js --target local     # 5 cases（本地）
+node tools/quick-suite.js --target prod --e2e
+
 # 近 15 分鐘抓取線上日誌（含常見關鍵詞）
 node tools/export-render-logs-range.js \
   --since "$(date -u -v -15M +%Y-%m-%dT%H:%M:%SZ)" \
@@ -45,6 +73,14 @@ npm run save:context
 ---
 
 ### 三、工具清單（依模板撰寫）
+
+#### 3.0 測試套件統一入口（新增）
+- render-suite.js：Render 部署健檢與延伸測試（health/cold-start/redis/concurrency/api/persistence/multi）
+- redis-suite.js：Redis 相關測試（conn/config/perf/render）
+- multi-turn-suite.js：多輪與補問測試（supplement/render）
+- time-and-recurring-suite.js：時間解析/格式修正/每日重複
+- regression-suite.js：回歸/風險/修復驗證
+- quick-suite.js：5-case 冒煙與端到端切換（local/prod）
 
 #### 3.1 export-render-logs-range.js（Render 日誌分頁擷取）
 - 功能定位：
