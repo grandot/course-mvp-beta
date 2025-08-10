@@ -47,7 +47,7 @@
   - `rrule`：完整 RRULE 字串（可選，月循環逐步補）
   - `gcalEventId` / `gcalRecurringId`：鏡像對應的 GCal event id / recurring id（exceptions 用）
 - GCal Events 對應：
-  - `summary` ← `courseName`（可加前綴：學生名）
+  - `summary`：`[lineUserId] [studentName] - courseName`（例如：`U_xxx 小明 - 數學課`）
   - `description`：可含學生名/內部 ID/連結
   - `start`/`end`：`dateTime` + `timeZone`
   - `recurrence`: [`RRULE:FREQ=WEEKLY;BYDAY=...`] 或 daily/monthly RRULE
