@@ -43,11 +43,8 @@ function initializeGoogleCalendar() {
         const oauth2Client = new google.auth.OAuth2(
           process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID,
           process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET
-          // redirectUri 非必填，已擁有 refresh_token 可直接換取 access_token
         );
-        oauth2Client.setCredentials({
-          refresh_token: process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN,
-        });
+        oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN });
         auth = oauth2Client;
         calendar = google.calendar({ version: 'v3', auth });
         authMode = 'oauth2';
