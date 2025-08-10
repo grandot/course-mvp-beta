@@ -316,6 +316,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       recurrenceType: slots.recurrenceType || null,
       dayOfWeek: slots.dayOfWeek,
       studentName: slots.studentName,
+      userId,
     };
 
     let calendarEvent = { eventId: null };

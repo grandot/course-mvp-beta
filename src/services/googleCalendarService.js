@@ -207,13 +207,15 @@ async function createEvent(calendarId, courseData) {
       recurrenceType = null,
       dayOfWeek = null,
       studentName,
+      userId,
+      courseId,
     } = courseData;
 
     const startDateTime = buildDateTime(courseDate, scheduleTime);
     const endDateTime = addHours(startDateTime, 1);
 
     const eventResource = {
-      summary: courseName,
+      summary: userId ? `[${userId}] ${studentName} - ${courseName}` : `${studentName} - ${courseName}`,
       description: `${studentName}的課程\n由 LINE 課程管理機器人自動創建`,
       start: {
         dateTime: startDateTime,
@@ -224,6 +226,13 @@ async function createEvent(calendarId, courseData) {
         timeZone: 'Asia/Taipei',
       },
       recurrence: buildRecurrenceRule(recurring, recurrenceType, dayOfWeek),
+      extendedProperties: {
+        private: {
+          userId: userId || '',
+          studentName: studentName || '',
+          courseId: courseId || '',
+        },
+      },
       reminders: {
         useDefault: false,
         overrides: [], // 我們使用自己的提醒系統
