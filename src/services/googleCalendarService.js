@@ -48,7 +48,7 @@ function initializeGoogleCalendar() {
         auth = oauth2Client;
         calendar = google.calendar({ version: 'v3', auth });
         authMode = 'oauth2';
-        console.log('🔐 已使用 OAuth2 模式初始化 Google Calendar');
+        console.log('🔐 已使用 OAuth2 模式初始化 Google Calendar (client configured, using refresh_token)');
       } else if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
         // 3) Service Account（備選）
         auth = new google.auth.GoogleAuth({
@@ -67,7 +67,7 @@ function initializeGoogleCalendar() {
       }
       console.log('✅ Google Calendar 服務初始化完成（模式：' + authMode + '）');
     } catch (error) {
-      console.error('❌ Google Calendar 初始化失敗:', error);
+      console.error('❌ Google Calendar 初始化失敗:', error?.response?.data || error?.message || error);
       throw error;
     }
   }
@@ -87,16 +87,15 @@ async function createCalendar(studentName, userId) {
       timeZone: 'Asia/Taipei',
     };
 
-    const response = await calendarService.calendars.insert({
-      resource: calendarResource,
-    });
+    console.log('📝 準備建立日曆:', JSON.stringify(calendarResource));
+    const response = await calendarService.calendars.insert({ resource: calendarResource });
 
     const calendarId = response.data.id;
     console.log('✅ 已創建新日曆:', calendarId);
 
     return calendarId;
   } catch (error) {
-    console.error('❌ 創建日曆失敗:', error);
+    console.error('❌ 創建日曆失敗:', error?.response?.data || error?.message || error);
     throw error;
   }
 }
@@ -231,10 +230,8 @@ async function createEvent(calendarId, courseData) {
       },
     };
 
-    const response = await calendarService.events.insert({
-      calendarId,
-      resource: eventResource,
-    });
+    console.log('📝 準備建立事件: calendarId=', calendarId, ' resource=', JSON.stringify(eventResource));
+    const response = await calendarService.events.insert({ calendarId, resource: eventResource });
 
     const eventId = response.data.id;
     console.log('✅ 已創建課程事件:', eventId);
@@ -244,7 +241,7 @@ async function createEvent(calendarId, courseData) {
       ...response.data,
     };
   } catch (error) {
-    console.error('❌ 創建課程事件失敗:', error);
+    console.error('❌ 創建課程事件失敗:', error?.response?.data || error?.message || error);
     throw error;
   }
 }
