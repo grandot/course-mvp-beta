@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+description: 測試→分析→優化→擴張 的持續迴圈與通過率門檻
+---
+# QA 連續測試迴圈規則
+
+- 目標：以真實使用體驗為核心，建立「測試 → 分析 → 優化 → 小幅擴張」的迴圈。
+- 主要腳本與路徑：
+  - 批次測試腳本：[tools/test-real-batches.js](mdc:tools/test-real-batches.js)
+  - 連續執行腳本：[tools/run-real-batches-loop.sh](mdc:tools/run-real-batches-loop.sh)
+  - 全域測試入口：[tools/run-all-tests.js](mdc:tools/run-all-tests.js)
+  - 報告與日誌：[
+    QA/reports](mdc:QA/reports), [test-results](mdc:test-results)
+- 擴張門檻：
+  - 以環境變數 `REAL_BATCH_PASS_THRESHOLD` 控制（預設 80）。
+  - 當上一批總通過率 ≥ 門檻，才擴張到更大測試集。
+- 匯報規則：
+  - 每輪結束主動匯報：各批次通過率、關鍵失敗、最小修復建議。
+  - 達到 80% 目標可暫停擴張，轉入主程式碼優化與體驗修補。
+- 背景程序管理：
+  - 如需終止：可透過 `pkill -f run-real-batches-loop.sh` / `pkill -f test-real-batches.js`。

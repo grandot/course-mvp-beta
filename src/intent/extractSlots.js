@@ -219,6 +219,8 @@ function checkRecurring(message) {
 function extractStudentName(message) {
   // 常見的學生姓名模式 - 按精確度排序
   const namePatterns = [
+    // 立即處理『名字+下/這/本週(周)+課表』開頭句型，避免後綴吃入姓名
+    /^([小大]?[一-龥A-Za-z]{1,12})(?=這週|這周|本週|本周|下週|下周|課表)/,
     // 最高精確度模式 - 明確的姓名結構（調整順序，優先精確匹配）
     /(?:新增|幫.*?新增)\s*([小大]?[一-龥A-Za-z]{2,6})的/, // 新增小明的、幫我新增小明的
     /(?:安排)\s*([小大]?[一-龥A-Za-z]{2,6})每週/, // 安排小華每週
@@ -255,7 +257,19 @@ function extractStudentName(message) {
   for (const pattern of namePatterns) {
     const match = message.match(pattern);
     if (match && match[1]) {
-      const name = match[1].trim();
+      let name = match[1].trim();
+
+      // 針對「小美下週」這類結構，避免把「下/上/本/這」吃進姓名
+      try {
+        const idx = message.indexOf(name);
+        if (idx >= 0) {
+          const after = message.slice(idx + name.length);
+          // 若名字最後一字是「上下本這」，且名字後面緊接著「週/周/星期」，則去掉尾字
+          if (/^(週|周|星期)/.test(after) && /[上下本這]$/.test(name)) {
+            name = name.replace(/[上下本這]$/, '');
+          }
+        }
+      } catch (_) {}
 
       // 嚴格過濾不是姓名的詞彙
       const invalidNames = [
@@ -266,6 +280,9 @@ function extractStudentName(message) {
 
       // 檢查是否包含無效詞彙
       const containsInvalid = invalidNames.some((invalid) => name.includes(invalid) || name === invalid);
+
+      // 再做一次後綴清理，移除『這週/本週/下週/這周/本周/下周』等時間詞
+      name = stripTimeSuffixFromName(name);
 
       if (!containsInvalid
           && name.length >= 2 && name.length <= 6
@@ -413,7 +430,7 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
       if (!slots.studentName) {
-        const m = message.match(/(測試?[A-Za-z一-龥]{1,12})(?:的|今天|明天|這週|本週|下週)/);
+        const m = message.match(/(測試?[A-Za-z一-龥]{1,12})(?=的|今天|明天|這週|本週|下週|這周|本周|下周|課表)/);
         if (m && m[1]) slots.studentName = stripTimeSuffixFromName(m[1]);
       }
       break;

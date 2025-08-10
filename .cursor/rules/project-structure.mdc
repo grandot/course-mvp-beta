@@ -1,0 +1,30 @@
+---
+alwaysApply: true
+description: 專案結構與入口說明，便於 AI 快速定位與導航
+---
+# 專案結構指南
+
+- 主要入口
+  - [src/index.js](mdc:src/index.js)
+- LINE Webhook 與互動流
+  - [src/bot/webhook.js](mdc:src/bot/webhook.js)
+  - 對話管理：[src/conversation/ConversationManager.js](mdc:src/conversation/ConversationManager.js)
+- 意圖與槽位
+  - 意圖解析：[src/intent/parseIntent.js](mdc:src/intent/parseIntent.js)
+  - 槽位抽取：[src/intent/extractSlots.js](mdc:src/intent/extractSlots.js)
+  - 時間解析：[src/intent/timeParser.js](mdc:src/intent/timeParser.js)
+- 任務處理（Tasks）
+  - 例如：[src/tasks/handle_add_course_task.js](mdc:src/tasks/handle_add_course_task.js)
+- 服務層（Services）
+  - Firebase / Calendar 等：[src/services](mdc:src/services)
+- 結構化日誌（NDJSON）
+  - 日誌工具：[src/utils/logger.js](mdc:src/utils/logger.js)
+  - 已整合於 webhook 流程：[src/bot/webhook.js](mdc:src/bot/webhook.js)
+- 測試與報告
+  - 全部測試入口：[tools/run-all-tests.js](mdc:tools/run-all-tests.js)
+  - 實際批次測試：[tools/test-real-batches.js](mdc:tools/test-real-batches.js)
+  - 連續批次腳本：[tools/run-real-batches-loop.sh](mdc:tools/run-real-batches-loop.sh)
+  - 報告輸出：[
+    QA/reports](mdc:QA/reports), [test-results/render-logs](mdc:test-results/render-logs)
+- 線上日誌與摘要工具說明
+  - 文件：[tools/README.md](mdc:tools/README.md)

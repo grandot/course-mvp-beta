@@ -180,6 +180,67 @@ function formatCourseList(courses, description) {
 }
 
 /**
+ * 將重複課程在給定日期範圍內展開為單日實例
+ * 規則：
+ * - weekly: 依據 dayOfWeek 與 scheduleTime，每週生成一次
+ * - daily: 每天生成一次
+ * - monthly: 先簡化為每月同日，若跨區間則不展開（本案主要處理 weekly/daily）
+ */
+function expandRecurringCourses(recurringCourses, dateRange) {
+  if (!recurringCourses || recurringCourses.length === 0) return [];
+
+  const start = new Date(`${dateRange.startDate}T00:00:00+08:00`);
+  const end = new Date(`${dateRange.endDate}T23:59:59+08:00`);
+
+  const results = [];
+  for (const c of recurringCourses) {
+    const recurrenceType = c.recurrenceType || 'weekly';
+    if (recurrenceType === 'daily') {
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        results.push({
+          ...c,
+          courseDate: dateStr,
+          isRecurring: true,
+          source: 'recurrence',
+        });
+      }
+    } else if (recurrenceType === 'weekly') {
+      const dayOfWeek = typeof c.dayOfWeek === 'number' ? c.dayOfWeek : null;
+      if (dayOfWeek === null) continue;
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() === dayOfWeek) {
+          const dateStr = d.toISOString().split('T')[0];
+          results.push({
+            ...c,
+            courseDate: dateStr,
+            isRecurring: true,
+            source: 'recurrence',
+          });
+        }
+      }
+    } else if (recurrenceType === 'monthly') {
+      // 簡化處理：若基準日存在且在區間內，才加入一次
+      const base = c.courseDate ? new Date(`${c.courseDate}T00:00:00+08:00`) : null;
+      if (base && base >= start && base <= end) {
+        results.push({ ...c, courseDate: c.courseDate, isRecurring: true, source: 'recurrence' });
+      }
+    }
+  }
+  return results;
+}
+
+function dedupeCourses(list) {
+  if (!list || list.length === 0) return [];
+  const map = new Map();
+  for (const c of list) {
+    const k = `${c.studentName}|${c.courseDate}|${c.scheduleTime || '00:00'}|${c.courseName}`;
+    if (!map.has(k)) map.set(k, c);
+  }
+  return Array.from(map.values());
+}
+
+/**
  * 查詢所有學生（如果沒有指定學生名稱）
  */
 async function getAllStudentCourses(userId, dateRange) {
@@ -234,23 +295,36 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
     let courses = [];
 
     if (slots.studentName) {
-      // 查詢特定學生的課程
-      courses = await firebaseService.getCoursesByStudent(
+      // 單一學生：單次課程 + 重複課展開
+      const single = await firebaseService.getCoursesByStudent(
         userId,
         slots.studentName,
-        {
-          startDate: dateRange.startDate,
-          endDate: dateRange.endDate,
-        },
+        { startDate: dateRange.startDate, endDate: dateRange.endDate },
       );
+      const recurring = await firebaseService.getRecurringCoursesByStudent(userId, slots.studentName);
+      const expanded = expandRecurringCourses(recurring, dateRange);
+      courses = dedupeCourses([...single, ...expanded]);
 
-      // 如果指定了課程名稱，進一步篩選
       if (slots.courseName) {
         courses = courses.filter((course) => course.courseName.includes(slots.courseName));
       }
     } else {
-      // 查詢所有學生的課程
-      courses = await getAllStudentCourses(userId, dateRange);
+      // 多學生：每位學生單次 + 重複展開彙總
+      const parent = await firebaseService.getOrCreateParent(userId);
+      const all = [];
+      if (parent.students && parent.students.length > 0) {
+        for (const s of parent.students) {
+          const single = await firebaseService.getCoursesByStudent(
+            userId,
+            s.studentName,
+            { startDate: dateRange.startDate, endDate: dateRange.endDate },
+          );
+          const recurring = await firebaseService.getRecurringCoursesByStudent(userId, s.studentName);
+          const expanded = expandRecurringCourses(recurring, dateRange);
+          all.push(...single, ...expanded);
+        }
+      }
+      courses = dedupeCourses(all);
     }
 
     console.log(`📚 查詢到 ${courses.length} 筆課程`);

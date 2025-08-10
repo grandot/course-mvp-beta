@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+description: 將口語化需求映射為實際指令，降低溝通成本
+---
+# 口語需求 → 指令對應
+
+- 「抓摘要（近15分鐘）」
+  - 執行：`npm run save:context`
+- 「抓近30分鐘摘要」
+  - 執行：`node tools/generate-trace-summaries.js --since <30分鐘前ISO> --max-pages 80`
+- 「抓某 userId 的近1小時摘要」
+  - 執行：`node tools/generate-trace-summaries.js --since <60分鐘前ISO> --userId <ID> --max-pages 80`
+- 「撈 Render 日誌（近15分鐘）」
+  - 執行：`node tools/export-render-logs-range.js --since <15分鐘前ISO> --max-pages 80 --keywords "traceId,userId"`
+- 「追線上日誌」
+  - 執行：`npm run logs:render:follow`
+
+注意：
+- 在 LINE 對話輸入 `/save-context` 不會自動跑本機腳本；但若在此聊天提出此需求，應視為請求執行 `npm run save:context`。
+- 若使用者要求「儲存工作上下文」，可輸出/更新 [AI_TASK_CONTEXT.md](mdc:AI_TASK_CONTEXT.md)。

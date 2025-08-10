@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+description: 結構化日誌策略與線上日誌抓取/摘要工具
+---
+# 結構化日誌與分析工具
+
+- 日誌原則：
+  - 單行 JSON（NDJSON），欄位包含：`userId`, `traceId`, `direction`(inbound/processing/outbound), `channel`, `textIn`/`textOut`, `intent`, `slots`, `status`, `errorCode`, `latencyMs`。
+  - 以 AsyncLocalStorage 於非同步流程攜帶 `userId`/`traceId`，確保全鏈路可追蹤。
+- 主要位置：
+  - 日誌工具：[src/utils/logger.js](mdc:src/utils/logger.js)
+  - 整合點（Webhook）：[src/bot/webhook.js](mdc:src/bot/webhook.js)
+- 線上日誌工具：
+  - 分頁擷取： [tools/export-render-logs-range.js](mdc:tools/export-render-logs-range.js)
+  - 回合摘要： [tools/generate-trace-summaries.js](mdc:tools/generate-trace-summaries.js)
+  - 一鍵摘要： [tools/save-context.js](mdc:tools/save-context.js)
+  - 使用說明： [tools/README.md](mdc:tools/README.md)
+- 產物輸出：
+  - NDJSON / 純文字： [test-results/render-logs](mdc:test-results/render-logs)
+  - 摘要 Markdown： `trace-summary-*.md` 於同一路徑。
+- 建議策略：
+  - 需長時間窗時，先用 `export-render-logs-range.js` 歸檔，再用 `generate-trace-summaries.js` 產生摘要。
