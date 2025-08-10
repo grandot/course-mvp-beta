@@ -35,7 +35,10 @@
     "qa:test:local": "node tools/qa-orchestrator.js test --mode local",
     "qa:test:real": "node tools/qa-orchestrator.js test --mode real",
     "qa:test:both": "node tools/qa-orchestrator.js test --mode both",
-    "qa:fix": "node tools/qa-orchestrator.js fix"
+    "qa:fix": "node tools/qa-orchestrator.js fix",
+    "save:context": "node tools/save-context.js",
+    "status:trim": "node tools/maintain-project-status.js",
+    "changelog:update": "node tools/update-changelog.js"
   },
   "keywords": [
     "line-bot",

@@ -251,6 +251,13 @@ if (isFeatureEnabled('SLOT_TEMPLATE_SYSTEM')) {
 - 重要決策記錄在對應的 `.md` 文件中
 - 保持文檔的可讀性和時效性
 
+#### CHANGELOG 與狀態板維護規則（強制）
+- CHANGELOG 原則：聚焦重點、避免冗長細節；用精煉的一句話說清楚「解了什麼、帶來什麼效果」。實作細節留在 PR/設計文。
+- 專案狀態板（`PROJECT_STATUS.md`）的 Done 區塊最多 5 筆；超出者移至 `doc/CHANGELOG.md` 並保留完成日期。
+- 自動化腳本：
+  - `npm run status:trim` 將 Done 超出部分自動移轉至 CHANGELOG 並修剪狀態板。
+  - `npm run changelog:update` 依規則追加簡版條目到 CHANGELOG（避免重複）。
+
 ## 🎯 常見開發任務快速參考
 
 ### 新增意圖
