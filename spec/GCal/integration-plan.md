@@ -55,6 +55,22 @@
 
 ---
 
+## 事件命名與歸屬標識（含 LINE User ID）
+- 為什麼要帶 `LINE User ID`：
+  - 唯一性/隔離：不同家長可能都有「小明」，用 `userId + studentName` 避免混淆與誤關聯。
+  - 定位/追蹤：平台在 GCal 端能快速定位到哪位家長底下的事件，便於排錯與回補。
+  - 遷移安全：`userId` 為穩定主鍵，避免僅憑顯示名造成錯配。
+- 放置位置：
+  - `summary`：`[lineUserId] [studentName] - courseName`（例：`U_xxx 小明 - 數學課`）
+  - `extendedProperties.private`：必含 `userId`、`courseId`、`studentName`（系統硬對齊以此為準）
+- 隱私與對外可見：
+  - 目前 calendar 僅平台持有、不對外分享，summary 含 `userId` 不會外泄。
+  - 未來若分享給家長：可改 summary 僅顯示「學生名 - 課程」，`userId` 仍保留在私有屬性中。
+- 更名一致性：
+  - 家長/學生改名時可更新 summary 顯示；系統對齊仍以 `userId` + `courseId` 為準，不受影響。
+
+---
+
 ## API 對接與套件
 - 使用 `googleapis`（Node）Calendar v3：
   - `events.insert` / `patch` / `delete`
