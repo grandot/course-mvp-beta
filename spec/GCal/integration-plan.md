@@ -9,9 +9,10 @@
   - 查課表可顯示單次與重複課（daily/weekly，monthly 逐步補齊），不中斷。
   - 新增/修改/取消課程可鏡像到 GCal（不阻塞主流程）。
   - 衝突檢查可透過 GCal FreeBusy 作二次校驗（可選）。
-- 範圍：
-  - 以「單一 Calendar（先簡化）」支持多位學生事件；後續再細分到每位學生/每位家長各自 calendar。
-  - 寫入 GCal 採「背景同步」與「重試/回補」策略，避免使用者被外部依賴卡住。
+- 範圍（與產品決策對齊）：
+  - Calendar 顆粒度：採「每位學生一個 calendar」為預設。平台帳號持有，不需對外分享。
+  - 查詢預設：以 Firebase 為主（快照），GCal 作鏡像/校對與背景同步。
+  - 寫入順序：先寫 GCal，再寫 Firebase；GCal 失敗也要落地 Firebase 並排入回補。
 
 ---
 
@@ -21,10 +22,10 @@
   - Google Calendar = 鏡像（Mirror），提供外部可視、FreeBusy 校對。
 - 計算規則：
   - RRULE 與時區語義與 GCal 對齊（Asia/Taipei）。
-  - 查詢展開：短期可用本地 RRULE 展開；GCal 上線後，優先用 GCal 單次展開（singleEvents/instances）。
+  - 查詢展開：預設讀 Firebase（快、穩、低成本）；必要時以 GCal 單次展開（singleEvents/instances）做校對或補齊；本地 RRULE 展開作為後備。
 - 可靠性：
   - 功能旗標控制與回退：
-    - `USE_GCAL=true|false`：是否啟用 GCal 參與查詢/寫入。
+    - `USE_GCAL=true|false`：是否啟用 GCal 參與（鏡像/校對）。
     - `GCAL_FALLBACK_FIREBASE=true|false`：GCal 失敗時是否回退用 Firebase 結果/流程。
     - `ENABLE_LOCAL_RECURRING_EXPAND=true|false`：是否啟用本地 RRULE 展開（查詢時）。
   - 任一外部失敗，不阻塞主流程；統一回傳結構化 code/訊息。
@@ -69,21 +70,23 @@
 ## 主要流程
 ### 1) 新增課程
 - 單次課：
-  1. 寫入 Firestore。
-  2. 若 `USE_GCAL=true`，背景建立 GCal event（對應 `gcalEventId`）。
-  3. 失敗 → 記錄重試隊列，不阻塞使用者。
+  1. 先寫入 GCal 事件（取得 eventId / recurringId）。
+  2. 寫入 Firebase（帶上對應的 `gcalEventId`/`gcalRecurringId`）。
+  3. 若 GCal 失敗 → 仍寫入 Firebase 並記錄回補隊列（不阻塞用戶）。
 - 重複課（daily/weekly）：
-  1. 寫入 Firestore（含 `recurrenceType` / `rrule`）。
-  2. `USE_GCAL=true` → 背景建立 recurring event（保存 `gcalRecurringId`）。
-  3. 失敗 → 記錄重試，並保證查詢時仍可看到（本地展開 or Firebase 單次）。
+  1. 先在 GCal 建 recurring 事件（RRULE）。
+  2. 寫入 Firebase（保存 recurrenceType、rrule、gcalRecurringId）。
+  3. 若 GCal 失敗 → 仍寫入 Firebase 並回補；查詢時以 Firebase + 本地展開保底。
 
 ### 2) 查詢課表（本週/下週/自訂區間）
-- 優先策略：
-  - `USE_GCAL=true` → 以 `events.list`（`singleEvents=true`）或 `instances` 在區間展開，取回事件清單。
-  - 合併 Firebase 單次課（必要時）與 GCal 結果，去重（`studentName|date|time|courseName`）。
+- 預設策略（快速穩定）：
+  - 直接讀 Firebase（單次 + 已同步/鏡像的 recurring 展開快照）。
+  - 去重鍵：`studentName|date|time|courseName`，格式化輸出。
+- 校對/補齊（可選）：
+  - `USE_GCAL=true` 時，用 `events.list(singleEvents)` 或 `instances` 校對；如發現缺口，觸發背景回補。
 - 回退策略：
-  - GCal 失敗 → 若 `GCAL_FALLBACK_FIREBASE=true` 則改用 Firebase：
-    - 直接查單次課 +（若 `ENABLE_LOCAL_RECURRING_EXPAND=true`）本地展開 recurring 定義。
+  - 若 Firebase 資料不完整且 GCal 可用 → 臨時以 GCal 補齊當次查詢結果。
+  - 若 GCal 失敗 → 仍回以 Firebase 可得資料；必要時本地 RRULE 展開。
 
 ### 3) 衝突檢查
 - 預設：本地時間區間重疊檢查（同學生）。
@@ -99,9 +102,8 @@
 
 ---
 
-## 旗標與環境變數
 - 行為旗標：
-  - `USE_GCAL=true|false`：是否啟用 GCal 參與（查詢/鏡像）。
+  - `USE_GCAL=true|false`：是否啟用 GCal 參與（鏡像/校對）。
   - `GCAL_FALLBACK_FIREBASE=true|false`：GCal 失敗是否回退。
   - `ENABLE_LOCAL_RECURRING_EXPAND=true|false`：本地 RRULE 展開。
 - GCal 設定：
@@ -187,4 +189,4 @@ TZ_DEFAULT=Asia/Taipei
 
 ---
 
-如需改為「每位學生/每位家長一個 calendar」：保留相同服務層介面，只要在 userId/studentName→calendarId 的路由表補齊即可，不影響主流程。
+註：目前預設「每位學生一個 calendar」。如需暫時簡化為單一 calendar，可透過 `G_CALENDAR_ID_DEFAULT` 快速切換，介面不變，僅在 `userId/studentName → calendarId` 對照層做退化處理。
