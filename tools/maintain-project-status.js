@@ -47,6 +47,22 @@ function extractDoingLines(markdown) {
   return { lines, doingHeaderIdx: headerIdx, doingStart: headerIdx + 1, doingEnd: i, doingItems: items };
 }
 
+function extractNextLines(markdown) {
+  const lines = markdown.split('\n');
+  // 相容不同標題描述
+  const headerIdx = lines.findIndex(l => /### Next（/.test(l));
+  if (headerIdx === -1) return { lines, nextHeaderIdx: -1, nextStart: -1, nextEnd: -1, nextItems: [] };
+  let i = headerIdx + 1;
+  const items = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith('### ') || line.startsWith('## ')) break;
+    if (line.trim().startsWith('- ')) items.push({ idx: i, text: line.trim().slice(2) });
+    i += 1;
+  }
+  return { lines, nextHeaderIdx: headerIdx, nextStart: headerIdx + 1, nextEnd: i, nextItems: items };
+}
+
 function normalizeEntry(text) { return `- ${text}`; }
 
 function appendToChangelogIfMissing(entries) {
@@ -140,6 +156,57 @@ function main() {
   } catch (e) {
     // 靜默忽略自動遷移錯誤，保持現有流程
   }
+
+  // 0.5) 嘗試自動從 Next 遷移到 Doing：若近期 commit/CHANGELOG 含關鍵詞，視為已開工
+  try {
+    let changed = false;
+    const { nextHeaderIdx, nextStart, nextEnd, nextItems } = extractNextLines(md);
+    if (nextHeaderIdx !== -1 && nextItems.length > 0) {
+      const recentCommits = (() => {
+        try { return execSync('git log -n 50 --pretty=format:%s%n%b', { encoding: 'utf8' }); } catch (_) { return ''; }
+      })();
+      const changelogFull = readFile(CHANGELOG_PATH);
+      const normalize = (s) => (s || '')
+        .replace(/\[[^\]]*\]/g, '')
+        .replace(/[（(][^）)]*[）)]/g, '')
+        .replace(/（需求定義完成；尚未開工）/g, '')
+        .replace(/（需求定義完成，尚未開工）/g, '')
+        .replace(/\s+/g, '')
+        .toLowerCase();
+
+      const lines = md.split('\n');
+      const { doingHeaderIdx, doingStart, doingEnd, doingItems } = extractDoingLines(md);
+      const doingHeader = doingHeaderIdx !== -1 ? lines[doingHeaderIdx] : '### Doing（最多 3 項）';
+      const currentDoingSet = new Set(doingItems.map(x => normalize(x.text)));
+
+      const toMove = [];
+      const stay = [];
+      for (const it of nextItems) {
+        const key = normalize(it.text);
+        const found = key && (normalize(recentCommits).includes(key) || normalize(changelogFull).includes(key));
+        if (found) toMove.push(it.text); else stay.push(it.text);
+      }
+
+      if (toMove.length > 0) {
+        // 更新 Next 區塊
+        const newNextSection = [lines[nextHeaderIdx], ...stay.map(t => `- ${t}`)];
+        // 更新 Doing 區塊（追加未重複者）
+        const added = toMove.filter(t => !currentDoingSet.has(normalize(t)));
+        const newDoingSection = [doingHeader, ...doingItems.map(x => `- ${x.text}`), ...added.map(t => `- ${t}`)];
+
+        const updated = [
+          ...lines.slice(0, nextHeaderIdx),
+          ...newNextSection,
+          ...lines.slice(nextEnd, doingHeaderIdx !== -1 ? doingHeaderIdx : nextEnd),
+          ...newDoingSection,
+          ...lines.slice(doingHeaderIdx !== -1 ? doingEnd : (nextEnd)),
+        ].join('\n');
+        md = updated;
+        changed = true;
+        console.log(`Auto-moved from Next to Doing: ${added.length} item(s).`);
+      }
+    }
+  } catch (_) {}
 
   // 1) 並行同步 Done 條目到 CHANGELOG（避免重複）
   const { lines, doneStart, doneEnd, doneItems } = extractDoneLines(md);
