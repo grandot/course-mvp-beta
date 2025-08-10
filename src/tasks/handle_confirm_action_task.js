@@ -70,10 +70,6 @@ async function handle_confirm_action_task(slots, userId, event) {
           return {
             success: true,
             message: `✅ 已成功覆蓋並${intent === 'add_course' ? '新增' : '更新'}課程！\n\n${result.message}`,
-            quickReply: [
-              { label: '📅 查詢課表', text: '查詢今天課表' },
-              { label: '📝 記錄內容', text: '記錄課程內容' },
-            ],
           };
         }
         return result;
@@ -101,11 +97,6 @@ async function handle_confirm_action_task(slots, userId, event) {
     return {
       success: true,
       message: confirmMessages[intent] || '✅ 已確認執行操作！',
-      quickReply: [
-        { label: '📅 查詢課表', text: '查詢今天課表' },
-        { label: '📅 新增課程', text: '新增課程' },
-        { label: '📝 記錄內容', text: '記錄課程內容' },
-      ],
     };
   } catch (error) {
     console.error('❌ 處理確認操作失敗:', error);

@@ -35,17 +35,9 @@ async function handle_restart_input_task(slots, userId) {
     // 提供友善的重新開始引導
     const welcomeMessage = '🔄 好的！讓我們重新開始。\n\n我可以幫您：\n• 📅 新增課程安排\n• 📋 查詢課表\n• 📝 記錄課程內容\n• ⏰ 設定課程提醒\n• 🗑️ 取消課程\n\n請告訴我您想做什麼！';
 
-    const quickReplyOptions = [
-      { label: '新增課程', text: '我要新增課程' },
-      { label: '查詢課表', text: '查詢今天課表' },
-      { label: '記錄內容', text: '記錄課程內容' },
-      { label: '設定提醒', text: '設定課程提醒' },
-    ];
-
     return {
       success: true,
       message: welcomeMessage,
-      quickReply: quickReplyOptions,
     };
   } catch (error) {
     console.error('❌ 處理重新輸入失敗:', error);
@@ -61,11 +53,6 @@ async function handle_restart_input_task(slots, userId) {
     return {
       success: true,
       message: '🔄 已重新開始。請告訴我您想做什麼，例如新增課程、查詢課表或記錄內容。',
-      quickReply: [
-        { label: '新增課程', text: '我要新增課程' },
-        { label: '查詢課表', text: '查詢課表' },
-        { label: '記錄內容', text: '記錄課程內容' },
-      ],
     };
   }
 }

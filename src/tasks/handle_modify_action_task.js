@@ -112,12 +112,6 @@ async function handle_modify_action_task(slots, userId, event) {
     return {
       success: true,
       message: modifyGuide,
-      quickReply: [
-        { label: '🕐 修改時間', text: '改成下午3點' },
-        { label: '📅 修改日期', text: '改成明天' },
-        { label: '📚 修改課程', text: '改成英文課' },
-        { label: '❌ 取消修改', text: '取消修改' },
-      ],
     };
   } catch (error) {
     console.error('❌ 處理修改操作失敗:', error);

@@ -245,14 +245,12 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'create_recurring_course':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
     case 'set_reminder':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
@@ -260,7 +258,6 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'add_course_content':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
@@ -268,24 +265,15 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'stop_recurring_course':
       return [
         { label: '✅ 確認刪除', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
     // 查詢類意圖 - 提供後續操作選項
     case 'query_schedule':
-      return [
-        { label: '📚 新增課程', text: '我要新增課程' },
-        { label: '📝 記錄內容', text: '記錄課程內容' },
-        { label: '⏰ 設定提醒', text: '設定提醒' },
-      ];
+      return null; // 移除非允許情境的 Quick Reply
 
     case 'query_course_content':
-      return [
-        { label: '📝 新增記錄', text: '記錄課程內容' },
-        { label: '📸 上傳照片', text: '上傳課程照片' },
-        { label: '📅 查詢其他', text: '查詢課表' },
-      ];
+      return null; // 移除
 
     // 操作性意圖 - 這些已在任務處理器中處理，通常不需要額外 Quick Reply
     case 'confirm_action':
@@ -296,24 +284,12 @@ function getQuickReplyForIntent(intent, result = null) {
 
     // 錯誤或未知意圖 - 提供重新開始的選項
     case 'unknown':
-      return [
-        { label: '📚 新增課程', text: '我要新增課程' },
-        { label: '📅 查詢課表', text: '查詢今天課表' },
-        { label: '📝 記錄內容', text: '記錄課程內容' },
-        { label: '❓ 重新說明', text: '重新開始' },
-      ];
+      return null; // 移除
 
     // 預設情況
     default:
       // 如果任務執行成功，提供通用操作
-      if (result && result.success) {
-        return [
-          { label: '📚 新增課程', text: '我要新增課程' },
-          { label: '📅 查詢課表', text: '查詢課表' },
-          { label: '📝 記錄內容', text: '記錄課程內容' },
-        ];
-      }
-      return commonActions;
+      return null;
   }
 }
 
