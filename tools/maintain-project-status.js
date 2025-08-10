@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const STATUS_PATH = path.resolve(__dirname, '../PROJECT_STATUS.md');
 const CHANGELOG_PATH = path.resolve(__dirname, '../doc/CHANGELOG.md');
@@ -29,6 +30,21 @@ function extractDoneLines(markdown) {
     i += 1;
   }
   return { lines, doneStart: startIdx + 1, doneEnd: i, doneItems: items };
+}
+
+function extractDoingLines(markdown) {
+  const lines = markdown.split('\n');
+  const headerIdx = lines.findIndex(l => l.trim().startsWith('### Doing（最多 3 項'));
+  if (headerIdx === -1) return { lines, doingHeaderIdx: -1, doingStart: -1, doingEnd: -1, doingItems: [] };
+  let i = headerIdx + 1;
+  const items = [];
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith('### ') || line.startsWith('## ')) break;
+    if (line.trim().startsWith('- ')) items.push({ idx: i, text: line.trim().slice(2) });
+    i += 1;
+  }
+  return { lines, doingHeaderIdx: headerIdx, doingStart: headerIdx + 1, doingEnd: i, doingItems: items };
 }
 
 function normalizeEntry(text) { return `- ${text}`; }
@@ -57,14 +73,80 @@ function appendToChangelogIfMissing(entries) {
 }
 
 function main() {
-  const md = readFile(STATUS_PATH);
+  let md = readFile(STATUS_PATH);
+
+  // 0) 嘗試自動從 Doing 遷移到 Done：檢查近期 commit 與 CHANGELOG
+  try {
+    const { doingHeaderIdx, doingStart, doingEnd, doingItems } = extractDoingLines(md);
+    if (doingHeaderIdx !== -1 && doingItems.length > 0) {
+      const recentCommits = (() => {
+        try { return execSync('git log -n 50 --pretty=format:%s%n%b', { encoding: 'utf8' }); } catch (_) { return ''; }
+      })();
+      const changelogFull = readFile(CHANGELOG_PATH);
+
+      const normalize = (s) => (s || '')
+        .replace(/\[[^\]]*\]/g, '') // 移除 [P1][UX]
+        .replace(/[（(][^）)]*[）)]/g, '') // 移除括號內容（含中英文）
+        .replace(/\s+/g, '')
+        .toLowerCase();
+
+      const toTitle = (s) => (s || '')
+        .replace(/\[[^\]]*\]/g, '')
+        .replace(/[（(][^）)]*[）)]/g, '')
+        .trim();
+
+      const migrated = [];
+      const remaining = [];
+      for (const it of doingItems) {
+        const key = normalize(it.text);
+        const found = key && (normalize(recentCommits).includes(key) || normalize(changelogFull).includes(key));
+        if (found) migrated.push(toTitle(it.text)); else remaining.push(it.text);
+      }
+
+      if (migrated.length > 0) {
+        // 更新 Doing 區塊內容
+        const lines = md.split('\n');
+        const headerLine = lines[doingHeaderIdx];
+        const newDoingSection = [headerLine, ...remaining.map(t => `- ${t}`)];
+        const updatedAfterDoing = [
+          ...lines.slice(0, doingHeaderIdx),
+          ...newDoingSection,
+          ...lines.slice(doingEnd),
+        ];
+        md = updatedAfterDoing.join('\n');
+
+        // 把遷移條目插入 Done 區塊最前面（加上日期）
+        const { lines: lines2, doneStart, doneEnd, doneItems } = extractDoneLines(md);
+        if (doneStart !== -1) {
+          const today = new Date();
+          const y = today.getFullYear();
+          const m = String(today.getMonth() + 1).padStart(2, '0');
+          const d = String(today.getDate()).padStart(2, '0');
+          const dated = migrated.map(t => `${y}-${m}-${d}：${t}`);
+
+          const newMd = [
+            ...lines2.slice(0, doneStart),
+            ...dated.map(t => `- ${t}`),
+            ...lines2.slice(doneStart, doneEnd),
+            ...lines2.slice(doneEnd),
+          ].join('\n');
+          md = newMd;
+
+          // 同步到 CHANGELOG（避免重複）
+          appendToChangelogIfMissing(dated);
+        }
+      }
+    }
+  } catch (e) {
+    // 靜默忽略自動遷移錯誤，保持現有流程
+  }
+
+  // 1) 並行同步 Done 條目到 CHANGELOG（避免重複）
   const { lines, doneStart, doneEnd, doneItems } = extractDoneLines(md);
   if (doneStart === -1) {
     console.log('No Done section found.');
     return;
   }
-
-  // 1) 並行同步 Done 條目到 CHANGELOG（避免重複）
   const allDoneTexts = doneItems.map(x => x.text);
   const { appended } = appendToChangelogIfMissing(allDoneTexts);
 
@@ -81,6 +163,10 @@ function main() {
     return;
   }
 
+  // 若有遷移過，覆寫檔案
+  if (md !== readFile(STATUS_PATH)) {
+    writeFile(STATUS_PATH, md);
+  }
   console.log(`Synced CHANGELOG (appended ${appended}). Done section within limit: ${doneItems.length} items.`);
 }
 
