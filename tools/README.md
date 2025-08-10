@@ -1,3 +1,130 @@
+## tools/ 使用手冊（統一入口版）
+
+本手冊說明 `tools/` 目錄的最新結構與使用方式。為了降低心智負擔，我們已將零散測試腳本「整合為 6 個入口」，其餘子測試與輔助腳本已歸檔到分層目錄，保持根層乾淨可讀。
+
+---
+
+### 目錄導覽（你只需要記住這 6 個入口）
+
+- Render 套件：`tools/render-suite.js`
+- Redis 套件：`tools/redis-suite.js`
+- 多輪對話套件：`tools/multi-turn-suite.js`
+- 時間與重複規則套件：`tools/time-and-recurring-suite.js`
+- 回歸與風險套件：`tools/regression-suite.js`
+- 快速冒煙/端到端：`tools/quick-suite.js`
+
+輔助工具（保留）
+- 日誌擷取：`tools/export-render-logs-range.js`
+- 回合摘要：`tools/generate-trace-summaries.js`
+- 一鍵摘要：`tools/save-context.js`
+
+分層目錄（不用直接執行）
+- 子測試腳本：`tools/suites/<suite>/cases/*`
+- 研發/維運輔助：`tools/internal/*`（admin/debug/logs/qa 分類）
+
+---
+
+### 快速開始（建議指令）
+
+```bash
+# Render 測試（部署健檢/冷啟動/Redis/併發）
+node tools/render-suite.js --basic
+node tools/render-suite.js --all         # 含 multi/persistence 等延伸
+
+# Redis 測試（連線/設定/效能/整合）
+node tools/redis-suite.js --conn --config   # 預設
+node tools/redis-suite.js --perf
+node tools/redis-suite.js --render
+
+# 多輪/補問
+node tools/multi-turn-suite.js --supplement  # 預設
+node tools/multi-turn-suite.js --render
+
+# 時間與重複規則
+node tools/time-and-recurring-suite.js --parser --daily  # 預設
+node tools/time-and-recurring-suite.js --format
+
+# 回歸與風險
+node tools/regression-suite.js --risk
+node tools/regression-suite.js --fix "quick reply"
+node tools/regression-suite.js --all
+
+# 快速冒煙/端到端
+node tools/quick-suite.js --target prod      # 5 cases（線上）
+node tools/quick-suite.js --target local     # 5 cases（本地）
+node tools/quick-suite.js --target prod --e2e
+
+# 線上日誌與摘要
+node tools/export-render-logs-range.js \
+  --since "$(date -u -v -15M +%Y-%m-%dT%H:%M:%SZ)" \
+  --max-pages 80 --keywords "traceId,userId,channel,line"
+node tools/generate-trace-summaries.js \
+  --since "$(date -u -v -15M +%Y-%m-%dT%H:%M:%SZ)" --max-pages 80
+```
+
+---
+
+### 什麼時候用哪個套件？（最短決策）
+
+- 我只想看部署好不好：用 `render-suite.js --basic`
+- 我懷疑 Redis 有問題：用 `redis-suite.js --conn --config`，要看效能加 `--perf`
+- 我要驗證多輪補問：用 `multi-turn-suite.js --supplement`
+- 我覺得時間解析/重複課有 bug：用 `time-and-recurring-suite.js --parser` 或 `--daily`
+- 我要回歸與風險清單：用 `regression-suite.js --risk` / `--all`
+- 我要 5 個冒煙用例或端到端：`quick-suite.js --target prod|local [--e2e]`
+
+---
+
+### 常用旗標（共通心智模型）
+
+- `--basic`：只跑基礎健檢（Render 套件）
+- `--all`：該類套件能跑的通通跑
+- `--conn / --config / --perf / --render`：Redis 套件的子測試選擇
+- `--supplement / --render`：多輪套件的子測試選擇
+- `--parser / --format / --daily`：時間套件的子測試選擇
+- `--risk / --fix <tag>`：回歸/風險套件
+- `--target local|prod`：快速套件（冒煙/端到端）目標環境
+
+---
+
+### 注意事項（避免踩雷）
+
+- `test-line-bot-automation.js` 已移至 `tools/suites/misc/`，請勿直打線上 webhook 當作 E2E。
+  - 若未經 LINE 平台且使用假 replyToken，LINE 回覆會失敗，伺服器端常見 500。
+  - 建議：用 `render-suite.js` 做線上健檢；對話類請改走真實 LINE 或改為 Mock。
+- 舊的 `test-*.js` 已分流到 `suites/*/cases` 或 `suites/misc`，入口統一由 6 個 *-suite.js 管理。
+- 研發/維運輔助腳本（索引檢查、除錯、長迴圈批次等）已移至 `tools/internal/*`，不要誤當正式測試入口。
+
+---
+
+### 舊版到新版的對應（遷移備忘）
+
+- `test-render-*` → `render-suite.js`（子測試見 `suites/render/cases`）
+- `test-redis-*`/`redis-performance-test.js` → `redis-suite.js`（見 `suites/redis/cases`）
+- `test-multi-turn-*`/`test-supplement-input.js` → `multi-turn-suite.js`（見 `suites/multi-turn/cases`）
+- `test-time-*`/`test-daily-recurring.js` → `time-and-recurring-suite.js`（見 `suites/time/cases`）
+- `regression-test.js`/`test-all-risks.js`/`test-fix-verification.js` → `regression-suite.js`
+- `test-5-cases*.js`/`test-full-workflow.js` → `quick-suite.js`（見 `suites/quick/cases`）
+
+---
+
+### FAQ（你可能會碰到的問題）
+
+- 為什麼我直打 webhook 會 500？
+  - 因為沒有經 LINE 平台、replyToken 不合法，真正的回覆 API 會失敗。請用 `render-suite.js` 健檢或走 LINE 官方對話。
+- Render 日誌抓不到？
+  - CLI 偶發節流，縮小時間窗或降低頁數；或先把 NDJSON 存檔再生成摘要。
+- 我要把腳本再精簡？
+  - 新案例直接放 `suites/<suite>/cases`，入口不用改；不建議再回到根層新增 `test-*.js`。
+
+---
+
+### 貢獻與規範（簡版）
+
+- 新的測試案例：請放到 `tools/suites/<suite>/cases/`，並在對應 `*-suite.js` 加一個旗標分支
+- 命名統一：`test-<領域>-<主題>.js`，避免縮寫
+- 請在案例檔案開頭用 5~10 行說明「測什麼、為何需要」，讓 PM 也看得懂
+
 ## tools/ 工具總覽與擴充指南
 
 這份文件提供一個「可擴充」的結構，用來說明 `tools/` 目錄下所有工具的用途與使用方式。未來新增新工具時，請沿用同一份模板，讓內容保持一致、好維護。
