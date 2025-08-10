@@ -1,4 +1,20 @@
 # 📝 Change Log
+## [1.2.2] - 2025-08-10 - 立即修復：意圖誤判與錯誤回覆兜底 🔧
+
+### 🐛 Fixed
+- 修復 `record_content` 被誤判為 `add_course`：在 `parseIntent.js` 加入內容記錄優先規則（偵測「學了/教了/內容/表現/老師說/記錄」等關鍵詞，且不含排程關鍵詞時直接判為內容記錄）。
+- 兜底固定錯誤回覆：於 `webhook.js` 執行任務後，若處理器返回 `success=false` 且無訊息時，依 `code` 類型顯示三類固定文案（驗證/格式錯誤、外部服務延遲、資訊不完整）。
+
+### ✨ Added
+- 配置集中化：新增 `src/config/index.js`；新增範例環境 `config/env.example`。
+
+### ♻️ Not Changed
+- Quick Reply 清單：依 PM 規劃，暫不調整。
+
+### 🧪 Verification
+- 手動驗證：「今天學了分數」→ `record_content`（不誤判為 `add_course`）。
+- 兜底錯誤文案：`INVALID_TIME` / `MISSING_FIELDS` / `CALENDAR_UNAVAILABLE` 分別顯示對應訊息。
+
 
 ## [1.3.4] - 2025-08-07 - 每日重複課程功能實現 🔄
 

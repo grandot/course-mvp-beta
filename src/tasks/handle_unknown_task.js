@@ -19,12 +19,6 @@ async function handle_unknown_task(slots, userId, messageEvent = null) {
       success: true,
       code: 'UNKNOWN_HELP',
       message: helpMessage,
-      quickReply: [
-        { label: '📅 新增課程', text: '新增課程' },
-        { label: '📋 查詢課表', text: '查詢課表' },
-        { label: '📝 記錄內容', text: '記錄內容' },
-        { label: '⏰ 設定提醒', text: '設定提醒' },
-      ],
     };
   } catch (error) {
     console.error('❌ 處理unknown意圖失敗:', error);

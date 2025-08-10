@@ -392,7 +392,6 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       },
       quickReply: [
         { label: '✅ 確認', text: '確認' },
-        { label: '✏️ 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ],
     };

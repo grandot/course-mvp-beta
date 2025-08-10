@@ -96,8 +96,21 @@ async function handleTextMessage(event, req = null) {
     // 第四步：記錄任務執行結果到對話上下文
     await conversationManager.recordTaskResult(userId, intent, slots, result);
 
-    // 第五步：處理回應和 Quick Reply
-    const responseMessage = result.message;
+    // 第五步：處理回應和 Quick Reply（不調整 Quick Reply，本輪僅加兜底錯誤文案）
+    let responseMessage = result.message;
+    if (result && result.success === false) {
+      // 三種固定錯誤回覆兜底（若處理器未給自定義訊息）
+      const code = result.code || '';
+      if (!responseMessage) {
+        if (code === 'MISSING_FIELDS' || code === 'MISSING_DATE' || code === 'INVALID_TIME') {
+          responseMessage = '請補齊必要資訊後再試。';
+        } else if (code === 'SERVICE_TIMEOUT' || code === 'CALENDAR_UNAVAILABLE') {
+          responseMessage = '外部服務延遲或不可用，等一下再試一次。';
+        } else if (code === 'VALIDATION_ERROR') {
+          responseMessage = '請檢查輸入格式，稍後再試。';
+        }
+      }
+    }
     let quickReply = null;
 
     if (result.success) {
@@ -232,14 +245,12 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'create_recurring_course':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
     case 'set_reminder':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
@@ -247,7 +258,6 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'add_course_content':
       return [
         { label: '✅ 確認', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
@@ -255,24 +265,15 @@ function getQuickReplyForIntent(intent, result = null) {
     case 'stop_recurring_course':
       return [
         { label: '✅ 確認刪除', text: '確認' },
-        { label: '📝 修改', text: '修改' },
         { label: '❌ 取消操作', text: '取消操作' },
       ];
 
     // 查詢類意圖 - 提供後續操作選項
     case 'query_schedule':
-      return [
-        { label: '📚 新增課程', text: '我要新增課程' },
-        { label: '📝 記錄內容', text: '記錄課程內容' },
-        { label: '⏰ 設定提醒', text: '設定提醒' },
-      ];
+      return null; // 移除非允許情境的 Quick Reply
 
     case 'query_course_content':
-      return [
-        { label: '📝 新增記錄', text: '記錄課程內容' },
-        { label: '📸 上傳照片', text: '上傳課程照片' },
-        { label: '📅 查詢其他', text: '查詢課表' },
-      ];
+      return null; // 移除
 
     // 操作性意圖 - 這些已在任務處理器中處理，通常不需要額外 Quick Reply
     case 'confirm_action':
@@ -283,24 +284,12 @@ function getQuickReplyForIntent(intent, result = null) {
 
     // 錯誤或未知意圖 - 提供重新開始的選項
     case 'unknown':
-      return [
-        { label: '📚 新增課程', text: '我要新增課程' },
-        { label: '📅 查詢課表', text: '查詢今天課表' },
-        { label: '📝 記錄內容', text: '記錄課程內容' },
-        { label: '❓ 重新說明', text: '重新開始' },
-      ];
+      return null; // 移除
 
     // 預設情況
     default:
       // 如果任務執行成功，提供通用操作
-      if (result && result.success) {
-        return [
-          { label: '📚 新增課程', text: '我要新增課程' },
-          { label: '📅 查詢課表', text: '查詢課表' },
-          { label: '📝 記錄內容', text: '記錄課程內容' },
-        ];
-      }
-      return commonActions;
+      return null;
   }
 }
 
