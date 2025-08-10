@@ -581,6 +581,7 @@ module.exports = {
   // 課程操作
   saveCourse,
   getCoursesByStudent,
+  getRecurringCoursesByStudent,
   findCourse,
   updateCourseRecord,
   deleteCourse,

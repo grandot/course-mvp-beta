@@ -301,8 +301,13 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
         slots.studentName,
         { startDate: dateRange.startDate, endDate: dateRange.endDate },
       );
-      const recurring = await firebaseService.getRecurringCoursesByStudent(userId, slots.studentName);
-      const expanded = expandRecurringCourses(recurring, dateRange);
+      let expanded = [];
+      try {
+        const recurring = await firebaseService.getRecurringCoursesByStudent(userId, slots.studentName);
+        expanded = expandRecurringCourses(recurring, dateRange);
+      } catch (e) {
+        console.warn('⚠️ 重複課查詢或展開失敗，採用單次課程降級:', e?.message || e);
+      }
       courses = dedupeCourses([...single, ...expanded]);
 
       if (slots.courseName) {
@@ -319,8 +324,13 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
             s.studentName,
             { startDate: dateRange.startDate, endDate: dateRange.endDate },
           );
-          const recurring = await firebaseService.getRecurringCoursesByStudent(userId, s.studentName);
-          const expanded = expandRecurringCourses(recurring, dateRange);
+          let expanded = [];
+          try {
+            const recurring = await firebaseService.getRecurringCoursesByStudent(userId, s.studentName);
+            expanded = expandRecurringCourses(recurring, dateRange);
+          } catch (e) {
+            console.warn('⚠️ 重複課查詢或展開失敗（多學生），採用單次課程降級:', e?.message || e);
+          }
           all.push(...single, ...expanded);
         }
       }
