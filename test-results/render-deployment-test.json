@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-08-10T14:55:51.732Z",
+  "target": "https://course-mvp-beta.onrender.com",
+  "tests": {
+    "healthCheck": {
+      "success": true,
+      "responseTime": 883,
+      "data": {
+        "status": "ok",
+        "timestamp": "2025-08-10T14:55:52.566Z",
+        "version": "1.0.0"
+      }
+    },
+    "coldStart": {
+      "success": false,
+      "error": "Request failed with status code 400"
+    },
+    "redisConnection": {
+      "success": false,
+      "error": "Request failed with status code 400"
+    },
+    "concurrency": {
+      "success": true,
+      "totalRequests": 5,
+      "successful": 0,
+      "failed": 5,
+      "totalTime": 145,
+      "averageTime": 29
+    }
+  }
+}

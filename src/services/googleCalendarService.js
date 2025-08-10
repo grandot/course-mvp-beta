@@ -7,6 +7,7 @@ const { google } = require('googleapis');
 
 let calendar = null;
 let auth = null;
+let authMode = 'uninitialized'; // 'oauth2' | 'service_account' | 'mock' | 'disabled'
 
 /**
  * 初始化 Google Calendar API
@@ -14,21 +15,7 @@ let auth = null;
 function initializeGoogleCalendar() {
   if (!calendar) {
     try {
-      // 檢查必要的環境變數
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-        throw new Error('❌ 缺少 Google Calendar 環境變數');
-      }
-
-      // 使用服務帳戶認證
-      auth = new google.auth.GoogleAuth({
-        credentials: {
-          client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-          private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        },
-        scopes: ['https://www.googleapis.com/auth/calendar'],
-      });
-
-      // 測試模式可禁用外呼（本機 QA）
+      // 1) Mock（測試）
       if (process.env.USE_MOCK_CALENDAR === 'true') {
         calendar = {
           calendars: {
@@ -45,11 +32,43 @@ function initializeGoogleCalendar() {
             list: async () => ({ data: { items: [] } }),
           },
         };
+        authMode = 'mock';
         console.log('🧪 使用 Mock Calendar 服務');
-      } else {
+      } else if (
+        process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID &&
+        process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET &&
+        process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN
+      ) {
+        // 2) OAuth2（推薦，與 gcal-setup.md 一致）
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID,
+          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET
+          // redirectUri 非必填，已擁有 refresh_token 可直接換取 access_token
+        );
+        oauth2Client.setCredentials({
+          refresh_token: process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN,
+        });
+        auth = oauth2Client;
         calendar = google.calendar({ version: 'v3', auth });
+        authMode = 'oauth2';
+        console.log('🔐 已使用 OAuth2 模式初始化 Google Calendar');
+      } else if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        // 3) Service Account（備選）
+        auth = new google.auth.GoogleAuth({
+          credentials: {
+            client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          },
+          scopes: ['https://www.googleapis.com/auth/calendar'],
+        });
+        calendar = google.calendar({ version: 'v3', auth });
+        authMode = 'service_account';
+        console.log('🔐 已使用 Service Account 模式初始化 Google Calendar');
+      } else {
+        authMode = 'disabled';
+        throw new Error('❌ 缺少 Google Calendar 憑證環境變數（OAuth 或 Service Account 任一可）');
       }
-      console.log('✅ Google Calendar 服務初始化完成');
+      console.log('✅ Google Calendar 服務初始化完成（模式：' + authMode + '）');
     } catch (error) {
       console.error('❌ Google Calendar 初始化失敗:', error);
       throw error;
@@ -450,10 +469,10 @@ async function testConnection() {
     });
 
     console.log('🔗 Google Calendar 連接測試成功');
-    return true;
+    return { ok: true, authMode };
   } catch (error) {
     console.error('❌ Google Calendar 連接測試失敗:', error);
-    return false;
+    return { ok: false, authMode, error: error.message };
   }
 }
 
@@ -461,6 +480,7 @@ module.exports = {
   // 初始化
   initializeGoogleCalendar,
   testConnection,
+  getAuthMode: () => authMode,
 
   // 日曆管理
   createCalendar,

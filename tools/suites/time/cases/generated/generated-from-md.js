@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** 自動生成：time - 2025-08-10T12:09:17.127Z */
+/** 自動生成：time - 2025-08-10T14:55:51.631Z */
 
 const path = require('path');
 const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 'qa-system/core/UnifiedTestRunner'));

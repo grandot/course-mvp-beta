@@ -212,6 +212,17 @@ app.get('/health/deps', async (req, res) => {
       checks.openai = { status: 'error', message: error.message };
     }
 
+    // 檢查 Google Calendar 連接（OAuth/SA）
+    try {
+      const gcal = require('./services/googleCalendarService');
+      const result = await gcal.testConnection();
+      checks.gcal = result.ok
+        ? { status: 'ok', message: 'Google Calendar連接正常', authMode: result.authMode }
+        : { status: 'error', message: result.error || '連接失敗', authMode: result.authMode };
+    } catch (error) {
+      checks.gcal = { status: 'error', message: error.message };
+    }
+
     const overallStatus = Object.values(checks).some((check) => check.status === 'error') ? 'error' : 'ok';
 
     res.json({
@@ -225,6 +236,17 @@ app.get('/health/deps', async (req, res) => {
       message: error.message,
       timestamp: new Date().toISOString(),
     });
+  }
+});
+
+// 單獨的 GCal 健康檢查（更易於外部快速驗證）
+app.get('/health/gcal', async (req, res) => {
+  try {
+    const gcal = require('./services/googleCalendarService');
+    const result = await gcal.testConnection();
+    res.json({ status: result.ok ? 'ok' : 'error', authMode: result.authMode, timestamp: new Date().toISOString(), error: result.error || null });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message, timestamp: new Date().toISOString() });
   }
 });
 
