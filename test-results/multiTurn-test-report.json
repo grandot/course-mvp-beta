@@ -1,12 +1,12 @@
 {
   "summary": {
     "total": 4,
-    "passed": 4,
-    "failed": 0,
+    "passed": 0,
+    "failed": 4,
     "skipped": 0,
-    "passRate": "100.0%",
-    "duration": "27978ms",
-    "timestamp": "2025-08-07T03:59:08.578Z"
+    "passRate": "0.0%",
+    "duration": "40721ms",
+    "timestamp": "2025-08-10T10:46:21.308Z"
   },
   "results": [
     {
@@ -30,12 +30,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "明天下午3點數學課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -43,14 +42,13 @@
                   "學生",
                   "哪位"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           },
           {
             "message": "小明",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -59,14 +57,17 @@
                   "小明",
                   "數學課"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:58:43.858Z"
+      "timestamp": "2025-08-10T10:45:50.115Z"
     },
     {
       "id": "multi_002",
@@ -88,12 +89,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "小明明天下午3點有課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -101,14 +101,13 @@
                   "課程",
                   "什麼課"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           },
           {
             "message": "英文課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -116,14 +115,17 @@
                   "確認",
                   "英文課"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:58:48.536Z"
+      "timestamp": "2025-08-10T10:45:59.888Z"
     },
     {
       "id": "multi_003",
@@ -146,12 +148,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "小明明天下午3點數學課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -159,20 +160,17 @@
                   "確認",
                   "修改"
                 ],
-                "passed": true
+                "passed": false
               },
               {
                 "type": "quickReply",
-                "expected": true,
-                "actual": true,
-                "passed": true
+                "expected": true
               }
             ]
           },
           {
             "message": "確認",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -180,14 +178,17 @@
                   "成功",
                   "已安排"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:58:56.102Z"
+      "timestamp": "2025-08-10T10:46:07.906Z"
     },
     {
       "id": "multi_004",
@@ -219,12 +220,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "小明明天下午3點數學課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -232,20 +232,17 @@
                   "確認",
                   "修改"
                 ],
-                "passed": true
+                "passed": false
               },
               {
                 "type": "quickReply",
-                "expected": true,
-                "actual": true,
-                "passed": true
+                "expected": true
               }
             ]
           },
           {
             "message": "修改",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -254,14 +251,13 @@
                   "時間",
                   "課程"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           },
           {
             "message": "改成下午4點",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -270,14 +266,18 @@
                   "4點",
                   "16:00"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗",
+          "步驟 3 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:59:08.577Z"
+      "timestamp": "2025-08-10T10:46:21.308Z"
     }
   ]
 }

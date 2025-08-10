@@ -17,14 +17,14 @@ async function main() {
 
   // 冒煙：5 cases（依 target 選擇 real/local）
   if (target === 'local') {
-    if (!runNode(require.resolve('./test-5-cases.js'))) process.exit(1);
+    if (!runNode(require.resolve('./suites/quick/cases/test-5-cases-local.js'))) process.exit(1);
   } else {
-    if (!runNode(require.resolve('./test-5-cases-real.js'))) process.exit(1);
+    if (!runNode(require.resolve('./suites/quick/cases/test-5-cases-prod.js'))) process.exit(1);
   }
 
   // 端到端
   if (runE2E) {
-    if (!runNode(require.resolve('./test-full-workflow.js'))) process.exit(1);
+    if (!runNode(require.resolve('./suites/quick/cases/test-full-workflow.js'))) process.exit(1);
   }
 }
 

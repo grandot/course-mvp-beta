@@ -15,8 +15,8 @@ async function main() {
   const runSupplement = hasFlag('--supplement') || !hasFlag('--render');
   const runRender = hasFlag('--render');
   let ok = true;
-  if (runSupplement) ok = runNode(require.resolve('./test-supplement-input.js')) && ok;
-  if (runRender) ok = runNode(require.resolve('./test-render-multi-turn.js')) && ok;
+  if (runSupplement) ok = runNode(require.resolve('./suites/multi-turn/cases/test-supplement-input.js')) && ok;
+  if (runRender) ok = runNode(require.resolve('./suites/multi-turn/cases/test-multi-turn-dialogue.js')) && ok;
   process.exit(ok ? 0 : 1);
 }
 

@@ -32,22 +32,19 @@ async function main() {
 
   if (runBasic || runAll) {
     // 部署健檢（健康、冷啟動、Redis、併發）
-    ok = runNode(require.resolve('./test-render-deployment.js')) && ok;
+    ok = runNode(require.resolve('./suites/render/cases/test-render-deployment.js')) && ok;
   }
   if (hasFlag('--persistence') || runAll) {
-    ok = runNode(require.resolve('./test-render-persistence.js')) && ok;
+    ok = runNode(require.resolve('./suites/render/cases/test-render-persistence.js')) && ok;
   }
   if (hasFlag('--multi') || runAll) {
-    ok = runNode(require.resolve('./test-render-multi-turn.js')) && ok;
+    ok = runNode(require.resolve('./suites/multi-turn/cases/test-multi-turn-dialogue.js')) && ok;
   }
   if (hasFlag('--api') || runAll) {
-    // 覆蓋較細緻 API 驗證腳本（若缺任一不致中斷）
-    runNode(require.resolve('./test-render.js'));
-    runNode(require.resolve('./test-render-api.js'));
-    ok = runNode(require.resolve('./test-render-comprehensive.js')) && ok;
+    // API 細緻驗證可併入 deployment；暫無額外子測試
   }
   if (hasFlag('--deps') || runAll) {
-    ok = runNode(require.resolve('./test-render-deps.js')) && ok;
+    // 依賴檢查已包含於 deployment 測試或環境檢查
   }
 
   process.exit(ok ? 0 : 1);

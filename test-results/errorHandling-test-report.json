@@ -1,12 +1,12 @@
 {
   "summary": {
     "total": 2,
-    "passed": 2,
-    "failed": 0,
+    "passed": 0,
+    "failed": 2,
     "skipped": 0,
-    "passRate": "100.0%",
-    "duration": "8551ms",
-    "timestamp": "2025-08-07T03:59:17.130Z"
+    "passRate": "0.0%",
+    "duration": "10066ms",
+    "timestamp": "2025-08-10T10:46:31.376Z"
   },
   "results": [
     {
@@ -23,12 +23,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "今天天氣如何？",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -37,14 +36,16 @@
                   "無法識別",
                   "請說"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:59:10.106Z"
+      "timestamp": "2025-08-10T10:46:23.133Z"
     },
     {
       "id": "error_002",
@@ -65,26 +66,24 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "小明明天下午3點數學課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
                 "expected": [
                   "確認"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           },
           {
             "message": "不對，是4點",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -92,14 +91,17 @@
                   "修改",
                   "4點"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:59:17.129Z"
+      "timestamp": "2025-08-10T10:46:31.376Z"
     }
   ]
 }

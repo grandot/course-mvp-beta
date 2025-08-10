@@ -25,12 +25,12 @@ async function main() {
   const runRender = hasFlag('--render');
 
   let ok = true;
-  if (runConn) ok = runNode(require.resolve('./test-redis-connection.js')) && ok;
-  if (runConfig) ok = runNode(require.resolve('./test-redis-config-check.js')) && ok;
-  if (runPerf) ok = runNode(require.resolve('./redis-performance-test.js')) && ok;
+  if (runConn) ok = runNode(require.resolve('./suites/redis/cases/test-redis-connection.js')) && ok;
+  if (runConfig) ok = runNode(require.resolve('./suites/redis/cases/test-redis-config-check.js')) && ok;
+  if (runPerf) ok = runNode(require.resolve('./suites/redis/cases/redis-performance-test.js')) && ok;
   if (runRender) {
-    runNode(require.resolve('./test-redis-render.js'));
-    ok = runNode(require.resolve('./test-production-redis.js')) && ok;
+    runNode(require.resolve('./suites/redis/cases/test-redis-render.js'));
+    ok = runNode(require.resolve('./suites/redis/cases/test-production-redis.js')) && ok;
   }
   process.exit(ok ? 0 : 1);
 }

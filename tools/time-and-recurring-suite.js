@@ -17,11 +17,11 @@ async function main() {
   const runFormat = hasFlag('--format');
   const runDaily = hasFlag('--daily') || (!hasFlag('--format'));
   let ok = true;
-  if (runParser) ok = runNode(require.resolve('./test-time-parser.js')) && ok;
-  if (runFormat) ok = runNode(require.resolve('./test-time-format-fix.js')) && ok;
+  if (runParser) ok = runNode(require.resolve('./suites/time/cases/test-time-parser.js')) && ok;
+  if (runFormat) ok = runNode(require.resolve('./suites/time/cases/test-time-format-fix.js')) && ok;
   if (runDaily) {
-    ok = runNode(require.resolve('./test-daily-recurring.js')) && ok;
-    runNode(require.resolve('./verify-daily-recurring.js'));
+    ok = runNode(require.resolve('./suites/time/cases/test-daily-recurring.js')) && ok;
+    runNode(require.resolve('./suites/time/cases/verify-daily-recurring.js'));
   }
   process.exit(ok ? 0 : 1);
 }

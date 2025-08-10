@@ -1,12 +1,12 @@
 {
   "summary": {
     "total": 2,
-    "passed": 2,
-    "failed": 0,
+    "passed": 0,
+    "failed": 2,
     "skipped": 0,
-    "passRate": "100.0%",
-    "duration": "7171ms",
-    "timestamp": "2025-08-07T03:59:24.302Z"
+    "passRate": "0.0%",
+    "duration": "11792ms",
+    "timestamp": "2025-08-10T10:46:43.170Z"
   },
   "results": [
     {
@@ -30,12 +30,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "明天下午3點數學課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -43,14 +42,13 @@
                   "學生",
                   "哪位"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           },
           {
             "message": "小明和小華都要上",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -59,14 +57,17 @@
                   "都",
                   "分別"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗",
+          "步驟 2 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:59:20.303Z"
+      "timestamp": "2025-08-10T10:46:39.166Z"
     },
     {
       "id": "boundary_002",
@@ -82,12 +83,11 @@
         }
       ],
       "result": {
-        "status": "passed",
+        "status": "failed",
         "steps": [
           {
             "message": "小明明天 3:30PM 英文課",
-            "response": "Mock Service 處理成功",
-            "passed": true,
+            "passed": false,
             "checks": [
               {
                 "type": "keywords",
@@ -96,14 +96,16 @@
                   "15:30",
                   "3:30"
                 ],
-                "passed": true
+                "passed": false
               }
             ]
           }
         ],
-        "errors": []
+        "errors": [
+          "步驟 1 驗證失敗"
+        ]
       },
-      "timestamp": "2025-08-07T03:59:24.302Z"
+      "timestamp": "2025-08-10T10:46:43.170Z"
     }
   ]
 }
