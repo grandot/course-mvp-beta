@@ -132,7 +132,7 @@ function formatCourseList(courses, description) {
     return `📅 ${description}沒有安排課程`;
   }
 
-  let message = `📅 ${description}的課程安排\n\n`;
+  let message = `📅 ${description}的課表\n\n`;
 
   // 按日期和時間排序
   courses.sort((a, b) => {
@@ -346,7 +346,7 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
 
     // 4. 如果沒有課程，提供建議
     if (courses.length === 0) {
-      const suggestionMessage = `${message}\n\n💡 您可以：\n• 新增課程：「小明明天上午10點英文課」\n• 查詢其他時間：「小明下週的課表」\n• 記錄課程內容：「記錄昨天數學課的內容」`;
+      const suggestionMessage = `${message}\n\n🔎 指引：\n• 查詢：「小明下週的課表」\n• 新增：「小明明天上午10點英文課」\n• 記錄：「記錄昨天數學課的內容」`;
 
       return {
         success: true,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** 自動生成：time - 2025-08-10T12:09:17.127Z */
+/** 自動生成：time - 2025-08-11T02:07:48.035Z */
 
 const path = require('path');
 const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 'qa-system/core/UnifiedTestRunner'));
@@ -21,8 +21,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "確認",
       "Lumi",
       "鋼琴課",
-      "8:30"
+      "8:30",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -40,8 +42,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "確認",
       "小光",
       "英文課",
-      "10:30"
+      "10:30",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -95,8 +99,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "確認",
       "Lumi",
       "鋼琴課",
-      "每週三"
+      "每週三",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -116,8 +122,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "英文課",
       "每週一",
       "每週三",
-      "每週五"
+      "每週五",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -135,8 +143,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "確認",
       "小明",
       "晨練課",
-      "每天"
+      "每天",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -155,8 +165,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "Lumi",
       "瑜伽課",
       "每天",
-      "17:00"
+      "17:00",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -193,8 +205,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "小明",
       "游泳課",
       "每週二",
-      "19:00"
+      "19:00",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -213,8 +227,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "Lumi",
       "鋼琴課",
       "每週四",
-      "14:00"
+      "14:00",
+      "成功"
     ],
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },

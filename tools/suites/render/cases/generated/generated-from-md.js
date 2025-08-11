@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** 自動生成：render - 2025-08-10T12:09:17.123Z */
+/** 自動生成：render - 2025-08-11T02:07:48.030Z */
 
 const path = require('path');
 const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 'qa-system/core/UnifiedTestRunner'));
@@ -20,9 +20,10 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     "expectedKeywords": [
       "確認",
       "小明",
-      "數學課"
+      "數學課",
+      "成功"
     ],
-    "expectedCode": "QUERY_OK",
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },
@@ -133,7 +134,7 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     "expectedKeywords": [
       "小明",
       "今天",
-      "課程"
+      "課表"
     ],
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
@@ -169,7 +170,7 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     "expectedKeywords": [
       "小光",
       "這週",
-      "課程"
+      "課表"
     ],
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
@@ -203,7 +204,8 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     ],
     "expectedKeywords": [
       "小明",
-      "數學課"
+      "數學課",
+      "時間"
     ],
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
@@ -220,7 +222,8 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     ],
     "expectedKeywords": [
       "晨練課",
-      "每天"
+      "每天",
+      "時間"
     ],
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
@@ -237,7 +240,8 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
     ],
     "expectedKeywords": [
       "Lumi",
-      "重複課程"
+      "重複課程",
+      "課表"
     ],
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true

@@ -122,21 +122,9 @@ async function handleTextMessage(event, req = null) {
     // 第四步：記錄任務執行結果到對話上下文
     await conversationManager.recordTaskResult(userId, intent, slots, result);
 
-    // 第五步：處理回應和 Quick Reply（不調整 Quick Reply，本輪僅加兜底錯誤文案）
-    let responseMessage = result.message;
-    if (result && result.success === false) {
-      // 三種固定錯誤回覆兜底（若處理器未給自定義訊息）
-      const code = result.code || '';
-      if (!responseMessage) {
-        if (code === 'MISSING_FIELDS' || code === 'MISSING_DATE' || code === 'INVALID_TIME') {
-          responseMessage = '請補齊必要資訊後再試。';
-        } else if (code === 'SERVICE_TIMEOUT' || code === 'CALENDAR_UNAVAILABLE') {
-          responseMessage = '外部服務延遲或不可用，等一下再試一次。';
-        } else if (code === 'VALIDATION_ERROR') {
-          responseMessage = '請檢查輸入格式，稍後再試。';
-        }
-      }
-    }
+    // 第五步：處理回應和 Quick Reply（使用統一渲染器）
+    const { render } = require('../nlu/ResponseRenderer');
+    let responseMessage = render(intent, slots, result);
     let quickReply = null;
 
     if (result.success) {

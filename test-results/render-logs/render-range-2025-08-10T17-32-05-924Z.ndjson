@@ -1,0 +1,2700 @@
+2025-08-10 17:17:16  📨 收到 1 個事件
+2025-08-10 17:17:16  📋 事件類型: message
+2025-08-10 17:17:16  🔍 完整事件 JSON: {
+2025-08-10 17:17:16    "type": "message",
+2025-08-10 17:17:16    "message": {
+2025-08-10 17:17:16      "type": "text",
+2025-08-10 17:17:16      "text": "提醒我小明的物理課"
+2025-08-10 17:17:16    },
+2025-08-10 17:17:16    "source": {
+2025-08-10 17:17:16      "userId": "U_test_user_qa",
+2025-08-10 17:17:16      "type": "user"
+2025-08-10 17:17:16    },
+2025-08-10 17:17:16    "replyToken": "test-reply-token-1754846236717",
+2025-08-10 17:17:16    "timestamp": 1754846236717
+2025-08-10 17:17:16  }
+2025-08-10 17:17:16  🧹 檢測到 QA 重置上下文請求，清理用戶上下文: U_test_user_qa
+2025-08-10 17:17:16  {"ts":"2025-08-10T17:17:16.891Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1754846236891_nsbssz","userId":"U_test_user_qa","textIn":"提醒我小明的物理課"}
+2025-08-10 17:17:16  🔍 用戶ID類型: string
+2025-08-10 17:17:16  🔍 是否測試用戶: true
+2025-08-10 17:17:16  🚀 生產用戶，使用真實 LINE Service
+2025-08-10 17:17:16  🎯 開始解析意圖: 提醒我小明的物理課 (用戶: U_test_user_qa)
+2025-08-10 17:17:17  ✅ 規則匹配成功: set_reminder
+2025-08-10 17:17:17  {"ts":"2025-08-10T17:17:17.033Z","lvl":"info","stage":"nlp","traceId":"line_1754846236891_nsbssz","userId":"U_test_user_qa","intent":"set_reminder"}
+2025-08-10 17:17:17  🔍 開始提取 slots - 意圖: set_reminder (用戶: U_test_user_qa)
+2025-08-10 17:17:17  🧠 使用對話上下文增強 slots 提取
+2025-08-10 17:17:17  📊 規則提取置信度: 0.67
+2025-08-10 17:17:17  🤖 啟用 AI 輔助提取...
+2025-08-10 17:17:18  ✅ 最終 slots: { studentName: '小明', courseName: '物理課' }
+2025-08-10 17:17:18  {"ts":"2025-08-10T17:17:18.706Z","lvl":"info","stage":"slots","traceId":"line_1754846236891_nsbssz","userId":"U_test_user_qa","intent":"set_reminder","slotsSummary":["studentName","courseName"]}
+2025-08-10 17:17:18  🎯 執行任務: set_reminder
+2025-08-10 17:17:18  🔔 開始處理設定提醒任務: { studentName: '小明', courseName: '物理課' }
+2025-08-10 17:17:18  ❓ 找不到對應課程: 學生=小明, 課程=物理課, 日期=null
+2025-08-10 17:17:18  📊 任務執行結果: {
+2025-08-10 17:17:18    success: false,
+2025-08-10 17:17:18    code: 'NOT_FOUND',
+2025-08-10 17:17:18    message: '❌ 找不到 小明 的 物理課，請確認課程是否已安排'
+2025-08-10 17:17:18  }
+2025-08-10 17:17:18  {"ts":"2025-08-10T17:17:18.780Z","lvl":"info","stage":"task","traceId":"line_1754846236891_nsbssz","userId":"U_test_user_qa","intent":"set_reminder","success":false,"code":"NOT_FOUND","latencyMs":74}
+2025-08-10 17:17:19  🔍 檢查 replyToken: test-reply-token-1754846236717
+2025-08-10 17:17:19  🧪 檢測到測試 token，跳過真實 LINE API 調用
+2025-08-10 17:17:19  📤 [測試模式] 實際業務回覆: ❌ 找不到 小明 的 物理課，請確認課程是否已安排
+2025-08-10 17:17:19  {"ts":"2025-08-10T17:17:19.066Z","lvl":"info","direction":"outbound","channel":"line","traceId":"line_1754846236891_nsbssz","userId":"U_test_user_qa","textOut":"❌ 找不到 小明 的 物理課，請確認課程是否已安排","quickReply":false}
+2025-08-10 17:17:31  📨 收到 1 個事件
+2025-08-10 17:17:31  📋 事件類型: message
+2025-08-10 17:17:31  🔍 完整事件 JSON: {
+2025-08-10 17:17:31    "type": "message",
+2025-08-10 17:17:31    "message": {
+2025-08-10 17:17:31      "type": "text",
+2025-08-10 17:17:31      "text": "小明的數學課改到下午4點"
+2025-08-10 17:17:31    },
+2025-08-10 17:17:31    "source": {
+2025-08-10 17:17:31      "userId": "U_test_user_qa",
+2025-08-10 17:17:31      "type": "user"
+2025-08-10 17:17:31    },
+2025-08-10 17:17:31    "replyToken": "test-reply-token-1754846251723",
+2025-08-10 17:17:31    "timestamp": 1754846251723
+2025-08-10 17:17:31  }
+2025-08-10 17:17:31  🧹 檢測到 QA 重置上下文請求，清理用戶上下文: U_test_user_qa
+2025-08-10 17:17:31  {"ts":"2025-08-10T17:17:31.892Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1754846251892_9672op","userId":"U_test_user_qa","textIn":"小明的數學課改到下午4點"}
+2025-08-10 17:17:31  🔍 用戶ID類型: string
+2025-08-10 17:17:31  🔍 是否測試用戶: true
+2025-08-10 17:17:31  🚀 生產用戶，使用真實 LINE Service
+2025-08-10 17:17:31  🎯 開始解析意圖: 小明的數學課改到下午4點 (用戶: U_test_user_qa)
+2025-08-10 17:17:32  ✅ 規則匹配成功: modify_course
+2025-08-10 17:17:32  {"ts":"2025-08-10T17:17:32.035Z","lvl":"info","stage":"nlp","traceId":"line_1754846251892_9672op","userId":"U_test_user_qa","intent":"modify_course"}
+2025-08-10 17:17:32  🔍 開始提取 slots - 意圖: modify_course (用戶: U_test_user_qa)
+2025-08-10 17:17:32  ❓ 未知意圖，無法提取 slots: modify_course
+2025-08-10 17:17:32  🧠 使用對話上下文增強 slots 提取
+2025-08-10 17:17:32  📊 規則提取置信度: 0.00
+2025-08-10 17:17:32  🔄 規則提取信心度低，AI 輔助增強...
+2025-08-10 17:17:33  ✅ 最終 slots: { studentName: '小明', courseName: '數學課', scheduleTime: '下午4點' }
+2025-08-10 17:17:33  {"ts":"2025-08-10T17:17:33.242Z","lvl":"info","stage":"slots","traceId":"line_1754846251892_9672op","userId":"U_test_user_qa","intent":"modify_course","slotsSummary":["studentName","courseName","scheduleTime"]}
+2025-08-10 17:17:33  🎯 執行任務: modify_course
+2025-08-10 17:17:33  ✏️ 執行修改操作任務: {
+2025-08-10 17:17:33    slots: { studentName: '小明', courseName: '數學課', scheduleTime: '下午4點' },
+2025-08-10 17:17:33    userId: 'U_test_user_qa'
+2025-08-10 17:17:33  }
+2025-08-10 17:17:33  📊 任務執行結果: { success: false, message: '❓ 沒有可供修改的最近操作。' }
+2025-08-10 17:17:33  {"ts":"2025-08-10T17:17:33.313Z","lvl":"info","stage":"task","traceId":"line_1754846251892_9672op","userId":"U_test_user_qa","intent":"modify_course","success":false,"code":null,"latencyMs":71}
+2025-08-10 17:17:33  🔍 檢查 replyToken: test-reply-token-1754846251723
+2025-08-10 17:17:33  🧪 檢測到測試 token，跳過真實 LINE API 調用
+2025-08-10 17:17:33  📤 [測試模式] 實際業務回覆: ❓ 沒有可供修改的最近操作。
+2025-08-10 17:17:33  {"ts":"2025-08-10T17:17:33.598Z","lvl":"info","direction":"outbound","channel":"line","traceId":"line_1754846251892_9672op","userId":"U_test_user_qa","textOut":"❓ 沒有可供修改的最近操作。","quickReply":false}
+2025-08-10 17:17:46  📨 收到 1 個事件
+2025-08-10 17:17:46  📋 事件類型: message
+2025-08-10 17:17:46  🔍 完整事件 JSON: {
+2025-08-10 17:17:46    "type": "message",
+2025-08-10 17:17:46    "message": {
+2025-08-10 17:17:46      "type": "text",
+2025-08-10 17:17:46      "text": "小明每天的晨練課改到早上7點"
+2025-08-10 17:17:46    },
+2025-08-10 17:17:46    "source": {
+2025-08-10 17:17:46      "userId": "U_test_user_qa",
+2025-08-10 17:17:46      "type": "user"
+2025-08-10 17:17:46    },
+2025-08-10 17:17:46    "replyToken": "test-reply-token-1754846266052",
+2025-08-10 17:17:46    "timestamp": 1754846266053
+2025-08-10 17:17:46  }
+2025-08-10 17:17:46  🧹 檢測到 QA 重置上下文請求，清理用戶上下文: U_test_user_qa
+2025-08-10 17:17:46  {"ts":"2025-08-10T17:17:46.330Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","textIn":"小明每天的晨練課改到早上7點"}
+2025-08-10 17:17:46  📨 收到 1 個事件
+2025-08-10 17:17:46  📋 事件類型: message
+2025-08-10 17:17:46  🔍 完整事件 JSON: {
+2025-08-10 17:17:46    "type": "message",
+2025-08-10 17:17:46    "message": {
+2025-08-10 17:17:46      "type": "text",
+2025-08-10 17:17:46      "text": "小明每天的晨練課改到早上7點"
+2025-08-10 17:17:46    },
+2025-08-10 17:17:46    "source": {
+2025-08-10 17:17:46      "userId": "U_test_user_qa",
+2025-08-10 17:17:46      "type": "user"
+2025-08-10 17:17:46    },
+2025-08-10 17:17:46    "replyToken": "test-reply-token-1754846266052",
+2025-08-10 17:17:46    "timestamp": 1754846266053
+2025-08-10 17:17:46  }
+2025-08-10 17:17:46  🧹 檢測到 QA 重置上下文請求，清理用戶上下文: U_test_user_qa
+2025-08-10 17:17:46  {"ts":"2025-08-10T17:17:46.330Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","textIn":"小明每天的晨練課改到早上7點"}
+2025-08-10 17:17:46  🔍 用戶ID類型: string
+2025-08-10 17:17:46  🔍 是否測試用戶: true
+2025-08-10 17:17:46  🚀 生產用戶，使用真實 LINE Service
+2025-08-10 17:17:46  🎯 開始解析意圖: 小明每天的晨練課改到早上7點 (用戶: U_test_user_qa)
+2025-08-10 17:17:46  ✅ 規則匹配成功: create_recurring_course
+2025-08-10 17:17:46  {"ts":"2025-08-10T17:17:46.473Z","lvl":"info","stage":"nlp","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","intent":"create_recurring_course"}
+2025-08-10 17:17:46  🔍 開始提取 slots - 意圖: create_recurring_course (用戶: U_test_user_qa)
+2025-08-10 17:17:46  🕒 開始高級時間解析: 小明每天的晨練課改到早上7點
+2025-08-10 17:17:46  ✅ 時間解析成功: {
+2025-08-10 17:17:46    input: '小明每天的晨練課改到早上7點',
+2025-08-10 17:17:46    output: '07:00',
+2025-08-10 17:17:46    details: { hour: 7, minute: 0, matchType: 'arabic_period', periodInfo: '早上' }
+2025-08-10 17:17:46  }
+2025-08-10 17:17:46  🧠 使用對話上下文增強 slots 提取
+2025-08-10 17:17:46  📊 規則提取置信度: 0.67
+2025-08-10 17:17:46  🤖 啟用 AI 輔助提取...
+2025-08-10 17:17:47  ✅ 最終 slots: {
+2025-08-10 17:17:47    studentName: '小明',
+2025-08-10 17:17:47    courseName: '晨練課',
+2025-08-10 17:17:47    scheduleTime: '07:00',
+2025-08-10 17:17:47    recurring: false
+2025-08-10 17:17:47  }
+2025-08-10 17:17:47  {"ts":"2025-08-10T17:17:47.835Z","lvl":"info","stage":"slots","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:17:47  🎯 執行任務: create_recurring_course
+2025-08-10 17:17:47  🎯 開始處理新增課程任務
+2025-08-10 17:17:47  📋 接收參數: {
+2025-08-10 17:17:47    studentName: '小明',
+2025-08-10 17:17:47    courseName: '晨練課',
+2025-08-10 17:17:47    scheduleTime: '07:00',
+2025-08-10 17:17:47    recurring: false
+2025-08-10 17:17:47  }
+2025-08-10 17:17:47  📊 任務執行結果: {
+2025-08-10 17:17:47    success: false,
+2025-08-10 17:17:47    code: 'MISSING_FIELDS',
+2025-08-10 17:17:47    message: '❓ 請提供以下資訊：課程日期\n\n範例：「小明每週三下午3點數學課」',
+2025-08-10 17:17:47    expectingInput: true,
+2025-08-10 17:17:47    missingFields: [ '課程日期' ]
+2025-08-10 17:17:47  }
+2025-08-10 17:17:47  {"ts":"2025-08-10T17:17:47.977Z","lvl":"info","stage":"task","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","intent":"create_recurring_course","success":false,"code":"MISSING_FIELDS","latencyMs":142}
+2025-08-10 17:17:48  🔍 檢查 replyToken: test-reply-token-1754846266052
+2025-08-10 17:17:48  🧪 檢測到測試 token，跳過真實 LINE API 調用
+2025-08-10 17:17:48  📤 [測試模式] 實際業務回覆: ❓ 請提供以下資訊：課程日期
+2025-08-10 17:17:48  
+2025-08-10 17:17:48  範例：「小明每週三下午3點數學課」
+2025-08-10 17:17:48  {"ts":"2025-08-10T17:17:48.262Z","lvl":"info","direction":"outbound","channel":"line","traceId":"line_1754846266330_86h5ec","userId":"U_test_user_qa","textOut":"❓ 請提供以下資訊：課程日期\n\n範例：「小明每週三下午3點數學課」","quickReply":false}
+2025-08-10 17:18:01  📨 收到 1 個事件
+2025-08-10 17:18:01  📋 事件類型: message
+2025-08-10 17:18:01  🔍 完整事件 JSON: {
+2025-08-10 17:18:01    "type": "message",
+2025-08-10 17:18:01    "message": {
+2025-08-10 17:18:01      "type": "text",
+2025-08-10 17:18:01      "text": "Lumi的鋼琴課改成每天下午3點"
+2025-08-10 17:18:01    },
+2025-08-10 17:18:01    "source": {
+2025-08-10 17:18:01      "userId": "U_test_user_qa",
+2025-08-10 17:18:01      "type": "user"
+2025-08-10 17:18:01    },
+2025-08-10 17:18:01    "replyToken": "test-reply-token-1754846280905",
+2025-08-10 17:18:01    "timestamp": 1754846280905
+2025-08-10 17:18:01  }
+2025-08-10 17:18:01  🧹 檢測到 QA 重置上下文請求，清理用戶上下文: U_test_user_qa
+2025-08-10 17:18:01  {"ts":"2025-08-10T17:18:01.072Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","textIn":"Lumi的鋼琴課改成每天下午3點"}
+2025-08-10 17:18:01  🔍 用戶ID類型: string
+2025-08-10 17:18:01  🔍 是否測試用戶: true
+2025-08-10 17:18:01  🚀 生產用戶，使用真實 LINE Service
+2025-08-10 17:18:01  🎯 開始解析意圖: Lumi的鋼琴課改成每天下午3點 (用戶: U_test_user_qa)
+2025-08-10 17:18:01  ✅ 規則匹配成功: create_recurring_course
+2025-08-10 17:18:01  {"ts":"2025-08-10T17:18:01.214Z","lvl":"info","stage":"nlp","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course"}
+2025-08-10 17:18:01  🔍 開始提取 slots - 意圖: create_recurring_course (用戶: U_test_user_qa)
+2025-08-10 17:18:01  🕒 開始高級時間解析: Lumi的鋼琴課改成每天下午3點
+2025-08-10 17:18:01  ✅ 時間解析成功: {
+2025-08-10 17:18:01    input: 'Lumi的鋼琴課改成每天下午3點',
+2025-08-10 17:18:01    output: '15:00',
+2025-08-10 17:18:01    details: { hour: 15, minute: 0, matchType: 'arabic_period', periodInfo: '下午' }
+2025-08-10 17:18:01  }
+2025-08-10 17:18:01  🧠 使用對話上下文增強 slots 提取
+2025-08-10 17:18:01  📊 規則提取置信度: 0.67
+2025-08-10 17:18:01  🤖 啟用 AI 輔助提取...
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {
+2025-08-10 17:18:03  ✅ 最終 slots: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  {"ts":"2025-08-10T17:18:03.009Z","lvl":"info","stage":"slots","traceId":"line_1754846281072_x42r3q","userId":"U_test_user_qa","intent":"create_recurring_course","slotsSummary":["studentName","courseName","scheduleTime","recurring"]}
+2025-08-10 17:18:03  🎯 執行任務: create_recurring_course
+2025-08-10 17:18:03  🎯 開始處理新增課程任務
+2025-08-10 17:18:03  📋 接收參數: {
+2025-08-10 17:18:03    studentName: 'Lumi',
+2025-08-10 17:18:03    courseName: '鋼琴課',
+2025-08-10 17:18:03    scheduleTime: '15:00',
+2025-08-10 17:18:03    recurring: true
+2025-08-10 17:18:03  }
+2025-08-10 17:18:03  👤 學生日曆: 4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b@group.calendar.google.com
+2025-08-10 17:18:03  ❌ 查詢事件失敗: GaxiosError: Not Found
+2025-08-10 17:18:03      at Gaxios._request (/opt/render/project/src/node_modules/googleapis-common/node_modules/gaxios/build/cjs/src/gaxios.js:154:23)
+2025-08-10 17:18:03      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-10 17:18:03      at async OAuth2Client.requestAsync (/opt/render/project/src/node_modules/googleapis-common/node_modules/google-auth-library/build/src/auth/oauth2client.js:463:20)
+2025-08-10 17:18:03      at async createAPIRequestAsync (/opt/render/project/src/node_modules/googleapis-common/build/src/apirequest.js:308:25)
+2025-08-10 17:18:03      at async getEvents (/opt/render/project/src/src/services/googleCalendarService.js:265:22)
+2025-08-10 17:18:03      at async Object.checkConflict (/opt/render/project/src/src/services/googleCalendarService.js:292:20)
+2025-08-10 17:18:03      at async handle_add_course_task (/opt/render/project/src/src/tasks/handle_add_course_task.js:292:27)
+2025-08-10 17:18:03      at async executeTask (/opt/render/project/src/src/tasks/index.js:121:16)
+2025-08-10 17:18:03      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:92:20)
+2025-08-10 17:18:03      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:438:13) {
+2025-08-10 17:18:03    config: {
+2025-08-10 17:18:03      url: URL {
+2025-08-10 17:18:03        href: 'https://www.googleapis.com/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        origin: 'https://www.googleapis.com',
+2025-08-10 17:18:03        protocol: 'https:',
+2025-08-10 17:18:03        username: '',
+2025-08-10 17:18:03        password: '',
+2025-08-10 17:18:03        host: 'www.googleapis.com',
+2025-08-10 17:18:03        hostname: 'www.googleapis.com',
+2025-08-10 17:18:03        port: '',
+2025-08-10 17:18:03        pathname: '/calendar/v3/calendars/4a0f9e74ce6d657504bec55784c18348676fc1f35aa59f71a6cd2b9b5b2f2f4b%40group.calendar.google.com/events',
+2025-08-10 17:18:03        search: '?timeMin=2025-08-11T00%3A00%3A00%2B08%3A00&timeMax=2025-08-11T23%3A59%3A59%2B08%3A00&singleEvents=true&orderBy=startTime',
+2025-08-10 17:18:03        searchParams: URLSearchParams {
+2025-08-10 17:18:03          'timeMin' => '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03          'timeMax' => '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03          'singleEvents' => 'true',
+2025-08-10 17:18:03          'orderBy' => 'startTime' },
+2025-08-10 17:18:03        hash: ''
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      method: 'GET',
+2025-08-10 17:18:03      apiVersion: '',
+2025-08-10 17:18:03      userAgentDirectives: [ [Object] ],
+2025-08-10 17:18:03      paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03      headers: Headers {
+2025-08-10 17:18:03        'accept-encoding': 'gzip',
+2025-08-10 17:18:03        authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03        'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03        'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      params: {
+2025-08-10 17:18:03        timeMin: '2025-08-11T00:00:00+08:00',
+2025-08-10 17:18:03        timeMax: '2025-08-11T23:59:59+08:00',
+2025-08-10 17:18:03        singleEvents: true,
+2025-08-10 17:18:03        orderBy: 'startTime'
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03      retry: true,
+2025-08-10 17:18:03      responseType: 'unknown',
+2025-08-10 17:18:03      errorRedactor: [Function: defaultErrorRedactor],
+2025-08-10 17:18:03      retryConfig: {
+2025-08-10 17:18:03        currentRetryAttempt: 0,
+2025-08-10 17:18:03        retry: 3,
+2025-08-10 17:18:03        httpMethodsToRetry: [Array],
+2025-08-10 17:18:03        noResponseRetries: 2,
+2025-08-10 17:18:03        retryDelayMultiplier: 2,
+2025-08-10 17:18:03        timeOfFirstRequest: 1754846283402,
+2025-08-10 17:18:03        totalTimeout: 9007199254740991,
+2025-08-10 17:18:03        maxRetryDelay: 9007199254740991,
+2025-08-10 17:18:03        statusCodesToRetry: [Array]
+2025-08-10 17:18:03      }
+2025-08-10 17:18:03    },
+2025-08-10 17:18:03    response: Response {
+2025-08-10 17:18:03      size: 0,
+2025-08-10 17:18:03      data: { error: [Object] },
+2025-08-10 17:18:03      config: {
+2025-08-10 17:18:03        url: URL {},
+2025-08-10 17:18:03        method: 'GET',
+2025-08-10 17:18:03        apiVersion: '',
+2025-08-10 17:18:03        userAgentDirectives: [Array],
+2025-08-10 17:18:03        paramsSerializer: [Function (anonymous)],
+2025-08-10 17:18:03        headers: Headers {
+2025-08-10 17:18:03          'accept-encoding': 'gzip',
+2025-08-10 17:18:03          authorization: '<<REDACTED> - See `errorRedactor` option in `gaxios` for configuration>.',
+2025-08-10 17:18:03          'user-agent': 'google-api-nodejs-client/8.0.0 (gzip)',
+2025-08-10 17:18:03          'x-goog-api-client': 'gdcl/8.0.0 gl-node/24.5.0'
+2025-08-10 17:18:03        },
+2025-08-10 17:18:03        params: [Object],
+2025-08-10 17:18:03        validateStatus: [Function (anonymous)],
+2025-08-10 17:18:03        retry: true,
+2025-08-10 17:18:03        responseType: 'unknown',
+2025-08-10 17:18:03        errorRedactor: [Function: defaultErrorRedactor]
+2025-08-10 17:18:03      },
+2025-08-10 17:18:03      Symbol(Body internals): {

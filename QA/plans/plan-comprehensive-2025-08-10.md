@@ -12,8 +12,8 @@
 @target: prod
 @steps:
 - 小明明天下午2點要上數學課
-@expect.keywords: 確認, 小明, 數學課
-@expect.code: QUERY_OK
+@expect.keywords: 確認, 小明, 數學課, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.1-B 時間格式多樣性（美式 PM/AM）
 @id: A1.1-B
@@ -21,7 +21,8 @@
 @target: prod
 @steps:
 - Lumi後天晚上八點半要上鋼琴課
-@expect.keywords: 確認, Lumi, 鋼琴課, 8:30
+@expect.keywords: 確認, Lumi, 鋼琴課, 8:30, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.1-C 中文數字時間（十點三十分）
 @id: A1.1-C
@@ -29,7 +30,8 @@
 @target: prod
 @steps:
 - 小光明天上午十點三十分英文課
-@expect.keywords: 確認, 小光, 英文課, 10:30
+@expect.keywords: 確認, 小光, 英文課, 10:30, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.2-A 缺少學生資訊（啟動補問）
 @id: A1.2-A
@@ -39,7 +41,8 @@
 1) 明天下午3點要上數學課
 @expect.keywords(step=1): 學生, 哪位, 補充
 2) 小明
-@expect.keywords(step=2): 確認, 小明, 數學課, 15:00
+@expect.keywords(step=2): 確認, 小明, 數學課, 15:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.2-B 缺少時間資訊（補問）
 @id: A1.2-B
@@ -49,7 +52,8 @@
 1) 小明要上數學課
 @expect.keywords(step=1): 時間, 課程日期
 2) 明天下午2點
-@expect.keywords(step=2): 確認, 小明, 數學課, 14:00
+@expect.keywords(step=2): 確認, 小明, 數學課, 14:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.2-C 多輪完整（學生→課程→時間）
 @id: A1.2-C
@@ -61,7 +65,8 @@
 2) 數學課
 @expect.keywords(step=2): 時間, 什麼時候
 3) 明天下午2點
-@expect.keywords(step=3): 確認, 小明, 數學課, 14:00
+@expect.keywords(step=3): 確認, 小明, 數學課, 14:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A1.3-A 無效時間格式（25點）
 @id: A1.3-A
@@ -96,7 +101,8 @@
 @target: prod
 @steps:
 - Lumi每週三下午3點要上鋼琴課
-@expect.keywords: 確認, Lumi, 鋼琴課, 每週三
+@expect.keywords: 確認, Lumi, 鋼琴課, 每週三, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.1-B 多天每週重複（一三五）
 @id: A2.1-B
@@ -104,7 +110,8 @@
 @target: prod
 @steps:
 - 小光每週一三五上午10點英文課
-@expect.keywords: 確認, 小光, 英文課, 每週一, 每週三, 每週五
+@expect.keywords: 確認, 小光, 英文課, 每週一, 每週三, 每週五, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.1-C 每日重複課程（功能開啟）
 @id: A2.1-C
@@ -112,7 +119,8 @@
 @target: prod
 @steps:
 - 小明每天早上8點晨練課
-@expect.keywords: 確認, 小明, 晨練課, 每天
+@expect.keywords: 確認, 小明, 晨練課, 每天, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.1-D 每日重複（變體表達）
 @id: A2.1-D
@@ -120,7 +128,8 @@
 @target: prod
 @steps:
 - 安排Lumi每日下午5點瑜伽課
-@expect.keywords: 確認, Lumi, 瑜伽課, 每天, 17:00
+@expect.keywords: 確認, Lumi, 瑜伽課, 每天, 17:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.1-E 每月重複（目前標示未完成）
 @id: A2.1-E
@@ -137,7 +146,8 @@
 @target: prod
 @steps:
 - 安排小明定期游泳課每週二晚上7點
-@expect.keywords: 確認, 小明, 游泳課, 每週二, 19:00
+@expect.keywords: 確認, 小明, 游泳課, 每週二, 19:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.2-B 模糊重複表達（每個星期四）
 @id: A2.2-B
@@ -145,7 +155,8 @@
 @target: prod
 @steps:
 - Lumi固定每個星期四下午兩點鋼琴課
-@expect.keywords: 確認, Lumi, 鋼琴課, 每週四, 14:00
+@expect.keywords: 確認, Lumi, 鋼琴課, 每週四, 14:00, 成功
+@expect.code: ADD_COURSE_OK
 
 ### A2.2-C 重複類型區分（daily/weekly/monthly）
 @id: A2.2-C
@@ -222,7 +233,7 @@
 @target: prod
 @steps:
 - 小明今天有什麼課？
-@expect.keywords: 小明, 今天, 課程
+@expect.keywords: 小明, 今天, 課表
 
 ### B1.1-B 明日課程查詢
 @id: B1.1-B
@@ -238,7 +249,7 @@
 @target: prod
 @steps:
 - 看一下小光這週的安排
-@expect.keywords: 小光, 這週, 課程
+@expect.keywords: 小光, 這週, 課表
 
 ### B1.2-A 無課程日查詢（空結果）
 @id: B1.2-A
@@ -255,7 +266,7 @@
 @target: prod
 @steps:
 - 小明的數學課什麼時候上？
-@expect.keywords: 小明, 數學課
+@expect.keywords: 小明, 數學課, 時間
 
 ### B1.3-B 每日重複課程查詢
 @id: B1.3-B
@@ -263,7 +274,7 @@
 @target: prod
 @steps:
 - 小明的晨練課每天幾點？
-@expect.keywords: 晨練課, 每天
+@expect.keywords: 晨練課, 每天, 時間
 
 ### B1.3-C 重複課類型識別查詢
 @id: B1.3-C
@@ -271,7 +282,7 @@
 @target: prod
 @steps:
 - 查詢Lumi的重複課程
-@expect.keywords: Lumi, 重複課程
+@expect.keywords: Lumi, 重複課程, 課表
 
 ### B2.1-A 當日課程記錄（標準）
 @id: B2.1-A
