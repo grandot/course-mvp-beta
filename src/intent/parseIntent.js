@@ -295,6 +295,7 @@ async function parseIntent(message, userId = null) {
   // 條件：包含內容相關關鍵詞，且不包含明確排程/新增關鍵詞
   {
     const contentKeywords = ['學了', '教了', '內容', '表現', '老師說', '反饋', '評價', '記錄'];
+    // 注意：不把「今天/明天/昨天」視為排程線索，避免把記錄語句誤導為新增
     const schedulingKeywords = ['新增', '安排', '預約', '每週', '每周', '每天', '每月', '重複', '定期', '幾點', '點', '時', '課表', '查詢'];
     const hasContent = contentKeywords.some((k) => cleanMessage.includes(k));
     const hasScheduling = schedulingKeywords.some((k) => cleanMessage.includes(k));
