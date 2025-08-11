@@ -1,19 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 
-function nowIsoUtc() {
-  return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+function nowTaipeiString() {
+  // 使用 sv-SE 產生 YYYY-MM-DD HH:mm:ss，並指定時區 Asia/Taipei
+  return new Date().toLocaleString('sv-SE', {
+    timeZone: 'Asia/Taipei',
+    hour12: false,
+  });
 }
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-function generateDefaultContent(iso) {
+function generateDefaultContent(ts) {
   return [
     '## AI 任務上下文（聊天）',
     '',
-    `- 最後更新：${iso}（UTC）`,
+    `- 最後更新：${ts}（台北時間, UTC+8）`,
     '',
     '### 當前重點',
     '- 簡化 NLU：Safety → AI（主判）→ 簡單規則兜底。',
@@ -32,25 +36,25 @@ function generateDefaultContent(iso) {
   ].join('\n');
 }
 
-function updateExistingContent(content, iso) {
+function updateExistingContent(content, ts) {
   const hasMarker = content.includes('AI 任務上下文（聊天）');
-  const replaced = content.replace(/(最後更新：)[^\n]*/g, `$1${iso}（UTC）`);
+  const replaced = content.replace(/(最後更新：)[^\n]*/g, `$1${ts}（台北時間, UTC+8）`);
   if (replaced !== content) return replaced;
   // 若沒有標記或無「最後更新」行，前置一個標頭區塊
-  const header = generateDefaultContent(iso);
+  const header = generateDefaultContent(ts);
   return `${header}\n${content}`;
 }
 
 function main() {
   const contextPath = path.resolve('AI_TASK_CONTEXT.md');
-  const iso = nowIsoUtc();
+  const ts = nowTaipeiString();
 
   let output;
   if (fs.existsSync(contextPath)) {
     const prev = fs.readFileSync(contextPath, 'utf8');
-    output = updateExistingContent(prev, iso);
+    output = updateExistingContent(prev, ts);
   } else {
-    output = generateDefaultContent(iso);
+    output = generateDefaultContent(ts);
   }
 
   fs.writeFileSync(contextPath, output, 'utf8');
