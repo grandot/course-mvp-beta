@@ -115,6 +115,7 @@
 - [ ] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
 - [ ] 各任務 Gatekeeper（最小充分條件與錯誤碼/文案統一）
 - [ ] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
+- [x] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
 - [ ] 更新 `config/mvp/intent-rules.yaml`（Safety/Query/Modify 權威規則）
 - [ ] 更新 QA 測試 MD 期望（課表/NOT_FOUND/功能開發中）
 - [ ] 灰度上線與回報（里程碑 1 → 3）

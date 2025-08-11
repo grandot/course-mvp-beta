@@ -60,6 +60,21 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// 決策鏈調試端點（最近紀錄或依 traceId 查詢）
+app.get('/debug/decision', (req, res) => {
+  try {
+    const { getRecent, getByTraceId } = require('./utils/decisionLogger');
+    const traceId = req.query.traceId || req.query.tid;
+    const limit = req.query.limit || 20;
+    if (traceId) {
+      return res.json({ ok: true, items: getByTraceId(String(traceId)) });
+    }
+    return res.json({ ok: true, items: getRecent(Number(limit)) });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
 // OpenAI 連通性 Ping（網路/授權快速檢查）
 app.get('/debug/openai-ping', async (req, res) => {
   try {

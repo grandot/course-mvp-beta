@@ -81,6 +81,11 @@ async function handleTextMessage(event, req = null) {
       intent = await parseIntent(userMessage, userId);
     }
     info({ stage: 'nlp', traceId, userId, intent });
+    try {
+      // 記錄 Router 決策到 DecisionLogger（便於 /debug/decision 查詢）
+      const { recordDecision } = require('../utils/decisionLogger');
+      recordDecision(traceId, { stage: 'nlp', userId, message: userMessage, intent });
+    } catch (_) {}
 
     // 里程碑1保險絲：查詢/提醒覆寫（避免誤分流）
     try {
@@ -127,12 +132,20 @@ async function handleTextMessage(event, req = null) {
       }
     }
     info({ stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots) });
+    try {
+      const { recordDecision } = require('../utils/decisionLogger');
+      recordDecision(traceId, { stage: 'slots', userId, intent, slots });
+    } catch (_) {}
 
     // 第三步：執行任務
     const t0 = Date.now();
     const result = await executeTask(intent, slots, userId, event);
     const latencyMs = Date.now() - t0;
     info({ stage: 'task', traceId, userId, intent, success: !!result?.success, code: result?.code || null, latencyMs });
+    try {
+      const { recordDecision } = require('../utils/decisionLogger');
+      recordDecision(traceId, { stage: 'task', userId, intent, result, latencyMs });
+    } catch (_) {}
 
     // 第四步：記錄任務執行結果到對話上下文
     await conversationManager.recordTaskResult(userId, intent, slots, result);
@@ -157,6 +170,10 @@ async function handleTextMessage(event, req = null) {
 
     // 回應用戶
     await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
+    try {
+      const { recordDecision } = require('../utils/decisionLogger');
+      recordDecision(traceId, { stage: 'render', userId, intent, responseMessage, quickReply });
+    } catch (_) {}
     info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage, quickReply: !!quickReply });
   } catch (error) {
     const { error: logError, generateTraceId } = require('../utils/logger');
