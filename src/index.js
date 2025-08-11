@@ -60,6 +60,54 @@ app.get('/debug/config', (req, res) => {
   });
 });
 
+// OpenAI 連通性 Ping（網路/授權快速檢查）
+app.get('/debug/openai-ping', async (req, res) => {
+  try {
+    const useAuth = (req.query.auth || 'true') !== 'false';
+    const https = require('https');
+
+    const options = {
+      method: 'GET',
+      hostname: 'api.openai.com',
+      path: '/v1/models',
+      headers: {},
+      timeout: 4000,
+    };
+    if (useAuth && process.env.OPENAI_API_KEY) {
+      options.headers.Authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const startedAt = Date.now();
+    const request = https.request(options, (response) => {
+      const latencyMs = Date.now() - startedAt;
+      let body = '';
+      response.on('data', (chunk) => { body += chunk; });
+      response.on('end', () => {
+        let json = null;
+        try { json = JSON.parse(body); } catch (_) {}
+        return res.json({
+          ok: response.statusCode && response.statusCode < 500,
+          statusCode: response.statusCode,
+          useAuth,
+          latencyMs,
+          body: json || body.slice(0, 300),
+        });
+      });
+    });
+    request.on('timeout', () => {
+      request.destroy(new Error('timeout'));
+    });
+    request.on('error', (err) => {
+      return res.status(500).json({ ok: false, error: err.message });
+    });
+    request.end();
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
 // 簡易意圖偵測調試端點（僅供自查，不處理安全性與速率限制）
 app.get('/debug/intent', async (req, res) => {
   try {
