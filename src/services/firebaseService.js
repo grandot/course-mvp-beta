@@ -13,6 +13,15 @@ let db = null;
 function initializeFirebase() {
   if (!db) {
     try {
+      // 確保 dotenv 已載入（防止環境變數未載入）
+      if (typeof require !== 'undefined') {
+        try {
+          require('dotenv').config();
+        } catch (e) {
+          // dotenv 可能已載入或不可用，忽略錯誤
+        }
+      }
+      
       // 檢查必要的環境變數
       const requiredEnvVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_STORAGE_BUCKET'];
       const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);

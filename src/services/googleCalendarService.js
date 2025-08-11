@@ -15,6 +15,15 @@ let authMode = 'uninitialized'; // 'oauth2' | 'service_account' | 'mock' | 'disa
 function initializeGoogleCalendar() {
   if (!calendar) {
     try {
+      // 確保 dotenv 已載入（防止環境變數未載入）
+      if (typeof require !== 'undefined') {
+        try {
+          require('dotenv').config();
+        } catch (e) {
+          // dotenv 可能已載入或不可用，忽略錯誤
+        }
+      }
+      
       // 1) Mock（測試）
       if (process.env.USE_MOCK_CALENDAR === 'true') {
         calendar = {

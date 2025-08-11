@@ -248,6 +248,7 @@ async function parseIntent(message, userId = null) {
     try {
       const text = String(msg || '');
       const has = (kw) => text.includes(kw);
+      if (safeHasAny(['確認', '好的', '是的', '對', 'OK', 'ok'], text)) return 'confirm_action';
       if (safeHasAny(['取消', '刪除', '刪掉'], text)) return 'cancel_course';
       if (has('提醒')) return 'set_reminder';
       if (safeHasAny(['改到', '改成', '修改', '更改', '換到', '換成', '改'], text)) return 'modify_course';

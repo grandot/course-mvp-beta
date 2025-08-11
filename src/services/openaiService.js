@@ -12,6 +12,15 @@ let openaiClient = null;
  */
 function initializeOpenAI() {
   if (!openaiClient) {
+    // 確保 dotenv 已載入（防止環境變數未載入）
+    if (typeof require !== 'undefined') {
+      try {
+        require('dotenv').config();
+      } catch (e) {
+        // dotenv 可能已載入或不可用，忽略錯誤
+      }
+    }
+    
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('❌ OPENAI_API_KEY 環境變數未設定');
     }
@@ -100,6 +109,7 @@ async function identifyIntent(message) {
 - cancel_course: 取消或刪除課程
 - record_content: 記錄課程內容或表現
 - modify_course: 修改課程時間或內容
+- confirm_action: 確認操作（確認、好的、是的）
 - unknown: 無法識別或不屬於課程管理相關
 
 回傳格式（純 JSON，不要額外文字）：
