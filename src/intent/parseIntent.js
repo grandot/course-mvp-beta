@@ -227,6 +227,29 @@ async function parseIntent(message, userId = null) {
   const diag = enableDiag ? diagMod.initDiagnostics(cleanMessage) : null;
   if (enableDiag) diagMod.pushPath(diag, 'start');
 
+  // C: 簡易關鍵詞降級（用於錯誤情況）
+  function fallbackIntentDetection(msg) {
+    try {
+      const text = String(msg || '');
+      const has = (kw) => text.includes(kw);
+      const hasAny = (kws) => Array.isArray(kws) && kws.some((k) => typeof k === 'string' && text.includes(k));
+      if (hasAny(['取消', '刪除', '刪掉'])) return 'cancel_course';
+      if (has('提醒')) return 'set_reminder';
+      if (hasAny(['改到', '改成', '修改', '更改', '換到', '換成', '改'])) return 'modify_course';
+      const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
+      if (hasAny(['新增', '安排', '要上', '幫我安排']) && hasAny(timeHints)) return 'add_course';
+      if (hasAny(['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '這週', '下週', '本週'])) return 'query_schedule';
+      if (hasAny(['學了', '內容', '記錄', '老師說', '表現', '評價'])) return 'record_content';
+      return 'unknown';
+    } catch (_) {
+      return 'unknown';
+    }
+  }
+
+  try {
+    // 環境/狀態隔離：若啟用 STATELESS_MODE，跳過會話上下文相關邏輯
+    const statelessMode = process.env.STATELESS_MODE === 'true' || process.env.ENABLE_ENV_ISOLATION === 'true' && process.env.NODE_ENV === 'production';
+
   // Fast-path 1: 明確操作詞優先
   const msg = cleanMessage;
   const has = (kw) => msg.includes(kw);
@@ -280,7 +303,7 @@ async function parseIntent(message, userId = null) {
   }
 
   // 優先檢查期待輸入狀態（補充缺失資訊）
-  if (userId) {
+  if (userId && !statelessMode) {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
 
@@ -306,7 +329,7 @@ async function parseIntent(message, userId = null) {
   }
 
   // 檢查是否為確認關鍵詞（在期待輸入狀態下）
-  if (userId) {
+  if (userId && !statelessMode) {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
 
@@ -424,6 +447,16 @@ async function parseIntent(message, userId = null) {
   console.log('❓ 無法識別意圖');
   if (enableDiag) { diag.finalIntent = 'unknown'; diagMod.pushPath(diag, 'unknown'); await diagMod.logDiagnostics(diag); }
   return 'unknown';
+  } catch (error) {
+    console.error('❌ parseIntent 發生例外，啟用降級判斷:', error?.message || error);
+    if (enableDiag) {
+      diag.error = error?.message || String(error);
+      diagMod.pushPath(diag, 'exception');
+    }
+    const fb = fallbackIntentDetection(cleanMessage);
+    if (enableDiag) { diag.finalIntent = fb; await diagMod.logDiagnostics(diag); }
+    return fb;
+  }
 }
 
 /**

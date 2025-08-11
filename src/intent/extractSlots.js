@@ -217,6 +217,32 @@ function checkRecurring(message) {
  * 提取學生姓名
  */
 function extractStudentName(message) {
+  // 環境隔離：在生產/無狀態模式下，先用簡化規則避免複雜 lookahead 正則在不同環境表現差異
+  try {
+    const statelessMode = process.env.STATELESS_MODE === 'true'
+      || (process.env.ENABLE_ENV_ISOLATION === 'true' && process.env.NODE_ENV === 'production');
+    if (statelessMode) {
+      const markers = ['這週', '本週', '下週', '這周', '本周', '下周', '今天', '明天', '昨天', '課表'];
+      for (const mk of markers) {
+        const idx = message.indexOf(mk);
+        if (idx > 0 && idx <= 12) {
+          let candidate = message.substring(0, idx).trim();
+          candidate = candidate.replace(/^(查詢|看|看看|顯示)/, '').replace(/的$/, '');
+          candidate = stripTimeSuffixFromName(candidate);
+          if (
+            candidate
+            && candidate.length >= 2
+            && candidate.length <= 12
+            && /[一-龥A-Za-z]/.test(candidate)
+            && !candidate.includes('課')
+          ) {
+            return candidate;
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
   // 常見的學生姓名模式 - 按精確度排序
   const namePatterns = [
     // 立即處理『名字+下/這/本週(周)+課表』開頭句型，避免後綴吃入姓名
