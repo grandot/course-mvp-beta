@@ -67,7 +67,9 @@ async function handleTextMessage(event, req = null) {
 
     // 里程碑1：若啟用 IntentRouter，改由 Router 決策
     let intent;
-    const useRouter = process.env.USE_INTENT_ROUTER === 'true';
+    const qaHeader = (req && (req.headers['x-qa-mode'] || req.query?.qaMode || '')).toString().toLowerCase();
+    const isQaFlow = qaHeader === 'real' || (userId && String(userId).startsWith('U_test_'));
+    const useRouter = process.env.USE_INTENT_ROUTER === 'true' || isQaFlow;
     if (useRouter) {
       const { createRequestContext } = require('../nlu/RequestContext');
       const { routeIntent } = require('../nlu/IntentRouter');

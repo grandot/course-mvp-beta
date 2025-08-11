@@ -108,9 +108,9 @@
 - 回退：`USE_INTENT_ROUTER=false` 即回舊路徑；日誌持續可觀測。
 
 ### 實作清單（可勾選）
-- [ ] 新增 `src/nlu/RequestContext.js`
-- [ ] 新增 `src/nlu/IntentRouter.js`（Safety/Query/Modify 決策、AI 補判）
-- [ ] 調整 `src/bot/webhook.js` 使用 Router（保留回退 Flag）
+- [x] 新增 `src/nlu/RequestContext.js`
+- [x] 新增 `src/nlu/IntentRouter.js`（Safety/Query/Modify 決策、AI 補判）
+- [x] 調整 `src/bot/webhook.js` 使用 Router（保留回退 Flag；QA 流程預設走 Router）
 - [ ] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
 - [ ] 新增 `src/nlu/ResponseRenderer.js`（Query/Record/Reminder/Cancel/Modify 模板）
 - [ ] 各任務 Gatekeeper（最小充分條件與錯誤碼/文案統一）
@@ -118,3 +118,8 @@
 - [ ] 更新 `config/mvp/intent-rules.yaml`（Safety/Query/Modify 權威規則）
 - [ ] 更新 QA 測試 MD 期望（課表/NOT_FOUND/功能開發中）
 - [ ] 灰度上線與回報（里程碑 1 → 3）
+
+### 測試附註（持續更新）
+- 2025-08-11 里程碑1骨幹上線（Router/Context/Renderer Query 空模板，webhook 接入）：
+  - 本地：可啟動，無阻塞；待接 Query 渲染與 Gatekeeper 才能影響結果文字
+  - 線上冒煙：待開啟 Flag 後再跑一輪
