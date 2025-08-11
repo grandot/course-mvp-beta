@@ -10,10 +10,12 @@
  */
 
 require('dotenv').config();
-const { parseIntent } = require('../src/intent/parseIntent');
-const { extractSlots } = require('../src/intent/extractSlots');
-const { executeTask } = require('../src/tasks');
-const { getConversationManager } = require('../src/conversation/ConversationManager');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '../../../..');
+const { parseIntent } = require(path.join(ROOT, 'src/intent/parseIntent'));
+const { extractSlots } = require(path.join(ROOT, 'src/intent/extractSlots'));
+const { executeTask } = require(path.join(ROOT, 'src/tasks'));
+const { getConversationManager } = require(path.join(ROOT, 'src/conversation/ConversationManager'));
 
 // 測試用戶 ID
 const TEST_USER_ID = 'test_multi_turn_user_123';

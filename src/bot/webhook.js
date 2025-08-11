@@ -458,13 +458,18 @@ function verifySignature(body, signature) {
  */
 async function handleWebhook(req, res) {
   try {
-    // 驗證簽名
+    // 驗證簽名（允許測試模式略過）
     const signature = req.headers['x-line-signature'];
     const body = JSON.stringify(req.body);
+    const allowTestWebhook = (process.env.NODE_ENV !== 'production') && (process.env.ALLOW_TEST_WEBHOOK === 'true' || process.env.USE_MOCK_LINE_SERVICE === 'true' || req.headers['x-qa-mode'] === 'test');
 
-    if (!verifySignature(body, signature)) {
-      console.error('❌ Webhook 簽名驗證失敗');
-      return res.status(400).json({ error: 'Invalid signature' });
+    if (!allowTestWebhook) {
+      if (!verifySignature(body, signature)) {
+        console.error('❌ Webhook 簽名驗證失敗');
+        return res.status(400).json({ error: 'Invalid signature' });
+      }
+    } else {
+      console.log('🧪 測試模式：略過 LINE 簽名驗證');
     }
 
     const { events } = req.body;

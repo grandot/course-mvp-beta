@@ -3,8 +3,10 @@
  * 驗證整個流程從意圖識別到 Google Calendar 創建
  */
 
-const { extractSlots, identifyRecurrenceType } = require('../src/intent/extractSlots');
-const { buildRecurrenceRule } = require('../src/services/googleCalendarService');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '../../../..');
+const { extractSlots, identifyRecurrenceType } = require(path.join(ROOT, 'src/intent/extractSlots'));
+const { buildRecurrenceRule } = require(path.join(ROOT, 'src/services/googleCalendarService'));
 
 // 設定測試環境變數
 process.env.ENABLE_DAILY_RECURRING = 'true';

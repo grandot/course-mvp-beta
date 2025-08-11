@@ -38,7 +38,8 @@
     "qa:fix": "node tools/qa-orchestrator.js fix",
     "save:context": "node tools/save-context.js",
     "status:trim": "node tools/maintain-project-status.js",
-    "changelog:update": "node tools/update-changelog.js"
+    "changelog:update": "node tools/update-changelog.js",
+    "sync:all": "node tools/sync-all-status.js"
   },
   "keywords": [
     "line-bot",

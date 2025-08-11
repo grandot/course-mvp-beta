@@ -83,11 +83,16 @@ async function chatCompletion(prompt, options = {}) {
  */
 async function identifyIntent(message) {
   const prompt = `
-請判斷以下語句的意圖類型，回傳 JSON 格式：
+你是課程管理聊天機器人的意圖分析器。僅處理課程相關語句，嚴格排除無關查詢。
 
 語句：「${message}」
 
-可能的意圖類型：
+判斷規則：
+- 僅在語句明確涉及「課程/上課/學生/課表/安排/提醒/取消/記錄」等教育相關內容時，才分配課程相關意圖
+- 天氣/心情/新聞/股市/一般問候/時間詢問（現在幾點）等非課程語句，一律回傳 unknown
+- 對模糊或不確定的語句設置低信心度
+
+可能的意圖：
 - add_course: 新增單次課程
 - create_recurring_course: 創建重複課程（每週、每天等）
 - query_schedule: 查詢課表或行程
@@ -97,8 +102,13 @@ async function identifyIntent(message) {
 - modify_course: 修改課程時間或內容
 - unknown: 無法識別或不屬於課程管理相關
 
-回傳格式：{"intent": "意圖名稱", "confidence": 0.8}
-confidence 為信心度（0.0-1.0），低於 0.6 請回傳 unknown
+回傳格式（純 JSON，不要額外文字）：
+{"intent": "意圖名稱", "confidence": 0.0~1.0}
+
+對於非課程相關的語句，必須回傳：
+{"intent": "unknown", "confidence": 0.0}
+
+信心度門檻：低於 0.7 請回傳 unknown
 `;
 
   try {

@@ -4,7 +4,9 @@
  * 用於驗證時間解析系統的準確性和覆蓋率
  */
 
-const { testTimeParser, parseScheduleTime } = require('../src/intent/timeParser');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '../../../..');
+const { testTimeParser, parseScheduleTime } = require(path.join(ROOT, 'src/intent/timeParser'));
 
 console.log('🕒 時間解析器高覆蓋度測試');
 console.log('============================\n');
@@ -67,7 +69,7 @@ console.log('\n' + '='.repeat(50) + '\n');
 
 // 與舊系統對比測試
 console.log('🔄 新舊系統對比測試:');
-const { parseScheduleTime: oldParseTime } = require('../src/intent/extractSlots');
+const { parseScheduleTime: oldParseTime } = require(path.join(ROOT, 'src/intent/extractSlots'));
 
 const comparisonTests = [
   '早上十點',      // 核心問題案例

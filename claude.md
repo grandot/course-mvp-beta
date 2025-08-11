@@ -12,6 +12,19 @@ npm run lint:fix   # 修復格式
 node tools/send-test-message.js "測試訊息"  # 測試功能
 ```
 
+## 自然語言命令（對 AI 助手說）
+當用戶用自然語言下達以下命令時，AI 助手應該執行對應的腳本：
+
+- **「更新所有文檔」「同步狀態」「同步文檔」** → 執行 `npm run sync:all`
+- **「保存上下文」「保存進度」** → 執行 `npm run save:context`  
+- **「跑測試」「執行測試」** → 執行 `npm test`
+- **「啟動服務」「開始」** → 執行 `npm start`
+- **「檢查代碼」「lint」** → 執行 `npm run lint`
+- **「修復格式」** → 執行 `npm run lint:fix`
+- **「查看日誌」「看log」** → 執行 `npm run logs:render`
+
+用戶不需要記住具體命令，直接用中文告訴 AI 助手想做什麼即可。
+
 ## 核心架構
 LINE Bot → parseIntent → extractSlots → handle_XXX_task → Google Calendar + Firebase
 

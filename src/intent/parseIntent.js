@@ -280,11 +280,13 @@ async function parseIntent(message, userId = null) {
       return 'set_reminder';
     }
 
-    // AI 主判（延長超時、降低信心閾值、加診斷日誌）
+    // 補問邏輯改由 IntentRouter 處理（這裡保持純意圖識別）
+
+    // AI 主判（延長超時、提高信心閾值、加診斷日誌；非課程語句交由 prompt 決策）
     try {
       const enableAI = process.env.ENABLE_AI_FALLBACK === 'true';
       if (enableAI) {
-        const minConfidence = parseFloat(process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.3');
+        const minConfidence = parseFloat(process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.7');
         const timeoutMs = parseInt(process.env.AI_FALLBACK_TIMEOUT_MS || '5000', 10);
         const withTimeout = (p, ms) => new Promise((resolve) => {
           let settled = false;
@@ -308,13 +310,18 @@ async function parseIntent(message, userId = null) {
       console.warn('⚠️ AI 主判例外，降級至規則兜底:', e?.message || e);
     }
 
-    // 停用簡化規則（臨時）：避免攔截 AI，讓非 Safety 句一律走 AI
-    if (enableDiag) { diagMod.pushPath(diag, 'no-simple-rule'); }
-    // 最終降級：僅保留 unknown（避免舊規則路徑干擾）
+    // 規則兜底：AI 失效時使用可靠的關鍵詞匹配
+    const ruleIntent = fallbackIntentDetection(cleanMessage);
+    if (ruleIntent !== 'unknown') {
+      console.log('✅ 規則兜底識別:', ruleIntent);
+      if (enableDiag) { diagMod.pushPath(diag, 'rule-fallback'); diag.finalIntent = ruleIntent; await diagMod.logDiagnostics(diag); }
+      return ruleIntent;
+    }
 
-  console.log('❓ 無法識別意圖');
-  if (enableDiag) { diag.finalIntent = 'unknown'; diagMod.pushPath(diag, 'unknown'); await diagMod.logDiagnostics(diag); }
-  return 'unknown';
+    // 最終 unknown：提供用戶引導
+    console.log('❓ 無法識別意圖，需要用戶澄清');
+    if (enableDiag) { diag.finalIntent = 'unknown'; diagMod.pushPath(diag, 'unknown-need-clarification'); await diagMod.logDiagnostics(diag); }
+    return 'unknown';
   } catch (error) {
     console.error('❌ parseIntent 發生例外，啟用降級判斷:', error?.message || error);
     if (enableDiag) {

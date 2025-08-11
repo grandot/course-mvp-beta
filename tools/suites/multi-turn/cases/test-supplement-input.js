@@ -6,18 +6,20 @@
  */
 
 require('dotenv').config();
-const { parseIntent } = require('../src/intent/parseIntent');
-const { extractSlots } = require('../src/intent/extractSlots');
-const { getConversationManager } = require('../src/conversation/ConversationManager');
+const path = require('path');
+const ROOT = path.resolve(__dirname, '../../../..');
+const { parseIntent } = require(path.join(ROOT, 'src/intent/parseIntent'));
+const { extractSlots } = require(path.join(ROOT, 'src/intent/extractSlots'));
+const { getConversationManager } = require(path.join(ROOT, 'src/conversation/ConversationManager'));
 
 // 動態載入任務處理器
 function getTaskHandler(intent) {
   try {
-    return require(`../src/tasks/handle_${intent}_task`);
+    return require(path.join(ROOT, `src/tasks/handle_${intent}_task`));
   } catch (error) {
     // 如果找不到單獨的處理器，嘗試從補充處理器中載入
     if (intent.startsWith('supplement_')) {
-      const supplementHandlers = require('../src/tasks/handle_supplement_input_task');
+      const supplementHandlers = require(path.join(ROOT, 'src/tasks/handle_supplement_input_task'));
       const handlerName = `handle_${intent}_task`;
       return supplementHandlers[handlerName];
     }
