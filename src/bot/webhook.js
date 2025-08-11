@@ -87,18 +87,11 @@ async function handleTextMessage(event, req = null) {
       recordDecision(traceId, { stage: 'nlp', userId, message: userMessage, intent });
     } catch (_) {}
 
-    // 里程碑1保險絲：查詢/提醒覆寫（避免誤分流）
+    // 里程碑1保險絲：僅保留提醒覆寫，關閉查詢覆寫避免壓過 AI
     try {
       const msg = String(userMessage || '');
-      const hasAny = (kws) => kws.some((k) => msg.includes(k));
-      const queryCues = ['課表', '時間表', '課程安排', '查詢', '看一下', '有什麼課', '有什麼', '今天', '明天', '這週', '下週', '本週'];
-      const addCues = ['要上', '安排', '新增'];
-      const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
-      const looksLikeAdd = hasAny(addCues) && hasAny(timeHints);
       if (msg.includes('提醒')) {
         intent = 'set_reminder';
-      } else if (hasAny(queryCues) && !looksLikeAdd) {
-        intent = 'query_schedule';
       }
     } catch (_) {}
 
