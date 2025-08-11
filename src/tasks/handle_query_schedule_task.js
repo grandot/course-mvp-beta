@@ -9,87 +9,91 @@ const firebaseService = require('../services/firebaseService');
  * 計算時間範圍
  */
 function calculateDateRange(timeReference, specificDate = null) {
+  const TZ = 'Asia/Taipei';
+
+  // 以台北時區格式化 YYYY-MM-DD
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
   const today = new Date();
+  const todayStr = fmt.format(today); // 本地（台北）今日字串
+
+  // 將 YYYY-MM-DD 當作 UTC 零點，便於做加減天數，再輸出 YYYY-MM-DD
+  const toUtcDate = (yyyyMmDd) => new Date(`${yyyyMmDd}T00:00:00Z`);
+  const addDaysStr = (yyyyMmDd, n) => {
+    const d = toUtcDate(yyyyMmDd);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
 
   if (specificDate) {
-    return {
-      startDate: specificDate,
-      endDate: specificDate,
-      description: specificDate,
-    };
+    return { startDate: specificDate, endDate: specificDate, description: specificDate };
   }
 
   switch (timeReference) {
-    case 'today':
-      const todayStr = today.toISOString().split('T')[0];
+    case 'today': {
+      return { startDate: todayStr, endDate: todayStr, description: '今天' };
+    }
+    case 'tomorrow': {
+      const s = addDaysStr(todayStr, 1);
+      return { startDate: s, endDate: s, description: '明天' };
+    }
+    case 'yesterday': {
+      const s = addDaysStr(todayStr, -1);
+      return { startDate: s, endDate: s, description: '昨天' };
+    }
+    case 'this_week': {
+      const base = toUtcDate(todayStr);
+      const dow = base.getUTCDay(); // 0(日)-6(六)
+      const start = new Date(base);
+      start.setUTCDate(base.getUTCDate() - dow);
+      const end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 6);
       return {
-        startDate: todayStr,
-        endDate: todayStr,
-        description: '今天',
-      };
-
-    case 'tomorrow':
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      const tomorrowStr = tomorrow.toISOString().split('T')[0];
-      return {
-        startDate: tomorrowStr,
-        endDate: tomorrowStr,
-        description: '明天',
-      };
-
-    case 'yesterday':
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
-      return {
-        startDate: yesterdayStr,
-        endDate: yesterdayStr,
-        description: '昨天',
-      };
-
-    case 'this_week':
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay()); // 週日
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6); // 週六
-      return {
-        startDate: weekStart.toISOString().split('T')[0],
-        endDate: weekEnd.toISOString().split('T')[0],
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
         description: '本週',
       };
-
-    case 'next_week':
-      const nextWeekStart = new Date(today);
-      nextWeekStart.setDate(today.getDate() - today.getDay() + 7); // 下週日
-      const nextWeekEnd = new Date(nextWeekStart);
-      nextWeekEnd.setDate(nextWeekStart.getDate() + 6); // 下週六
+    }
+    case 'next_week': {
+      const base = toUtcDate(todayStr);
+      const dow = base.getUTCDay();
+      const start = new Date(base);
+      start.setUTCDate(base.getUTCDate() - dow + 7);
+      const end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 6);
       return {
-        startDate: nextWeekStart.toISOString().split('T')[0],
-        endDate: nextWeekEnd.toISOString().split('T')[0],
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
         description: '下週',
       };
-
-    case 'last_week':
-      const lastWeekStart = new Date(today);
-      lastWeekStart.setDate(today.getDate() - today.getDay() - 7); // 上週日
-      const lastWeekEnd = new Date(lastWeekStart);
-      lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // 上週六
+    }
+    case 'last_week': {
+      const base = toUtcDate(todayStr);
+      const dow = base.getUTCDay();
+      const start = new Date(base);
+      start.setUTCDate(base.getUTCDate() - dow - 7);
+      const end = new Date(start);
+      end.setUTCDate(start.getUTCDate() + 6);
       return {
-        startDate: lastWeekStart.toISOString().split('T')[0],
-        endDate: lastWeekEnd.toISOString().split('T')[0],
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
         description: '上週',
       };
-
-    default:
-      // 預設查詢未來7天
-      const future7Days = new Date(today);
-      future7Days.setDate(today.getDate() + 7);
+    }
+    default: {
+      // 預設未來7天（含今日）
+      const end = addDaysStr(todayStr, 7);
       return {
-        startDate: today.toISOString().split('T')[0],
-        endDate: future7Days.toISOString().split('T')[0],
+        startDate: todayStr,
+        endDate: end,
         description: '未來7天',
       };
+    }
   }
 }
 
