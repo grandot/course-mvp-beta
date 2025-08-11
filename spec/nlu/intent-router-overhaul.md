@@ -114,7 +114,6 @@
 - [x] 新增 `src/nlu/ResponseRenderer.js` 並接入 webhook（已上線 Query 空結果與錯誤碼模板）
 - [x] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
 - [ ] 各任務 Gatekeeper（最小充分條件與錯誤碼/文案統一）
-- [ ] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
 - [x] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
 - [ ] 更新 `config/mvp/intent-rules.yaml`（Safety/Query/Modify 權威規則）
 - [ ] 更新 QA 測試 MD 期望（課表/NOT_FOUND/功能開發中）
@@ -129,3 +128,18 @@
       1) Query 標題已多數轉為「課表」，但仍有誤分流（今天/明天問句被帶偏）
       2) 記錄/提醒/取消尚未全面接 Gatekeeper＋模板，錯誤碼與文案未對齊期望
   - 下一步：補 Gatekeeper 與錯誤碼模板；微調 Router/規則避免 Query 被搶判
+
+- 2025-08-11 第二輪（多候選澄清與決策觀測上線）
+  - 線上冒煙：通過率 14%（28 測試，4 通過）
+    - 已改善：
+      - 查詢多候選不猜，回澄清選單（Quick Reply）
+      - 空查詢統一「課表＋三條指引」
+      - 決策鏈可於 `/debug/decision` 觀測（nlp/slots/task/render）
+    - 主要落差：
+      1) 時區/日期範圍導致「今天」誤落到「明天」
+      2) 「課程安排」等字眼仍可能讓新增/查詢互搶（需規則收斂）
+      3) 記錄/提醒/取消未全面套用錯誤模板，關鍵詞比對不穩定
+  - 下一步：
+    - 修正 Asia/Taipei 日期計算於 `handle_query_schedule_task`
+    - 將 `record/reminder/cancel` 錯誤回覆接入 `ResponseRenderer` 模板
+    - 收斂 `config/mvp/intent-rules.yaml` 以保護查詢不被搶判
