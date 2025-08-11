@@ -61,6 +61,17 @@ function hasRequiredKeywords(message, requiredKeywords) {
 }
 
 /**
+ * 檢查是否滿足 required_groups：需每組至少命中一個
+ */
+function meetsRequiredGroups(message, requiredGroups) {
+  if (!requiredGroups || !Array.isArray(requiredGroups) || requiredGroups.length === 0) {
+    return true;
+  }
+  const msg = message;
+  return requiredGroups.every((group) => Array.isArray(group) && group.some((kw) => msg.includes(kw)));
+}
+
+/**
  * 檢查是否包含排除詞
  */
 function hasExclusions(message, exclusions) {
@@ -93,9 +104,14 @@ function parseIntentByRules(message) {
       matched = true;
     }
 
-    // 3. 檢查必要關鍵詞
+    // 3. 檢查必要關鍵詞（單列表）
     if (!hasRequiredKeywords(message, rule.required_keywords)) {
       continue; // 不滿足必要關鍵詞，跳過此意圖
+    }
+
+    // 3.1 檢查必要關鍵詞群組（需每組至少命中一個）
+    if (!meetsRequiredGroups(message, rule.required_groups)) {
+      continue;
     }
 
     // 4. 檢查排除詞
@@ -239,8 +255,9 @@ async function parseIntent(message, userId = null) {
   const addCues = ['要上', '安排', '新增', '幫我安排'];
   const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排', '幾點'];
 
+  // 嚴格按照規格：新增 = (新增詞) AND (時間/重複詞)；查詢 = (查詢詞) AND NOT 新增
   const looksLikeAdd = hasAny(addCues) && (hasAny(timeHints) || hasAny(recurrenceHints));
-  const looksLikeQuery = hasAny(queryCues) || hasAny(['課程安排', '了解課程安排']);
+  const looksLikeQuery = (hasAny(queryCues) || hasAny(['課程安排', '了解課程安排'])) && !looksLikeAdd;
 
   // 若同時命中，明確帶「要上/安排 + 時間」視為新增，否則預設查詢
   if (looksLikeAdd) {

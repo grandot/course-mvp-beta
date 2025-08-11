@@ -128,9 +128,23 @@ app.get('/debug/intent', async (req, res) => {
   try {
     const q = String(req.query.q || '').trim();
     const userId = String(req.query.userId || 'U_test_debug');
+    if (!q) {
+      return res.json({
+        ok: true,
+        message: '請帶上 q 參數（要判斷的句子）。以下是可直接點用的示例：',
+        examples: [
+          '/debug/intent?q=小明今天有什麼課',
+          '/debug/intent?q=幫我安排小明明天下午2點數學課',
+          '/debug/intent?q=提醒我小明的數學課',
+          '/debug/intent?q=小明昨天數學課學了什麼',
+          '/debug/intent?q=小明的英文課改到下午四點',
+          '/debug/intent?q=取消小明明天的鋼琴課',
+        ],
+      });
+    }
     const { parseIntent } = require('./intent/parseIntent');
     const intent = await parseIntent(q, userId);
-    res.json({ ok: true, q, intent });
+    res.json({ ok: true, q, intent, userId });
   } catch (e) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
