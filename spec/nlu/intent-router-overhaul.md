@@ -111,8 +111,8 @@
 - [x] 新增 `src/nlu/RequestContext.js`
 - [x] 新增 `src/nlu/IntentRouter.js`（Safety/Query/Modify 決策、AI 補判）
 - [x] 調整 `src/bot/webhook.js` 使用 Router（保留回退 Flag；QA 流程預設走 Router）
+- [x] 新增 `src/nlu/ResponseRenderer.js` 並接入 webhook（已上線 Query 空結果與錯誤碼模板）
 - [ ] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
-- [ ] 新增 `src/nlu/ResponseRenderer.js`（Query/Record/Reminder/Cancel/Modify 模板）
 - [ ] 各任務 Gatekeeper（最小充分條件與錯誤碼/文案統一）
 - [ ] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
 - [ ] 更新 `config/mvp/intent-rules.yaml`（Safety/Query/Modify 權威規則）
@@ -120,6 +120,11 @@
 - [ ] 灰度上線與回報（里程碑 1 → 3）
 
 ### 測試附註（持續更新）
-- 2025-08-11 里程碑1骨幹上線（Router/Context/Renderer Query 空模板，webhook 接入）：
-  - 本地：可啟動，無阻塞；待接 Query 渲染與 Gatekeeper 才能影響結果文字
-  - 線上冒煙：待開啟 Flag 後再跑一輪
+- 2025-08-11 里程碑1骨幹上線（Router/Context/Renderer 空模板接入 webhook）
+  - 本地：無阻塞
+  - 線上冒煙（render-suite）：通過率 11%（28 測試，3 通過）
+    - 正向：B1.1-B（明日課表）、新增單次課、模糊語句澄清 PASS
+    - 主要落差：
+      1) Query 標題已多數轉為「課表」，但仍有誤分流（今天/明天問句被帶偏）
+      2) 記錄/提醒/取消尚未全面接 Gatekeeper＋模板，錯誤碼與文案未對齊期望
+  - 下一步：補 Gatekeeper 與錯誤碼模板；微調 Router/規則避免 Query 被搶判

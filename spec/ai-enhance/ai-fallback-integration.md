@@ -109,7 +109,8 @@
 - [x] `src/tasks/handle_record_content_task.js` 嚴格模式預設開啟（預設 true，可用環境關閉）
 - [x] `src/tasks/handle_set_reminder_task.js` 找不到課程統一 `NOT_FOUND` 文案
 - [x] `src/tasks/handle_modify_course_task.js` 最小處理器新增（回覆「功能開發中」）
-- [ ] `src/intent/extractSlots.js` Prompt/驗證器命名與文檔對齊（進行中，命名尚待最終對齊）
+- [x] `src/nlu/ResponseRenderer.js` 接入 webhook：統一 Query 空結果模板與錯誤碼渲染
+- [ ] `src/intent/extractSlots.js` Prompt/驗證器命名與文檔對齊（進行中）
 - [ ] `src/services/errorCollectionService.js` 實作與掛鉤（低信心/錯誤用例收集）
 - [x] `/health/deps`/NDJSON 打點驗證（OpenAI/GCal/Redis/Firebase 健康檢查已接）
 
