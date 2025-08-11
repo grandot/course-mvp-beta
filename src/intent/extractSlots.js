@@ -914,6 +914,23 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
       return slots;
     }
 
+    // 查詢會話鎖：若存在有效查詢會話，固定學生/時間，不跨學生自動補
+    try {
+      if (intent === 'query_schedule') {
+        const session = await conversationManager.getActiveQuerySession(userId);
+        const ttl = conversationManager.getQuerySessionTtlMs(userId);
+        if (session && ttl > 0) {
+          const pinned = { ...slots };
+          if (!pinned.studentName && session.studentName) pinned.studentName = session.studentName;
+          if (!pinned.timeReference && session.timeReference) pinned.timeReference = session.timeReference;
+          console.log('🔒 套用查詢會話鎖:', pinned);
+          return pinned;
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ 查詢會話鎖應用失敗:', e?.message || e);
+    }
+
     // 缺關鍵槽位時，避免用上下文自動補全，先走澄清流程
     const disableAutoFill = process.env.DISABLE_CONTEXT_AUTO_FILL === 'true';
     const isCriticalIntent = ['add_course', 'create_recurring_course', 'set_reminder', 'cancel_course', 'record_content', 'add_course_content', 'query_course_content'].includes(intent);

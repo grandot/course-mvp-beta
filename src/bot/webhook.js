@@ -99,8 +99,21 @@ async function handleTextMessage(event, req = null) {
       return;
     }
 
-    // 第二步：實體提取
+    // 第二步：實體提取 + 查詢會話鎖（若為查詢則固定學生/時間）
     const slots = await extractSlots(userMessage, intent, userId);
+    if (intent === 'query_schedule') {
+      try {
+        const { getConversationManager } = require('../conversation/ConversationManager');
+        const cm = getConversationManager();
+        // 若使用者在這句明確提到另一個學生，則重置會話
+        await cm.setActiveQuerySession(userId, {
+          studentName: slots.studentName || null,
+          timeReference: slots.timeReference || null,
+        });
+      } catch (e) {
+        console.warn('⚠️ 設定查詢會話鎖失敗:', e?.message || e);
+      }
+    }
     info({ stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots) });
 
     // 第三步：執行任務

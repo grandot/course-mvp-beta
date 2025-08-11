@@ -104,14 +104,14 @@
 4) 錯誤案例收集與快取/速率治理 → 控成本提穩定
 
 ### 具體落地清單（可勾選）
-- [ ] `config/mvp/intent-rules.yaml` 收斂與優先級調整
-- [ ] `src/bot/webhook.js` 問句查詢覆寫/提醒/取消護欄
-- [ ] `src/tasks/handle_record_content_task.js` 嚴格模式預設開啟
-- [ ] `src/tasks/handle_set_reminder_task.js` 找不到課程統一 `NOT_FOUND` 文案
-- [ ] `src/tasks/handle_modify_course_task.js` 最小處理器新增
-- [ ] `src/intent/extractSlots.js` Prompt/驗證器命名與文檔對齊
-- [ ] `src/services/errorCollectionService.js` 實作與掛鉤
-- [ ] Render 環境變數設定與 `/health/deps`/NDJSON 打點驗證
+- [x] `config/mvp/intent-rules.yaml` 收斂與優先級調整（已提升 query_schedule，收斂 add_course）
+- [x] `src/bot/webhook.js` 問句查詢覆寫/提醒護欄（已加強；取消亦有快徑）
+- [x] `src/tasks/handle_record_content_task.js` 嚴格模式預設開啟（預設 true，可用環境關閉）
+- [x] `src/tasks/handle_set_reminder_task.js` 找不到課程統一 `NOT_FOUND` 文案
+- [x] `src/tasks/handle_modify_course_task.js` 最小處理器新增（回覆「功能開發中」）
+- [ ] `src/intent/extractSlots.js` Prompt/驗證器命名與文檔對齊（進行中，命名尚待最終對齊）
+- [ ] `src/services/errorCollectionService.js` 實作與掛鉤（低信心/錯誤用例收集）
+- [x] `/health/deps`/NDJSON 打點驗證（OpenAI/GCal/Redis/Firebase 健康檢查已接）
 
 ## 成功準則（短期）
 - 模糊查詢與問句類用例線上 PASS 率 ≥ 80%
@@ -137,6 +137,11 @@
 - 測試與觀測：
   - 問句/模糊句線上實測串接；低信心與覆寫決策已出現在 `/test-results/render-logs` 摘要中
   - 健康檢查與日誌線路暢通（依賴 `src/utils/logger.js` 與現有 webhook 打點）
+
+## 近期新增（本輪）
+- 查詢會話鎖（預設 60s，測試用戶自動關閉）：避免查詢跨學生串台
+- Webhook 覆寫加強：提醒/查詢短路；修改快徑導向最小處理器
+- 查詢輸出一致化：標題一律「課表」，空結果固定引導
 
 ## 關聯（非 AI 配套）
 非 AI 的規則分流、Webhook 覆寫、任務前置校驗與文案一致化，詳見：

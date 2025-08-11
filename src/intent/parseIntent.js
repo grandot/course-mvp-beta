@@ -228,6 +228,11 @@ async function parseIntent(message, userId = null) {
     return 'query_course_content';
   }
 
+  // 修改快徑：改/修改/更改/改到/改成/換到/換成
+  if (hasAny(['修改', '更改', '改到', '改成', '換到', '換成', '改'])) {
+    return 'modify_course';
+  }
+
   // 4) 新增課程 vs 查課表（優先查詢）
   const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
   const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];

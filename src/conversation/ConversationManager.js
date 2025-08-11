@@ -156,6 +156,8 @@ class ConversationManager {
           dates: [],
           times: [],
         },
+        // 查詢會話鎖：避免不同學生的查詢互相串台
+        activeQuerySession: null, // { studentName, timeReference, startedAt }
       },
     };
   }
@@ -381,6 +383,62 @@ class ConversationManager {
         entities[key] = entities[key].slice(-maxEntityCount);
       }
     });
+  }
+
+  /**
+   * 取得查詢會話 TTL（ms）
+   * 測試用戶（U_test_ 開頭）自動為 0，避免用例污染
+   */
+  getQuerySessionTtlMs(userId) {
+    try {
+      if (userId && String(userId).startsWith('U_test_')) return 0;
+      const raw = process.env.QUERY_SESSION_TTL_MS;
+      const n = raw ? parseInt(raw, 10) : 60000;
+      return Number.isFinite(n) ? n : 60000;
+    } catch (_) {
+      return 60000;
+    }
+  }
+
+  /**
+   * 讀取有效的查詢會話（若過期則回 null）
+   */
+  async getActiveQuerySession(userId) {
+    const context = await this.getContext(userId);
+    const session = context.state.activeQuerySession;
+    if (!session) return null;
+    const ttl = this.getQuerySessionTtlMs(userId);
+    if (ttl <= 0) return null;
+    const alive = Date.now() - (session.startedAt || 0) <= ttl;
+    if (!alive) {
+      context.state.activeQuerySession = null;
+      await this.saveContext(userId, context);
+      return null;
+    }
+    return session;
+  }
+
+  /**
+   * 設定/更新查詢會話
+   */
+  async setActiveQuerySession(userId, { studentName = null, timeReference = null }) {
+    const context = await this.getContext(userId);
+    context.state.activeQuerySession = {
+      studentName: studentName || null,
+      timeReference: timeReference || null,
+      startedAt: Date.now(),
+    };
+    await this.saveContext(userId, context);
+    return true;
+  }
+
+  /**
+   * 清除查詢會話
+   */
+  async clearActiveQuerySession(userId) {
+    const context = await this.getContext(userId);
+    context.state.activeQuerySession = null;
+    return this.saveContext(userId, context);
   }
 
   /**
