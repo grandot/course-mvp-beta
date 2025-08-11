@@ -216,14 +216,13 @@ app.get('/health/deps', async (req, res) => {
       checks.firebase = { status: 'error', message: error.message };
     }
 
-    // 檢查 OpenAI 連接
+    // 檢查 OpenAI 連接（以實際 API 呼叫驗證）
     try {
       const openaiService = require('./services/openaiService');
-      if (openaiService.client) {
-        checks.openai = { status: 'ok', message: 'OpenAI服務已初始化' };
-      } else {
-        checks.openai = { status: 'warning', message: 'OpenAI服務未初始化' };
-      }
+      const ok = await openaiService.testConnection();
+      checks.openai = ok
+        ? { status: 'ok', message: 'OpenAI服務連接正常' }
+        : { status: 'error', message: 'OpenAI服務連接失敗或無法呼叫' };
     } catch (error) {
       checks.openai = { status: 'error', message: error.message };
     }
