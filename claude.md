@@ -4,6 +4,8 @@
 使用 LINE 對話記錄和管理課程，採用意圖識別架構。
 
 ## 快速開始
+- 每次啟動 查看 @AI_TASK_CONTEXT.md 文檔，了解上下文。
+- tools/save-context.js 這個腳本可以更新 @AI_TASK_CONTEXT.md
 ```bash
 npm start          # 啟動服務
 npm run lint:fix   # 修復格式

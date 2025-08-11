@@ -1,13 +1,13 @@
 {
-  "timestamp": "2025-08-11T05:49:46.962Z",
+  "timestamp": "2025-08-11T12:39:52.256Z",
   "target": "https://course-mvp-beta.onrender.com",
   "tests": {
     "healthCheck": {
       "success": true,
-      "responseTime": 188,
+      "responseTime": 172,
       "data": {
         "status": "ok",
-        "timestamp": "2025-08-11T05:49:47.131Z",
+        "timestamp": "2025-08-11T12:39:52.376Z",
         "version": "1.0.0"
       }
     },
@@ -24,8 +24,8 @@
       "totalRequests": 5,
       "successful": 0,
       "failed": 5,
-      "totalTime": 255,
-      "averageTime": 51
+      "totalTime": 382,
+      "averageTime": 76.4
     }
   }
 }
