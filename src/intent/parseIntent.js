@@ -303,27 +303,8 @@ async function parseIntent(message, userId = null) {
       console.warn('⚠️ AI 主判例外，降級至規則兜底:', e?.message || e);
     }
 
-    // 簡單規則兜底（只處理明確情況）
-    if (hasAny(['修改', '更改', '改到', '改成', '換到', '換成', '改'])) {
-      if (enableDiag) { diagMod.pushPath(diag, 'simple-modify'); diag.finalIntent = 'modify_course'; await diagMod.logDiagnostics(diag); }
-      return 'modify_course';
-    }
-    {
-      const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
-      const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];
-      const addCues = ['要上', '安排', '新增', '幫我安排'];
-      const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排', '幾點'];
-      const looksLikeAdd = hasAny(addCues) && (hasAny(timeHints) || hasAny(recurrenceHints));
-      const looksLikeQuery = hasAny(queryCues) && !looksLikeAdd;
-      if (looksLikeAdd) {
-        if (enableDiag) { diagMod.pushPath(diag, 'simple-add'); diag.finalIntent = 'add_course'; await diagMod.logDiagnostics(diag); }
-        return 'add_course';
-      }
-      if (looksLikeQuery) {
-        if (enableDiag) { diagMod.pushPath(diag, 'simple-query'); diag.finalIntent = 'query_schedule'; await diagMod.logDiagnostics(diag); }
-        return 'query_schedule';
-      }
-    }
+    // 停用簡化規則（臨時）：避免攔截 AI，讓非 Safety 句一律走 AI
+    if (enableDiag) { diagMod.pushPath(diag, 'no-simple-rule'); }
     // 最終降級：僅保留 unknown（避免舊規則路徑干擾）
 
   console.log('❓ 無法識別意圖');
