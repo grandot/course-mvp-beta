@@ -11,6 +11,7 @@ const handle_query_course_content_task = require('./handle_query_course_content_
 const handle_set_reminder_task = require('./handle_set_reminder_task');
 const handle_cancel_course_task = require('./handle_cancel_course_task');
 const handle_unknown_task = require('./handle_unknown_task');
+const handle_modify_course_task = require('./handle_modify_course_task');
 
 // 操作性意圖處理器（多輪對話功能）
 const handle_confirm_action_task = require('./handle_confirm_action_task');
@@ -55,7 +56,7 @@ const taskHandlers = {
   restart_input: handle_restart_input_task,
 
   // 修改課程意圖
-  modify_course: handle_modify_action_task,
+  modify_course: handle_modify_course_task,
 
   // 補充資訊意圖（多輪對話功能）
   supplement_student_name: handle_supplement_student_name_task,

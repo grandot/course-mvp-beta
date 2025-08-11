@@ -205,6 +205,46 @@ async function parseIntent(message, userId = null) {
   const cleanMessage = message.trim();
   console.log('🎯 開始解析意圖:', cleanMessage, userId ? `(用戶: ${userId})` : '');
 
+  // Fast-path 1: 明確操作詞優先
+  const msg = cleanMessage;
+  const has = (kw) => msg.includes(kw);
+  const hasAny = (kws) => kws.some((k) => msg.includes(k));
+
+  // 1) 取消/刪除 → cancel_course
+  if (hasAny(['取消', '刪除', '刪掉'])) {
+    return 'cancel_course';
+  }
+
+  // 2) 提醒 → set_reminder
+  if (has('提醒')) {
+    return 'set_reminder';
+  }
+
+  // 3) 內容查詢 vs 記錄
+  // 問句類（什麼/？）+ 內容相關詞 → query_course_content
+  const contentWords = ['學了', '內容', '記錄', '學習', '上課內容', '作業'];
+  const questionWords = ['什麼', '？', '?', '多少', '哪'];
+  if (hasAny(contentWords) && hasAny(questionWords)) {
+    return 'query_course_content';
+  }
+
+  // 4) 新增課程 vs 查課表（優先查詢）
+  const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
+  const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];
+  const addCues = ['要上', '安排', '新增', '幫我安排'];
+  const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排', '幾點'];
+
+  const looksLikeAdd = hasAny(addCues) && (hasAny(timeHints) || hasAny(recurrenceHints));
+  const looksLikeQuery = hasAny(queryCues) || hasAny(['課程安排', '了解課程安排']);
+
+  // 若同時命中，明確帶「要上/安排 + 時間」視為新增，否則預設查詢
+  if (looksLikeAdd) {
+    return 'add_course';
+  }
+  if (looksLikeQuery) {
+    return 'query_schedule';
+  }
+
   // 優先檢查期待輸入狀態（補充缺失資訊）
   if (userId) {
     const { getConversationManager } = require('../conversation/ConversationManager');
@@ -261,6 +301,60 @@ async function parseIntent(message, userId = null) {
 
   // 第一階段：規則匹配
   const ruleBasedIntent = parseIntentByRules(cleanMessage);
+
+  // AI Fallback（僅在需要時啟用）：
+  // 條件 1：規則無命中或為 unknown
+  // 條件 2：查詢/新增線索同時存在 → 歸為「模糊」，交給 AI 補判
+  // 條件 3：問句但沒有明確新增/提醒/取消特徵 → 交給 AI 補判
+  try {
+    const enableAI = process.env.ENABLE_AI_FALLBACK === 'true';
+    if (enableAI) {
+      const isQuestion = /[?？]$/.test(cleanMessage) || ['請問', '能不能', '可不可以', '想了解'].some(k => cleanMessage.includes(k));
+      const msg = cleanMessage;
+      const hasAny = (kws) => kws.some((k) => msg.includes(k));
+      const timeHints = ['點', ':', '上午', '中午', '下午', '晚上'];
+      const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];
+      const addCues = ['要上', '安排', '新增', '幫我安排'];
+      const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排'];
+
+      const looksLikeAdd = hasAny(addCues) && (hasAny(timeHints) || hasAny(recurrenceHints));
+      const looksLikeQuery = hasAny(queryCues);
+      const looksAmbiguous = looksLikeAdd && looksLikeQuery;
+
+      // 強保護：含提醒/取消關鍵詞時不啟用 AI 覆寫（直接走固定意圖）
+      if (hasAny(['提醒'])) {
+        return 'set_reminder';
+      }
+      if (hasAny(['取消', '刪除', '刪掉'])) {
+        return 'cancel_course';
+      }
+
+      const needAI = !ruleBasedIntent || ruleBasedIntent === 'unknown' || looksAmbiguous || (isQuestion && !looksLikeAdd && !looksLikeQuery);
+      if (needAI) {
+        const minConfidence = parseFloat(process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.7');
+        const timeoutMs = parseInt(process.env.AI_FALLBACK_TIMEOUT_MS || '900', 10);
+
+        const withTimeout = (p, ms) => new Promise((resolve) => {
+          let settled = false;
+          const timer = setTimeout(() => { if (!settled) resolve({ intent: 'unknown', confidence: 0 }); }, ms);
+          p.then((r) => { if (!settled) { settled = true; clearTimeout(timer); resolve(r); } })
+           .catch(() => { if (!settled) { settled = true; clearTimeout(timer); resolve({ intent: 'unknown', confidence: 0 }); } });
+        });
+
+        const { identifyIntent } = require('../services/openaiService');
+        const aiResult = await withTimeout(identifyIntent(cleanMessage), timeoutMs);
+
+        if (aiResult && aiResult.intent && aiResult.confidence >= minConfidence) {
+          console.log('🤖 AI Fallback 命中:', aiResult.intent, '信心度:', aiResult.confidence);
+          return aiResult.intent;
+        } else {
+          console.log('🤖 AI Fallback 未採用，維持規則結果:', ruleBasedIntent || 'unknown');
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ AI Fallback 發生例外，回退規則:', e?.message || e);
+  }
 
   // 檢查是否需要對話上下文
   if (ruleBasedIntent && userId) {

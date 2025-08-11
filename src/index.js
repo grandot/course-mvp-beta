@@ -53,8 +53,24 @@ app.get('/debug/config', (req, res) => {
     ENABLE_AI_FALLBACK: process.env.ENABLE_AI_FALLBACK,
     NODE_ENV: process.env.NODE_ENV,
     has_openai_key: !!process.env.OPENAI_API_KEY,
+    AI_FALLBACK_MIN_CONFIDENCE: process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.7',
+    AI_FALLBACK_TIMEOUT_MS: process.env.AI_FALLBACK_TIMEOUT_MS || '900',
+    STRICT_RECORD_REQUIRES_COURSE: process.env.STRICT_RECORD_REQUIRES_COURSE === 'false' ? false : true,
     timestamp: new Date().toISOString(),
   });
+});
+
+// 簡易意圖偵測調試端點（僅供自查，不處理安全性與速率限制）
+app.get('/debug/intent', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const userId = String(req.query.userId || 'U_test_debug');
+    const { parseIntent } = require('./intent/parseIntent');
+    const intent = await parseIntent(q, userId);
+    res.json({ ok: true, q, intent });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
 });
 
 // Webhook 調試端點 - 檢查實際請求數據

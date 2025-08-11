@@ -66,7 +66,23 @@ async function handleTextMessage(event, req = null) {
     const conversationManager = getConversationManager();
 
     // 第一步：上下文感知的意圖識別
-    const intent = await parseIntent(userMessage, userId);
+    let intent = await parseIntent(userMessage, userId);
+    // Webhook 安全覆寫（雙重保險）
+    try {
+      const text = (userMessage || '').trim();
+      const has = (kw) => text.includes(kw);
+      const hasAny = (kws) => kws.some((k) => text.includes(k));
+      const isQuestion = /[?？]$/.test(text) || hasAny(['請問', '嗎', '呢']);
+      const queryWords = ['課表', '有什麼課', '今天', '明天', '這週', '下週', '幾點', '查詢', '看一下', '課程安排'];
+      const addRequired = hasAny(['要上', '安排', '新增']) && hasAny(['點', ':', '上午', '下午', '晚上', '每週', '每周', '每天', '每月']);
+      if (has('提醒')) {
+        intent = 'set_reminder';
+      } else if ((isQuestion && hasAny(queryWords)) || hasAny(['課表', '時間表', '課程安排'])) {
+        if (!addRequired) {
+          intent = 'query_schedule';
+        }
+      }
+    } catch (_) {}
     info({ stage: 'nlp', traceId, userId, intent });
 
     // 記錄用戶訊息到對話歷史（先記錄，後續需要slots補充）

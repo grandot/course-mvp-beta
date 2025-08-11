@@ -163,8 +163,8 @@ async function handle_record_content_task(slots, userId = null) {
       }
     }
 
-    // 嚴格模式：要求必須關聯既有課程（對齊產品第一性：內容屬於具體課程）
-    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE === 'true';
+    // 嚴格模式：要求必須關聯既有課程（預設開啟；可用環境變數關閉）
+    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE === 'false' ? false : true;
     if (!matchingCourse && strictRequiresCourse) {
       return {
         success: false,
