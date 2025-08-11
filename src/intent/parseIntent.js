@@ -43,7 +43,12 @@ function matchesPatterns(message, patterns) {
   return patterns.some((pattern) => {
     try {
       const regex = new RegExp(pattern);
-      return regex.test(message);
+      try {
+        return regex.test(message);
+      } catch (e) {
+        console.warn('⚠️ 正則執行失敗:', pattern, e?.message || e);
+        return false;
+      }
     } catch (error) {
       console.warn('⚠️ 無效的正則表達式模式:', pattern);
       return false;
@@ -221,6 +226,17 @@ async function parseIntent(message, userId = null) {
   const cleanMessage = message.trim();
   console.log('🎯 開始解析意圖:', cleanMessage, userId ? `(用戶: ${userId})` : '');
 
+  // 安全版工具：hasAny（避免環境差異導致例外）
+  const safeHasAny = (kws, text) => {
+    try {
+      if (!Array.isArray(kws) || typeof text !== 'string') return false;
+      return kws.some((k) => typeof k === 'string' && text.includes(k));
+    } catch (e) {
+      console.error('hasAny 異常:', e?.message || e);
+      return false;
+    }
+  };
+
   // B: 診斷收集（可開關）
   const enableDiag = process.env.ENABLE_DIAGNOSTICS === 'true';
   const diagMod = enableDiag ? require('../utils/diagnostics') : null;
@@ -232,14 +248,13 @@ async function parseIntent(message, userId = null) {
     try {
       const text = String(msg || '');
       const has = (kw) => text.includes(kw);
-      const hasAny = (kws) => Array.isArray(kws) && kws.some((k) => typeof k === 'string' && text.includes(k));
-      if (hasAny(['取消', '刪除', '刪掉'])) return 'cancel_course';
+      if (safeHasAny(['取消', '刪除', '刪掉'], text)) return 'cancel_course';
       if (has('提醒')) return 'set_reminder';
-      if (hasAny(['改到', '改成', '修改', '更改', '換到', '換成', '改'])) return 'modify_course';
+      if (safeHasAny(['改到', '改成', '修改', '更改', '換到', '換成', '改'], text)) return 'modify_course';
       const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
-      if (hasAny(['新增', '安排', '要上', '幫我安排']) && hasAny(timeHints)) return 'add_course';
-      if (hasAny(['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '這週', '下週', '本週'])) return 'query_schedule';
-      if (hasAny(['學了', '內容', '記錄', '老師說', '表現', '評價'])) return 'record_content';
+      if (safeHasAny(['新增', '安排', '要上', '幫我安排'], text) && safeHasAny(timeHints, text)) return 'add_course';
+      if (safeHasAny(['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '這週', '下週', '本週'], text)) return 'query_schedule';
+      if (safeHasAny(['學了', '內容', '記錄', '老師說', '表現', '評價'], text)) return 'record_content';
       return 'unknown';
     } catch (_) {
       return 'unknown';
@@ -247,13 +262,14 @@ async function parseIntent(message, userId = null) {
   }
 
   try {
-    // 環境/狀態隔離：若啟用 STATELESS_MODE，跳過會話上下文相關邏輯
-    const statelessMode = process.env.STATELESS_MODE === 'true' || process.env.ENABLE_ENV_ISOLATION === 'true' && process.env.NODE_ENV === 'production';
+    // 環境/狀態隔離：簡化為單一旗標
+    const isProduction = process.env.NODE_ENV === 'production';
+    const useStatelessMode = isProduction || process.env.STATELESS_MODE === 'true';
 
   // Fast-path 1: 明確操作詞優先
   const msg = cleanMessage;
   const has = (kw) => msg.includes(kw);
-  const hasAny = (kws) => kws.some((k) => msg.includes(k));
+    const hasAny = (kws) => safeHasAny(kws, msg);
 
   // 1) 取消/刪除 → cancel_course
   if (hasAny(['取消', '刪除', '刪掉'])) {
@@ -285,8 +301,8 @@ async function parseIntent(message, userId = null) {
   // 4) 新增課程 vs 查課表（優先查詢）
   const timeHints = ['點', ':', '上午', '中午', '下午', '晚上', '每週', '每周', '每天', '每月'];
   const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];
-  const addCues = ['要上', '安排', '新增', '幫我安排'];
-  const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排', '幾點'];
+    const addCues = ['要上', '安排', '新增', '幫我安排'];
+    const queryCues = ['課表', '查詢', '看一下', '有什麼課', '今天', '明天', '後天', '這週', '下週', '本週', '課程安排', '幾點'];
 
   // 嚴格按照規格：新增 = (新增詞) AND (時間/重複詞)；查詢 = (查詢詞) AND NOT 新增
   const looksLikeAdd = hasAny(addCues) && (hasAny(timeHints) || hasAny(recurrenceHints));
@@ -303,7 +319,7 @@ async function parseIntent(message, userId = null) {
   }
 
   // 優先檢查期待輸入狀態（補充缺失資訊）
-  if (userId && !statelessMode) {
+  if (userId && !useStatelessMode) {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
 
@@ -329,7 +345,7 @@ async function parseIntent(message, userId = null) {
   }
 
   // 檢查是否為確認關鍵詞（在期待輸入狀態下）
-  if (userId && !statelessMode) {
+  if (userId && !useStatelessMode) {
     const { getConversationManager } = require('../conversation/ConversationManager');
     const conversationManager = getConversationManager();
 
@@ -369,7 +385,7 @@ async function parseIntent(message, userId = null) {
     if (enableAI) {
       const isQuestion = /[?？]$/.test(cleanMessage) || ['請問', '能不能', '可不可以', '想了解'].some(k => cleanMessage.includes(k));
       const msg = cleanMessage;
-      const hasAny = (kws) => kws.some((k) => msg.includes(k));
+        const hasAny = (kws) => safeHasAny(kws, msg);
       const timeHints = ['點', ':', '上午', '中午', '下午', '晚上'];
       const recurrenceHints = ['每週', '每周', '每天', '每月', '固定', '定期'];
       const addCues = ['要上', '安排', '新增', '幫我安排'];

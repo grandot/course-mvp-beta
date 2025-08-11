@@ -84,7 +84,13 @@ function parseScheduleTime(message) {
   ];
 
   for (const pattern of timePatterns) {
-    const match = message.match(pattern);
+    let match = null;
+    try {
+      match = message.match(pattern);
+    } catch (e) {
+      console.warn('⚠️ 時間解析正則失敗:', pattern, e?.message || e);
+      match = null;
+    }
     if (match) {
       let hour = parseInt(match[1]);
       const minute = match[2] ? parseInt(match[2]) : 0;
@@ -372,7 +378,13 @@ function extractCourseName(message) {
   ];
 
   for (const pattern of coursePatterns) {
-    const match = message.match(pattern);
+    let match = null;
+    try {
+      match = message.match(pattern);
+    } catch (e) {
+      console.warn('⚠️ 課程名稱正則失敗:', pattern, e?.message || e);
+      match = null;
+    }
     if (match && match[1]) {
       let courseName = match[1];
 
