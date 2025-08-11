@@ -280,12 +280,12 @@ async function parseIntent(message, userId = null) {
       return 'set_reminder';
     }
 
-    // AI 主判（有限時、有限信心閾值）
+    // AI 主判（延長超時、降低信心閾值、加診斷日誌）
     try {
       const enableAI = process.env.ENABLE_AI_FALLBACK === 'true';
       if (enableAI) {
-        const minConfidence = parseFloat(process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.6');
-        const timeoutMs = parseInt(process.env.AI_FALLBACK_TIMEOUT_MS || '900', 10);
+        const minConfidence = parseFloat(process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.3');
+        const timeoutMs = parseInt(process.env.AI_FALLBACK_TIMEOUT_MS || '5000', 10);
         const withTimeout = (p, ms) => new Promise((resolve) => {
           let settled = false;
           const timer = setTimeout(() => { if (!settled) resolve({ intent: 'unknown', confidence: 0 }); }, ms);
@@ -293,10 +293,15 @@ async function parseIntent(message, userId = null) {
            .catch(() => { if (!settled) { settled = true; clearTimeout(timer); resolve({ intent: 'unknown', confidence: 0 }); } });
         });
         const { identifyIntent } = require('../services/openaiService');
+        console.log('🤖 AI調用參數:', { message: cleanMessage.substring(0, 50), timeoutMs, minConfidence });
         const aiResult = await withTimeout(identifyIntent(cleanMessage), timeoutMs);
+        console.log('🤖 AI原始結果:', aiResult);
         if (aiResult && aiResult.intent && aiResult.confidence >= minConfidence) {
+          console.log('✅ AI結果採用:', aiResult.intent, aiResult.confidence);
           if (enableDiag) { diagMod.pushPath(diag, 'ai-primary'); diag.finalIntent = aiResult.intent; await diagMod.logDiagnostics(diag); }
           return aiResult.intent;
+        } else {
+          console.log('❌ AI結果拒絕:', { hasIntent: !!aiResult?.intent, confidence: aiResult?.confidence, threshold: minConfidence });
         }
       }
     } catch (e) {
