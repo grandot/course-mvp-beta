@@ -20,6 +20,18 @@ function calculateDateRange(timeReference, specificDate = null) {
   });
 
   const today = new Date();
+  // 診斷：系統 vs 台北時間
+  try {
+    if (process.env.ENABLE_DIAGNOSTICS === 'true') {
+      const now = new Date();
+      const taiwanTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+      console.log('🕐 時間計算診斷:', {
+        systemTime: now.toISOString(),
+        taiwanTime: taiwanTime.toISOString(),
+        timeReference,
+      });
+    }
+  } catch (_) {}
   const todayStr = fmt.format(today); // 本地（台北）今日字串
 
   // 將 YYYY-MM-DD 當作 UTC 零點，便於做加減天數，再輸出 YYYY-MM-DD

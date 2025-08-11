@@ -221,6 +221,12 @@ async function parseIntent(message, userId = null) {
   const cleanMessage = message.trim();
   console.log('🎯 開始解析意圖:', cleanMessage, userId ? `(用戶: ${userId})` : '');
 
+  // B: 診斷收集（可開關）
+  const enableDiag = process.env.ENABLE_DIAGNOSTICS === 'true';
+  const diagMod = enableDiag ? require('../utils/diagnostics') : null;
+  const diag = enableDiag ? diagMod.initDiagnostics(cleanMessage) : null;
+  if (enableDiag) diagMod.pushPath(diag, 'start');
+
   // Fast-path 1: 明確操作詞優先
   const msg = cleanMessage;
   const has = (kw) => msg.includes(kw);
@@ -228,11 +234,13 @@ async function parseIntent(message, userId = null) {
 
   // 1) 取消/刪除 → cancel_course
   if (hasAny(['取消', '刪除', '刪掉'])) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-cancel'); diag.finalIntent = 'cancel_course'; await diagMod.logDiagnostics(diag); }
     return 'cancel_course';
   }
 
   // 2) 提醒 → set_reminder
   if (has('提醒')) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-reminder'); diag.finalIntent = 'set_reminder'; await diagMod.logDiagnostics(diag); }
     return 'set_reminder';
   }
 
@@ -241,11 +249,13 @@ async function parseIntent(message, userId = null) {
   const contentWords = ['學了', '內容', '記錄', '學習', '上課內容', '作業'];
   const questionWords = ['什麼', '？', '?', '多少', '哪'];
   if (hasAny(contentWords) && hasAny(questionWords)) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-content-query'); diag.finalIntent = 'query_course_content'; await diagMod.logDiagnostics(diag); }
     return 'query_course_content';
   }
 
   // 修改快徑：改/修改/更改/改到/改成/換到/換成
   if (hasAny(['修改', '更改', '改到', '改成', '換到', '換成', '改'])) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-modify'); diag.finalIntent = 'modify_course'; await diagMod.logDiagnostics(diag); }
     return 'modify_course';
   }
 
@@ -261,9 +271,11 @@ async function parseIntent(message, userId = null) {
 
   // 若同時命中，明確帶「要上/安排 + 時間」視為新增，否則預設查詢
   if (looksLikeAdd) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-add'); diag.finalIntent = 'add_course'; await diagMod.logDiagnostics(diag); }
     return 'add_course';
   }
   if (looksLikeQuery) {
+    if (enableDiag) { diagMod.pushPath(diag, 'fast-query'); diag.finalIntent = 'query_schedule'; await diagMod.logDiagnostics(diag); }
     return 'query_schedule';
   }
 
@@ -383,9 +395,11 @@ async function parseIntent(message, userId = null) {
   if (ruleBasedIntent && userId) {
     const needsContext = await checkIfNeedsContext(ruleBasedIntent, cleanMessage);
     if (needsContext) {
+      if (enableDiag) diagMod.pushPath(diag, 'context-needed');
       const contextAwareIntent = await parseIntentWithContext(ruleBasedIntent, cleanMessage, userId);
       if (contextAwareIntent) {
         console.log('✅ 上下文感知識別成功:', contextAwareIntent);
+        if (enableDiag) { diag.finalIntent = contextAwareIntent; diagMod.pushPath(diag, 'context-success'); await diagMod.logDiagnostics(diag); }
         return contextAwareIntent;
       }
     }
@@ -393,6 +407,7 @@ async function parseIntent(message, userId = null) {
 
   if (ruleBasedIntent) {
     console.log('✅ 規則匹配成功:', ruleBasedIntent);
+    if (enableDiag) { diag.finalIntent = ruleBasedIntent; diagMod.pushPath(diag, 'rule-success'); await diagMod.logDiagnostics(diag); }
     return ruleBasedIntent;
   }
 
@@ -401,11 +416,13 @@ async function parseIntent(message, userId = null) {
     console.log('🤖 啟用 AI 備援識別...');
     const aiBasedIntent = await parseIntentByAI(cleanMessage);
     if (aiBasedIntent !== 'unknown') {
+      if (enableDiag) { diag.finalIntent = aiBasedIntent; diagMod.pushPath(diag, 'ai-fallback-success'); await diagMod.logDiagnostics(diag); }
       return aiBasedIntent;
     }
   }
 
   console.log('❓ 無法識別意圖');
+  if (enableDiag) { diag.finalIntent = 'unknown'; diagMod.pushPath(diag, 'unknown'); await diagMod.logDiagnostics(diag); }
   return 'unknown';
 }
 

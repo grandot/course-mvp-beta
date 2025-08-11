@@ -51,6 +51,7 @@ app.get('/health', (req, res) => {
 app.get('/debug/config', (req, res) => {
   res.json({
     ENABLE_AI_FALLBACK: process.env.ENABLE_AI_FALLBACK,
+    ENABLE_DIAGNOSTICS: process.env.ENABLE_DIAGNOSTICS,
     NODE_ENV: process.env.NODE_ENV,
     has_openai_key: !!process.env.OPENAI_API_KEY,
     AI_FALLBACK_MIN_CONFIDENCE: process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.7',
@@ -145,6 +146,17 @@ app.get('/debug/intent', async (req, res) => {
     const { parseIntent } = require('./intent/parseIntent');
     const intent = await parseIntent(q, userId);
     res.json({ ok: true, q, intent, userId });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+// 診斷檢視端點（最近 N 筆）
+app.get('/debug/diagnostics', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '50', 10);
+    const { getRecent } = require('./utils/diagnostics');
+    res.json({ ok: true, items: getRecent(limit) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
