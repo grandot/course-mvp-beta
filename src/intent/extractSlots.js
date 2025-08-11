@@ -298,6 +298,28 @@ function extractStudentName(message) {
 }
 
 /**
+ * 擷取所有可能的學生候選（保守擷取，不含時間詞）
+ */
+function findAllStudentCandidates(message) {
+  const candidates = new Set();
+  const patterns = [
+    /([小大]?[一-龥A-Za-z]{2,12})(?=的課|的|今天|明天|昨天|這週|本週|下週|這周|本周|下周|課表)/g,
+    /(?:查詢|看|看看|顯示)?([小大]?[一-龥A-Za-z]{2,12})(?=今天|明天|這週|本週|下週)/g,
+  ];
+  for (const p of patterns) {
+    let m;
+    while ((m = p.exec(message)) !== null) {
+      let name = stripTimeSuffixFromName(m[1]);
+      if (!name) continue;
+      if (name.length < 2 || name.length > 12) continue;
+      if (/(今天|明天|昨天|課|課表)$/.test(name)) continue;
+      candidates.add(name);
+    }
+  }
+  return Array.from(candidates);
+}
+
+/**
  * 提取課程名稱
  */
 function extractCourseName(message) {
@@ -428,6 +450,13 @@ async function extractSlotsByIntent(message, intent) {
       slots.timeReference = parseTimeReference(message);
       slots.specificDate = parseSpecificDate(message);
       slots.courseName = extractCourseName(message);
+      // 解析多位候選學生：多候選時不猜，由上層流程引導使用者確認
+      try {
+        const candidates = findAllStudentCandidates(message);
+        if (candidates.length > 1) {
+          slots.studentCandidates = candidates;
+        }
+      } catch (_) {}
       // 最小回退：若學生缺失，嘗試從語句直接抓取可能的人名（含「測試」前綴）
       if (!slots.studentName) {
         const m = message.match(/(測試?[A-Za-z一-龥]{1,12})(?=的|今天|明天|這週|本週|下週|這周|本周|下周|課表)/);
@@ -885,6 +914,7 @@ module.exports = {
   extractStudentName,
   extractCourseName,
   enhanceSlotsWithContext,
+  findAllStudentCandidates,
 };
 
 /**

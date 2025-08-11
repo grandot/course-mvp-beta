@@ -112,7 +112,7 @@
 - [x] 新增 `src/nlu/IntentRouter.js`（Safety/Query/Modify 決策、AI 補判）
 - [x] 調整 `src/bot/webhook.js` 使用 Router（保留回退 Flag；QA 流程預設走 Router）
 - [x] 新增 `src/nlu/ResponseRenderer.js` 並接入 webhook（已上線 Query 空結果與錯誤碼模板）
-- [ ] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
+- [x] 調整 `src/intent/extractSlots.js` 支援 session pinned、Query 多候選回詢問
 - [ ] 各任務 Gatekeeper（最小充分條件與錯誤碼/文案統一）
 - [ ] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`
 - [x] 新增 `src/utils/decisionLogger.js` 與 `/debug/decision`

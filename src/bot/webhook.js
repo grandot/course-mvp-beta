@@ -131,6 +131,22 @@ async function handleTextMessage(event, req = null) {
         console.warn('⚠️ 設定查詢會話鎖失敗:', e?.message || e);
       }
     }
+
+    // 查詢多候選：不猜，先回澄清選單
+    if (intent === 'query_schedule' && Array.isArray(slots.studentCandidates) && slots.studentCandidates.length > 1) {
+      const { getConversationManager } = require('../conversation/ConversationManager');
+      const cm = getConversationManager();
+      await cm.setExpectedInput(userId, 'query_schedule', ['student_name_input'], { intent: 'query_schedule', existingSlots: slots, missingFields: ['studentName'] });
+
+      const options = slots.studentCandidates.slice(0, 4);
+      const quickReply = options.map((name) => ({ label: name, text: name }));
+      const clarify = '❓ 請問要查哪位學生的課表？';
+
+      await currentLineService.replyMessage(replyToken, clarify, quickReply);
+      info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: clarify, quickReply: !!quickReply });
+      try { require('../utils/decisionLogger').recordDecision(traceId, { stage: 'render', userId, intent, responseMessage: clarify, quickReply }); } catch (_) {}
+      return;
+    }
     info({ stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots) });
     try {
       const { recordDecision } = require('../utils/decisionLogger');
