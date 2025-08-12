@@ -345,11 +345,8 @@ ENABLE_TRELLO_LABELS=false
 # 推送 PROJECT_STATUS.md → Trello（會自動建立 Backlog/Next/Doing/Blocked/Done 列表）
 npm run trello:push
 
-# 從 Trello 抓回五個列表的條目，輸出預覽到 reports/trello-sync-pull.md（不改檔）
+# 從 Trello 拉回五個列表並直接寫回 PROJECT_STATUS.md（無預覽）
 npm run trello:pull
-
-# 從 Trello 寫回（覆寫 PROJECT_STATUS.md 的五個區塊）
-npm run trello:pull:write
 
 # 進階旗標（搭配 trello:push 使用）
 #   --dry-run           只顯示即將動作

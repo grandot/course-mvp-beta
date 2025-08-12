@@ -275,7 +275,6 @@ async function syncPush(boardId, statusFile, options) {
 async function main() {
   const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
   const isPull = process.argv.includes('--mode=pull');
-  const writeBack = process.argv.includes('--write');
   const dryRun = process.argv.includes('--dry-run');
   const listsArg = (process.argv.find(a => a.startsWith('--lists=')) || '').split('=')[1];
   const listsFilter = listsArg ? listsArg.split(',').map(s => s.trim()).filter(Boolean) : null;
@@ -291,7 +290,7 @@ async function main() {
     return;
   }
 
-  // Pull 模式：從 Trello 讀取五個列表，輸出成 Markdown 預覽，預設不覆寫原檔
+  // Pull 模式：從 Trello 讀取五個列表，直接覆寫 PROJECT_STATUS.md 的五個區塊
   const canonicalBoardId = await getCanonicalBoardIdMaybe(TRELLO_BOARD_ID);
   const board = await getBoardMeta(canonicalBoardId);
   const lists = await getLists(canonicalBoardId);
@@ -313,26 +312,7 @@ async function main() {
     return `### ${name}\n${bullets}\n`;
   }
 
-  const snapshot = [
-    `## Trello Pull Snapshot`,
-    `- board: ${board.name} (${board.url})`,
-    `- pulledAt: ${new Date().toISOString()}`,
-    '',
-    buildSection('Backlog', pulled.Backlog || []),
-    buildSection('Next', pulled.Next || []),
-    buildSection('Doing', pulled.Doing || []),
-    buildSection('Blocked', pulled.Blocked || []),
-    buildSection('Done', pulled.Done || []),
-  ].join('\n');
-
-  if (!writeBack) {
-    const outDir = path.resolve(process.cwd(), 'reports');
-    try { fs.mkdirSync(outDir, { recursive: true }); } catch (_) {}
-    const outPath = path.join(outDir, 'trello-sync-pull.md');
-    fs.writeFileSync(outPath, snapshot, 'utf8');
-    console.log(`已輸出預覽：${outPath}（不覆寫 PROJECT_STATUS.md）`);
-    return;
-  }
+  // 直接寫回，不產生預覽檔
 
   // writeBack：覆寫 PROJECT_STATUS.md 內五個區塊的條目
   const md = fs.readFileSync(statusFile, 'utf8');
@@ -358,97 +338,7 @@ async function main() {
   fs.writeFileSync(statusFile, newMd, 'utf8');
   console.log('已將 Trello 內容寫回 PROJECT_STATUS.md（五個區塊的條目已覆寫）');
 
-  // 同步一段「聊天上下文摘要」：覆寫整個摘要段（舊的刪除），只保留本輪重點
-  try {
-    const contextPath = path.resolve(process.cwd(), 'AI_TASK_CONTEXT.md');
-    if (fs.existsSync(contextPath)) {
-      const ctx = fs.readFileSync(contextPath, 'utf8');
-      const hasSection = /###\s*當前上下文摘要/.test(ctx);
-      if (hasSection) {
-        const now = new Date();
-        const taipeiTsLine = new Intl.DateTimeFormat('zh-TW', {
-          timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-        }).format(now).replace(/\//g, '-');
-        const sourceLabel = detectContextSourceLabel();
-
-        // 從「當前聊天上下文」來源萃取要點（不再參考 PROJECT_STATUS.md）
-        async function summarizeFromChatContext() {
-          try {
-            // 來源優先序（自動融合到 sync:trello）：
-            // 1) AI_CONTEXT_TEXT（直接文字）
-            // 2) AI_CONTEXT_TEXT_FILE（檔案路徑）
-            // 3) AI_CONTEXT_TEXT_FETCHER（shell 指令，stdout 當原文）
-            // 4) reports/chat-transcript.md（固定檔）
-            let raw = process.env.AI_CONTEXT_TEXT || '';
-            if (!raw) {
-              const f = process.env.AI_CONTEXT_TEXT_FILE;
-              if (f && fs.existsSync(path.resolve(process.cwd(), f))) {
-                raw = fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
-              }
-            }
-            if (!raw) {
-              const cmd = process.env.AI_CONTEXT_TEXT_FETCHER;
-              if (cmd) {
-                try { raw = execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch (_) { /* ignore */ }
-              }
-            }
-            if (!raw) {
-              const p = path.resolve(process.cwd(), 'reports/chat-transcript.md');
-              if (fs.existsSync(p)) {
-                const t = fs.readFileSync(p, 'utf8');
-                if (t && t.trim()) raw = t;
-              }
-            }
-            if (!raw || !raw.trim()) return [];
-            if (!process.env.OPENAI_API_KEY || !OpenAIClient) {
-              // 簡易 fallback：取 - 開頭或段落標題，前 20 條
-              return raw.split(/\r?\n/)
-                .map(s => s.trim())
-                .filter(s => s)
-                .reduce((arr, s) => {
-                  if (/^[-•]\s+/.test(s)) arr.push(s.replace(/^[-•]\s+/, '- '));
-                  else if (/^#{1,3}\s+/.test(s)) arr.push('- ' + s.replace(/^#{1,3}\s+/, ''));
-                  return arr; }, [])
-                .slice(0, 20);
-            }
-            const client = new OpenAIClient({ apiKey: process.env.OPENAI_API_KEY });
-            const prompt = '請整理以下最近 100 條對話為主題式摘要（繁體中文），輸出 6-12 條：合併同主題、去重、每條以「- 」開頭，內容只含決策/進度/問題/下一步/風險，不要流水帳：\n\n' + raw;
-            const resp = await client.chat.completions.create({
-              model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-              messages: [
-                { role: 'system', content: '你是專注整理上下文的助理，輸出繁體中文條列（- 開頭），不超過12條。' },
-                { role: 'user', content: prompt },
-              ],
-              temperature: 0.2,
-            });
-            const text = resp.choices?.[0]?.message?.content || '';
-            return text.split(/\r?\n/).map(s => s.trim()).filter(Boolean).map(s => (s.startsWith('- ') ? s : `- ${s}`));
-          } catch { return []; }
-        }
-
-        const bulletsPrimary = ['- Trello 同步落地：日常在 Trello 操作，回檔一鍵用 `npm run sync:trello`；說明見 `tools/README.md`；可選 Webhook（公網 URL）'];
-        const bulletsExtra = await summarizeFromChatContext();
-        const combined = [...bulletsPrimary, ...bulletsExtra];
-        const seen = new Set();
-        const finalBullets = [];
-        for (const b of combined) {
-          const key = b.replace(/[`*_\s\-：:]/g, '').toLowerCase();
-          if (seen.has(key)) continue;
-          seen.add(key);
-          finalBullets.push(b);
-        }
-        const newBlock = `\n### 當前上下文摘要（依新舊降冪）\n[${sourceLabel}]\n\n${finalBullets.join('\n')}\n`;
-
-        // 取代整個「當前上下文摘要」段落內容
-        const replaced = ctx.replace(/###\s*當前上下文摘要[\s\S]*$/m, newBlock);
-        let withTs = replaced.replace(/- 最後更新：.*\n/, `- 最後更新：${taipeiTsLine}（台北時間, UTC+8）\n`);
-        // 只保留「最後更新」之後的兩個空行
-        withTs = withTs.replace(/(- 最後更新：[^\n]*\n)(?:\s*\n)+(?=###\s*當前上下文摘要)/, `$1\n\n`);
-        fs.writeFileSync(contextPath, withTs, 'utf8');
-      }
-    }
-  } catch (_) {}
+  // 不再同步或修改 AI 任務上下文檔案
 }
 
 main().catch((err) => {
