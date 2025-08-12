@@ -265,6 +265,48 @@ async function createEvent(calendarId, courseData) {
 }
 
 /**
+ * 將事件標記為「已取消」而不物理刪除
+ * - 在 summary 前加上【已取消】（若尚未存在）
+ * - 設為透明（不佔忙碌時段）
+ * - 於 extendedProperties.private.cancelled 設為 'true'
+ */
+async function markEventCancelled(calendarId, eventId) {
+  try {
+    const calendarService = initializeGoogleCalendar();
+
+    // 取得現有事件
+    const existing = await calendarService.events.get({ calendarId, eventId });
+    const resource = existing.data || {};
+
+    const hasPrefix = typeof resource.summary === 'string' && resource.summary.includes('【已取消】');
+    const summary = hasPrefix ? resource.summary : `【已取消】${resource.summary || ''}`;
+
+    // 準備 extendedProperties.private
+    const extendedPrivate = {
+      ...(resource.extendedProperties && resource.extendedProperties.private ? resource.extendedProperties.private : {}),
+      cancelled: 'true',
+    };
+
+    const updated = {
+      ...resource,
+      summary,
+      transparency: 'transparent',
+      extendedProperties: {
+        ...(resource.extendedProperties || {}),
+        private: extendedPrivate,
+      },
+    };
+
+    await calendarService.events.update({ calendarId, eventId, resource: updated });
+    console.log('✅ 事件已標記為已取消:', eventId);
+    return { success: true };
+  } catch (error) {
+    console.error('❌ 標記事件為已取消失敗:', error?.response?.data || error?.message || error);
+    return { success: false, message: error?.message };
+  }
+}
+
+/**
  * 查詢事件（檢查時間衝突）
  */
 async function getEvents(calendarId, timeMin, timeMax) {
@@ -298,7 +340,18 @@ async function checkConflict(calendarId, courseDate, scheduleTime, duration = 1)
     const dayStart = `${courseDate}T00:00:00+08:00`;
     const dayEnd = `${courseDate}T23:59:59+08:00`;
 
-    const events = await getEvents(calendarId, dayStart, dayEnd);
+    let events = await getEvents(calendarId, dayStart, dayEnd);
+
+    // 過濾「已取消」事件（不應參與衝突判斷）
+    events = (events || []).filter((event) => {
+      try {
+        const cancelledFlag = event?.extendedProperties?.private?.cancelled === 'true';
+        const cancelledTitle = typeof event?.summary === 'string' && event.summary.includes('【已取消】');
+        return !(cancelledFlag || cancelledTitle);
+      } catch (_) {
+        return true;
+      }
+    });
 
     // 檢查是否有時間重疊
     const newStart = new Date(startDateTime);

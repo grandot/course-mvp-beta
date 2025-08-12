@@ -114,14 +114,13 @@ async function deleteFromGoogleCalendar(course) {
       return true;
     }
 
-    // 從 Google Calendar 刪除事件
-    const deleteResult = await googleCalendarService.deleteEvent(student.calendarId, course.calendarEventId);
-
-    if (deleteResult.success) {
-      console.log('✅ Google Calendar 事件已刪除:', course.calendarEventId);
+    // 根據產品規則：主動取消不物理刪除 GCal 事件，僅做標記
+    const result = await googleCalendarService.markEventCancelled(student.calendarId, course.calendarEventId);
+    if (result.success) {
+      console.log('✅ Google Calendar 事件已標記為取消:', course.calendarEventId);
       return true;
     }
-    console.error('❌ Google Calendar 刪除失敗:', deleteResult.message);
+    console.error('❌ Google Calendar 標記取消失敗:', result.message);
     return false;
   } catch (error) {
     console.error('❌ Google Calendar 刪除異常:', error);

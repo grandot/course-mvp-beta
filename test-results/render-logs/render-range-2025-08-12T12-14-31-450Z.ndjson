@@ -1,0 +1,3000 @@
+2025-08-12 12:12:23  🧪 Mock LINE Service 初始化（測試模式）
+2025-08-12 12:12:23  ⚠️ 警告：USE_MOCK_LINE_SERVICE 未設定，建議明確指定
+2025-08-12 12:12:23  📨 收到 1 個事件
+2025-08-12 12:12:23  📋 事件類型: message
+2025-08-12 12:12:23  🔍 完整事件 JSON: {
+2025-08-12 12:12:23    "type": "message",
+2025-08-12 12:12:23    "mode": "active",
+2025-08-12 12:12:23    "timestamp": 1755000739795,
+2025-08-12 12:12:23    "source": {
+2025-08-12 12:12:23      "type": "user",
+2025-08-12 12:12:23      "userId": "U_test_automation_user_12345_basic_001"
+2025-08-12 12:12:23    },
+2025-08-12 12:12:23    "replyToken": "reply_token_1755000739795",
+2025-08-12 12:12:23    "message": {
+2025-08-12 12:12:23      "type": "text",
+2025-08-12 12:12:23      "id": "msg_1755000739795",
+2025-08-12 12:12:23      "text": "小明明天下午3點數學課"
+2025-08-12 12:12:23    }
+2025-08-12 12:12:23  }
+2025-08-12 12:12:23  {"ts":"2025-08-12T12:12:23.529Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1755000743529_6zqj3z","userId":"U_test_automation_user_12345_basic_001","textIn":"小明明天下午3點數學課"}
+2025-08-12 12:12:23  🔍 用戶ID類型: string
+2025-08-12 12:12:23  🔍 是否測試用戶: true
+2025-08-12 12:12:23  🚀 生產用戶，使用真實 LINE Service
+2025-08-12 12:12:23  ✅ Redis 連接成功
+2025-08-12 12:12:24  [dotenv@17.2.1] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+2025-08-12 12:12:24  ✅ OpenAI 服務初始化完成
+2025-08-12 12:12:25  🤖 AI 識別意圖: add_course 信心度: 1
+2025-08-12 12:12:25  {"ts":"2025-08-12T12:12:25.037Z","lvl":"info","stage":"nlp","traceId":"line_1755000743529_6zqj3z","userId":"U_test_automation_user_12345_basic_001","intent":"add_course"}
+2025-08-12 12:12:25  🔍 開始提取 slots - 意圖: add_course (用戶: U_test_automation_user_12345_basic_001)
+2025-08-12 12:12:25  🕒 開始高級時間解析: 小明明天下午3點數學課
+2025-08-12 12:12:25  ✅ 時間解析成功: {
+2025-08-12 12:12:25    input: '小明明天下午3點數學課',
+2025-08-12 12:12:25    output: '15:00',
+2025-08-12 12:12:25    details: { hour: 15, minute: 0, matchType: 'arabic_period', periodInfo: '下午' }
+2025-08-12 12:12:25  }
+2025-08-12 12:12:25  🧠 使用對話上下文增強 slots 提取
+2025-08-12 12:12:25  📊 規則提取置信度: 1.00
+2025-08-12 12:12:25  🤖 啟用 AI 輔助提取...
+2025-08-12 12:12:27  ✅ 最終 slots: {
+2025-08-12 12:12:27    studentName: '小明',
+2025-08-12 12:12:27    courseName: '數學課',
+2025-08-12 12:12:27    scheduleTime: '15:00',
+2025-08-12 12:12:27    recurring: false,
+2025-08-12 12:12:27    timeReference: 'tomorrow'
+2025-08-12 12:12:27  }
+2025-08-12 12:12:27  {"ts":"2025-08-12T12:12:27.092Z","lvl":"info","stage":"slots","traceId":"line_1755000743529_6zqj3z","userId":"U_test_automation_user_12345_basic_001","intent":"add_course","slotsSummary":["studentName","courseName","scheduleTime","recurring","timeReference"]}
+2025-08-12 12:12:27  🎯 執行任務: add_course
+2025-08-12 12:12:27  🎯 開始處理新增課程任務
+2025-08-12 12:12:27  📋 接收參數: {
+2025-08-12 12:12:27    studentName: '小明',
+2025-08-12 12:12:27    courseName: '數學課',
+2025-08-12 12:12:27    scheduleTime: '15:00',
+2025-08-12 12:12:27    recurring: false,
+2025-08-12 12:12:27    timeReference: 'tomorrow'
+2025-08-12 12:12:27  }
+2025-08-12 12:12:27  [dotenv@17.2.1] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+2025-08-12 12:12:27  ✅ Firebase 服務初始化完成
+2025-08-12 12:12:28  [dotenv@17.2.1] injecting env (0) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+2025-08-12 12:12:28  🔐 已使用 OAuth2 模式初始化 Google Calendar (client configured, using refresh_token)
+2025-08-12 12:12:28  ✅ Google Calendar 服務初始化完成（模式：oauth2）
+2025-08-12 12:12:29  ⚠️ calendarId 無法存取，將自動重建: not_found
+2025-08-12 12:12:29  📝 準備建立日曆: {"summary":"小明的課程 (U_test_automation_user_12345_basic_001)","description":"由 LINE 課程管理機器人自動創建的學生課程日曆","timeZone":"Asia/Taipei"}
+2025-08-12 12:12:31  ✅ 已創建新日曆: 356d0c91a448350c5759f89df75e23e109b43b60c0115520b2d2029f6697dffa@group.calendar.google.com
+2025-08-12 12:12:31  📨 收到 1 個事件
+2025-08-12 12:12:31  📋 事件類型: message
+2025-08-12 12:12:31  🔍 完整事件 JSON: {
+2025-08-12 12:12:31    "type": "message",
+2025-08-12 12:12:31    "mode": "active",
+2025-08-12 12:12:31    "timestamp": 1755000751324,
+2025-08-12 12:12:31    "source": {
+2025-08-12 12:12:31      "type": "user",
+2025-08-12 12:12:31      "userId": "U_test_automation_user_12345_basic_002"
+2025-08-12 12:12:31    },
+2025-08-12 12:12:31    "replyToken": "reply_token_1755000751324",
+2025-08-12 12:12:31    "message": {
+2025-08-12 12:12:31      "type": "text",
+2025-08-12 12:12:31      "id": "msg_1755000751324",
+2025-08-12 12:12:31      "text": "小明每週三下午3點數學課"
+2025-08-12 12:12:31    }
+2025-08-12 12:12:31  }
+2025-08-12 12:12:31  {"ts":"2025-08-12T12:12:31.573Z","lvl":"info","direction":"inbound","channel":"line","traceId":"line_1755000751573_tyu7yh","userId":"U_test_automation_user_12345_basic_002","textIn":"小明每週三下午3點數學課"}
+2025-08-12 12:12:31  🔍 用戶ID類型: string
+2025-08-12 12:12:31  🔍 是否測試用戶: true
+2025-08-12 12:12:31  🚀 生產用戶，使用真實 LINE Service
+2025-08-12 12:12:31  ✅ 已更新 calendarId: 小明 356d0c91a448350c5759f89df75e23e109b43b60c0115520b2d2029f6697dffa@group.calendar.google.com
+2025-08-12 12:12:31  👤 學生日曆: 356d0c91a448350c5759f89df75e23e109b43b60c0115520b2d2029f6697dffa@group.calendar.google.com
+2025-08-12 12:12:32  📝 準備建立事件: calendarId= 356d0c91a448350c5759f89df75e23e109b43b60c0115520b2d2029f6697dffa@group.calendar.google.com  resource= {"summary":"[U_test_automation_user_12345_basic_001] 小明 - 數學課","description":"小明的課程\n由 LINE 課程管理機器人自動創建","start":{"dateTime":"2025-08-13T15:00:00+08:00","timeZone":"Asia/Taipei"},"end":{"dateTime":"2025-08-13T16:00:00+08:00","timeZone":"Asia/Taipei"},"recurrence":[],"extendedProperties":{"private":{"userId":"U_test_automation_user_12345_basic_001","studentName":"小明","courseId":""}},"reminders":{"useDefault":false,"overrides":[]}}
+2025-08-12 12:12:32  🤖 AI 識別意圖: add_course 信心度: 1
+2025-08-12 12:12:32  {"ts":"2025-08-12T12:12:32.408Z","lvl":"info","stage":"nlp","traceId":"line_1755000751573_tyu7yh","userId":"U_test_automation_user_12345_basic_002","intent":"add_course"}
+2025-08-12 12:12:32  🔍 開始提取 slots - 意圖: add_course (用戶: U_test_automation_user_12345_basic_002)
+2025-08-12 12:12:32  🕒 開始高級時間解析: 小明每週三下午3點數學課
+2025-08-12 12:12:32  ✅ 時間解析成功: {
+2025-08-12 12:12:32    input: '小明每週三下午3點數學課',
+2025-08-12 12:12:32    output: '15:00',
+2025-08-12 12:12:32    details: { hour: 15, minute: 0, matchType: 'arabic_period', periodInfo: '下午' }
+2025-08-12 12:12:32  }
+2025-08-12 12:12:32  🧠 使用對話上下文增強 slots 提取
+2025-08-12 12:12:32  📊 規則提取置信度: 1.00
+2025-08-12 12:12:32  🤖 啟用 AI 輔助提取...
+2025-08-12 12:12:32  ✅ 已創建課程事件: 6kpn5vb759ub8vfgc01rtbs350
+2025-08-12 12:12:32  📝 準備建立事件: calendarId= 356d0c91a448350c5759f89df75e23e109b43b60c0115520b2d2029f6697dffa@group.calendar.google.com  resource= {"summary":"[U_test_automation_user_12345_basic_001] 小明 - 數學課","description":"小明的課程\n由 LINE 課程管理機器人自動創建","start":{"dateTime":"2025-08-13T15:00:00+08:00","timeZone":"Asia/Taipei"},"end":{"dateTime":"2025-08-13T16:00:00+08:00","timeZone":"Asia/Taipei"},"recurrence":[],"extendedProperties":{"private":{"userId":"U_test_automation_user_12345_basic_001","studentName":"小明","courseId":""}},"reminders":{"useDefault":false,"overrides":[]}}
+2025-08-12 12:12:32  🤖 AI 識別意圖: add_course 信心度: 1
+2025-08-12 12:12:32  {"ts":"2025-08-12T12:12:32.408Z","lvl":"info","stage":"nlp","traceId":"line_1755000751573_tyu7yh","userId":"U_test_automation_user_12345_basic_002","intent":"add_course"}
+2025-08-12 12:12:32  🔍 開始提取 slots - 意圖: add_course (用戶: U_test_automation_user_12345_basic_002)
+2025-08-12 12:12:32  🕒 開始高級時間解析: 小明每週三下午3點數學課
+2025-08-12 12:12:32  ✅ 時間解析成功: {
+2025-08-12 12:12:32    input: '小明每週三下午3點數學課',
+2025-08-12 12:12:32    output: '15:00',
+2025-08-12 12:12:32    details: { hour: 15, minute: 0, matchType: 'arabic_period', periodInfo: '下午' }
+2025-08-12 12:12:32  }
+2025-08-12 12:12:32  🧠 使用對話上下文增強 slots 提取
+2025-08-12 12:12:32  📊 規則提取置信度: 1.00
+2025-08-12 12:12:32  🤖 啟用 AI 輔助提取...
+2025-08-12 12:12:32  ✅ 已創建課程事件: 6kpn5vb759ub8vfgc01rtbs350
+2025-08-12 12:12:32  📅 Google Calendar 事件已創建: 6kpn5vb759ub8vfgc01rtbs350
+2025-08-12 12:12:33  ✅ 課程資料已儲存: SXr4b4GCD9UpzPiG1nBi
+2025-08-12 12:12:33  💾 Firebase 課程資料已儲存: SXr4b4GCD9UpzPiG1nBi
+2025-08-12 12:12:33  📊 任務執行結果: {
+2025-08-12 12:12:33    success: true,
+2025-08-12 12:12:33    code: 'ADD_COURSE_OK',
+2025-08-12 12:12:33    message: '✅ 課程已安排成功！\n\n👦 學生：小明\n📚 課程：數學課\n📅 日期：2025-08-13\n🕐 時間：下午3:00',
+2025-08-12 12:12:33    data: {
+2025-08-12 12:12:33      courseId: 'SXr4b4GCD9UpzPiG1nBi',
+2025-08-12 12:12:33      eventId: '6kpn5vb759ub8vfgc01rtbs350'
+2025-08-12 12:12:33    },
+2025-08-12 12:12:33    quickReply: [ { label: '✅ 確認', text: '確認' }, { label: '❌ 取消操作', text: '取消操作' } ]
+2025-08-12 12:12:33  }
+2025-08-12 12:12:33  {"ts":"2025-08-12T12:12:33.186Z","lvl":"info","stage":"task","traceId":"line_1755000743529_6zqj3z","userId":"U_test_automation_user_12345_basic_001","intent":"add_course","success":true,"code":"ADD_COURSE_OK","latencyMs":6094}
+2025-08-12 12:12:33  🔍 檢查 replyToken: reply_token_1755000739795
+2025-08-12 12:12:33  {"ts":"2025-08-12T12:12:33.643Z","lvl":"error","direction":"inbound","channel":"line","traceId":"err_1755000753643_vn50lt","userId":"U_test_automation_user_12345_basic_001","textIn":"小明明天下午3點數學課","error":"Request failed with status code 400"}
+2025-08-12 12:12:33  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:33  🚀 生產用戶，使用真實 LINE Service
+2025-08-12 12:12:33  🔍 檢查 replyToken: reply_token_1755000739795
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,
+2025-08-12 12:12:34  ❌ 訊息回覆失敗: { message: 'Invalid reply token' }
+2025-08-12 12:12:34  ❌ Webhook 處理失敗: AxiosError: Request failed with status code 400
+2025-08-12 12:12:34      at settle (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:2090:12)
+2025-08-12 12:12:34      at IncomingMessage.handleStreamEnd (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:3207:11)
+2025-08-12 12:12:34      at IncomingMessage.emit (node:events:519:35)
+2025-08-12 12:12:34      at endReadableNT (node:internal/streams/readable:1701:12)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2025-08-12 12:12:34      at Axios.request (/opt/render/project/src/node_modules/axios/dist/node/axios.cjs:4317:41)
+2025-08-12 12:12:34      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-08-12 12:12:34      at async Object.replyMessage (/opt/render/project/src/src/services/lineService.js:75:22)
+2025-08-12 12:12:34      at async handleTextMessage (/opt/render/project/src/src/bot/webhook.js:204:5)
+2025-08-12 12:12:34      at async handleWebhook (/opt/render/project/src/src/bot/webhook.js:498:13)
+2025-08-12 12:12:34      at async /opt/render/project/src/src/index.js:34:5 {
+2025-08-12 12:12:34    code: 'ERR_BAD_REQUEST',
+2025-08-12 12:12:34    config: {
+2025-08-12 12:12:34      transitional: {
+2025-08-12 12:12:34        silentJSONParsing: true,
+2025-08-12 12:12:34        forcedJSONParsing: true,
+2025-08-12 12:12:34        clarifyTimeoutError: false
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      adapter: [ 'xhr', 'http', 'fetch' ],
+2025-08-12 12:12:34      transformRequest: [ [Function: transformRequest] ],
+2025-08-12 12:12:34      transformResponse: [ [Function: transformResponse] ],
+2025-08-12 12:12:34      timeout: 0,
+2025-08-12 12:12:34      xsrfCookieName: 'XSRF-TOKEN',
+2025-08-12 12:12:34      xsrfHeaderName: 'X-XSRF-TOKEN',
+2025-08-12 12:12:34      maxContentLength: -1,
+2025-08-12 12:12:34      maxBodyLength: -1,
+2025-08-12 12:12:34      env: { FormData: [Function [FormData]], Blob: [class Blob] },
+2025-08-12 12:12:34      validateStatus: [Function: validateStatus],
+2025-08-12 12:12:34      headers: Object [AxiosHeaders] {
+2025-08-12 12:12:34        Accept: 'application/json, text/plain, */*',
+2025-08-12 12:12:34        'Content-Type': 'application/json',
+2025-08-12 12:12:34        Authorization: 'Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=',
+2025-08-12 12:12:34        'User-Agent': 'axios/1.11.0',
+2025-08-12 12:12:34        'Content-Length': '129',
+2025-08-12 12:12:34        'Accept-Encoding': 'gzip, compress, deflate, br'
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      method: 'post',
+2025-08-12 12:12:34      url: 'https://api.line.me/v2/bot/message/reply',
+2025-08-12 12:12:34      data: '{"replyToken":"reply_token_1755000739795","messages":[{"type":"text","text":"處理訊息時發生錯誤，請稍後再試。"}]}',
+2025-08-12 12:12:34      allowAbsoluteUrls: true
+2025-08-12 12:12:34    },
+2025-08-12 12:12:34    request: <ref *1> ClientRequest {
+2025-08-12 12:12:34      _events: [Object: null prototype] {
+2025-08-12 12:12:34        abort: [Function (anonymous)],
+2025-08-12 12:12:34        aborted: [Function (anonymous)],
+2025-08-12 12:12:34        connect: [Function (anonymous)],
+2025-08-12 12:12:34        error: [Function (anonymous)],
+2025-08-12 12:12:34        socket: [Function (anonymous)],
+2025-08-12 12:12:34        timeout: [Function (anonymous)],
+2025-08-12 12:12:34        finish: [Function: requestOnFinish]
+2025-08-12 12:12:34      },
+2025-08-12 12:12:34      _eventsCount: 7,
+2025-08-12 12:12:34      _maxListeners: undefined,
+2025-08-12 12:12:34      outputData: [],
+2025-08-12 12:12:34      outputSize: 0,
+2025-08-12 12:12:34      writable: true,
+2025-08-12 12:12:34      destroyed: false,
+2025-08-12 12:12:34      _last: false,
+2025-08-12 12:12:34      chunkedEncoding: false,
+2025-08-12 12:12:34      shouldKeepAlive: false,
+2025-08-12 12:12:34      maxRequestsOnConnectionReached: false,
+2025-08-12 12:12:34      _defaultKeepAlive: true,
+2025-08-12 12:12:34      useChunkedEncodingByDefault: true,
+2025-08-12 12:12:34      sendDate: false,
+2025-08-12 12:12:34      _removedConnection: false,
+2025-08-12 12:12:34      _removedContLen: false,
+2025-08-12 12:12:34      _removedTE: false,
+2025-08-12 12:12:34      strictContentLength: false,
+2025-08-12 12:12:34      _contentLength: 129,
+2025-08-12 12:12:34      _hasBody: true,
+2025-08-12 12:12:34      _trailer: '',
+2025-08-12 12:12:34      finished: true,
+2025-08-12 12:12:34      _headerSent: true,
+2025-08-12 12:12:34      _closed: false,
+2025-08-12 12:12:34      _header: 'POST /v2/bot/message/reply HTTP/1.1\r\n' +
+2025-08-12 12:12:34        'Accept: application/json, text/plain, */*\r\n' +
+2025-08-12 12:12:34        'Content-Type: application/json\r\n' +
+2025-08-12 12:12:34        'Authorization: Bearer +LATS/cSYCUN4VVSpU/2TOWpDXGyYl2os+C99MgPfEnAG5pHrmY3fEGJoMik7hddPGBV+hQcpnypK0bDjW3x4FfTq1Iohow/cd3+PrGnpP/mEzymfa0VcComebCYH5z0a5FHQRjiv7Ggw8t+FKOo0wdB04t89/1O/w1cDnyilFU=\r\n' +
+2025-08-12 12:12:34        'User-Agent: axios/1.11.0\r\n' +
+2025-08-12 12:12:34        'Content-Length: 129\r\n' +
+2025-08-12 12:12:34        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+2025-08-12 12:12:34        'Host: api.line.me\r\n' +
+2025-08-12 12:12:34        'Connection: keep-alive\r\n' +
+2025-08-12 12:12:34        '\r\n',
+2025-08-12 12:12:34      _keepAliveTimeout: 0,
+2025-08-12 12:12:34      _onPendingData: [Function: nop],
+2025-08-12 12:12:34      agent: Agent {
+2025-08-12 12:12:34        _events: [Object: null prototype],
+2025-08-12 12:12:34        _eventsCount: 2,
+2025-08-12 12:12:34        _maxListeners: undefined,
+2025-08-12 12:12:34        options: [Object: null prototype],
+2025-08-12 12:12:34        defaultPort: 443,
+2025-08-12 12:12:34        protocol: 'https:',
+2025-08-12 12:12:34        requests: [Object: null prototype] {},
+2025-08-12 12:12:34        sockets: [Object: null prototype],
+2025-08-12 12:12:34        freeSockets: [Object: null prototype],
+2025-08-12 12:12:34        keepAliveMsecs: 1000,
+2025-08-12 12:12:34        keepAlive: true,

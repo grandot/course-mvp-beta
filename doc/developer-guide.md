@@ -381,6 +381,30 @@ async function handle_set_reminder_task(slots, userId) {
 }
 ```
 
+## 5.1 Google Calendar 整合原則與取消/撤銷規範（重要）
+
+### 憑證與歸屬
+- Calendar 一律使用「平台 Gmail 的 OAuth」作為機器身分（人可見）；Service Account 僅用於 Firebase。
+
+### 取消與撤銷邏輯
+- 使用者主動取消（自然語句如「取消小明明天3點數學課」）
+  - Firebase：軟刪除，將課程文件標記 `cancelled=true`，並寫入 `cancelledAt`、`updatedAt`
+  - Google Calendar：不物理刪除；改用事件更新標記為「已取消」：
+    - summary 前綴加「【已取消】」
+    - `transparency='transparent'`（不佔忙碌時段）
+    - `extendedProperties.private.cancelled='true'`
+  - 衝突檢查：`googleCalendarService.checkConflict()` 會忽略帶上述標記的事件，避免誤判
+
+- 撤銷上一動作（剛完成後立即按「取消操作/undo」）
+  - Firebase：物理刪除該筆課程紀錄
+  - Google Calendar：物理刪除對應事件
+
+### 實作位置
+- 標記取消：`googleCalendarService.markEventCancelled(calendarId, eventId)`
+- 主動取消任務：`tasks/handle_cancel_course_task.js`（呼叫 markEventCancelled + 軟刪）
+- 撤銷上一動作：`tasks/handle_cancel_action_task.js`（物理刪除事件 + 物理刪 Firebase）
+- 衝突過濾：`googleCalendarService.checkConflict()` 已過濾【已取消】或 `extendedProperties.private.cancelled='true'` 的事件
+
 ## 快速上手提示
 
 1. **本地開發**：
