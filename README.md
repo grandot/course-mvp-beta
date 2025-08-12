@@ -49,6 +49,21 @@ npm start
 
 服務將在 http://localhost:3000 啟動。
 
+## 🧭 專案同步與看板
+
+- 同步變更紀錄（依 `PROJECT_STATUS.md` 的 `### Done` 條目自動生成/補齊 `doc/CHANGELOG.md`）
+  - 直接執行：
+    - `bin/sync`
+    - 或 `npm run sync`
+  - 規則：只讀取含日期前綴的 Done 條目（格式 `YYYY-MM-DD：內容` 或 `YYYY-MM-DD: 內容`）
+  - 不會動 `AI_TASK_CONTEXT.md`
+
+- Trello 對接（看板 ←→ 文件）
+  - 推（`PROJECT_STATUS.md` → Trello）：`bin/trello:push`
+  - 拉（Trello → 覆寫 `PROJECT_STATUS.md` 五個區塊）：`bin/trello:pull`
+  - 注意：拉取會直接覆寫 `Backlog/Next/Doing/Blocked/Done` 五個區塊；請先提交本地修改再執行
+  - 詳細參數與環境變數請見 `tools/README.md`
+
 ## 🧪 測試功能
 
 ### 測試語意處理（不需要外部服務）
