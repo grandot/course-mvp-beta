@@ -27,9 +27,11 @@
 - [P0][debug]新增課程時日曆未寫入成功，但是firebase寫入成功
 - [P0][Feature] 修改課程功能（需求定義完成）
 ### Next（需求定義完成，尚未開工）
+- [P1][Security] 撤銷保護（時效限制＋lastAction 驗證；僅允許 N 分鐘內撤銷，逾時需人工確認）
+- [P1][Security] deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents）
 - [P1][Quality] 單元測試補齊（需求定義完成；尚未開工）
-- [P0]確認GCal跟firebase是否同步（新增/刪除/修改）
-- [P0] 除了測試的日曆，正常用戶的日曆不可刪除。如果用戶下達刪除指令，改變status不要物理刪除。
+- [P0] 確認 GCal 與 Firebase 是否同步（新增/刪除/修改）
+- [P0] 除了測試日曆，正常用戶日曆不可刪；用戶刪除指令改為 status，不做物理刪除
 ### Backlog（優先序由上而下）
 - [P1][Feature] 批次操作（一次新增多個課程）
 - [P2][Feature] 匯出 PDF 課程報表
