@@ -1,7 +1,7 @@
 # 專案狀態報告
 
-**最後更新**: 2025-08-12
-**版本**: 1.2.18  
+**最後更新**: 2025-08-13
+**版本**: 1.2.19  
 **部署狀態**: 生產環境運行中
 
 ## 概覽（快速掃描）
@@ -27,11 +27,11 @@
 - [P0][Feature] 修改課程功能（需求定義完成）
 - 重複任務「每月」尚未實作
 ### Next（需求定義完成，尚未開工）
-- [P1][Security] 撤銷保護（時效限制＋lastAction 驗證；僅允許 N 分鐘內撤銷，逾時需人工確認）
-- [P1][Security] deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents）
 - [P1][Quality] 單元測試補齊（需求定義完成；尚未開工）
 - [P0]確認GCal跟firebase是否同步（新增/刪除/修改）
 - [P0] 除了測試的日曆，正常用戶的日曆不可刪除。如果用戶下達刪除指令，改變status不要物理刪除。
+- 撤銷保護（時效限制＋lastAction 驗證；僅允許 N 分鐘內撤銷，逾時需人工確認）
+- deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents）
 ### Backlog（優先序由上而下）
 - [P1][Feature] 批次操作（一次新增多個課程）
 - [P2][Feature] 匯出 PDF 課程報表
