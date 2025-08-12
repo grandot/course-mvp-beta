@@ -353,7 +353,47 @@ function updateChangelog(status, existing) {
     }
   }
 
-  return content;
+  // 規整：同一天僅保留一個區塊，並按日期由新到舊排序；合併重覆的 bullet
+  function normalizeByDate(md) {
+    const headerMatch = md.match(/^#\s+.*\n\n?/);
+    const header = headerMatch ? headerMatch[0] : '# 📝 Change Log\n\n';
+    const legendIdx = md.search(/^##\s+📋\s+Legend/m);
+    const legend = legendIdx >= 0 ? md.slice(legendIdx).trimStart() : '';
+    const body = legendIdx >= 0 ? md.slice(header.length, legendIdx) : md.slice(header.length);
+
+    // 抽取所有日期區塊
+    const re = /^##\s+(\d{4}-\d{2}-\d{2}).*\n([\s\S]*?)(?=^##\s+\d{4}-\d{2}-\d{2}|^##\s+📋|\Z)/gm;
+    const dateToBullets = new Map();
+    let m;
+    while ((m = re.exec(body)) !== null) {
+      const dateStr = m[1];
+      const sec = m[2] || '';
+      const bullets = sec.split(/\n/)
+        .map(s => s.trim())
+        .filter(s => s.startsWith('- '));
+      if (!dateToBullets.has(dateStr)) dateToBullets.set(dateStr, new Set());
+      const set = dateToBullets.get(dateStr);
+      bullets.forEach(b => set.add(b));
+    }
+
+    // 排序（新→舊）
+    const dates = Array.from(dateToBullets.keys()).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+
+    // 重建內容
+    let out = header;
+    for (const d of dates) {
+      const list = Array.from(dateToBullets.get(d));
+      if (list.length === 0) continue;
+      out += `## ${d} - 系統更新 📝\n\n`;
+      out += '### 🐛 Fixed\n';
+      out += list.join('\n') + '\n\n';
+      out += '---\n\n';
+    }
+    if (legend) out += legend.startsWith('\n') ? legend : `\n${legend}`;
+    return out;
+  }
+
+  return normalizeByDate(content);
 }
 
 // 主函數
