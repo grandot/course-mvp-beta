@@ -282,76 +282,77 @@ function analyzeCommitForChangelog(commit, date) {
 
 // 5. 更新 CHANGELOG.md
 function updateChangelog(status, existing) {
-  console.log('📜 更新 CHANGELOG.md...');
-  
+  console.log('📜 更新 CHANGELOG.md（依 PROJECT_STATUS.md 的 Done 條目）...');
+
   let content = existing.changelog;
-  
-  // 生成動態條目
-  const newEntries = generateChangelogEntries(status);
-  
-  if (newEntries.length === 0) {
-    // 只更新現有日期格式（如果有的話）
-    content = content.replace(
-      /## (\d{4}-\d{2}-\d{2})/g,
-      `## ${status.date}`
-    );
-    return content;
+
+  // 由 PROJECT_STATUS.md 的 Done 區塊生成 changelog 條目
+  // 僅處理含日期前綴的條目：YYYY-MM-DD：xxxx
+  const doneItems = Array.isArray(existing.doneItems) ? existing.doneItems : [];
+  const dateItemMap = new Map(); // dateStr -> [items]
+
+  for (const line of doneItems) {
+    const m = line.match(/^(\d{4}-\d{2}-\d{2})[:：]\s*(.+)$/);
+    if (!m) continue;
+    const [, dateStr, rest] = m;
+    if (!dateItemMap.has(dateStr)) dateItemMap.set(dateStr, []);
+    dateItemMap.get(dateStr).push(rest.trim());
   }
-  
-  // 智能添加新的日期區塊（置頂，最新在前）
-  const hasDateSections = content.match(/## \d{4}-\d{2}-\d{2}/);
-  
-  if (hasDateSections) {
-    // 在第一個日期區塊前插入新條目
-    let newSection = `## ${status.date} - `;
-    
-    // 生成標題（基於條目類型）
-    const hasFixed = newEntries.some(e => e.type === '🚀 Fixed');
-    const hasAdded = newEntries.some(e => e.type === '✨ Added');
-    
-    if (hasFixed && hasAdded) {
-      newSection += '功能修復與新增 🔧✨\n\n';
-    } else if (hasFixed) {
-      newSection += '功能修復 🔧\n\n';
-    } else if (hasAdded) {
-      newSection += '功能新增 ✨\n\n';
-    } else {
-      newSection += '系統更新 📝\n\n';
-    }
-    
-    // 按類型組織條目
-    const fixedEntries = newEntries.filter(e => e.type === '🚀 Fixed');
-    const addedEntries = newEntries.filter(e => e.type === '✨ Added');
-    
-    if (fixedEntries.length > 0) {
+
+  if (dateItemMap.size === 0) return content;
+
+  // 幫助函式：找某日期區塊範圍
+  function findDateSectionRange(md, dateStr) {
+    const re = new RegExp(`^##\\s+${dateStr}\\b[\\/\s\S]*?`, 'm');
+    // 粗略判斷存在與否
+    const idx = md.search(new RegExp(`^##\\s+${dateStr}\\b`, 'm'));
+    if (idx < 0) return null;
+    // 找到該標題到下一個日期標題的範圍
+    const after = md.slice(idx + 2);
+    const nextIdxRel = after.search(/^##\s+\d{4}-\d{2}-\d{2}\b/m);
+    const end = nextIdxRel >= 0 ? idx + 2 + nextIdxRel : md.length;
+    return { start: idx, end };
+  }
+
+  // 依日期新建或補充區塊（置頂插入新的日期區塊）
+  for (const [dateStr, items] of dateItemMap.entries()) {
+    if (!items || items.length === 0) continue;
+    const exists = new RegExp(`^##\s+${dateStr}\b`, 'm').test(content);
+    if (!exists) {
+      // 新建日期區塊，置頂插入
+      let newSection = `## ${dateStr} - 系統更新 📝\n\n`;
       newSection += '### 🐛 Fixed\n';
-      for (const entry of fixedEntries) {
-        newSection += `- **${entry.title}**: `;
-        if (entry.details.length > 0) {
-          newSection += entry.details.join('，');
+      for (const it of items) newSection += `- ${it}\n`;
+      newSection += '\n---\n\n';
+      const firstDate = content.match(/(^##\s+\d{4}-\d{2}-\d{2}.*)/m);
+      if (firstDate) {
+        content = content.replace(firstDate[1], newSection + firstDate[1]);
+      } else {
+        // 若沒有任何日期區塊，直接附加在檔頭後
+        content = content.trimEnd() + '\n\n' + newSection;
+      }
+      continue;
+    }
+
+    // 已存在該日期區塊 → 補上缺少的條目
+    const range = findDateSectionRange(content, dateStr);
+    if (range) {
+      const section = content.slice(range.start, range.end);
+      let updatedSection = section;
+      for (const it of items) {
+        if (!section.includes(`- ${it}`)) {
+          // 盡量插到 "### 🐛 Fixed" 後面，若沒有就加在該區塊末尾
+          if (/###\s*🐛\s*Fixed/.test(updatedSection)) {
+            updatedSection = updatedSection.replace(/(###\s*🐛\s*Fixed\s*\n)/, `$1- ${it}\n`);
+          } else {
+            updatedSection = updatedSection.replace(/\n+$/, '') + `\n- ${it}\n`;
+          }
         }
-        newSection += '\n';
       }
-      newSection += '\n';
-    }
-    
-    if (addedEntries.length > 0) {
-      newSection += '### ✨ Added\n';
-      for (const entry of addedEntries) {
-        newSection += `- ${entry.title}\n`;
-      }
-      newSection += '\n';
-    }
-    
-    newSection += '---\n\n';
-    
-    // 插入到第一個日期區塊前
-    const firstDateMatch = content.match(/(## \d{4}-\d{2}-\d{2})/);
-    if (firstDateMatch) {
-      content = content.replace(firstDateMatch[1], newSection + firstDateMatch[1]);
+      content = content.slice(0, range.start) + updatedSection + content.slice(range.end);
     }
   }
-  
+
   return content;
 }
 

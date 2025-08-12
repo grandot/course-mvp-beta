@@ -39,7 +39,7 @@
     "save:context": "node tools/save-context.js",
     "status:trim": "node tools/maintain-project-status.js",
     "changelog:update": "node tools/update-changelog.js",
-    "sync:all": "node tools/sync-all-status.js",
+    "sync": "node tools/sync-all-status.js",
     "trello:push": "node tools/trello-sync.js",
     "trello:pull": "node tools/trello-sync.js --mode=pull",
     "trello:webhook:serve": "node tools/trello-webhook-server.js",
