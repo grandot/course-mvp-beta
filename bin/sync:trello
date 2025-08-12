@@ -1,4 +1,0 @@
-#!/bin/zsh
-DIR="$(cd "$(dirname "$0")/.." && pwd)"
-node "$DIR/tools/trello-sync.js" --mode=pull && node "$DIR/tools/sync-all-status.js"
-

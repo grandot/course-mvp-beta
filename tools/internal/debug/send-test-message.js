@@ -69,7 +69,7 @@ async function testMessage(message) {
   try {
     // 第一步：意圖識別
     console.log('🎯 開始意圖識別...');
-    const intent = await parseIntent(message);
+    const intent = await parseIntent(message, TEST_USER_ID);
     console.log('✅ 識別結果:', intent);
 
     if (intent === 'unknown') {
@@ -91,7 +91,7 @@ async function testMessage(message) {
     console.log(result.message);
     console.log('-'.repeat(40));
 
-    if (result.success) {
+    if (result && result.success) {
       console.log('✅ 測試成功完成');
       if (result.data) {
         console.log('📊 附加資料:', JSON.stringify(result.data, null, 2));

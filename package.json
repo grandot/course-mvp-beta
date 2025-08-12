@@ -43,8 +43,7 @@
     "trello:push": "node tools/trello-sync.js",
     "trello:pull": "node tools/trello-sync.js --mode=pull",
     "trello:webhook:serve": "node tools/trello-webhook-server.js",
-    "trello:webhook:register": "node tools/register-trello-webhook.js",
-    "sync:trello": "node tools/trello-sync.js --mode=pull && node tools/sync-all-status.js"
+    "trello:webhook:register": "node tools/register-trello-webhook.js"
   },
   "keywords": [
     "line-bot",
