@@ -241,19 +241,31 @@ function updateAITaskContext(status, existing) {
   console.log('🤖 更新 AI_TASK_CONTEXT.md...');
   
   const sections = [];
+
+  // 如果檔案已採用「當前上下文摘要」格式，就只更新時間戳並原樣輸出
+  if (/###\s*當前上下文摘要/.test(existing.aiContext)) {
+    const updated = existing.aiContext.replace(
+      /- 最後更新：.*\n/,
+      `- 最後更新：${status.timestamp}\n`
+    );
+    return updated;
+  }
   
   // 標題和時間戳
   sections.push('## AI 任務上下文（聊天）\n');
   sections.push(`- 最後更新：${status.timestamp}\n`);
   
-  // 當前重點（保留現有的）
-  sections.push('### 當前重點');
-  if (existing.currentFocus.length > 0) {
-    existing.currentFocus.forEach(item => {
-      sections.push(`- ${item}`);
-    });
+  // 當前重點（完全保留現有內容，不自動覆蓋）
+  const currentFocusMatch = existing.aiContext.match(/### 當前重點\n?([\s\S]*?)(?=###|$)/);
+  if (currentFocusMatch) {
+    sections.push('### 當前重點');
+    sections.push(currentFocusMatch[1].trim());
+    sections.push('');
+  } else {
+    // 如果沒有現有內容，創建空的當前重點區塊
+    sections.push('### 當前重點');
+    sections.push('');
   }
-  sections.push('');
   
   // 最近變更（從 git 獲取）
   sections.push('### 最近變更（已部署）');
@@ -432,6 +444,7 @@ function updateChangelog(status, existing) {
 // 主函數
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
+  const forceContext = process.argv.includes('--force-context') || process.argv.includes('--force');
   
   if (isDryRun) {
     console.log('🧪 Dry Run 模式 - 只預覽變化，不實際寫入\n');
@@ -454,7 +467,14 @@ async function main() {
     // 4. 寫入文檔（只在有變化時）
     const updates = {
       projectStatus: writeFile(PROJECT_STATUS, updatedProjectStatus, isDryRun),
-      aiContext: writeFile(AI_TASK_CONTEXT, updatedAIContext, isDryRun),
+      aiContext: (() => {
+        if (forceContext && !isDryRun) {
+          fs.writeFileSync(AI_TASK_CONTEXT, updatedAIContext, 'utf8');
+          console.log('✅ 已更新 AI_TASK_CONTEXT.md（force-context）');
+          return true;
+        }
+        return writeFile(AI_TASK_CONTEXT, updatedAIContext, isDryRun);
+      })(),
       changelog: writeFile(CHANGELOG, updatedChangelog, isDryRun)
     };
     

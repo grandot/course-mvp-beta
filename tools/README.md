@@ -320,3 +320,54 @@ node tools/<檔名>.js --foo ... --bar ...
 node tools/export-render-logs-range.js --since "$(date -u -v -15M +%Y-%m-%dT%H:%M:%SZ)" --max-pages 80 --keywords "traceId,userId"
 node tools/generate-trace-summaries.js --since "$(date -u -v -15M +%Y-%m-%dT%H:%M:%SZ)" --max-pages 80
 ```
+
+---
+
+## Trello 同步工具（新增）
+
+> 用來把 `PROJECT_STATUS.md` 與 Trello 看板做雙向同步；支援 push、pull 預覽、pull 寫回、列表篩選、dry-run、（可選）標籤自動化，以及 Webhook 事件收集。
+
+### 環境變數
+```env
+TRELLO_KEY=
+TRELLO_TOKEN=
+TRELLO_BOARD_ID=
+# optional for webhook（要從 Trello 即時回流才需要）
+TRELLO_APP_SECRET=
+TRELLO_WEBHOOK_PORT=4300
+TRELLO_WEBHOOK_CALLBACK_URL=
+# optional：自動將 `[P1][Feature]` 這類標籤同步成 Trello 標籤
+ENABLE_TRELLO_LABELS=false
+```
+
+### 指令
+```bash
+# 推送 PROJECT_STATUS.md → Trello（會自動建立 Backlog/Next/Doing/Blocked/Done 列表）
+npm run trello:push
+
+# 從 Trello 抓回五個列表的條目，輸出預覽到 reports/trello-sync-pull.md（不改檔）
+npm run trello:pull
+
+# 從 Trello 寫回（覆寫 PROJECT_STATUS.md 的五個區塊）
+npm run trello:pull:write
+
+# 進階旗標（搭配 trello:push 使用）
+#   --dry-run           只顯示即將動作
+#   --lists=Backlog,Next 只同步指定列表
+#   --labels            啟用標籤自動化（或用 .env 的 ENABLE_TRELLO_LABELS=true）
+node tools/trello-sync.js --dry-run --lists=Backlog,Next --labels
+
+# Webhook（可選，需公網 URL）
+npm run trello:webhook:serve     # 啟動本地 Webhook 伺服器（預設 :4300/trello/webhook）
+npm run trello:webhook:register  # 註冊 Webhook 到 Trello（需 TRELLO_WEBHOOK_CALLBACK_URL）
+```
+
+### 常見問題
+- 401 invalid key：Token 與 Key 不成對，請用 `https://trello.com/1/authorize?...&key=YOUR_KEY` 重新產生 token。
+- 400 invalid idBoard：`TRELLO_BOARD_ID` 若填 shortLink，建列表會被拒；腳本已自動轉為長 ID。
+- 429：稍候再試或降低同步頻率；腳本已有輕量節流，可依需要加大等待時間。
+
+### 設計筆記
+- 主從與衝突：第一版採「單向推」為主，pull 預覽不改檔；若要雙向自動 merge，建議加 `config/trello-sync-map.json` 以 cardId 為準，或使用 Custom Fields 存 `syncId`。
+- 標籤：會解析卡名開頭的 `[P1][Feature]` 類型標籤；啟用後自動建立 Trello 標籤並綁定到卡片。
+- Webhook：伺服器會把事件以 NDJSON 寫到 `reports/trello-webhook-events.ndjson`，之後可加上差異報告與自動回寫。
