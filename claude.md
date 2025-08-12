@@ -4,26 +4,11 @@
 使用 LINE 對話記錄和管理課程，採用意圖識別架構。
 
 ## 快速開始
-- 每次啟動 查看 @AI_TASK_CONTEXT.md 文檔，了解上下文。
-- tools/save-context.js 這個腳本可以更新 @AI_TASK_CONTEXT.md
 ```bash
 npm start          # 啟動服務
 npm run lint:fix   # 修復格式
 node tools/send-test-message.js "測試訊息"  # 測試功能
 ```
-
-## 自然語言命令（對 AI 助手說）
-當用戶用自然語言下達以下命令時，AI 助手應該執行對應的腳本：
-
-- **「更新所有文檔」「同步狀態」「同步文檔」** → 執行 `npm run sync:all`
-- **「保存上下文」「保存進度」** → 執行 `npm run save:context`  
-- **「跑測試」「執行測試」** → 執行 `npm test`
-- **「啟動服務」「開始」** → 執行 `npm start`
-- **「檢查代碼」「lint」** → 執行 `npm run lint`
-- **「修復格式」** → 執行 `npm run lint:fix`
-- **「查看日誌」「看log」** → 執行 `npm run logs:render`
-
-用戶不需要記住具體命令，直接用中文告訴 AI 助手想做什麼即可。
 
 ## 核心架構
 LINE Bot → parseIntent → extractSlots → handle_XXX_task → Google Calendar + Firebase
@@ -67,3 +52,4 @@ Google Calendar 專精時間邏輯，Firebase 專精業務資料，兩者協作�
 ### ⚙️ 其他參考
 - **配置說明：`/config/README.md`** - 分階段配置管理
 - **專案進度：`/PROJECT_STATUS.md`** - 即時進度監控與里程碑追蹤
+- **上下文：`/AI_TASK_CONTEXT.md`** - 上次AI上下文摘要

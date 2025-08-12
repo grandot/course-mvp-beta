@@ -128,6 +128,29 @@ async function ensureStudentCalendar(userId, studentName) {
 
       // 在 Firebase 中記錄學生資料
       student = await firebaseService.addStudent(userId, studentName, calendarId);
+      return student;
+    }
+
+    // 無 calendarId → 自動補建
+    if (!student.calendarId) {
+      const calendarId = await googleCalendarService.createCalendar(studentName, userId);
+      if (firebaseService.updateStudentCalendarId) {
+        await firebaseService.updateStudentCalendarId(userId, studentName, calendarId);
+      }
+      return { ...student, calendarId };
+    }
+
+    // 有 calendarId，但可能不是現在的 OAuth 身份 → 驗證，失敗則重建並回寫
+    if (googleCalendarService.verifyCalendarAccess) {
+      const access = await googleCalendarService.verifyCalendarAccess(student.calendarId);
+      if (!access.ok) {
+        console.warn('⚠️ calendarId 無法存取，將自動重建:', access.reason);
+        const calendarId = await googleCalendarService.createCalendar(studentName, userId);
+        if (firebaseService.updateStudentCalendarId) {
+          await firebaseService.updateStudentCalendarId(userId, studentName, calendarId);
+        }
+        return { ...student, calendarId };
+      }
     }
 
     return student;
@@ -331,8 +354,21 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         console.warn('⚠️ 無學生 calendarId，跳過 GCal 事件建立，將僅寫入 Firebase');
       }
     } catch (e) {
-      console.warn('⚠️ 建立 GCal 事件失敗，採用 Firebase 降級策略:', e?.message || e);
-      // calendarEvent 仍為 { eventId: null }
+      console.warn('⚠️ 建立 GCal 事件失敗，嘗試自動重建日曆並重試一次:', e?.message || e);
+      try {
+        const reStudent = await ensureStudentCalendar(userId, slots.studentName);
+        if (reStudent.calendarId) {
+          student = reStudent;
+          calendarEvent = await googleCalendarService.createEvent(
+            student.calendarId,
+            eventData,
+          );
+          console.log('📅 重試後事件已創建:', calendarEvent.eventId);
+        }
+      } catch (e2) {
+        console.warn('⚠️ 重試建立 GCal 事件仍失敗，採用 Firebase 降級策略:', e2?.message || e2);
+        // calendarEvent 仍為 { eventId: null }
+      }
     }
 
     // 6. 同步資料到 Firebase

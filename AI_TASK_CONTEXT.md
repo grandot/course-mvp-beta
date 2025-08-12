@@ -7,7 +7,7 @@
 ### 當前上下文摘要（依新舊降冪）
 [cursor chat]
 
-- 共識：prompt抓的上下文是來自於模型記憶，無法被程序調用
+- 共識：prompt抓的上下文是來自於模型記憶，無法被程序調用，所以AI_TASK_CONTEXT.md得手動寫
 - 決策：`AI_TASK_CONTEXT.md` 僅保存「當前聊天要點與下一步」，不混入 Trello/系統日誌
 - 同步：Trello push/pull/pull:write 完成；一鍵 `npm run sync:trello`（Trello → 檔案 → 文檔同步）
 - 修復：Trello 授權/Board ID 問題（shortLink→長 ID）、`app-key` 產生 token、401/400 已排除

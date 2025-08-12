@@ -139,6 +139,36 @@ async function addStudent(userId, studentName, calendarId) {
 }
 
 /**
+ * 更新學生的 calendarId（自動修復用）
+ */
+async function updateStudentCalendarId(userId, studentName, newCalendarId) {
+  try {
+    const firestore = initializeFirebase();
+    const parentRef = firestore.collection('parents').doc(userId);
+    const snap = await parentRef.get();
+    if (!snap.exists) throw new Error(`找不到家長文件: ${userId}`);
+
+    const parent = snap.data();
+    const students = Array.isArray(parent.students) ? [...parent.students] : [];
+    const idx = students.findIndex((s) => s.studentName === studentName);
+    if (idx === -1) throw new Error(`找不到學生: ${studentName}`);
+
+    students[idx] = { ...students[idx], calendarId: newCalendarId };
+
+    await parentRef.update({
+      students,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    console.log('✅ 已更新 calendarId:', studentName, newCalendarId);
+    return students[idx];
+  } catch (error) {
+    console.error('❌ 更新學生 calendarId 失敗:', error);
+    throw error;
+  }
+}
+
+/**
  * 課程 (Courses) 相關操作
  */
 
@@ -586,6 +616,7 @@ module.exports = {
   // 學生操作
   getStudent,
   addStudent,
+  updateStudentCalendarId,
 
   // 課程操作
   saveCourse,

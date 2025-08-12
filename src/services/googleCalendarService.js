@@ -488,6 +488,25 @@ async function testConnection() {
   }
 }
 
+/**
+ * 驗證目前憑證對 calendarId 是否可存取
+ * - ok=true 代表可用
+ * - ok=false 搭配 reason: 'not_found' | 'forbidden' | 'unknown'
+ */
+async function verifyCalendarAccess(calendarId) {
+  try {
+    const calendarService = initializeGoogleCalendar();
+    await calendarService.calendars.get({ calendarId });
+    return { ok: true };
+  } catch (error) {
+    const status = error?.response?.status;
+    const msg = error?.message || '';
+    if (status === 404 || /Not Found/i.test(msg)) return { ok: false, reason: 'not_found', error };
+    if (status === 403 || /Forbidden/i.test(msg)) return { ok: false, reason: 'forbidden', error };
+    return { ok: false, reason: 'unknown', error };
+  }
+}
+
 module.exports = {
   // 初始化
   initializeGoogleCalendar,
@@ -514,4 +533,7 @@ module.exports = {
   buildDateTime,
   addHours,
   buildRecurrenceRule,
+  
+  // 驗證工具
+  verifyCalendarAccess,
 };
