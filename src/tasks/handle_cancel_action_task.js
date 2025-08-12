@@ -56,10 +56,14 @@ async function handle_cancel_action_task(slots, userId, event) {
             }
 
             if (originalResult.data.eventId && originalSlots.studentName) {
-              const calendarId = await googleCalendarService.getStudentCalendarId(originalSlots.studentName);
+              // 透過 Firebase 取得對應學生的 calendarId
+              const student = await firebaseService.getStudent(userId, originalSlots.studentName);
+              const calendarId = student && student.calendarId ? student.calendarId : null;
               if (calendarId) {
                 await googleCalendarService.deleteEvent(calendarId, originalResult.data.eventId);
                 console.log('✅ 已從 Google Calendar 刪除事件:', originalResult.data.eventId);
+              } else {
+                console.warn('⚠️ 找不到學生 calendarId，略過 GCal 刪除');
               }
             }
 

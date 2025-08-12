@@ -575,6 +575,7 @@ module.exports = {
   deleteEvent,
   getEvent,
   getEvents,
+  markEventCancelled,
 
   // 衝突檢查
   checkConflict,

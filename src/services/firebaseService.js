@@ -494,6 +494,21 @@ function getCollection(collectionName) {
 }
 
 /**
+ * 物理刪除指定集合的文件
+ */
+async function deleteDocument(collectionName, docId) {
+  try {
+    const firestore = initializeFirebase();
+    await firestore.collection(collectionName).doc(docId).delete();
+    console.log(`🗑️ 已物理刪除文檔 (${collectionName}/${docId})`);
+    return true;
+  } catch (error) {
+    console.error(`❌ 物理刪除文檔失敗 (${collectionName}/${docId}):`, error);
+    return false;
+  }
+}
+
+/**
  * Firebase Storage 圖片上傳功能
  */
 
@@ -604,11 +619,26 @@ module.exports = {
   // 初始化
   initializeFirebase,
   testConnection,
+  // 關閉
+  shutdownFirebase: async function shutdownFirebase() {
+    try {
+      if (admin && admin.apps && admin.apps.length > 0) {
+        await Promise.all(admin.apps.map((app) => app.delete().catch(() => {})));
+      }
+      db = null;
+      console.log('🧹 Firebase 已關閉');
+      return true;
+    } catch (e) {
+      console.warn('⚠️ Firebase 關閉時發生例外:', e?.message || e);
+      return false;
+    }
+  },
 
   // 通用操作
   addDocument,
   updateDocument,
   getCollection,
+  deleteDocument,
 
   // 家長操作
   getOrCreateParent,

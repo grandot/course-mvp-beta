@@ -272,8 +272,18 @@ async function parseIntent(message, userId = null) {
     const has = (kw) => msg.includes(kw);
     const hasAny = (kws) => safeHasAny(kws, msg);
 
-    if (hasAny(['取消', '刪除', '刪掉'])) {
-      if (enableDiag) { diagMod.pushPath(diag, 'safety-cancel'); diag.finalIntent = 'cancel_course'; await diagMod.logDiagnostics(diag); }
+    // A1: 明確的「撤銷上一動作」快捷詞，優先判為 cancel_action（避免被一般取消課程蓋過）
+    const isPureCancelAction = /^(取消操作|算了|不要|放棄|重新開始|重來)$/.
+      test(msg);
+    if (isPureCancelAction) {
+      if (enableDiag) { diagMod.pushPath(diag, 'safety-cancel-action'); diag.finalIntent = 'cancel_action'; await diagMod.logDiagnostics(diag); }
+      return 'cancel_action';
+    }
+
+    // A2: 一般取消課程的強匹配（含「取消/刪除」且帶有課程語境）
+    const mentionsCourseContext = /課|課程|學生|星期|週|周|時間|今天|明天|昨天|\d/.test(msg);
+    if (hasAny(['取消', '刪除', '刪掉']) && mentionsCourseContext) {
+      if (enableDiag) { diagMod.pushPath(diag, 'safety-cancel-course'); diag.finalIntent = 'cancel_course'; await diagMod.logDiagnostics(diag); }
       return 'cancel_course';
     }
     if (has('提醒')) {

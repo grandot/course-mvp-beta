@@ -405,6 +405,51 @@ async function handle_set_reminder_task(slots, userId) {
 - 撤銷上一動作：`tasks/handle_cancel_action_task.js`（物理刪除事件 + 物理刪 Firebase）
 - 衝突過濾：`googleCalendarService.checkConflict()` 已過濾【已取消】或 `extendedProperties.private.cancelled='true'` 的事件
 
+### 測試與驗收（2025-08-12）
+
+- 目標：驗證兩條路徑行為完全符合規範
+  - 撤銷上一動作（undo）：Firebase 物理刪除 + GCal 物理刪除
+  - 使用者主動取消：Firebase 軟刪（cancelled=true, cancelledAt）+ GCal 標記取消（不物理刪）
+
+- 測試腳本與位置：
+  - 撤銷：`test-cancel-action.js`
+  - 主動取消：`test-cancel-course.js`
+  - 非互動一鍵驗證（避免 Quick Reply 卡住）：`tools/internal/debug/run-noninteractive-tests.js`
+
+- 關鍵實作與修復點：
+  - `src/services/firebaseService.js`
+    - 新增 `deleteDocument(collection, id)` 支援物理刪除
+    - 新增 `shutdownFirebase()` 測試後關閉連線，避免 Node 不退出
+  - `src/tasks/handle_cancel_action_task.js`
+    - 撤銷時改以 `firebaseService.getStudent(userId, name)` 取得 `calendarId` 後執行 `googleCalendarService.deleteEvent(...)`
+  - `src/services/googleCalendarService.js`
+    - 新增並匯出 `markEventCancelled(calendarId, eventId)`
+    - `checkConflict(...)` 忽略已取消事件（標題含【已取消】或 `extendedProperties.private.cancelled='true'`）
+  - `src/intent/parseIntent.js`
+    - 將「取消操作/算了/不要/重來…」優先路由為 `cancel_action`，避免誤判為 `cancel_course`
+
+- 驗收要點（皆已通過）：
+  - 撤銷：
+    - Firebase 該筆 `/courses/{courseId}` 不存在（物理刪）
+    - GCal 該 `eventId` 查詢回 404（物理刪）
+  - 主動取消：
+    - Firebase：`cancelled=true` 且 `cancelledAt` 有時間戳
+    - GCal：事件 summary 含「【已取消】」、`transparency='transparent'`、`extendedProperties.private.cancelled='true'`
+    - 衝突檢查：同一時段不再視為衝突
+
+### 本地執行測試
+
+```bash
+# 撤銷（立即 undo）驗證
+node test-cancel-action.js
+
+# 使用者主動取消驗證（GCal 標記 + Firebase 軟刪）
+node test-cancel-course.js
+
+# 非互動一鍵驗證（覆蓋兩條路徑，並自動關閉連線）
+node tools/internal/debug/run-noninteractive-tests.js
+```
+
 ## 快速上手提示
 
 1. **本地開發**：
