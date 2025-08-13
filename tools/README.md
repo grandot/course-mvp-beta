@@ -359,6 +359,30 @@ npm run trello:webhook:serve     # 啟動本地 Webhook 伺服器（預設 :4300
 npm run trello:webhook:register  # 註冊 Webhook 到 Trello（需 TRELLO_WEBHOOK_CALLBACK_URL）
 ```
 
+### 同步規則（重要）
+- 唯一識別（UID）：系統以「條目主題名」經規範化後做 SHA-1，取前 12 碼，寫入 Trello 卡片 description 第一行，例如 `uid:1a2b3c4d5e6f`。
+  - 規範化規則：
+    - 移除開頭標籤（例如 `[P1][Feature]`）。
+    - 只取主題本體（移除 `（` / `(` / `|` 之後的尾註與規格連結）。
+    - 去除狀態尾綴（例如「支援/尚未實作/實作中/驗收中/需求定義完成」與「vN 實作中」）。
+- 描述表頭（前三行，系統維護）：
+  1) `uid:<12位hex>`
+  2) `source: PROJECT_STATUS.md | manual`
+  3) `syncedAt:<ISO>`
+- Markdown 不寫任何 UID 或中繼資訊，只保留可讀的條目名稱。
+- 拉回（pull）時：若 Trello 卡片缺少上述表頭，系統會自動補上（不改卡名）。
+
+### 去重與移動
+- 去重：
+  - 指令：`node tools/trello-sync.js --merge-duplicates --lists=Doing`（可指定多個列表）。
+  - 規則：同一 UID 的卡視為重複；保留最早活動時間的卡為主卡，合併其餘描述與標籤後封存重複卡。
+- 自動移動列表：
+  - 推送時若找到既有卡片但在錯誤列表，會自動移動到目標列表（例如把完成項從 Doing 移到 Done）。
+
+### 小提示
+- `Done` 預設僅同步最近 5 筆（專案面板有保留完整歷史）。
+- 若卡名尾註不同（例如加了規格連結/狀態字樣），系統仍會依 UID 視為同一張卡，不會重複建立。
+
 ### 常見問題
 - 401 invalid key：Token 與 Key 不成對，請用 `https://trello.com/1/authorize?...&key=YOUR_KEY` 重新產生 token。
 - 400 invalid idBoard：`TRELLO_BOARD_ID` 若填 shortLink，建列表會被拒；腳本已自動轉為長 ID。
