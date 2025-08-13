@@ -341,7 +341,7 @@ function findAllStudentCandidates(message) {
   for (const p of patterns) {
     let m;
     while ((m = p.exec(message)) !== null) {
-      let name = stripTimeSuffixFromName(m[1]);
+      const name = stripTimeSuffixFromName(m[1]);
       if (!name) continue;
       if (name.length < 2 || name.length > 12) continue;
       if (/(今天|明天|昨天|課|課表)$/.test(name)) continue;
@@ -608,6 +608,46 @@ async function extractSlotsByIntent(message, intent) {
       }
       break;
 
+    case 'modify_course':
+      slots.studentName = extractStudentName(message);
+      slots.courseName = extractCourseName(message);
+      slots.timeReference = parseTimeReference(message);
+      slots.courseDate = parseSpecificDate(message);
+      
+      // 提取新值
+      const newTimeMatch = message.match(/改[到成].*?([上中下午晚][午間]?\d{1,2}[:\：]\d{2}|[上中下午晚][午間]?\d{1,2}點(?:半|\d{1,2}分)?)/);
+      if (newTimeMatch) {
+        slots.scheduleTimeNew = parseScheduleTime(newTimeMatch[1]);
+      }
+      
+      // 修復課程名稱提取 - 從"改"字之前提取
+      const courseBeforeChangeMatch = message.match(/([^改]+課)改/);
+      if (courseBeforeChangeMatch) {
+        const fullMatch = courseBeforeChangeMatch[1];
+        // 進一步提取純課程名稱
+        const pureCourseName = fullMatch.match(/([一-龥A-Za-z]+課)$/);
+        if (pureCourseName) {
+          slots.courseName = pureCourseName[1];
+        }
+      }
+      
+      const newCourseMatch = message.match(/改[成為](.+?課)/);
+      if (newCourseMatch) {
+        slots.courseNameNew = newCourseMatch[1];
+      }
+      
+      const newDateMatch = message.match(/改[到成].*?(明天|後天|今天|下週|下周|\d{1,2}[\/\-]\d{1,2})/);
+      if (newDateMatch) {
+        if (newDateMatch[1] === '明天') {
+          slots.courseDateNew = parseSpecificDate('明天');
+        } else if (newDateMatch[1] === '後天') {
+          slots.courseDateNew = parseSpecificDate('後天');
+        } else {
+          slots.courseDateNew = parseSpecificDate(newDateMatch[1]);
+        }
+      }
+      break;
+
     default:
       console.log('❓ 未知意圖，無法提取 slots:', intent);
   }
@@ -665,7 +705,10 @@ async function extractSlotsByAI(message, intent, existingSlots) {
   "reminderNote": "提醒備註或null",
   "courseDate": "課程日期或null",
   "recurring": "是否重複或null",
-  "dayOfWeek": "星期幾或null"
+  "dayOfWeek": "星期幾或null",
+  "courseNameNew": "新課程名或null",
+  "courseDateNew": "新課程日期或null", 
+  "scheduleTimeNew": "新時間或null"
 }
 `;
 
@@ -741,20 +784,20 @@ function validateExtractionResult(result, originalMessage, intent) {
 function stripTimeSuffixFromName(name) {
   if (!name) return name;
   const stripped = name
-    .replace(/(今天|明天|昨天|這週|本週|下週|這周|本周|下周)$/,'')
-    .replace(/(每週[一二三四五六日]?|每周[一二三四五六日]?|星期[一二三四五六日]|週[一二三四五六日]|周[一二三四五六日]|每天)$/,'');
+    .replace(/(今天|明天|昨天|這週|本週|下週|這周|本周|下周)$/, '')
+    .replace(/(每週[一二三四五六日]?|每周[一二三四五六日]?|星期[一二三四五六日]|週[一二三四五六日]|周[一二三四五六日]|每天)$/, '');
   return stripped.trim();
 }
 
 function hasActionWords(text) {
-  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我'];
+  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我', '改', '改到', '改成', '修改', '調整', '更改'];
   return actionWords.some((word) => text.includes(word));
 }
 
 function cleanStudentName(rawName) {
   // 移除常見的動作詞前綴
   const cleaned = rawName
-    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄|提醒|提醒我|醒我)/, '')
+    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄|提醒|提醒我|醒我|改|改到|改成|修改|調整|更改)/, '')
     .replace(/(的|之)$/, '');
   return cleaned.trim();
 }
@@ -808,7 +851,7 @@ function calculateConfidence(slots, intent) {
     query_schedule: ['studentName', 'timeReference'],
     set_reminder: ['studentName', 'courseName', 'reminderTime'],
     cancel_course: ['studentName', 'courseName'],
-    modify_course: ['studentName', 'courseName'],
+    modify_course: ['studentName', 'courseName', 'courseNameNew', 'courseDateNew', 'scheduleTimeNew'],
   };
 
   const expected = expectedFields[intent] || [];

@@ -38,6 +38,7 @@ async function simulateTaskExecution(intent, slots, userId) {
       set_reminder: path.join(TASKS_DIR, 'handle_set_reminder_task'),
       cancel_course: path.join(TASKS_DIR, 'handle_cancel_course_task'),
       stop_recurring_course: path.join(TASKS_DIR, 'handle_cancel_course_task'),
+      modify_course: path.join(TASKS_DIR, 'handle_modify_course_task'),
     };
 
     if (!taskHandlers[intent]) {

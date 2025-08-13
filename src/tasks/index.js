@@ -97,8 +97,8 @@ async function executeTask(intent, slots, userId, event = null) {
     if (!handler) {
       return {
         success: false,
-      code: 'NOT_IMPLEMENTED',
-      message: `❌ 目前不支援「${intent}」功能，請稍後再試`,
+        code: 'NOT_IMPLEMENTED',
+        message: `❌ 目前不支援「${intent}」功能，請稍後再試`,
       };
     }
 
@@ -116,6 +116,9 @@ async function executeTask(intent, slots, userId, event = null) {
     let result;
     if (supplementIntents.includes(intent) && event) {
       // supplement 處理器需要 3 個參數
+      result = await handler(slots, userId, event);
+    } else if (intent === 'modify_course') {
+      // modify_course 處理器需要 3 個參數 (slots, userId, event)
       result = await handler(slots, userId, event);
     } else {
       // 標準處理器只需要 2 個參數
