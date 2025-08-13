@@ -58,7 +58,7 @@
 - Why：集中一處避免分散邏輯，與 GCal 對齊。
 - Edits：
   - `src/services/googleCalendarService.js`
-    - 新增 `buildRecurrenceRule(recurrenceType, { dayOfWeek, monthDay, nthWeek }) => string[]`。
+    - 新增 `buildRecurrenceRule(recurring, { recurrenceType, dayOfWeek, monthDay, nthWeek }) => string[]`。
     - daily → `RRULE:FREQ=DAILY`
     - weekly → `RRULE:FREQ=WEEKLY;BYDAY=...`（多天以逗號列出）
     - monthly（BYMONTHDAY）→ `RRULE:FREQ=MONTHLY;BYMONTHDAY=X`
