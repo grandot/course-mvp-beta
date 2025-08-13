@@ -541,6 +541,8 @@ async function syncPush(boardId, statusFile, options) {
   const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done']
     .filter(n => !listsFilter || listsFilter.includes(n));
   const purge = process.argv.includes('--purge');
+  const purgeConcArg = (process.argv.find(a => a.startsWith('--purge-concurrency=')) || '').split('=')[1];
+  const purgeConcurrency = Math.max(1, Math.min(16, Number(purgeConcArg || 8)));
   // 顯示看板資訊，避免同步到錯誤看板時使用者無感
   const canonicalBoardId = await getCanonicalBoardIdMaybe(boardId);
   try {
@@ -552,22 +554,26 @@ async function syncPush(boardId, statusFile, options) {
 
   const listsMap = await ensureLists(canonicalBoardId, wantedLists);
 
-  // 可選：在同步前刪除（非封存）指定列表的所有卡片
+  // 可選：在同步前刪除（非封存）指定列表的所有卡片（並行刪除，顯示進度）
   if (purge && !dryRun) {
-    console.log('！將刪除所有現有卡片（非封存），僅保留列表結構');
+    console.log(`！將刪除所有現有卡片（非封存），僅保留列表結構；並行度=${purgeConcurrency}`);
     for (const ln of wantedLists) {
       const l = listsMap[ln];
       if (!l) continue;
       const cards = await getCards(l.id);
-      for (const c of (cards || [])) {
-        try {
-          await trello('DELETE', `/cards/${c.id}`);
-        } catch (e) {
-          console.warn(`[警告] 刪除卡片失敗：${c.name} ${c.id} ${e && e.message}`);
-        }
-        await sleep(60);
+      const total = (cards || []).length;
+      if (!total) { console.log(`[purge] ${ln}: 0/0`); continue; }
+      let done = 0;
+      for (let i = 0; i < cards.length; i += purgeConcurrency) {
+        const batch = cards.slice(i, i + purgeConcurrency);
+        await Promise.all(batch.map(async (c) => {
+          try { await trello('DELETE', `/cards/${c.id}`); } catch (e) { console.warn(`[警告] 刪除卡片失敗：${c.name} ${c.id} ${e && e.message}`); }
+        }));
+        done += batch.length;
+        console.log(`[purge] ${ln}: ${done}/${total}`);
+        await sleep(100);
       }
-      await sleep(120);
+      await sleep(200);
     }
   }
   // 建立全看板索引，支援跨列表移動
@@ -628,7 +634,7 @@ async function syncPush(boardId, statusFile, options) {
 }
 
 async function main() {
-  const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
+const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
   const isPull = process.argv.includes('--mode=pull');
   const dryRun = process.argv.includes('--dry-run');
   const listsArg = (process.argv.find(a => a.startsWith('--lists=')) || '').split('=')[1];
@@ -729,9 +735,13 @@ async function main() {
   // 不再同步或修改 AI 任務上下文檔案
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { main };
 
 

@@ -1,7 +1,8 @@
-# 專案工作板（單一資訊來源）
+# 專案工作板 
+日期與時間一律使用台北時間（Asia/Taipei）
 
 ### Doing
-- 重複課程功能完整實作 [uid:0236f790]
+ 
 ### Next
 - deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents｜規格: doc/developer-guide.md） [uid:79cd3934]
 - 除了測試的日曆，正常用戶的日曆不可刪除。如果用戶下達刪除指令，改變status不要物理刪除。 [uid:80a5f26b]
@@ -35,6 +36,7 @@
 ### Blocked
 - 圖片上傳 404（LINE API）— 需官方支援或替代流程決策 [uid:e424a45a]
 ### Done
+- 2025-08-14：**重複課程功能完整實作**（P0 支援 daily/weekly/monthly BYMONTHDAY，單一開關控制，起始日智慧推導，小月跳過策略，2分鐘撤銷時限｜規格: spec/recurring/task-recurring.md） [uid:0236f790]
 - 2025-08-13：修改課程功能（modify_course v1 完成｜規格: spec/modify-course/plan.md） [uid:ceab455d]
 - 2025-08-13：時間格式統一（訊息固定顯示 :mm；00:xx → 上午12:xx） [uid:9eaa05c2]
 - 2025-08-12：新增課程時日曆未寫入成功，但是firebase寫入成功 [uid:35c38d0e]

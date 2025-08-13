@@ -343,34 +343,33 @@ ENABLE_TRELLO_LABELS=false
 ### 指令
 ```bash
 # 推送 PROJECT_STATUS.md → Trello（會自動建立 Backlog/Next/Doing/Blocked/Done 列表）
-npm run trello:push
+./bin/trello:push
 
 # 從 Trello 拉回五個列表並直接寫回 PROJECT_STATUS.md（無預覽）
-npm run trello:pull
+./bin/trello:pull
 
 # 進階旗標（搭配 trello:push 使用）
-#   --dry-run           只顯示即將動作
-#   --lists=Backlog,Next 只同步指定列表
-#   --labels            啟用標籤自動化（或用 .env 的 ENABLE_TRELLO_LABELS=true）
-node tools/trello-sync.js --dry-run --lists=Backlog,Next --labels
+#   --dry-run               只顯示即將動作
+#   --lists=Backlog,Next    只同步指定列表
+#   --purge                 推送前刪除目標列表所有卡（非封存，保留列表）
+#   --purge-concurrency=12  刪卡並行度（1~16，預設 8）
+#   --labels                啟用標籤自動化（或用 .env 的 ENABLE_TRELLO_LABELS=true）
+node tools/trello-sync/trello-sync.js --dry-run --lists=Backlog,Next --labels
 
 # Webhook（可選，需公網 URL）
-npm run trello:webhook:serve     # 啟動本地 Webhook 伺服器（預設 :4300/trello/webhook）
-npm run trello:webhook:register  # 註冊 Webhook 到 Trello（需 TRELLO_WEBHOOK_CALLBACK_URL）
+node tools/trello-sync/trello-webhook-server.js     # 啟動本地 Webhook 伺服器（預設 :4300/trello/webhook）
+node tools/trello-sync/register-trello-webhook.js   # 註冊 Webhook 到 Trello（需 TRELLO_WEBHOOK_CALLBACK_URL）
 ```
 
 ### 同步規則（重要）
-- 唯一識別（UID）：系統以「條目主題名」經規範化後做 SHA-1，取前 12 碼，寫入 Trello 卡片 description 第一行，例如 `uid:1a2b3c4d5e6f`。
-  - 規範化規則：
-    - 移除開頭標籤（例如 `[P1][Feature]`）。
-    - 只取主題本體（移除 `（` / `(` / `|` 之後的尾註與規格連結）。
-    - 去除狀態尾綴（例如「支援/尚未實作/實作中/驗收中/需求定義完成」與「vN 實作中」）。
-- 描述表頭（前三行，系統維護）：
-  1) `uid:<12位hex>`
+- 唯一識別（UID）：Description 首行 `uid:xxxxxxxx`，支援 8 或 12 碼；MD 每條目尾保留 `[uid:xxxxxxxx]`。
+- 描述表頭（頂部維護）：
+  1) `uid:<8或12位hex>`
   2) `source: PROJECT_STATUS.md | manual`
   3) `syncedAt:<ISO>`
-- Markdown 不寫任何 UID 或中繼資訊，只保留可讀的條目名稱。
-- 拉回（pull）時：若 Trello 卡片缺少上述表頭，系統會自動補上（不改卡名）。
+  4) `ref: spec/...`（若 MD 條目含「｜規格: ...」會自動帶入）
+- 標題以 MD 為準（同步時會更新 Trello 卡片標題；會移除技術性標記如 `[uid:...]`）。
+- 拉回（pull）時：直接用 Trello 卡名覆寫 `PROJECT_STATUS.md` 的五個區塊（請先確認不要保留本地修改）。
 
 ### 去重與移動
 - 去重：

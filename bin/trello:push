@@ -1,4 +1,4 @@
 #!/bin/zsh
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
-node "$DIR/tools/trello-sync.js"
+node "$DIR/tools/trello-sync/trello-sync.js" "$@"
 

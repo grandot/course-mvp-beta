@@ -7,7 +7,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const STATUS_PATH = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
-const UIDMAP_PATH = path.resolve(process.cwd(), 'PROJECT_STATUS.uidmap.json');
+const UIDMAP_PATH = path.resolve(process.cwd(), 'tools/trello-sync/PROJECT_STATUS.uidmap.json');
 
 function readFileSafe(p) {
   return fs.readFileSync(p, 'utf8');
