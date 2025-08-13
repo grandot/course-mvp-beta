@@ -32,7 +32,7 @@
 - Why：與人類直覺一致、且只做最小推導，不展開長序列。
 - Edits（新增純函式並在任務層使用）：
   - `src/tasks/handle_add_course_task.js`
-    - 新增 `deriveStartDate(recurrenceType, scheduleTime, { dayOfWeek, monthDay, nthWeek }, now)`：
+    - 改進現有 `calculateNextCourseDate(scheduleTime, { recurrenceType, dayOfWeek, monthDay, nthWeek }, now)`（P0）；P1 再抽象為 `deriveStartDate(...)` 標準介面：
       - daily：今天未過→今天，否則→明天。
       - weekly（單/多天）：從「現在」起找最近的符合週幾；若今天且未過→今天。
       - monthly（BYMONTHDAY）：本月有該日且未過→本月；否則→下月；小月無該日→跳過（不自動改）。
