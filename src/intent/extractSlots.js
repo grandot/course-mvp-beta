@@ -233,6 +233,53 @@ function parseDayOfWeek(message) {
   return null;
 }
 
+/**
+ * 解析多天（每週一三五 / 週二四 / 星期一、三、五 / 週一到週五）為數字陣列
+ * 回傳：[1,3,5] 這類 0(日)~6(六) 的集合；若無法解析回 []
+ */
+function parseDaysOfWeekMulti(message) {
+  const out = new Set();
+  if (!message || typeof message !== 'string') return [];
+
+  // 1) 範圍：星期一到星期五 / 週二至週四 / 周一到五
+  try {
+    const rangeRe = /(星期|週|周)?([一二三四五六日天])(到|至)(星期|週|周)?([一二三四五六日天])/g;
+    let m;
+    while ((m = rangeRe.exec(message)) !== null) {
+      const start = m[2];
+      const end = m[5];
+      const map = { '日': 0, '天': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+      if (map[start] !== undefined && map[end] !== undefined) {
+        const s = map[start];
+        const e = map[end];
+        if (s <= e) {
+          for (let d = s; d <= e; d += 1) out.add(d);
+        } else {
+          // 跨週（極少見）：六到二 → 六、日(0)、一、二
+          for (let d = s; d <= 6; d += 1) out.add(d);
+          for (let d = 0; d <= e; d += 1) out.add(d);
+        }
+      }
+    }
+  } catch (_) {}
+
+  // 2) 列舉：每週一三五 / 週二、四 / 星期一三五 / 一三五
+  try {
+    const enumerateHostRe = /(每週|每周|每星期|每個?星期|星期|週|周)([一二三四五六日天、，,和與及\s]+)/g;
+    let m2;
+    const map = { '日': 0, '天': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+    while ((m2 = enumerateHostRe.exec(message)) !== null) {
+      const tail = (m2[2] || '').replace(/(星期|週|周)/g, '');
+      const chars = tail.match(/[一二三四五六日天]/g) || [];
+      for (const ch of chars) {
+        if (map[ch] !== undefined) out.add(map[ch]);
+      }
+    }
+  } catch (_) {}
+
+  return Array.from(out.values()).sort((a, b) => a - b);
+}
+
 function checkRecurring(message) {
   // 優先使用新的重複類型識別
   const recurrenceType = identifyRecurrenceType(message);
@@ -513,7 +560,11 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       slots.scheduleTime = parseScheduleTime(message);
       slots.courseDate = parseSpecificDate(message);
-      slots.dayOfWeek = parseDayOfWeek(message);
+      // 先嘗試多天解析；若無則回落單一天
+      const daysMulti = parseDaysOfWeekMulti(message);
+      slots.dayOfWeek = (Array.isArray(daysMulti) && daysMulti.length > 0)
+        ? daysMulti
+        : parseDayOfWeek(message);
       const recurrenceResult = checkRecurring(message);
       // 提取每月重複日號（如「每月15號」→ 15）
       if (recurrenceResult === 'monthly') {
@@ -1061,6 +1112,7 @@ module.exports = {
   parseSpecificDate,
   parseScheduleTime,
   parseDayOfWeek,
+  parseDaysOfWeekMulti,
   parseMonthDay,
   identifyRecurrenceType,
   parseMonthDay,
