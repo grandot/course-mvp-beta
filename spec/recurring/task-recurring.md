@@ -32,7 +32,7 @@
 - Why：與人類直覺一致、且只做最小推導，不展開長序列。
 - Edits（新增純函式並在任務層使用）：
   - `src/tasks/handle_add_course_task.js`
-    - 新增 `deriveStartDate(recurrenceType, scheduleTime, { dayOfWeek, monthDay }, now)`：
+    - 新增 `deriveStartDate(recurrenceType, scheduleTime, { dayOfWeek, monthDay, nthWeek }, now)`：
       - daily：今天未過→今天，否則→明天。
       - weekly（單/多天）：從「現在」起找最近的符合週幾；若今天且未過→今天。
       - monthly（BYMONTHDAY）：本月有該日且未過→本月；否則→下月；小月無該日→跳過（不自動改）。
@@ -58,7 +58,7 @@
 - Why：集中一處避免分散邏輯，與 GCal 對齊。
 - Edits：
   - `src/services/googleCalendarService.js`
-    - 新增 `buildRecurrenceRule(recurrenceType, { dayOfWeek, monthDay }) => string[]`。
+    - 新增 `buildRecurrenceRule(recurrenceType, { dayOfWeek, monthDay, nthWeek }) => string[]`。
     - daily → `RRULE:FREQ=DAILY`
     - weekly → `RRULE:FREQ=WEEKLY;BYDAY=...`（多天以逗號列出）
     - monthly（BYMONTHDAY）→ `RRULE:FREQ=MONTHLY;BYMONTHDAY=X`
