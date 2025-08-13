@@ -247,9 +247,6 @@ function parseProjectStatus(filePath) {
     const text = extractSection(md, name);
     result[name] = parseBulletLines(text);
   }
-  if (Array.isArray(result.Done)) {
-    result.Done = result.Done.slice(0, 5);
-  }
   return result;
 }
 
@@ -566,7 +563,7 @@ async function main() {
       }
     }
     const names = (cards || []).map(c => c.name);
-    pulled[name] = name === 'Done' ? names.slice(0, 5) : names;
+    pulled[name] = names;
     await sleep(100);
   }
 
@@ -597,7 +594,7 @@ async function main() {
   newMd = replaceSection(newMd, 'Next', pulled.Next || []);
   newMd = replaceSection(newMd, 'Doing', pulled.Doing || []);
   newMd = replaceSection(newMd, 'Blocked', pulled.Blocked || []);
-  newMd = replaceSection(newMd, 'Done', (pulled.Done || []).slice(0, 5));
+  newMd = replaceSection(newMd, 'Done', (pulled.Done || []));
   fs.writeFileSync(statusFile, newMd, 'utf8');
   console.log('已將 Trello 內容寫回 PROJECT_STATUS.md（五個區塊的條目已覆寫）');
 
