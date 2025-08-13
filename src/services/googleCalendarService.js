@@ -159,12 +159,17 @@ function addHours(dateTimeString, hours = 1) {
 
 /**
  * 建立重複規則
+ * 支援兩種呼叫形式（向下相容）：
+ * 1) 舊：buildRecurrenceRule(recurring, recurrenceType, dayOfWeek)
+ * 2) 新：buildRecurrenceRule(recurring, { recurrenceType, dayOfWeek, monthDay, nthWeek })
+ *    - P0 僅接受 `nthWeek` 參數但不使用（預留至 P1）
+ *
  * @param {boolean} recurring - 是否重複
- * @param {string} recurrenceType - 重複類型: daily, weekly, monthly
- * @param {number} dayOfWeek - 星期幾（仅每週重複需要）
+ * @param {string|object|null} recurrenceTypeOrOptions - 重複類型或包含參數的物件
+ * @param {number|null} dayOfWeekLegacy - 僅舊介面使用：星期幾（每週重複）
  * @returns {Array<string>} Google Calendar 重複規則陣列
  */
-function buildRecurrenceRule(recurring, recurrenceType = null, dayOfWeek = null) {
+function buildRecurrenceRule(recurring, recurrenceTypeOrOptions = null, dayOfWeekLegacy = null) {
   if (!recurring) return [];
 
   // 統一重複功能開關檢查（向後兼容 ENABLE_DAILY_RECURRING）
@@ -172,6 +177,25 @@ function buildRecurrenceRule(recurring, recurrenceType = null, dayOfWeek = null)
   if (!enableRecurring) {
     // 如果重複功能關閉，不建立任何重複規則
     return [];
+  }
+
+  // 解析參數（向下相容）
+  let recurrenceType = null;
+  let dayOfWeek = null;
+  let monthDay = null;
+  let nthWeek = null; // P0 預留不使用
+
+  if (recurrenceTypeOrOptions && typeof recurrenceTypeOrOptions === 'object') {
+    recurrenceType = recurrenceTypeOrOptions.recurrenceType || null;
+    // 允許 weekly 多天情境：此處仍僅接受單一（P0），多天支援在後續擴充
+    dayOfWeek = Array.isArray(recurrenceTypeOrOptions.dayOfWeek)
+      ? recurrenceTypeOrOptions.dayOfWeek[0]
+      : recurrenceTypeOrOptions.dayOfWeek ?? null;
+    monthDay = recurrenceTypeOrOptions.monthDay ?? null;
+    nthWeek = recurrenceTypeOrOptions.nthWeek ?? null; // 預留，不使用
+  } else {
+    recurrenceType = recurrenceTypeOrOptions;
+    dayOfWeek = dayOfWeekLegacy;
   }
 
   if (recurrenceType === 'daily') {
@@ -198,6 +222,7 @@ function buildRecurrenceRule(recurring, recurrenceType = null, dayOfWeek = null)
   }
 
   if (recurrenceType === 'monthly') {
+    // P0：維持既有行為；`monthDay` 和 `nthWeek` 的細節在 P1 擴充
     return ['RRULE:FREQ=MONTHLY'];
   }
 
