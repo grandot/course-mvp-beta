@@ -33,12 +33,13 @@ const FEATURES = {
     status: 'active',
   },
 
-  DAILY_RECURRING_COURSES: {
-    enabled: process.env.ENABLE_DAILY_RECURRING === 'true',
+  RECURRING_COURSES: {
+    enabled: process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true',
     phase: 'Phase 1',
-    description: '每日重複課程功能',
-    status: process.env.ENABLE_DAILY_RECURRING === 'true' ? 'active' : 'disabled',
-    environmentVariable: 'ENABLE_DAILY_RECURRING',
+    description: '重複課程功能（每日、每週、每月）',
+    status: (process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true') ? 'active' : 'disabled',
+    environmentVariable: 'ENABLE_RECURRING_COURSES',
+    fallbackVariable: 'ENABLE_DAILY_RECURRING',
     defaultValue: 'false',
   },
 
@@ -115,8 +116,8 @@ function isFeatureEnabled(featureName) {
   if (!feature) return false;
 
   // 如果功能依賴環境變數，動態檢查
-  if (featureName === 'DAILY_RECURRING_COURSES') {
-    return process.env.ENABLE_DAILY_RECURRING === 'true';
+  if (featureName === 'RECURRING_COURSES') {
+    return process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
   }
 
   return feature.enabled || false;
@@ -142,10 +143,16 @@ function getRoadmap() {
 // 取得環境變數狀態
 function getEnvironmentStatus() {
   return {
+    ENABLE_RECURRING_COURSES: {
+      value: process.env.ENABLE_RECURRING_COURSES || 'false',
+      enabled: process.env.ENABLE_RECURRING_COURSES === 'true',
+      description: '重複課程功能開關（統一控制日週月）',
+    },
     ENABLE_DAILY_RECURRING: {
       value: process.env.ENABLE_DAILY_RECURRING || 'false',
       enabled: process.env.ENABLE_DAILY_RECURRING === 'true',
-      description: '每日重複課程功能開關',
+      description: '每日重複課程功能開關（向後兼容）',
+      deprecated: true,
     },
   };
 }

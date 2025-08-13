@@ -25,7 +25,8 @@ const config = {
     privateKey: getEnv('FIREBASE_PRIVATE_KEY', ''),
   },
   features: {
-    enableDailyRecurring: getEnv('ENABLE_DAILY_RECURRING', 'false') === 'true',
+    enableRecurringCourses: getEnv('ENABLE_RECURRING_COURSES', 'false') === 'true' || getEnv('ENABLE_DAILY_RECURRING', 'false') === 'true',
+    enableDailyRecurring: getEnv('ENABLE_DAILY_RECURRING', 'false') === 'true', // 向後兼容
     enableAiFallback: getEnv('ENABLE_AI_FALLBACK', 'false') === 'true',
   },
 };

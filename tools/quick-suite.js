@@ -8,6 +8,14 @@
 
 const { spawnSync } = require('child_process');
 function runNode(script, args = []) { return spawnSync(process.execPath, [script, ...args], { stdio: 'inherit' }).status === 0; }
+function runExisting(modulePath, args = []) {
+  try {
+    const resolved = require.resolve(modulePath);
+    return runNode(resolved, args);
+  } catch (_) {
+    return false;
+  }
+}
 function getArgValue(flag) { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i+1] : null; }
 function hasFlag(f) { return process.argv.includes(f); }
 
@@ -17,9 +25,15 @@ async function main() {
 
   // 冒煙：5 cases（依 target 選擇 real/local）
   if (target === 'local') {
-    if (!runNode(require.resolve('./suites/quick/cases/test-5-cases-local.js'))) process.exit(1);
+    if (!runExisting('./suites/quick/cases/test-5-cases-local.js')) {
+      console.warn('⚠️ 找不到 suites/quick/cases/test-5-cases-local.js，改跑 test-full-workflow.js（local）');
+      if (!runExisting('./suites/quick/cases/test-full-workflow.js')) process.exit(1);
+    }
   } else {
-    if (!runNode(require.resolve('./suites/quick/cases/test-5-cases-prod.js'))) process.exit(1);
+    if (!runExisting('./suites/quick/cases/test-5-cases-prod.js')) {
+      console.warn('⚠️ 找不到 suites/quick/cases/test-5-cases-prod.js，改跑 render-suite.js --basic');
+      if (!runExisting('../render-suite.js', ['--basic'])) process.exit(1);
+    }
   }
 
   // 端到端

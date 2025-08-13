@@ -135,14 +135,25 @@ async function handle_modify_course_task(slots, userId, event) {
       const op = last || (ctx.state.pendingData && ctx.state.pendingData.lastOperation) || null;
       if (op && op.intent === 'add_course' && op.slots) {
         const s = op.slots;
-        course = await firebaseService.findCourse(userId, s.studentName, s.courseName, s.courseDate);
+        // 確保courseDate有值時才傳入，否則不指定日期
+        if (s.courseDate) {
+          course = await firebaseService.findCourse(userId, s.studentName, s.courseName, s.courseDate);
+        } else {
+          course = await firebaseService.findCourse(userId, s.studentName, s.courseName);
+        }
       }
     }
 
     if (!course && slots && slots.studentName && slots.courseName) {
       // timeReference → YYYY-MM-DD（若必要）
       const courseDate = slots.courseDate || toYmdFromReference(slots.timeReference);
-      course = await firebaseService.findCourse(userId, slots.studentName, slots.courseName, courseDate);
+      // 只有在courseDate有效時才查詢，否則不指定日期進行查詢
+      if (courseDate) {
+        course = await firebaseService.findCourse(userId, slots.studentName, slots.courseName, courseDate);
+      } else {
+        // 不指定日期，查找匹配的課程（取第一個）
+        course = await firebaseService.findCourse(userId, slots.studentName, slots.courseName);
+      }
     }
 
     if (!course) {

@@ -167,10 +167,14 @@ function addHours(dateTimeString, hours = 1) {
 function buildRecurrenceRule(recurring, recurrenceType = null, dayOfWeek = null) {
   if (!recurring) return [];
 
-  // 檢查環境變數控制
-  const enableDaily = process.env.ENABLE_DAILY_RECURRING === 'true';
+  // 統一重複功能開關檢查（向後兼容 ENABLE_DAILY_RECURRING）
+  const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
+  if (!enableRecurring) {
+    // 如果重複功能關閉，不建立任何重複規則
+    return [];
+  }
 
-  if (enableDaily && recurrenceType === 'daily') {
+  if (recurrenceType === 'daily') {
     return ['RRULE:FREQ=DAILY'];
   }
 

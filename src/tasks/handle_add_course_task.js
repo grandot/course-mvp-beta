@@ -74,13 +74,25 @@ function resolveTimeReference(timeReference) {
  * 處理重複課程的日期計算
  * @param {string} recurrenceType - 重複類型：daily, weekly, monthly
  * @param {number} dayOfWeek - 星期幾（仅每週重複需要）
+ * @param {string} scheduleTime - 課程時間（HH:MM格式），用於每日重複的起始日判斷
  * @returns {string} 下次課程日期 YYYY-MM-DD
  */
-function calculateNextCourseDate(recurrenceType, dayOfWeek = null) {
+function calculateNextCourseDate(recurrenceType, dayOfWeek = null, scheduleTime = null) {
   const today = new Date();
 
   if (recurrenceType === 'daily') {
-    // 每日重複：如果現在時間已過，從明天開始
+    // 每日重複：判斷今天的指定時間是否已過
+    if (scheduleTime) {
+      const todayStr = today.toISOString().split('T')[0];
+      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00`);
+      
+      // 如果今天的指定時間還沒到，從今天開始；否則從明天開始
+      if (targetDateTime > today) {
+        return todayStr;
+      }
+    }
+    
+    // 預設或時間已過：從明天開始
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
@@ -211,7 +223,16 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       }
     }
 
-    // 1. 驗證必要參數
+    // 1. 優先處理重複功能關閉但用戶要求重複的情況
+    if (slots.recurringRequested) {
+      return {
+        success: false,
+        code: 'RECURRING_DISABLED',
+        message: '⚠️ 重複課程功能目前未開放，僅支援單次課程。\n\n範例：「小明明天下午3點數學課」',
+      };
+    }
+
+    // 2. 驗證必要參數
     const missingFields = validateSlots(slots);
     if (missingFields.length > 0) {
       const conversationManager = getConversationManager();
@@ -245,7 +266,17 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       };
     }
 
-    // 2. 處理時間和日期
+    // 3. 統一重複功能檢查（向後兼容 ENABLE_DAILY_RECURRING）
+    const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
+    if (slots.recurring && !enableRecurring) {
+      return {
+        success: false,
+        code: 'RECURRING_DISABLED',
+        message: '⚠️ 重複課程功能目前未開放，僅支援單次課程。\n\n範例：「小明明天下午3點數學課」',
+      };
+    }
+
+    // 4. 處理時間和日期
     let { courseDate } = slots;
 
     if (!courseDate && slots.timeReference) {
@@ -254,7 +285,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
     if (!courseDate && slots.recurring) {
       // 支援不同類型的重複課程
-      courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
+      courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek, slots.scheduleTime);
     }
 
     // 若 courseDate 存在但不是 YYYY-MM-DD，視為無效並以 timeReference/recurring 推導
@@ -265,7 +296,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         courseDate = resolveTimeReference(slots.timeReference);
       }
       if (!courseDate && slots.recurring) {
-        courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek);
+        courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek, slots.scheduleTime);
       }
     }
 
@@ -279,16 +310,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       };
     }
 
-    // 2.2 月循環尚未支援：友善降級（MVP）
-    if (slots.recurring && slots.recurrenceType === 'monthly') {
-      return {
-        success: false,
-        code: 'NOT_IMPLEMENTED_MONTHLY',
-        message: '⚠️ 目前僅支援「每天」與「每週」的重複課程，每月重複將在後續版本提供。',
-      };
-    }
-
-    // 2.1 非重複課：禁止建立過去時間
+    // 3.1 非重複課：禁止建立過去時間
     if (!slots.recurring) {
       const dateTimeStr = `${courseDate}T${slots.scheduleTime || '00:00'}:00`;
       const targetMs = Date.parse(dateTimeStr);

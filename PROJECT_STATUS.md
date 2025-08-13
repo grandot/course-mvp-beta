@@ -24,30 +24,45 @@
 ## 工作板（永續分欄）
 
 ### Doing（最多 3 項）
-- [P0][Feature] 修改課程功能（需求定義完成）
-- 重複任務「每月」尚未實作
+- 修改課程功能（modify_course v1 實作中｜規格: spec/modify-course/plan.md）
+- 重複任務「每月」支援（RRULE: MONTHLY｜規格: spec/GCal/integration-plan.md）
 ### Next（需求定義完成，尚未開工）
-- [P1][Quality] 單元測試補齊（需求定義完成；尚未開工）
-- [P0]確認GCal跟firebase是否同步（新增/刪除/修改）
-- [P0] 除了測試的日曆，正常用戶的日曆不可刪除。如果用戶下達刪除指令，改變status不要物理刪除。
+- 單元測試補齊（需求定義完成；尚未開工）
+- 確認GCal跟firebase是否同步（新增/刪除/修改）
+- 除了測試的日曆，正常用戶的日曆不可刪除。如果用戶下達刪除指令，改變status不要物理刪除。
+- 衝突檢查條件化（僅在日期/時間變更時檢查｜規格: spec/modify-course/plan.md）
+- 修改課程成功訊息優化（僅改課名時以「已更新課名為 X」簡短回饋｜規格: spec/modify-course/task.md）
+- 撤銷保護（時效限制＋lastAction 驗證；僅允許 N 分鐘內撤銷，逾時需人工確認｜規格: doc/developer-guide.md）
+- deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents｜規格: doc/developer-guide.md）
 - 撤銷保護（時效限制＋lastAction 驗證；僅允許 N 分鐘內撤銷，逾時需人工確認）
 - deleteDocument 集合白名單（僅允許刪除 courses/reminders/course_contents）
+- 每月重複用例口徑對齊（A2.2-C 斷言「未支援」文案或標記 Expected Fail；待 monthly 實作前不算功能性 FAIL）
+- Render 健檢 400 校準（健檢/Redis 檢查使用免簽名端點或加入測試標頭 x-qa-mode:test；更新 `tools/render-suite.js`）
+- 開關文件同步（`config/env.example`、`README` 補充 `ENABLE_RECURRING_COURSES` 與舊變數相容性說明）
 ### Backlog（優先序由上而下）
-- [P1][Feature] 批次操作（一次新增多個課程）
-- [P2][Feature] 匯出 PDF 課程報表
-- [P2][Feature] 搜尋特定課程/內容
-- [P1][Ops] 監控告警（異常監控與即時告警）
-- [P2][Perf] Redis 連接池與延遲優化
-- [P2][Security] Rate limiting 與輸入驗證
+- 批次操作（一次新增多個課程）
+- 匯出 PDF 課程報表
+- 搜尋特定課程/內容
+- 無變更保護（修改課程無實質變更時不更新，提示引導）
+- 監控告警（異常監控與即時告警）
+- Redis 連接池與延遲優化
+- Rate limiting 與輸入驗證
+- 課名提取強化（cleanCourseName 句式擴充與動作詞容錯｜規格: spec/modify-course/plan.md）
+- 時區一致性整理（統一 Asia/Taipei +08:00 的解析/顯示與過去時間判斷）
+- 衝突檢查排除自身事件（修改時忽略當前事件，避免自我衝突）
 - 已固定 Asia/Taipei（+08:00）並處理跨日進位；符合目前產品市場。若未來跨時區，需抽象化。
+- 測試報告存證與口徑統一（所有測試輸出以 tee 落檔；彙整報告僅讀檔案數據，避免批次口徑差）
+- 測試標準化與差異守門（同旗標配置、userId 隔離；一致性差異門檻警示）
+- 覆蓋率管線（整合 nyc/jest 產出 coverage，納入 QA 報告）
+- 旗標汰換（逐步移除 `ENABLE_DAILY_RECURRING`，僅保留 `ENABLE_RECURRING_COURSES`，清理 deprecation log）
 ### Blocked（阻塞與依賴）
-- [P1][External] 圖片上傳 404（LINE API）— 需官方支援或替代流程決策
+- 圖片上傳 404（LINE API）— 需官方支援或替代流程決策
 ### Done（最近 5 筆，含完成日）
-- [P0][debug]新增課程時日曆未寫入成功，但是firebase寫入成功
+- 2025-08-13：時間格式統一（訊息固定顯示 :mm；00:xx → 上午12:xx）
+- 2025-08-12：新增課程時日曆未寫入成功，但是firebase寫入成功
 - 2025-08-12：**確認按鈕功能恢復**（AI prompt + 規則兜底雙重保險，確保「確認」100% 識別）
 - 2025-08-12：**Google Calendar 同步修復**（環境變數載入修復，課程直接寫入日曆）
 - 2025-08-11：意圖識別準確率修復（AI 信心閾值 0.3→0.7，啟用規則兜底，非課程語句防呆）
-- 2025-08-11：啟用 IntentRouter 分層架構（parseIntent 專注識別，補問邏輯由 Router 處理）
 ### 短期改進（本月）
 1. 實作修改課程功能
 2. 新增單元測試（提升覆蓋）

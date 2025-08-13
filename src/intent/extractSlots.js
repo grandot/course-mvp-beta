@@ -120,26 +120,30 @@ function parseScheduleTime(message) {
  * @returns {string|false} 重複類型或 false
  */
 function identifyRecurrenceType(message) {
-  // 檢查環境變數控制
-  const enableDaily = process.env.ENABLE_DAILY_RECURRING === 'true';
-
-  // 每日重複關鍵詞
+  // 統一重複功能開關檢查（向後兼容 ENABLE_DAILY_RECURRING）
+  const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
+  
+  // 檢查是否有重複關鍵詞
   const dailyKeywords = ['每天', '每日', '天天', '日日', '每一天'];
-  if (enableDaily && dailyKeywords.some((keyword) => message.includes(keyword))) {
-    return 'daily';
-  }
-
-  // 每週重複關鍵詞
   const weeklyKeywords = ['每週', '每周', '週週', '每星期'];
-  if (weeklyKeywords.some((keyword) => message.includes(keyword))) {
-    return 'weekly';
+  const monthlyKeywords = ['每月', '每個月', '月月', '每月份'];
+  
+  const hasDaily = dailyKeywords.some((keyword) => message.includes(keyword));
+  const hasWeekly = weeklyKeywords.some((keyword) => message.includes(keyword));
+  const hasMonthly = monthlyKeywords.some((keyword) => message.includes(keyword));
+  
+  if (!enableRecurring) {
+    // 如果重複功能關閉但偵測到重複關鍵詞，回傳特殊值用於降級提示
+    if (hasDaily || hasWeekly || hasMonthly) {
+      return 'disabled';
+    }
+    return false;
   }
 
-  // 每月重複關鍵詞
-  const monthlyKeywords = ['每月', '每個月', '月月', '每月份'];
-  if (monthlyKeywords.some((keyword) => message.includes(keyword))) {
-    return 'monthly';
-  }
+  // 功能開啟時的正常識別
+  if (hasDaily) return 'daily';
+  if (hasWeekly) return 'weekly';
+  if (hasMonthly) return 'monthly';
 
   return false;
 }
@@ -463,8 +467,17 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseDate = parseSpecificDate(message);
       slots.dayOfWeek = parseDayOfWeek(message);
       const recurrenceResult = checkRecurring(message);
-      slots.recurring = !!recurrenceResult; // 轉換為布林值保持兼容性
-      slots.recurrenceType = recurrenceResult || null; // 新增重複類型資訊
+      
+      // 處理功能關閉但偵測到重複關鍵詞的情況
+      if (recurrenceResult === 'disabled') {
+        slots.recurring = false;
+        slots.recurrenceType = null;
+        slots.recurringRequested = true; // 標記用戶要求重複但功能關閉
+      } else {
+        slots.recurring = !!recurrenceResult; // 轉換為布林值保持兼容性
+        slots.recurrenceType = recurrenceResult || null; // 新增重複類型資訊
+        slots.recurringRequested = false;
+      }
       slots.timeReference = parseTimeReference(message);
 
       // 額外偵測：若訊息中包含「看似時間」但數值超界（如 25點、13:99），標記為 invalidTime

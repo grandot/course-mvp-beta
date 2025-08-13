@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-08-13T06:55:46.205Z",
+  "testUserId": "U_real_test_1755068086194",
+  "baseUrl": "http://localhost:3000",
+  "summary": {
+    "total": 10,
+    "successful": 0,
+    "failed": 10,
+    "successRate": 0,
+    "averageResponseTime": 0
+  },
+  "results": [
+    {
+      "scenario": "場景1",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景2",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景3",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景4",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景5",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景6",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景7",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景8",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景9",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    },
+    {
+      "scenario": "場景10",
+      "success": false,
+      "error": "Request failed with status code 500",
+      "status": 500
+    }
+  ]
+}

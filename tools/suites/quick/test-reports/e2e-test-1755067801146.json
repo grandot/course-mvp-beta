@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-08-13T06:50:01.146Z",
+  "testConfig": {
+    "baseUrl": "http://localhost:3000",
+    "testUserId": "test_user_e2e_123456",
+    "testStudentName": "測試小明",
+    "testCourseName": "數學課",
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "verbose": true
+  },
+  "summary": {
+    "total": 10,
+    "passed": 1,
+    "failed": 9,
+    "successRate": "10.00%"
+  },
+  "errors": [
+    {
+      "test": "新增課程功能",
+      "error": "新增課程失敗: Request failed with status code 400"
+    },
+    {
+      "test": "查詢課程功能",
+      "error": "查詢課程失敗: Request failed with status code 400"
+    },
+    {
+      "test": "記錄內容功能",
+      "error": "記錄內容失敗: Request failed with status code 400"
+    },
+    {
+      "test": "設定提醒功能",
+      "error": "設定提醒失敗: Request failed with status code 400"
+    },
+    {
+      "test": "取消課程功能",
+      "error": "取消課程失敗: Request failed with status code 400"
+    },
+    {
+      "test": "圖片上傳功能",
+      "error": "圖片上傳失敗: Request failed with status code 400"
+    },
+    {
+      "test": "錯誤處理機制",
+      "error": "錯誤處理失敗: Request failed with status code 400"
+    },
+    {
+      "test": "語意解析測試",
+      "error": "語意解析測試通過率過低: 0.0% (0/5)"
+    },
+    {
+      "test": "負載處理測試",
+      "error": "負載測試失敗: 0.0% (0/5)"
+    }
+  ],
+  "recommendation": "NEEDS_MAJOR_FIXES"
+}
