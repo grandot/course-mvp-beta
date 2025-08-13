@@ -24,7 +24,6 @@
 ## 工作板（永續分欄）
 
 ### Doing（最多 3 項）
-- 修改課程功能（modify_course v1 實作中｜規格: spec/modify-course/plan.md）
 - 重複任務「每月」支援（RRULE: MONTHLY｜規格: spec/GCal/integration-plan.md）
 ### Next（需求定義完成，尚未開工）
 - 單元測試補齊（需求定義完成；尚未開工）
@@ -58,6 +57,7 @@
 ### Blocked（阻塞與依賴）
 - 圖片上傳 404（LINE API）— 需官方支援或替代流程決策
 ### Done（最近 5 筆，含完成日）
+- 2025-08-13：修改課程功能（modify_course v1 完成｜規格: spec/modify-course/plan.md）
 - 2025-08-13：時間格式統一（訊息固定顯示 :mm；00:xx → 上午12:xx）
 - 2025-08-12：新增課程時日曆未寫入成功，但是firebase寫入成功
 - 2025-08-12：**確認按鈕功能恢復**（AI prompt + 規則兜底雙重保險，確保「確認」100% 識別）

@@ -401,6 +401,17 @@ async function createOrUpdateByName(listId, items, options) {
       if (dryRun) {
         console.log(`[dry-run] ＝ 將更新描述：${found.name}`);
       } else {
+        // 若卡片不在目標列表，先移動到目標列表
+        if (found.idList && found.idList !== listId) {
+          try {
+            await updateCard(found.id, { idList: listId, pos: 'bottom' });
+            // 更新 in-memory 狀態，避免後續依賴錯誤
+            found.idList = listId;
+            await sleep(120);
+          } catch (e) {
+            console.warn(`[警告] 移動卡片到列表失敗：${found.name} ${found.id} ${e && e.message}`);
+          }
+        }
         // 在保留原描述其餘內容的前提下，於描述頂部維護 uid/source/syncedAt
         const nextDesc = upsertHeaderInDesc(found.desc || '', uidLine, 'PROJECT_STATUS.md');
         await updateCard(found.id, { desc: nextDesc });
