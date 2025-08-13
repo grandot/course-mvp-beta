@@ -71,49 +71,78 @@ function resolveTimeReference(timeReference) {
 }
 
 /**
- * 處理重複課程的日期計算
+ * 使用 Asia/Taipei 時區的安全日期函數（防止跨日誤判）
+ */
+function getTaiwanDate() {
+  const now = new Date();
+  const taiwanTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return taiwanTime;
+}
+
+/**
+ * 格式化日期為 YYYY-MM-DD
+ */
+function formatDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 檢查當月是否有指定日期
+ */
+function hasDateInMonth(year, month, day) {
+  const testDate = new Date(year, month - 1, day);
+  return testDate.getMonth() === month - 1 && testDate.getDate() === day;
+}
+
+/**
+ * 處理重複課程的日期計算（符合人類直覺的推導邏輯）
  * @param {string} recurrenceType - 重複類型：daily, weekly, monthly
- * @param {number} dayOfWeek - 星期幾（仅每週重複需要）
- * @param {string} scheduleTime - 課程時間（HH:MM格式），用於每日重複的起始日判斷
+ * @param {number|array} dayOfWeek - 星期幾（僅每週重複需要）
+ * @param {string} scheduleTime - 課程時間（HH:MM格式），用於判斷是否已過
+ * @param {number} monthDay - 每月重複的目標日期（1-31）
  * @returns {string} 下次課程日期 YYYY-MM-DD
  */
-function calculateNextCourseDate(recurrenceType, dayOfWeek = null, scheduleTime = null) {
-  const today = new Date();
+function calculateNextCourseDate(recurrenceType, dayOfWeek = null, scheduleTime = null, monthDay = null) {
+  const today = getTaiwanDate();
+  const todayStr = formatDateString(today);
 
   if (recurrenceType === 'daily') {
-    // 每日重複：判斷今天的指定時間是否已過
+    // 每日重複：今天指定時間未過→今天；否則→明天
     if (scheduleTime) {
-      const todayStr = today.toISOString().split('T')[0];
-      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00`);
-      
-      // 如果今天的指定時間還沒到，從今天開始；否則從明天開始
-      if (targetDateTime > today) {
+      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00+08:00`);
+      const nowTaiwan = getTaiwanDate();
+
+      // 如果今天的指定時間還沒到，從今天開始
+      if (targetDateTime > nowTaiwan) {
         return todayStr;
       }
     }
-    
-    // 預設或時間已過：從明天開始
+
+    // 時間已過或未指定時間：從明天開始
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return formatDateString(tomorrow);
   }
 
   if (recurrenceType === 'weekly' && dayOfWeek !== null) {
-    // 支援單天或多天陣列，並考慮當日時間是否已過
+    // 每週重複：從「現在」起找最近的符合週幾；若今天且未過→今天
     const currentDay = today.getDay();
 
     // 將 dayOfWeek 正規化為代碼集合（0~6）
     const daySet = new Set(
       Array.isArray(dayOfWeek)
         ? dayOfWeek.map((d) => (typeof d === 'string' ? Number(d) : d)).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
-        : [dayOfWeek]
+        : [dayOfWeek],
     );
 
     // 如果今天就在集合內，且指定時間未過，直接使用今天
     if (daySet.has(currentDay) && scheduleTime) {
-      const todayStr = today.toISOString().split('T')[0];
-      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00`);
-      if (targetDateTime > today) {
+      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00+08:00`);
+      const nowTaiwan = getTaiwanDate();
+      if (targetDateTime > nowTaiwan) {
         return todayStr;
       }
     }
@@ -127,20 +156,54 @@ function calculateNextCourseDate(recurrenceType, dayOfWeek = null, scheduleTime 
     }
     const nextDate = new Date(today);
     nextDate.setDate(today.getDate() + (minDelta === 8 ? 7 : minDelta));
-    return nextDate.toISOString().split('T')[0];
+    return formatDateString(nextDate);
   }
 
   if (recurrenceType === 'monthly') {
-    // 每月重複：下個月同一天
-    const nextMonth = new Date(today);
-    nextMonth.setMonth(today.getMonth() + 1);
-    return nextMonth.toISOString().split('T')[0];
+    // 每月重複（BYMONTHDAY）：本月有該日且未過→本月；否則→下月；小月無該日→跳過
+    const currentDay = today.getDate();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+
+    // 使用用戶指定的日期作為目標日期（BYMONTHDAY 模式）
+    // monthDay 參數由呼叫方傳入，若無則使用當日
+    const targetDay = monthDay || currentDay;
+
+    // 檢查本月該日是否存在且時間未過
+    if (hasDateInMonth(currentYear, currentMonth, targetDay) && scheduleTime) {
+      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00+08:00`);
+      const nowTaiwan = getTaiwanDate();
+      if (targetDateTime > nowTaiwan) {
+        return todayStr;
+      }
+    }
+
+    // 嘗試下個月同一天
+    let nextMonth = currentMonth + 1;
+    let nextYear = currentYear;
+    if (nextMonth > 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    }
+
+    // 檢查下月是否有該日
+    if (hasDateInMonth(nextYear, nextMonth, targetDay)) {
+      return `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+    }
+    // 小月無該日：跳過到再下個月（不自動改為月底）
+    let skipMonth = nextMonth + 1;
+    let skipYear = nextYear;
+    if (skipMonth > 12) {
+      skipMonth = 1;
+      skipYear += 1;
+    }
+    return `${skipYear}-${String(skipMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
   }
 
   // 預設回傳明天
   const defaultDate = new Date(today);
   defaultDate.setDate(today.getDate() + 1);
-  return defaultDate.toISOString().split('T')[0];
+  return formatDateString(defaultDate);
 }
 
 /**
@@ -234,7 +297,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         );
         return {
           success: false,
-          code: 'INVALID_TIME',
+          code: 'VALIDATION_ERROR',
           message: '❌ 時間格式不正確，請重新輸入正確的時間（例如：下午2點 或 14:00）',
           expectingInput: true,
           missingFields: ['上課時間'],
@@ -244,6 +307,18 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
     // 1. 優先處理重複功能關閉但用戶要求重複的情況
     if (slots.recurringRequested) {
+      // 可觀測性：NDJSON 格式日誌（降級時）
+      const observabilityLog = {
+        intent: 'add_course',
+        userId,
+        traceId: `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        recurringRequested: true,
+        disabledByFlag: true,
+        status: 'disabled',
+        timestamp: new Date().toISOString(),
+      };
+      console.log(`OBSERVABILITY: ${JSON.stringify(observabilityLog)}`);
+
       return {
         success: false,
         code: 'RECURRING_DISABLED',
@@ -278,16 +353,16 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
       return {
         success: false,
-        code: 'MISSING_FIELDS',
+        code: 'VALIDATION_ERROR',
         message: `❓ 請提供以下資訊：${missingFields.join('、')}\n\n範例：「小明每週三下午3點數學課」`,
         expectingInput: true,
         missingFields,
       };
     }
 
-    // 3. 統一重複功能檢查（向後兼容 ENABLE_DAILY_RECURRING）
-    const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
-    if (slots.recurring && !enableRecurring) {
+    // 3. 統一重複功能檢查（使用單一事實來源）
+    const { isRecurringEnabled } = require('../intent/extractSlots');
+    if (slots.recurring && !isRecurringEnabled()) {
       return {
         success: false,
         code: 'RECURRING_DISABLED',
@@ -303,8 +378,13 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     }
 
     if (!courseDate && slots.recurring) {
-      // 支援不同類型的重複課程
-      courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek, slots.scheduleTime);
+      // 支援不同類型的重複課程（weekly 可為多天；monthly 使用 monthDay）
+      courseDate = calculateNextCourseDate(
+        slots.recurrenceType || 'weekly',
+        slots.dayOfWeek,
+        slots.scheduleTime,
+        slots.monthDay || (slots.courseDate ? new Date(slots.courseDate).getDate() : null),
+      );
     }
 
     // 若 courseDate 存在但不是 YYYY-MM-DD，視為無效並以 timeReference/recurring 推導
@@ -315,14 +395,19 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         courseDate = resolveTimeReference(slots.timeReference);
       }
       if (!courseDate && slots.recurring) {
-        courseDate = calculateNextCourseDate(slots.recurrenceType || 'weekly', slots.dayOfWeek, slots.scheduleTime);
+        courseDate = calculateNextCourseDate(
+          slots.recurrenceType || 'weekly',
+          slots.dayOfWeek,
+          slots.scheduleTime,
+          slots.monthDay || null,
+        );
       }
     }
 
     if (!courseDate) {
       return {
         success: false,
-        code: 'MISSING_DATE',
+        code: 'VALIDATION_ERROR',
         message: '❓ 請提供以下資訊：課程日期\n\n範例：「小明每週三下午3點數學課」',
         expectingInput: true,
         missingFields: ['課程日期'],
@@ -336,7 +421,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       if (!Number.isNaN(targetMs) && targetMs < Date.now()) {
         return {
           success: false,
-          code: 'INVALID_PAST_TIME',
+          code: 'VALIDATION_ERROR',
           message: '❌ 無法建立過去時間的課程，請確認日期時間後重新輸入',
         };
       }
@@ -352,7 +437,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     }
     console.log('👤 學生日曆:', student.calendarId);
 
-    // 4. 檢查時間衝突
+    // 4. 檢查時間衝突（僅檢查首個實例，降低成本與假陽性）
     const conflictCheck = await googleCalendarService.checkConflict(
       student.calendarId,
       courseDate,
@@ -364,10 +449,14 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         .map((c) => `• ${c.summary} (${c.start.split('T')[1].substring(0, 5)})`)
         .join('\n');
 
+      const conflictMessage = slots.recurring
+        ? `⚠️ 首個時段衝突\n\n${courseDate} ${slots.scheduleTime} 已有以下課程：\n${conflictInfo}\n\n💡 註：僅檢查首個實例時段，後續時段請自行確認。\n\n請選擇其他時間或確認是否要覆蓋。`
+        : `⚠️ 時間衝突\n\n${courseDate} ${slots.scheduleTime} 已有以下課程：\n${conflictInfo}\n\n請選擇其他時間或確認是否要覆蓋。`;
+
       return {
         success: false,
-        code: 'TIME_CONFLICT',
-        message: `⚠️ 時間衝突\n\n${courseDate} ${slots.scheduleTime} 已有以下課程：\n${conflictInfo}\n\n請選擇其他時間或確認是否要覆蓋。`,
+        code: 'CONFLICT_ERROR',
+        message: conflictMessage,
       };
     }
 
@@ -381,6 +470,10 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       dayOfWeek: slots.dayOfWeek,
       studentName: slots.studentName,
       userId,
+      // 為 monthly 重複類型提供 monthDay 參數（優先來自 slots.monthDay，其次 courseDate 派生）
+      monthDay: (slots.recurrenceType === 'monthly')
+        ? (typeof slots.monthDay === 'number' ? slots.monthDay : new Date(courseDate).getDate())
+        : null,
     };
 
     let calendarEvent = { eventId: null };
@@ -435,6 +528,54 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     const savedCourse = await firebaseService.saveCourse(courseData);
     console.log('💾 Firebase 課程資料已儲存:', savedCourse.courseId);
 
+    // 可觀測性：NDJSON 格式日誌（建立系列時）
+    if (slots.recurring) {
+      try {
+        const logger = require('../utils/logger');
+        logger.info({
+          intent: 'add_course',
+          userId,
+          traceId: logger.generateTraceId('course'),
+          recurring: true,
+          recurrenceType: slots.recurrenceType,
+          startDate: courseDate,
+          scheduleTime: slots.scheduleTime,
+          rule: Array.isArray(calendarEvent.recurrence) ? calendarEvent.recurrence.join(';') : null,
+          status: 'success',
+        });
+      } catch (_) {}
+    }
+
+    // 6.5 檢查小月策略提示（29/30/31號的月重複）
+    let smallMonthWarning = '';
+    if (slots.recurring && slots.recurrenceType === 'monthly') {
+      const monthDay = new Date(courseDate).getDate();
+      if (monthDay >= 29) {
+        const today = getTaiwanDate();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
+
+        // 檢查未來幾個月是否會遇到小月問題
+        const futureIssues = [];
+        for (let i = 1; i <= 6; i++) { // 檢查未來6個月
+          let checkMonth = currentMonth + i;
+          let checkYear = currentYear;
+          if (checkMonth > 12) {
+            checkMonth -= 12;
+            checkYear += 1;
+          }
+
+          if (!hasDateInMonth(checkYear, checkMonth, monthDay)) {
+            futureIssues.push(`${checkYear}年${checkMonth}月`);
+          }
+        }
+
+        if (futureIssues.length > 0) {
+          smallMonthWarning = `\n\n💡 小月提醒：${futureIssues.slice(0, 2).join('、')}${futureIssues.length > 2 ? '等' : ''}將無${monthDay}號，課程會自動跳過。\n如需改為每月最後一天，請告知調整。`;
+        }
+      }
+    }
+
     // 7. 格式化成功訊息
     const timeDisplay = slots.scheduleTime.replace(/(\d{2}):(\d{2})/, (match, hour, minute) => {
       const h = parseInt(hour, 10);
@@ -464,7 +605,9 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         const normalizeIndex = (val) => {
           if (typeof val === 'number') return val;
           if (typeof val === 'string') {
-            const map = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+            const map = {
+              SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6,
+            };
             const up = val.trim().toUpperCase();
             if (map.hasOwnProperty(up)) return map[up];
             const n = Number(up);
@@ -492,7 +635,10 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
           recurringDisplay = `🔄 重複：每${label} ${timeDisplay}\n`;
         }
       } else if (slots.recurrenceType === 'monthly') {
-        recurringDisplay = `🔄 重複：每月 ${timeDisplay}\n`;
+        const md = (typeof eventData.monthDay === 'number' && eventData.monthDay >= 1 && eventData.monthDay <= 31)
+          ? `${eventData.monthDay}號`
+          : '';
+        recurringDisplay = `🔄 重複：每月${md ? ' ' + md : ''} ${timeDisplay}\n`;
       } else {
         // 向下兼容：預設為每週
         const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
@@ -506,6 +652,9 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       message += `📅 日期：${courseDate}\n`;
       message += `🕐 時間：${timeDisplay}`;
     }
+
+    // 加入小月提醒
+    message += smallMonthWarning;
 
     // 設定期待確認狀態（簡化版）
     const result = {
@@ -550,19 +699,19 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     if (error.message.includes('Calendar')) {
       return {
         success: false,
-        code: 'CALENDAR_UNAVAILABLE',
+        code: 'SYSTEM_ERROR',
         message: '❌ 日曆服務暫時無法使用，請稍後再試。',
       };
     } if (error.message.includes('Firebase') || error.message.includes('Firestore')) {
       return {
         success: false,
-        code: 'FIREBASE_ERROR',
+        code: 'SYSTEM_ERROR',
         message: '❌ 資料儲存失敗，請稍後再試。',
       };
     }
     return {
       success: false,
-      code: 'ADD_COURSE_FAILED',
+      code: 'SYSTEM_ERROR',
       message: '❌ 新增課程失敗，請檢查輸入資訊並稍後再試。',
     };
   }

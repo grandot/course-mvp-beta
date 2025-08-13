@@ -115,24 +115,52 @@ function parseScheduleTime(message) {
 }
 
 /**
+ * 統一重複功能開關檢查（單一事實來源）
+ * @returns {boolean} 是否啟用重複功能
+ */
+function isRecurringEnabled() {
+  return process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
+}
+
+/**
+ * 從訊息中提取每月重複的日期（1-31）
+ * @param {string} message - 用戶訊息
+ * @returns {number|null} 月日數字，如「每月15號」→15
+ */
+function parseMonthDay(message) {
+  if (!message) return null;
+  
+  // 匹配「每月X號」、「月X號」等格式
+  const monthDayPattern = /(?:每月|月)(\d{1,2})號/g;
+  const match = monthDayPattern.exec(message);
+  
+  if (match && match[1]) {
+    const day = parseInt(match[1], 10);
+    // 驗證日期範圍
+    if (day >= 1 && day <= 31) {
+      return day;
+    }
+  }
+  
+  return null;
+}
+
+/**
  * 識別重複類型：每日、每週、每月
  * @param {string} message - 用戶訊息
  * @returns {string|false} 重複類型或 false
  */
 function identifyRecurrenceType(message) {
-  // 統一重複功能開關檢查（向後兼容 ENABLE_DAILY_RECURRING）
-  const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
-  
   // 檢查是否有重複關鍵詞
   const dailyKeywords = ['每天', '每日', '天天', '日日', '每一天'];
   const weeklyKeywords = ['每週', '每周', '週週', '每星期'];
   const monthlyKeywords = ['每月', '每個月', '月月', '每月份'];
-  
+
   const hasDaily = dailyKeywords.some((keyword) => message.includes(keyword));
   const hasWeekly = weeklyKeywords.some((keyword) => message.includes(keyword));
   const hasMonthly = monthlyKeywords.some((keyword) => message.includes(keyword));
-  
-  if (!enableRecurring) {
+
+  if (!isRecurringEnabled()) {
     // 如果重複功能關閉但偵測到重複關鍵詞，回傳特殊值用於降級提示
     if (hasDaily || hasWeekly || hasMonthly) {
       return 'disabled';
@@ -146,6 +174,22 @@ function identifyRecurrenceType(message) {
   if (hasMonthly) return 'monthly';
 
   return false;
+}
+
+/**
+ * 從訊息中提取每月重複的日期（1-31）
+ * 例：「每月15號」、「月1號」
+ */
+function parseMonthDay(message) {
+  try {
+    if (!message) return null;
+    const m = message.match(/(?:每月|月)(\d{1,2})號/);
+    if (m && m[1]) {
+      const day = parseInt(m[1], 10);
+      if (Number.isFinite(day) && day >= 1 && day <= 31) return day;
+    }
+  } catch (_) {}
+  return null;
 }
 
 function parseDayOfWeek(message) {
@@ -196,7 +240,11 @@ function checkRecurring(message) {
     return recurrenceType;
   }
 
-  // 向下兼容：原有邏輯，預設回傳每週重複
+  // 向下兼容：原有邏輯，但需要檢查功能開關
+  if (!isRecurringEnabled()) {
+    return false;
+  }
+
   const recurringKeywords = ['每週', '每周', '每月', '重複', '定期', '固定', '循環', '週期性'];
 
   // 明確的重複關鍵詞
@@ -467,7 +515,16 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseDate = parseSpecificDate(message);
       slots.dayOfWeek = parseDayOfWeek(message);
       const recurrenceResult = checkRecurring(message);
+      // 提取每月重複日號（如「每月15號」→ 15）
+      if (recurrenceResult === 'monthly') {
+        slots.monthDay = parseMonthDay(message);
+      }
       
+      // 提取每月重複的日期（如「每月15號」）
+      if (recurrenceResult === 'monthly') {
+        slots.monthDay = parseMonthDay(message);
+      }
+
       // 處理功能關閉但偵測到重複關鍵詞的情況
       if (recurrenceResult === 'disabled') {
         slots.recurring = false;
@@ -626,13 +683,13 @@ async function extractSlotsByIntent(message, intent) {
       slots.courseName = extractCourseName(message);
       slots.timeReference = parseTimeReference(message);
       slots.courseDate = parseSpecificDate(message);
-      
+
       // 提取新值
       const newTimeMatch = message.match(/改[到成].*?([上中下午晚][午間]?\d{1,2}[:\：]\d{2}|[上中下午晚][午間]?\d{1,2}點(?:半|\d{1,2}分)?)/);
       if (newTimeMatch) {
         slots.scheduleTimeNew = parseScheduleTime(newTimeMatch[1]);
       }
-      
+
       // 修復課程名稱提取 - 從"改"字之前提取
       const courseBeforeChangeMatch = message.match(/([^改]+課)改/);
       if (courseBeforeChangeMatch) {
@@ -643,12 +700,12 @@ async function extractSlotsByIntent(message, intent) {
           slots.courseName = pureCourseName[1];
         }
       }
-      
+
       const newCourseMatch = message.match(/改[成為](.+?課)/);
       if (newCourseMatch) {
         slots.courseNameNew = newCourseMatch[1];
       }
-      
+
       const newDateMatch = message.match(/改[到成].*?(明天|後天|今天|下週|下周|\d{1,2}[\/\-]\d{1,2})/);
       if (newDateMatch) {
         if (newDateMatch[1] === '明天') {
@@ -1004,11 +1061,15 @@ module.exports = {
   parseSpecificDate,
   parseScheduleTime,
   parseDayOfWeek,
+  parseMonthDay,
   identifyRecurrenceType,
+  parseMonthDay,
   extractStudentName,
   extractCourseName,
   enhanceSlotsWithContext,
   findAllStudentCandidates,
+  // 重複功能開關檢查
+  isRecurringEnabled,
 };
 
 /**

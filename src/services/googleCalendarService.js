@@ -23,7 +23,7 @@ function initializeGoogleCalendar() {
           // dotenv 可能已載入或不可用，忽略錯誤
         }
       }
-      
+
       // 1) Mock（測試）
       if (process.env.USE_MOCK_CALENDAR === 'true') {
         calendar = {
@@ -44,14 +44,14 @@ function initializeGoogleCalendar() {
         authMode = 'mock';
         console.log('🧪 使用 Mock Calendar 服務');
       } else if (
-        process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID &&
-        process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET &&
-        process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN
+        process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID
+        && process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET
+        && process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN
       ) {
         // 2) OAuth2（推薦，與 gcal-setup.md 一致）
         const oauth2Client = new google.auth.OAuth2(
           process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_ID,
-          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET
+          process.env.GOOGLE_CALENDAR_OAUTH_CLIENT_SECRET,
         );
         oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_CALENDAR_OAUTH_REFRESH_TOKEN });
         auth = oauth2Client;
@@ -74,7 +74,7 @@ function initializeGoogleCalendar() {
         authMode = 'disabled';
         throw new Error('❌ 缺少 Google Calendar 憑證環境變數（OAuth 或 Service Account 任一可）');
       }
-      console.log('✅ Google Calendar 服務初始化完成（模式：' + authMode + '）');
+      console.log(`✅ Google Calendar 服務初始化完成（模式：${authMode}）`);
     } catch (error) {
       console.error('❌ Google Calendar 初始化失敗:', error?.response?.data || error?.message || error);
       throw error;
@@ -172,11 +172,19 @@ function addHours(dateTimeString, hours = 1) {
 function buildRecurrenceRule(recurring, recurrenceTypeOrOptions = null, dayOfWeekLegacy = null) {
   if (!recurring) return [];
 
-  // 統一重複功能開關檢查（向後兼容 ENABLE_DAILY_RECURRING）
-  const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
-  if (!enableRecurring) {
-    // 如果重複功能關閉，不建立任何重複規則
-    return [];
+  // 統一重複功能開關檢查（單一事實來源）
+  try {
+    const { isRecurringEnabled } = require('../intent/extractSlots');
+    if (!isRecurringEnabled()) {
+      // 如果重複功能關閉，不建立任何重複規則
+      return [];
+    }
+  } catch (error) {
+    console.warn('⚠️ 無法載入 isRecurringEnabled 函數，使用備援檢查');
+    const enableRecurring = process.env.ENABLE_RECURRING_COURSES === 'true' || process.env.ENABLE_DAILY_RECURRING === 'true';
+    if (!enableRecurring) {
+      return [];
+    }
   }
 
   // 解析參數（向下相容）
@@ -223,7 +231,7 @@ function buildRecurrenceRule(recurring, recurrenceTypeOrOptions = null, dayOfWee
       if (typeof value === 'string') {
         const upper = value.trim().toUpperCase();
         // 允許傳 MO/TU/... 或中文數字轉換已在上游完成
-        if (['MO','TU','WE','TH','FR','SA','SU'].includes(upper)) return upper;
+        if (['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'].includes(upper)) return upper;
         const asNum = Number(upper);
         return Number.isFinite(asNum) && dayMapping.hasOwnProperty(asNum) ? dayMapping[asNum] : null;
       }
@@ -251,7 +259,15 @@ function buildRecurrenceRule(recurring, recurrenceTypeOrOptions = null, dayOfWee
   }
 
   if (recurrenceType === 'monthly') {
-    // P0：維持既有行為；`monthDay` 和 `nthWeek` 的細節在 P1 擴充
+    // P0 支援 BYMONTHDAY（固定日期）
+    if (monthDay !== null && monthDay !== undefined) {
+      // 明確指定的月日（1-31）
+      const validMonthDay = Math.max(1, Math.min(31, Number(monthDay)));
+      return [`RRULE:FREQ=MONTHLY;BYMONTHDAY=${validMonthDay}`];
+    }
+
+    // 預設：使用當前日期作為 BYMONTHDAY
+    // 在呼叫處應該傳入適當的 monthDay 值
     return ['RRULE:FREQ=MONTHLY'];
   }
 
@@ -273,6 +289,7 @@ async function createEvent(calendarId, courseData) {
       recurring = false,
       recurrenceType = null,
       dayOfWeek = null,
+      monthDay = null,
       studentName,
       userId,
       courseId,
@@ -292,7 +309,12 @@ async function createEvent(calendarId, courseData) {
         dateTime: endDateTime,
         timeZone: 'Asia/Taipei',
       },
-      recurrence: buildRecurrenceRule(recurring, recurrenceType, dayOfWeek),
+      recurrence: buildRecurrenceRule(recurring, {
+        recurrenceType,
+        dayOfWeek,
+        monthDay,
+        nthWeek: null, // P0 預留，不使用
+      }),
       extendedProperties: {
         private: {
           userId: userId || '',
@@ -645,7 +667,7 @@ module.exports = {
   buildDateTime,
   addHours,
   buildRecurrenceRule,
-  
+
   // 驗證工具
   verifyCalendarAccess,
 };
