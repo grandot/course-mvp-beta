@@ -125,6 +125,12 @@ function processRequest(input) {
    - 用途：排程、重複規則
    - API：無狀態呼叫
 
+### Recurring 設計原則（補充）
+- 優先依賴 GCal RRULE，不本地展開序列、不實作本地 EXDATE。
+- 缺日期時僅推導「首個實例」；衝突檢查只檢首實例。
+- 小月（如 31 號）：預設跳過，建立當下提供「改為每月最後一天」選項。
+- 行為細節與測試口徑見：`spec/recurring/plan-recurring.md`。
+
 ## 3. 環境變數配置
 
 ### 基本配置

@@ -450,6 +450,18 @@ node test-cancel-course.js
 node tools/internal/debug/run-noninteractive-tests.js
 ```
 
+## 5.2 Recurring 課程統一規則（摘要）
+- 設計原則：優先依賴 GCal RRULE，不本地展開序列、不重造輪子。
+- 單一開關：`ENABLE_RECURRING_COURSES` 控制 daily/weekly/monthly；關閉時一律友善降級，不追問日期。
+- 起始日（缺日期時）：
+  - 每天：今天時間未過→今天；否則→明天。
+  - 每週（單/多天）：從現在起最近的符合週幾（若今天且未過→今天）。
+  - 每月固定日：本月有該日且未過→本月；否則→下月；小月缺日→跳過（建立當下提供「改為每月最後一天」選項）。
+- 衝突檢查：僅檢查「首個實例」。
+- 時區：固定 Asia/Taipei。
+- 撤銷時限：程式內建 2 分鐘（可選 `UNDO_WINDOW_MINUTES` 覆蓋）。
+- 詳細規劃：`spec/recurring/plan-recurring.md`。
+
 ## 快速上手提示
 
 1. **本地開發**：

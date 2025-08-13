@@ -120,6 +120,11 @@ LINE Bot → 意圖識別 → 實體提取 → 任務執行 → 資料儲存
 - **Google Calendar** - 專精時間邏輯（重複規則、衝突檢測）
 - **Firebase** - 專精業務資料（學生資料、課程記錄）
 
+### 重複課程（Recurring）
+- 設計原則：依賴 GCal RRULE，不本地展開序列。
+- 行為統一：單一開關、起始日預設、只檢首實例衝突、Asia/Taipei。
+- 詳細規劃：`spec/recurring/plan-recurring.md`。
+
 ## 🎯 使用範例
 
 ### 新增課程
