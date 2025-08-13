@@ -308,16 +308,17 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
     // 1. 優先處理重複功能關閉但用戶要求重複的情況
     if (slots.recurringRequested) {
       // 可觀測性：NDJSON 格式日誌（降級時）
-      const observabilityLog = {
-        intent: 'add_course',
-        userId,
-        traceId: `course-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        recurringRequested: true,
-        disabledByFlag: true,
-        status: 'disabled',
-        timestamp: new Date().toISOString(),
-      };
-      console.log(`OBSERVABILITY: ${JSON.stringify(observabilityLog)}`);
+      try {
+        const logger = require('../utils/logger');
+        logger.info({
+          intent: 'add_course',
+          userId,
+          traceId: logger.generateTraceId('course'),
+          recurringRequested: true,
+          disabledByFlag: true,
+          status: 'disabled',
+        });
+      } catch (_) {}
 
       return {
         success: false,
@@ -655,6 +656,14 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
 
     // 加入小月提醒
     message += smallMonthWarning;
+
+    // 月重複未明確指定日號時給提示（已採用預設日號，可引導使用者之後明確指定）
+    if (slots.recurring && slots.recurrenceType === 'monthly' && !(typeof slots.monthDay === 'number' && Number.isFinite(slots.monthDay))) {
+      try {
+        const assumed = new Date(courseDate).getDate();
+        message += `\n\n💡 提醒：已預設使用每月${assumed}號。若需更改，請直接說「每月X號」例如「每月15號」。`;
+      } catch (_) {}
+    }
 
     // 設定期待確認狀態（簡化版）
     const result = {
