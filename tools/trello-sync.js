@@ -226,7 +226,7 @@ function deriveUidLabelName(taskName) {
 }
 
 function parseUidFromDesc(desc) {
-  const m = (desc || '').match(/^uid:([0-9a-f]{12})/m);
+  const m = (desc || '').match(/^uid:([0-9a-f]{8,12})/m);
   return m ? `uid:${m[1]}` : null;
 }
 
@@ -234,7 +234,7 @@ function upsertHeaderInDesc(originalDesc, uidLine, sourceValue) {
   const nowIso = new Date().toISOString();
   const lines = (originalDesc || '').split(/\r?\n/);
   // 移除既有的 header 行，避免重複
-  const rest = lines.filter(l => !/^uid:[0-9a-f]{12}/i.test(l) && !/^source:/i.test(l) && !/^syncedAt:/i.test(l));
+  const rest = lines.filter(l => !/^uid:[0-9a-f]{8,12}/i.test(l) && !/^source:/i.test(l) && !/^syncedAt:/i.test(l));
   const header = [uidLine, `source: ${sourceValue}`, `syncedAt: ${nowIso}`];
   return header.concat(rest.length > 0 ? [''].concat(rest) : []).join('\n');
 }
@@ -360,7 +360,7 @@ async function createOrUpdateByName(listId, items, options) {
   const byName = new Map(existing.map(c => [c.name, c]));
   // 以 description 中的 uid 做快速查找
   const byUid = new Map();
-  const uidRe = /^uid:([0-9a-f]{12})/m;
+  const uidRe = /^uid:([0-9a-f]{8,12})/m;
   for (const c of existing) {
     const m = (c.desc || '').match(uidRe);
     if (m) byUid.set(`uid:${m[1]}`, c);
@@ -440,11 +440,61 @@ async function createOrUpdateByName(listId, items, options) {
   }
 }
 
+// 依 Markdown 順序重排 Trello 列表（將 Markdown 出現的項目置頂，順序一致）
+async function reorderListToMatch(list, items, boardIndex) {
+  try {
+    const cards = await getCards(list.id);
+    if (!Array.isArray(cards) || cards.length === 0) return;
+
+    const byName = new Map(cards.map(c => [c.name, c]));
+    const byBase = new Map(cards.map(c => [normalizeTaskBase(c.name || ''), c]));
+
+    let moved = 0;
+    for (let i = 0; i < items.length; i++) {
+      const raw = items[i];
+      const { pureName } = extractBracketTags(raw);
+      const base = normalizeTaskBase(raw);
+      let card = byName.get(pureName) || byName.get(raw) || byBase.get(base);
+      // 若在其他列表，嘗試用全板索引找回並移動過來
+      if (!card && boardIndex) {
+        const c2 = boardIndex.byNameAll.get(pureName) || boardIndex.byNameAll.get(raw) || boardIndex.byBaseAll.get(base) || null;
+        if (c2 && c2.idList !== list.id) {
+          try { await updateCard(c2.id, { idList: list.id }); card = c2; } catch (_) {}
+        } else if (c2) {
+          card = c2;
+        }
+      }
+      if (!card) continue;
+      // 將 pos 設為小數遞增，保證置頂且順序一致
+      const targetPos = (i + 1) * 100; // 與 Trello 自動 pos 相容
+      try {
+        await updateCard(card.id, { pos: targetPos });
+        moved += 1;
+      } catch (_) {}
+      await sleep(60);
+    }
+    if (moved > 0) {
+      console.log(`↕ 重排列表「${list.name}」：已依 Markdown 順序置頂 ${moved} 項`);
+    }
+  } catch (e) {
+    console.warn(`[警告] 重排列表失敗：${list && list.name} ${e && e.message}`);
+  }
+}
+
 async function syncPush(boardId, statusFile, options) {
   const { listsFilter = null, dryRun = false, enableLabels = ENABLE_TRELLO_LABELS } = options || {};
   const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done']
     .filter(n => !listsFilter || listsFilter.includes(n));
-  const listsMap = await ensureLists(boardId, wantedLists);
+  // 顯示看板資訊，避免同步到錯誤看板時使用者無感
+  const canonicalBoardId = await getCanonicalBoardIdMaybe(boardId);
+  try {
+    const meta = await getBoardMeta(canonicalBoardId);
+    if (meta && meta.name && meta.url) {
+      console.log(`看板：${meta.name} (${meta.url})`);
+    }
+  } catch (_) {}
+
+  const listsMap = await ensureLists(canonicalBoardId, wantedLists);
   // 建立全看板索引，支援跨列表移動
   const allOpenLists = Object.values(listsMap);
   const byUidAll = new Map();
@@ -469,7 +519,6 @@ async function syncPush(boardId, statusFile, options) {
   // 準備標籤：
   // - UID 不再使用標籤（改寫入 description）
   // - 括號標籤：[P1][Feature] 等僅在啟用標籤時建立
-  const canonicalBoardId = await getCanonicalBoardIdMaybe(boardId);
   const namesToEnsure = new Set();
   for (const listName of wantedLists) {
     for (const item of (data[listName] || [])) {
@@ -496,6 +545,10 @@ async function syncPush(boardId, statusFile, options) {
     }
     console.log(`→ 同步 ${listName}（${items.length} 項）${dryRun ? '[dry-run]' : ''}`);
     await createOrUpdateByName(list.id, items, { dryRun, labelContext, boardIndex });
+    // 同步後依 Markdown 順序重排，讓人類一眼可見更新
+    if (!dryRun) {
+      await reorderListToMatch(list, items, boardIndex);
+    }
   }
 }
 
