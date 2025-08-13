@@ -95,11 +95,11 @@
 
 ## 7) 撤銷時限統一介面（內建 2 分鐘）
 - Why：單一事實來源，避免各處魔法數字。
-- Edits（僅規劃，P0 可先使用常數，之後抽出）：
-  - `src/utils/timeWindow.js`
-    - `export const UNDO_WINDOW_MS = 2 * 60 * 1000;`
-    - `export function getUndoWindowMs() { /* 讀 env 覆蓋（可選）*/ }`
-  - 使用處：`cancel_action` 與 P0「撤銷＋重建」流。
+- P0：直接以常數使用 `2 * 60 * 1000`（2 分鐘），不須新增檔案。
+- P1：抽出 `src/utils/timeWindow.js` 並提供：
+  - `export const UNDO_WINDOW_MS = 2 * 60 * 1000;`
+  - `export function getUndoWindowMs() { /* 可選讀 env 覆蓋 */ }`
+- 使用處：`cancel_action` 與 P0「撤銷＋重建」流。
 - 驗收：
   - 2 分鐘內可撤銷；超時有明確提示。
 

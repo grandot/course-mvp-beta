@@ -214,10 +214,39 @@ function buildRecurrenceRule(recurring, recurrenceTypeOrOptions = null, dayOfWee
       6: 'SA',
     };
 
-    if (dayOfWeek !== null && dayMapping[dayOfWeek]) {
-      return [`RRULE:FREQ=WEEKLY;BYDAY=${dayMapping[dayOfWeek]}`];
+    // 支援多天：若 options.dayOfWeek 是陣列，輸出逗號分隔的 BYDAY
+    const normalizeToCode = (value) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'number') {
+        return dayMapping.hasOwnProperty(value) ? dayMapping[value] : null;
+      }
+      if (typeof value === 'string') {
+        const upper = value.trim().toUpperCase();
+        // 允許傳 MO/TU/... 或中文數字轉換已在上游完成
+        if (['MO','TU','WE','TH','FR','SA','SU'].includes(upper)) return upper;
+        const asNum = Number(upper);
+        return Number.isFinite(asNum) && dayMapping.hasOwnProperty(asNum) ? dayMapping[asNum] : null;
+      }
+      return null;
+    };
+
+    // 若為多天陣列
+    if (recurrenceTypeOrOptions && typeof recurrenceTypeOrOptions === 'object' && Array.isArray(recurrenceTypeOrOptions.dayOfWeek)) {
+      const codes = recurrenceTypeOrOptions.dayOfWeek
+        .map(normalizeToCode)
+        .filter(Boolean);
+      if (codes.length > 0) {
+        return [`RRULE:FREQ=WEEKLY;BYDAY=${codes.join(',')}`];
+      }
     }
 
+    // 單一天（legacy 或物件中為單值）
+    const singleCode = normalizeToCode(dayOfWeek);
+    if (singleCode) {
+      return [`RRULE:FREQ=WEEKLY;BYDAY=${singleCode}`];
+    }
+
+    // 無指定週幾，僅回 FREQ=WEEKLY
     return ['RRULE:FREQ=WEEKLY'];
   }
 
