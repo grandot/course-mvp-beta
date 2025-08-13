@@ -47,7 +47,10 @@ function extractSection(md, title) {
 }
 
 function stripInlineTokens(text) {
-  return (text || '').replace(/\s*\[uid:[0-9a-f]{8,12}\]/ig, '').replace(/\s*\[key:[^\]]+\]/ig, '').trim();
+  return (text || '')
+    .replace(/\s*\[uid:[0-9a-f]{8,12}\]/ig, '')
+    .replace(/\s*\[key:[^\]]+\]/ig, '')
+    .trim();
 }
 
 function parseInlineUid(text) {
@@ -155,7 +158,8 @@ function fixStatus() {
         uid = genUid8();
       }
       uidmap[key] = uid; // 回寫
-      outLines.push(`${base} [uid:${uid}] [key:${key}]`);
+      // 只在 MD 寫回 UID；normalizedKey 僅維護於 uidmap.json
+      outLines.push(`${base} [uid:${uid}]`);
     }
     if (outLines.length > 0) replaceSection(sec, outLines);
   }
