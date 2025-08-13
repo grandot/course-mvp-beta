@@ -6,6 +6,8 @@ const path = require('path');
 const { runLocalLogicTests, processMessageAndGetResponse } = require('../../tools/suites/misc/test-local-environment');
 const { RealEnvironmentTester } = require('../../tools/suites/misc/test-real-environment');
 
+const fs = require('fs');
+
 class UnifiedTestRunner {
   constructor(options = {}) {
     this.mode = options.mode || 'both'; // 'local', 'real', 'both'
@@ -310,6 +312,187 @@ class UnifiedTestRunner {
     }
     
     console.log('\n' + '='.repeat(80));
+
+    // 產出詳細 Markdown 報告（人類可讀、逐條用例）
+    try {
+      const reportPath = this.generateDetailedMarkdownReport(results);
+      if (reportPath) {
+        console.log(`\n📝 已輸出詳細報告: ${reportPath}`);
+      }
+    } catch (e) {
+      console.log(`\n⚠️  輸出詳細報告失敗: ${e.message}`);
+    }
+  }
+
+  /**
+   * 生成極詳盡的 Markdown 報告，逐條用例列出「期望 vs 實際」與診斷
+   * 輸出路徑：QA/reports/detailed-test-report-<timestamp>.md
+   */
+  generateDetailedMarkdownReport(results) {
+    // 收集來源資料
+    const local = results.local || { results: [], total: 0, passed: 0, failed: 0 };
+    const real = results.real || { results: [], total: 0, passed: 0, failed: 0 };
+    const comparison = results.comparison || null;
+
+    const total = (comparison && comparison.summary && comparison.summary.total)
+      ? comparison.summary.total
+      : Math.max(local.results.length, real.results.length);
+
+    const lines = [];
+    const now = new Date().toISOString().replace(/[:.]/g, '-');
+    const headerTitle = `統一測試詳細報告 (${now})`;
+    lines.push(`# ${headerTitle}`);
+    lines.push('');
+
+    // 摘要
+    lines.push('## 摘要');
+    if (results.local) {
+      const passRateLocal = Math.round((local.passed / (local.total || 1)) * 100);
+      lines.push(`- 本機：共 ${local.total}，通過 ${local.passed}，失敗 ${local.failed}，通過率 ${passRateLocal}%`);
+    }
+    if (results.real) {
+      const passRateReal = Math.round((real.passed / (real.total || 1)) * 100);
+      lines.push(`- 線上：共 ${real.total}，通過 ${real.passed}，失敗 ${real.failed}，通過率 ${passRateReal}%`);
+    }
+    if (comparison) {
+      lines.push(`- 本機 vs 線上：一致性 ${comparison.consistency}%、差異數 ${comparison.differences.length}`);
+    }
+    lines.push('');
+
+    // 公用渲染輔助
+    const formatSteps = (tc) => {
+      if (!tc) return '';
+      if (Array.isArray(tc.steps) && tc.steps.length > 0) {
+        return tc.steps.map((s, i) => `  ${i + 1}. ${s.input || ''}`).join('\n');
+      }
+      return `  1. ${tc.input || tc.testCase?.input || ''}`;
+    };
+
+    const bullet = (ok) => ok ? '✅' : '❌';
+
+    const renderKeywordMatrix = (expected = [], actualText = '') => {
+      if (!Array.isArray(expected)) return '';
+      if (expected.length === 0) return '';
+      const rows = expected.map(k => `| ${k} | ${actualText && actualText.includes(k) ? '✅' : '❌'} |`);
+      return ['| 關鍵詞 | 命中 |', '| --- | --- |', ...rows].join('\n');
+    };
+
+    // 逐條案例
+    lines.push('## 用例明細（期望 vs 實際）');
+    lines.push('');
+
+    for (let i = 0; i < total; i++) {
+      const localItem = local.results[i] || null;
+      const realItem = real.results[i] || null;
+      const tc = localItem?.testCase || realItem?.testCase || {};
+
+      const id = tc.id || `#${i + 1}`;
+      const name = tc.name || '未命名測試';
+      const expectedKeywords = Array.isArray(tc.expectedKeywords) ? tc.expectedKeywords : [];
+      const expectedCode = tc.expectedCode !== undefined ? String(tc.expectedCode) : '';
+      const expectedSuccess = tc.expectedSuccess !== undefined ? String(tc.expectedSuccess) : '';
+
+      lines.push(`### ${id} ${name}`);
+      lines.push('');
+      lines.push('**輸入步驟**');
+      lines.push('');
+      lines.push('```');
+      lines.push(formatSteps(tc));
+      lines.push('```');
+      lines.push('');
+
+      // 期望
+      const expectLines = [];
+      if (expectedKeywords.length > 0) expectLines.push(`- 關鍵詞：${expectedKeywords.join('、')}`);
+      if (expectedCode) expectLines.push(`- 預期代碼：${expectedCode}`);
+      if (expectedSuccess) expectLines.push(`- 預期成功：${expectedSuccess}`);
+      if (expectLines.length === 0) expectLines.push('- 無明確期望（僅觀察行為）');
+      lines.push('**期望**');
+      lines.push('');
+      expectLines.forEach(l => lines.push(l));
+      lines.push('');
+
+      // 本機
+      if (localItem) {
+        lines.push('**本機結果**');
+        lines.push('');
+        lines.push(`- 總結：${bullet(localItem.success)} 本機 ${localItem.success ? 'PASS' : 'FAIL'}`);
+        if (localItem.intent) lines.push(`- 意圖：${localItem.intent}`);
+        if (localItem.code) lines.push(`- 任務代碼：${localItem.code}`);
+        if (typeof localItem.taskSuccess === 'boolean') lines.push(`- 任務成功：${localItem.taskSuccess ? '✅' : '❌'}`);
+        lines.push('- 輸出：');
+        lines.push('');
+        lines.push('```');
+        lines.push((localItem.output || '').toString());
+        lines.push('```');
+        lines.push('');
+        if (expectedKeywords.length > 0) {
+          lines.push(renderKeywordMatrix(expectedKeywords, localItem.output || ''));
+          lines.push('');
+        }
+      }
+
+      // 線上
+      if (realItem) {
+        lines.push('**線上結果**');
+        lines.push('');
+        lines.push(`- 總結：${bullet(realItem.testPassed)} 線上 ${realItem.testPassed ? 'PASS' : 'FAIL'}`);
+        lines.push(`- Webhook：${realItem.webhookStatus || 0} ${realItem.webhookOk ? '✅' : '❌'}`);
+        if (realItem.taskCode) lines.push(`- 任務代碼：${realItem.taskCode}`);
+        if (typeof realItem.taskSuccess === 'boolean') lines.push(`- 任務成功：${realItem.taskSuccess ? '✅' : '❌'}`);
+        lines.push('- 回覆：');
+        lines.push('');
+        lines.push('```');
+        lines.push((realItem.botReply || '').toString());
+        lines.push('```');
+        lines.push('');
+        if (expectedKeywords.length > 0) {
+          lines.push(renderKeywordMatrix(expectedKeywords, realItem.botReply || ''));
+          lines.push('');
+        }
+        // 診斷
+        if (!realItem.testPassed && realItem.diagnosticLogs) {
+          lines.push('**診斷日誌（重點節點）**');
+          const diag = realItem.diagnosticLogs;
+          const showCat = (title, arr) => {
+            if (Array.isArray(arr) && arr.length > 0) {
+              lines.push(`- ${title}`);
+              lines.push('');
+              lines.push('```');
+              arr.forEach(line => lines.push(line));
+              lines.push('```');
+              lines.push('');
+            }
+          };
+          showCat('🎯 意圖識別', diag.intentParsing);
+          showCat('📋 槽位提取', diag.slotExtraction);
+          showCat('⚙️ 任務執行', diag.taskExecution);
+          showCat('❌ 錯誤信息', diag.errors);
+          showCat('🔧 系統行為', diag.systemBehavior);
+          showCat('📝 資料驗證', diag.validation);
+        }
+      }
+
+      // 差異快照
+      if (localItem && realItem) {
+        const diffBadge = localItem.success === realItem.testPassed ? '一致 ✅' : '不一致 ❌';
+        lines.push(`> 本機 vs 線上：${diffBadge}`);
+        if (localItem.success && !realItem.testPassed) {
+          lines.push('> 提示：本機 PASS 但線上 FAIL，建議檢查線上意圖/槽位與回覆模板是否一致、以及環境變數差異。');
+        }
+      }
+
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    }
+
+    // 落檔
+    const outDir = 'QA/reports';
+    const outFile = `${outDir}/detailed-test-report-${now}.md`;
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(outFile, lines.join('\n'));
+    return outFile;
   }
   
   /**
