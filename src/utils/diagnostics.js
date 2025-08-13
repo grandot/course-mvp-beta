@@ -74,7 +74,9 @@ function recordRegex(diag, name, pattern, input, matched) {
   if (!diag) return;
   try {
     diag.notes.regex = diag.notes.regex || [];
-    diag.notes.regex.push({ name, pattern, matched: !!matched, sample: String(input).slice(0, 80) });
+    diag.notes.regex.push({
+      name, pattern, matched: !!matched, sample: String(input).slice(0, 80),
+    });
   } catch (_) {}
 }
 
@@ -111,5 +113,3 @@ module.exports = {
   logDiagnostics,
   getRecent,
 };
-
-

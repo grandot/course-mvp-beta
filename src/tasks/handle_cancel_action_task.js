@@ -21,6 +21,9 @@ async function handle_cancel_action_task(slots, userId, event) {
   try {
     const conversationManager = getConversationManager();
 
+    // 撤銷時限：2 分鐘（統一常數）
+    const UNDO_WINDOW_MS = 2 * 60 * 1000;
+
     // 取得最近的操作上下文
     const context = await conversationManager.getContext(userId);
     if (!context || !context.state.lastActions) {
@@ -35,6 +38,15 @@ async function handle_cancel_action_task(slots, userId, event) {
       .sort((a, b) => b.timestamp - a.timestamp)[0];
 
     const { intent, slots: originalSlots, result: originalResult } = lastAction;
+
+    // 檢查撤銷時限
+    const timeSinceAction = Date.now() - lastAction.timestamp;
+    if (timeSinceAction > UNDO_WINDOW_MS) {
+      return {
+        success: false,
+        message: '⏰ 撤銷時限已過（超過 2 分鐘），無法取消此操作。\n\n如需修改課程，請直接告知具體調整。',
+      };
+    }
 
     console.log('📝 取消操作詳情:', {
       intent,

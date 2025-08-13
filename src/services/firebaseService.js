@@ -21,7 +21,7 @@ function initializeFirebase() {
           // dotenv 可能已載入或不可用，忽略錯誤
         }
       }
-      
+
       // 檢查必要的環境變數
       const requiredEnvVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_PRIVATE_KEY', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_STORAGE_BUCKET'];
       const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
@@ -242,7 +242,7 @@ async function getCoursesByStudent(userId, studentName, options = {}) {
 async function getRecurringCoursesByStudent(userId, studentName) {
   try {
     const firestore = initializeFirebase();
-    let query = firestore.collection('courses')
+    const query = firestore.collection('courses')
       .where('userId', '==', userId)
       .where('studentName', '==', studentName)
       .where('isRecurring', '==', true);

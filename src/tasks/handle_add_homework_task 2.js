@@ -43,4 +43,3 @@ async function handle_add_homework_task(slots, userId) {
 }
 
 module.exports = handle_add_homework_task;
-

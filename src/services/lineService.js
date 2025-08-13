@@ -61,11 +61,11 @@ async function replyMessage(replyToken, message, quickReply = null) {
     console.log('🔍 檢查 replyToken:', replyToken);
     if (replyToken && replyToken.includes('test-reply-token') && process.env.QA_FORCE_REAL !== 'true') {
       console.log('🧪 檢測到測試 token，跳過真實 LINE API 調用');
-      
+
       // 記錄實際要發送的業務回覆內容
       const actualMessage = typeof message === 'string' ? message : JSON.stringify(message);
       console.log('📤 [測試模式] 實際業務回覆:', actualMessage);
-      
+
       return {
         status: 200,
         data: { message: actualMessage },

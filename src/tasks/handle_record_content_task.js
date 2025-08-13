@@ -164,7 +164,7 @@ async function handle_record_content_task(slots, userId = null) {
     }
 
     // 嚴格模式：要求必須關聯既有課程（預設開啟；可用環境變數關閉）
-    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE === 'false' ? false : true;
+    const strictRequiresCourse = process.env.STRICT_RECORD_REQUIRES_COURSE !== 'false';
     if (!matchingCourse && strictRequiresCourse) {
       return {
         success: false,

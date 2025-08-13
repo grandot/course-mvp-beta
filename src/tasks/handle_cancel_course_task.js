@@ -191,7 +191,7 @@ async function handle_cancel_course_task(slots, userId) {
     );
     if ((!coursesToCancel || coursesToCancel.length === 0) && slots.studentName) {
       // 使用候選名稱再嘗試一次
-      const altNames = getAlternateStudentNames(slots.studentName).filter(n => n !== slots.studentName);
+      const altNames = getAlternateStudentNames(slots.studentName).filter((n) => n !== slots.studentName);
       for (const alt of altNames) {
         coursesToCancel = await findCoursesToCancel(
           userId,

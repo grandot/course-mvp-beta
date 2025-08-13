@@ -5,8 +5,8 @@
 const firebaseService = require('../services/firebaseService');
 
 async function handle_query_course_content_task(slots, userId) {
-  const studentName = slots.studentName;
-  const courseName = slots.courseName;
+  const { studentName } = slots;
+  const { courseName } = slots;
   if (!studentName || !courseName) {
     return {
       success: false,
@@ -56,4 +56,3 @@ async function handle_query_course_content_task(slots, userId) {
 }
 
 module.exports = handle_query_course_content_task;
-

@@ -20,7 +20,7 @@ function initializeOpenAI() {
         // dotenv 可能已載入或不可用，忽略錯誤
       }
     }
-    
+
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('❌ OPENAI_API_KEY 環境變數未設定');
     }

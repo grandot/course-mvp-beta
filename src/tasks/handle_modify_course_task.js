@@ -181,9 +181,8 @@ async function handle_modify_course_task(slots, userId, event) {
     const newScheduleTime = slots.scheduleTimeNew || course.scheduleTime;
 
     // 只有實際修改時間/日期時才檢查過去時間
-    const timeOrDateChanged = 
-      (slots.courseDateNew && slots.courseDateNew !== course.courseDate) ||
-      (slots.scheduleTimeNew && slots.scheduleTimeNew !== course.scheduleTime);
+    const timeOrDateChanged = (slots.courseDateNew && slots.courseDateNew !== course.courseDate)
+      || (slots.scheduleTimeNew && slots.scheduleTimeNew !== course.scheduleTime);
     if (timeOrDateChanged && isPastTime(newCourseDate, newScheduleTime)) {
       return {
         success: false,

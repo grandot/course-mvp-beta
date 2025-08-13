@@ -55,7 +55,9 @@ async function handleTextMessage(event, req = null) {
     const traceId = generateTraceId('line');
 
     // inbound log (single-line JSON)
-    info({ direction: 'inbound', channel: 'line', traceId, userId, textIn: userMessage });
+    info({
+      direction: 'inbound', channel: 'line', traceId, userId, textIn: userMessage,
+    });
     console.log('🔍 用戶ID類型:', typeof userId);
     console.log('🔍 是否測試用戶:', userId && userId.startsWith('U_test_'));
 
@@ -80,11 +82,15 @@ async function handleTextMessage(event, req = null) {
       // 舊路徑（保留回退）
       intent = await parseIntent(userMessage, userId);
     }
-    info({ stage: 'nlp', traceId, userId, intent });
+    info({
+      stage: 'nlp', traceId, userId, intent,
+    });
     try {
       // 記錄 Router 決策到 DecisionLogger（便於 /debug/decision 查詢）
       const { recordDecision } = require('../utils/decisionLogger');
-      recordDecision(traceId, { stage: 'nlp', userId, message: userMessage, intent });
+      recordDecision(traceId, {
+        stage: 'nlp', userId, message: userMessage, intent,
+      });
     } catch (_) {}
 
     // 里程碑1保險絲：僅保留提醒覆寫，關閉查詢覆寫避免壓過 AI
@@ -136,24 +142,38 @@ async function handleTextMessage(event, req = null) {
       const clarify = '❓ 請問要查哪位學生的課表？';
 
       await currentLineService.replyMessage(replyToken, clarify, quickReply);
-      info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: clarify, quickReply: !!quickReply });
-      try { require('../utils/decisionLogger').recordDecision(traceId, { stage: 'render', userId, intent, responseMessage: clarify, quickReply }); } catch (_) {}
+      info({
+        direction: 'outbound', channel: 'line', traceId, userId, textOut: clarify, quickReply: !!quickReply,
+      });
+      try {
+        require('../utils/decisionLogger').recordDecision(traceId, {
+          stage: 'render', userId, intent, responseMessage: clarify, quickReply,
+        });
+      } catch (_) {}
       return;
     }
-    info({ stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots) });
+    info({
+      stage: 'slots', traceId, userId, intent, slotsSummary: Object.keys(slots),
+    });
     try {
       const { recordDecision } = require('../utils/decisionLogger');
-      recordDecision(traceId, { stage: 'slots', userId, intent, slots });
+      recordDecision(traceId, {
+        stage: 'slots', userId, intent, slots,
+      });
     } catch (_) {}
 
     // 第三步：執行任務
     const t0 = Date.now();
     const result = await executeTask(intent, slots, userId, event);
     const latencyMs = Date.now() - t0;
-    info({ stage: 'task', traceId, userId, intent, success: !!result?.success, code: result?.code || null, latencyMs });
+    info({
+      stage: 'task', traceId, userId, intent, success: !!result?.success, code: result?.code || null, latencyMs,
+    });
     try {
       const { recordDecision } = require('../utils/decisionLogger');
-      recordDecision(traceId, { stage: 'task', userId, intent, result, latencyMs });
+      recordDecision(traceId, {
+        stage: 'task', userId, intent, result, latencyMs,
+      });
     } catch (_) {}
 
     // 第四步：記錄任務執行結果到對話上下文
@@ -161,7 +181,7 @@ async function handleTextMessage(event, req = null) {
 
     // 第五步：處理回應和 Quick Reply（使用統一渲染器）
     const { render } = require('../nlu/ResponseRenderer');
-    let responseMessage = render(intent, slots, result);
+    const responseMessage = render(intent, slots, result);
     let quickReply = null;
 
     if (result.success) {
@@ -181,13 +201,19 @@ async function handleTextMessage(event, req = null) {
     await currentLineService.replyMessage(replyToken, responseMessage, quickReply);
     try {
       const { recordDecision } = require('../utils/decisionLogger');
-      recordDecision(traceId, { stage: 'render', userId, intent, responseMessage, quickReply });
+      recordDecision(traceId, {
+        stage: 'render', userId, intent, responseMessage, quickReply,
+      });
     } catch (_) {}
-    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage, quickReply: !!quickReply });
+    info({
+      direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage, quickReply: !!quickReply,
+    });
   } catch (error) {
     const { error: logError, generateTraceId } = require('../utils/logger');
     const traceId = generateTraceId('err');
-    logError({ direction: 'inbound', channel: 'line', traceId, userId: event?.source?.userId, textIn: event?.message?.text, error: error?.message || String(error) });
+    logError({
+      direction: 'inbound', channel: 'line', traceId, userId: event?.source?.userId, textIn: event?.message?.text, error: error?.message || String(error),
+    });
 
     // 記錄錯誤到對話歷史
     try {
@@ -199,7 +225,6 @@ async function handleTextMessage(event, req = null) {
 
     // 錯誤處理使用統一的服務選擇邏輯
     const currentLineService = getLineService(event.source.userId, req);
-    
 
     await currentLineService.replyMessage(
       event.replyToken,
@@ -219,7 +244,9 @@ async function handleImageMessage(event, req = null) {
     const { info } = require('../utils/logger');
     const traceId = require('../utils/logger').generateTraceId('line');
 
-    info({ direction: 'inbound', channel: 'line', traceId, userId, imageMessageId: messageId });
+    info({
+      direction: 'inbound', channel: 'line', traceId, userId, imageMessageId: messageId,
+    });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId, req);
@@ -240,7 +267,9 @@ async function handleImageMessage(event, req = null) {
     const t0 = Date.now();
     const result = await handle_record_content_task(slots, userId, event);
     const latencyMs = Date.now() - t0;
-    info({ stage: 'task', traceId, userId, intent: 'record_content', success: !!result?.success, code: result?.code || null, latencyMs });
+    info({
+      stage: 'task', traceId, userId, intent: 'record_content', success: !!result?.success, code: result?.code || null, latencyMs,
+    });
 
     // 提供圖片相關的快捷回覆按鈕
     const quickReply = [
@@ -250,7 +279,9 @@ async function handleImageMessage(event, req = null) {
     ];
 
     await currentLineService.replyMessage(replyToken, result.message, quickReply);
-    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: result.message, quickReply: !!quickReply });
+    info({
+      direction: 'outbound', channel: 'line', traceId, userId, textOut: result.message, quickReply: !!quickReply,
+    });
   } catch (error) {
     console.error('❌ 處理圖片訊息失敗:', error);
 
@@ -359,7 +390,9 @@ async function handlePostbackEvent(event, req = null) {
     const { info } = require('../utils/logger');
     const traceId = require('../utils/logger').generateTraceId('line');
 
-    info({ direction: 'inbound', channel: 'line', traceId, userId, postbackData: data });
+    info({
+      direction: 'inbound', channel: 'line', traceId, userId, postbackData: data,
+    });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId, req);
@@ -385,7 +418,9 @@ async function handlePostbackEvent(event, req = null) {
     }
 
     await currentLineService.replyMessage(replyToken, responseMessage);
-    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage });
+    info({
+      direction: 'outbound', channel: 'line', traceId, userId, textOut: responseMessage,
+    });
   } catch (error) {
     console.error('❌ 處理 Postback 事件失敗:', error);
     // 動態選擇 LINE Service 用於錯誤處理
@@ -407,7 +442,9 @@ async function handleFollowEvent(event) {
     const { info } = require('../utils/logger');
     const traceId = require('../utils/logger').generateTraceId('line');
 
-    info({ direction: 'inbound', channel: 'line', traceId, userId, event: 'follow' });
+    info({
+      direction: 'inbound', channel: 'line', traceId, userId, event: 'follow',
+    });
 
     // 動態選擇 LINE Service
     const currentLineService = getLineService(userId);
@@ -423,7 +460,9 @@ async function handleFollowEvent(event) {
     const welcomeMessage = '👋 歡迎使用課程管理機器人！\n\n我可以幫您：\n📚 安排和管理課程\n📅 查詢課程時間表\n📝 記錄課程內容和照片\n⏰ 設定課程提醒\n\n試試對我說：「小明每週三下午3點數學課」';
 
     await currentLineService.replyMessage(replyToken, welcomeMessage);
-    info({ direction: 'outbound', channel: 'line', traceId, userId, textOut: welcomeMessage });
+    info({
+      direction: 'outbound', channel: 'line', traceId, userId, textOut: welcomeMessage,
+    });
   } catch (error) {
     console.error('❌ 處理關注事件失敗:', error);
     // 動態選擇 LINE Service 用於錯誤處理

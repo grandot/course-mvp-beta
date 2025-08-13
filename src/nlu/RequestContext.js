@@ -38,5 +38,3 @@ async function createRequestContext(userId, text, req = null) {
 module.exports = {
   createRequestContext,
 };
-
-

@@ -239,7 +239,9 @@ function expandRecurringCourses(recurringCourses, dateRange) {
       // 簡化處理：若基準日存在且在區間內，才加入一次
       const base = c.courseDate ? new Date(`${c.courseDate}T00:00:00+08:00`) : null;
       if (base && base >= start && base <= end) {
-        results.push({ ...c, courseDate: c.courseDate, isRecurring: true, source: 'recurrence' });
+        results.push({
+          ...c, courseDate: c.courseDate, isRecurring: true, source: 'recurrence',
+        });
       }
     }
   }

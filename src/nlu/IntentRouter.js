@@ -21,7 +21,7 @@ function chooseQueryOrAdd(text) {
 }
 
 async function routeIntent(ctx) {
-  const text = ctx.text;
+  const { text } = ctx;
 
   // 1) Safety（不可覆蓋）
   if (ctx.cues.hasReminder) return { intent: 'set_reminder', source: 'safety' };
@@ -62,5 +62,3 @@ async function routeIntent(ctx) {
 module.exports = {
   routeIntent,
 };
-
-

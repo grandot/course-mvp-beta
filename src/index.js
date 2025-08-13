@@ -56,7 +56,7 @@ app.get('/debug/config', (req, res) => {
     has_openai_key: !!process.env.OPENAI_API_KEY,
     AI_FALLBACK_MIN_CONFIDENCE: process.env.AI_FALLBACK_MIN_CONFIDENCE || '0.7',
     AI_FALLBACK_TIMEOUT_MS: process.env.AI_FALLBACK_TIMEOUT_MS || '900',
-    STRICT_RECORD_REQUIRES_COURSE: process.env.STRICT_RECORD_REQUIRES_COURSE === 'false' ? false : true,
+    STRICT_RECORD_REQUIRES_COURSE: process.env.STRICT_RECORD_REQUIRES_COURSE !== 'false',
     timestamp: new Date().toISOString(),
   });
 });
@@ -115,9 +115,7 @@ app.get('/debug/openai-ping', async (req, res) => {
     request.on('timeout', () => {
       request.destroy(new Error('timeout'));
     });
-    request.on('error', (err) => {
-      return res.status(500).json({ ok: false, error: err.message });
-    });
+    request.on('error', (err) => res.status(500).json({ ok: false, error: err.message }));
     request.end();
   } catch (e) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -145,7 +143,9 @@ app.get('/debug/intent', async (req, res) => {
     }
     const { parseIntent } = require('./intent/parseIntent');
     const intent = await parseIntent(q, userId);
-    res.json({ ok: true, q, intent, userId });
+    res.json({
+      ok: true, q, intent, userId,
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
@@ -348,7 +348,9 @@ app.get('/health/gcal', async (req, res) => {
   try {
     const gcal = require('./services/googleCalendarService');
     const result = await gcal.testConnection();
-    res.json({ status: result.ok ? 'ok' : 'error', authMode: result.authMode, timestamp: new Date().toISOString(), error: result.error || null });
+    res.json({
+      status: result.ok ? 'ok' : 'error', authMode: result.authMode, timestamp: new Date().toISOString(), error: result.error || null,
+    });
   } catch (error) {
     res.status(500).json({ status: 'error', error: error.message, timestamp: new Date().toISOString() });
   }

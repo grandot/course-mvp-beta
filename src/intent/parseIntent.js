@@ -273,8 +273,8 @@ async function parseIntent(message, userId = null) {
     const hasAny = (kws) => safeHasAny(kws, msg);
 
     // A1: 明確的「撤銷上一動作」快捷詞，優先判為 cancel_action（避免被一般取消課程蓋過）
-    const isPureCancelAction = /^(取消操作|算了|不要|放棄|重新開始|重來)$/.
-      test(msg);
+    const isPureCancelAction = /^(取消操作|算了|不要|放棄|重新開始|重來)$/
+      .test(msg);
     if (isPureCancelAction) {
       if (enableDiag) { diagMod.pushPath(diag, 'safety-cancel-action'); diag.finalIntent = 'cancel_action'; await diagMod.logDiagnostics(diag); }
       return 'cancel_action';
@@ -303,7 +303,7 @@ async function parseIntent(message, userId = null) {
           let settled = false;
           const timer = setTimeout(() => { if (!settled) resolve({ intent: 'unknown', confidence: 0 }); }, ms);
           p.then((r) => { if (!settled) { settled = true; clearTimeout(timer); resolve(r); } })
-           .catch(() => { if (!settled) { settled = true; clearTimeout(timer); resolve({ intent: 'unknown', confidence: 0 }); } });
+            .catch(() => { if (!settled) { settled = true; clearTimeout(timer); resolve({ intent: 'unknown', confidence: 0 }); } });
         });
         const { identifyIntent } = require('../services/openaiService');
         console.log('🤖 AI調用參數:', { message: cleanMessage.substring(0, 50), timeoutMs, minConfidence });
@@ -313,9 +313,8 @@ async function parseIntent(message, userId = null) {
           console.log('✅ AI結果採用:', aiResult.intent, aiResult.confidence);
           if (enableDiag) { diagMod.pushPath(diag, 'ai-primary'); diag.finalIntent = aiResult.intent; await diagMod.logDiagnostics(diag); }
           return aiResult.intent;
-        } else {
-          console.log('❌ AI結果拒絕:', { hasIntent: !!aiResult?.intent, confidence: aiResult?.confidence, threshold: minConfidence });
         }
+        console.log('❌ AI結果拒絕:', { hasIntent: !!aiResult?.intent, confidence: aiResult?.confidence, threshold: minConfidence });
       }
     } catch (e) {
       console.warn('⚠️ AI 主判例外，降級至規則兜底:', e?.message || e);
