@@ -32,10 +32,11 @@
 - Why：與人類直覺一致、且只做最小推導，不展開長序列。
 - Edits（新增純函式並在任務層使用）：
   - `src/tasks/handle_add_course_task.js`
-    - 改進現有 `calculateNextCourseDate(scheduleTime, { recurrenceType, dayOfWeek, monthDay, nthWeek }, now)`（P0）；P1 再抽象為 `deriveStartDate(...)` 標準介面：
-      - daily：今天未過→今天，否則→明天。
+    - 改進現有 `calculateNextCourseDate` 的日期推導邏輯（P0）；P1 再抽象為 `deriveStartDate` 標準介面：
+      - daily：今天指定時間未過→今天；否則→明天。
       - weekly（單/多天）：從「現在」起找最近的符合週幾；若今天且未過→今天。
       - monthly（BYMONTHDAY）：本月有該日且未過→本月；否則→下月；小月無該日→跳過（不自動改）。
+      - 注意：推導需同時考量具體時間（scheduleTime），不可只看日期。
     - 若使用者「有給日期」但在過去→直接 `VALIDATION_ERROR`；僅「未給日期」時啟動推導。
 - 驗收：
   - A2.1-C / A2.1-D 不再被追問日期，能直接建立 daily。
