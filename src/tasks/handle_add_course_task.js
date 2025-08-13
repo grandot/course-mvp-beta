@@ -458,9 +458,39 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
       if (slots.recurrenceType === 'daily') {
         recurringDisplay = `🔄 重複：每天 ${timeDisplay}\n`;
       } else if (slots.recurrenceType === 'weekly' && slots.dayOfWeek !== null) {
-        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-        const dayName = days[slots.dayOfWeek];
-        recurringDisplay = `🔄 重複：每${dayName} ${timeDisplay}\n`;
+        // 週期：支援單天或多天顯示
+        const zhDaysFull = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        const zhDaysShort = ['日', '一', '二', '三', '四', '五', '六'];
+        const normalizeIndex = (val) => {
+          if (typeof val === 'number') return val;
+          if (typeof val === 'string') {
+            const map = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+            const up = val.trim().toUpperCase();
+            if (map.hasOwnProperty(up)) return map[up];
+            const n = Number(up);
+            if (Number.isFinite(n)) return n;
+          }
+          return null;
+        };
+        if (Array.isArray(slots.dayOfWeek)) {
+          const short = slots.dayOfWeek
+            .map(normalizeIndex)
+            .filter((n) => n !== null && n >= 0 && n <= 6)
+            .map((n) => zhDaysShort[n]);
+          const joined = short.join(''); // 例：一三五
+          if (joined) {
+            recurringDisplay = `🔄 重複：每週${joined} ${timeDisplay}\n`;
+          } else {
+            // 後備：單天（若解析失敗）
+            const idx = normalizeIndex(slots.dayOfWeek[0]);
+            const label = (idx !== null && idx >= 0 && idx <= 6) ? zhDaysFull[idx] : '週';
+            recurringDisplay = `🔄 重複：每${label} ${timeDisplay}\n`;
+          }
+        } else {
+          const idx = normalizeIndex(slots.dayOfWeek);
+          const label = (idx !== null && idx >= 0 && idx <= 6) ? zhDaysFull[idx] : '週';
+          recurringDisplay = `🔄 重複：每${label} ${timeDisplay}\n`;
+        }
       } else if (slots.recurrenceType === 'monthly') {
         recurringDisplay = `🔄 重複：每月 ${timeDisplay}\n`;
       } else {
