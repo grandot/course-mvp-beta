@@ -194,6 +194,19 @@ function extractBracketTags(taskName) {
   return { tags, pureName: rest };
 }
 
+// 解析行內 UID 標記（出現在 Markdown 條目尾巴的 [uid:xxxxxxxx]）
+function parseInlineUid(text) {
+  const m = (text || '').match(/\[uid:([0-9a-f]{8,12})\]/i);
+  return m ? `uid:${m[1].toLowerCase()}` : null;
+}
+
+// 移除行內技術性標記，供 Trello 顯示名稱使用
+function stripInlineTokens(text) {
+  return (text || '')
+    .replace(/\s*\[uid:[0-9a-f]{8,12}\]/ig, '')
+    .trim();
+}
+
 // 產生穩定的卡片唯一識別標籤名稱（不依賴括號後綴/規格連結）
 function normalizeTaskBase(taskName) {
   const { pureName } = extractBracketTags(taskName);
@@ -373,7 +386,9 @@ async function createOrUpdateByName(listId, items, options) {
   }
   for (const name of items) {
     const { tags, pureName } = extractBracketTags(name);
-    const uidLine = deriveUidLabelName(name); // e.g. uid:1a2b3c4d5e6f
+    const inlineUid = parseInlineUid(name);
+    const uidLine = inlineUid || deriveUidLabelName(name);
+    const displayName = stripInlineTokens(pureName);
     const base = normalizeTaskBase(name);
 
     // 精準比對順序：同 uid → 同名（純名優先）→ 同 base
@@ -395,8 +410,8 @@ async function createOrUpdateByName(listId, items, options) {
       if (dryRun) {
         console.log(`[dry-run] ＋ 將建立卡片：${name}`);
       } else {
-        const created = await createCard(listId, pureName, upsertHeaderInDesc('', uidLine, 'PROJECT_STATUS.md'));
-        console.log(`＋ 建立卡片：${pureName}`);
+        const created = await createCard(listId, displayName, upsertHeaderInDesc('', uidLine, 'PROJECT_STATUS.md'));
+        console.log(`＋ 建立卡片：${displayName}`);
         // 追加括號標籤（若啟用）
         if (labelContext && tags.length > 0) {
           for (const t of tags) {
@@ -454,10 +469,21 @@ async function reorderListToMatch(list, items, boardIndex) {
       const raw = items[i];
       const { pureName } = extractBracketTags(raw);
       const base = normalizeTaskBase(raw);
-      let card = byName.get(pureName) || byName.get(raw) || byBase.get(base);
+      const inlineUid = parseInlineUid(raw);
+      let card = null;
+      if (inlineUid && boardIndex && boardIndex.byUidAll) {
+        card = boardIndex.byUidAll.get(inlineUid) || null;
+      }
+      if (!card) {
+        card = byName.get(pureName) || byName.get(raw) || byBase.get(base);
+      }
       // 若在其他列表，嘗試用全板索引找回並移動過來
       if (!card && boardIndex) {
-        const c2 = boardIndex.byNameAll.get(pureName) || boardIndex.byNameAll.get(raw) || boardIndex.byBaseAll.get(base) || null;
+        const c2 = (inlineUid && boardIndex.byUidAll.get(inlineUid))
+          || boardIndex.byNameAll.get(pureName)
+          || boardIndex.byNameAll.get(raw)
+          || boardIndex.byBaseAll.get(base)
+          || null;
         if (c2 && c2.idList !== list.id) {
           try { await updateCard(c2.id, { idList: list.id }); card = c2; } catch (_) {}
         } else if (c2) {
@@ -485,6 +511,7 @@ async function syncPush(boardId, statusFile, options) {
   const { listsFilter = null, dryRun = false, enableLabels = ENABLE_TRELLO_LABELS } = options || {};
   const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done']
     .filter(n => !listsFilter || listsFilter.includes(n));
+  const purge = process.argv.includes('--purge');
   // 顯示看板資訊，避免同步到錯誤看板時使用者無感
   const canonicalBoardId = await getCanonicalBoardIdMaybe(boardId);
   try {
@@ -495,6 +522,25 @@ async function syncPush(boardId, statusFile, options) {
   } catch (_) {}
 
   const listsMap = await ensureLists(canonicalBoardId, wantedLists);
+
+  // 可選：在同步前刪除（非封存）指定列表的所有卡片
+  if (purge && !dryRun) {
+    console.log('！將刪除所有現有卡片（非封存），僅保留列表結構');
+    for (const ln of wantedLists) {
+      const l = listsMap[ln];
+      if (!l) continue;
+      const cards = await getCards(l.id);
+      for (const c of (cards || [])) {
+        try {
+          await trello('DELETE', `/cards/${c.id}`);
+        } catch (e) {
+          console.warn(`[警告] 刪除卡片失敗：${c.name} ${c.id} ${e && e.message}`);
+        }
+        await sleep(60);
+      }
+      await sleep(120);
+    }
+  }
   // 建立全看板索引，支援跨列表移動
   const allOpenLists = Object.values(listsMap);
   const byUidAll = new Map();
