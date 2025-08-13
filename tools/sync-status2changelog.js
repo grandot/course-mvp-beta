@@ -145,16 +145,22 @@ function parseExistingDocs() {
   const projectStatus = readFile(PROJECT_STATUS);
   const changelog = readFile(CHANGELOG);
   
-  // 從 PROJECT_STATUS 提取 Done 項目（安全的regex匹配）
+  // 從 PROJECT_STATUS 提取 Done 項目（以行為單位解析，避免複雜正則不穩定）
   const doneItems = [];
   try {
-    const doneMatch = projectStatus.match(/### Done[（(][^)）]*[)）][^#]*?(?=###|\z)/s);
-    if (doneMatch && doneMatch[0]) {
-      const lines = doneMatch[0].split('\n');
-      for (const line of lines) {
-        if (line.trim().startsWith('- ')) {
-          doneItems.push(line.trim().substring(2));
-        }
+    const lines = projectStatus.split('\n');
+    // 找到第一個以 "### Done" 開頭的標題（允許含括號備註）
+    let startIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (/^###\s+Done(\s*[（(].*[)）])?\s*$/.test(l)) { startIdx = i + 1; break; }
+    }
+    if (startIdx >= 0) {
+      for (let i = startIdx; i < lines.length; i++) {
+        const raw = lines[i];
+        if (/^###\s+/.test(raw)) break; // 下一個區塊
+        const t = raw.trim();
+        if (t.startsWith('- ')) doneItems.push(t.substring(2));
       }
     }
   } catch (error) {
@@ -170,11 +176,12 @@ function updateProjectStatus(status, existing) {
   
   let content = existing.projectStatus;
   
-  // 更新最後更新時間
-  content = content.replace(
-    /\*\*最後更新\*\*: .*/,
-    `**最後更新**: ${status.date}`
-  );
+  // 更新最後更新時間（若不存在則自動新增在第一個標題之後）
+  if (/\*\*最後更新\*\*: .*/.test(content)) {
+    content = content.replace(/\*\*最後更新\*\*: .*/, `**最後更新**: ${status.date}`);
+  } else {
+    content = content.replace(/^(#.*\n)/, `$1\n**最後更新**: ${status.date}\n`);
+  }
   
   // 更新版本號（只在有實質程式碼變更時）
   const hasCodeChanges = status.git.recentCommits.length > 0 && 
@@ -287,7 +294,7 @@ function updateChangelog(status, existing) {
   let content = existing.changelog;
 
   // 由 PROJECT_STATUS.md 的 Done 區塊生成 changelog 條目
-  // 僅處理含日期前綴的條目：YYYY-MM-DD：xxxx
+  // 覆蓋策略：挑出 Done 區塊中日期 >= changelog 最新日期 的條目，補進 changelog
   const doneItems = Array.isArray(existing.doneItems) ? existing.doneItems : [];
   const dateItemMap = new Map(); // dateStr -> [items]
 
@@ -300,6 +307,10 @@ function updateChangelog(status, existing) {
   }
 
   if (dateItemMap.size === 0) return content;
+
+  // 找 changelog 目前最新日期（預設很早的日期）
+  const mLatest = content.match(/^##\s+(\d{4}-\d{2}-\d{2})\b/m);
+  const latestDate = mLatest ? mLatest[1] : '1900-01-01';
 
   // 幫助函式：找某日期區塊範圍
   function findDateSectionRange(md, dateStr) {
@@ -318,7 +329,7 @@ function updateChangelog(status, existing) {
   for (const [dateStr, items] of dateItemMap.entries()) {
     if (!items || items.length === 0) continue;
     const exists = new RegExp(`^##\s+${dateStr}\b`, 'm').test(content);
-    if (!exists) {
+    if (!exists && dateStr >= latestDate) {
       // 新建日期區塊，置頂插入
       let newSection = `## ${dateStr} - 系統更新 📝\n\n`;
       newSection += '### 🐛 Fixed\n';

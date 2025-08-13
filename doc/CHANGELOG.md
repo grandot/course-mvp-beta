@@ -1,8 +1,26 @@
 # 📝 Change Log
 
+## 2025-08-14 - 系統更新 📝
+
+### 🐛 Fixed
+- **重複課程功能完整實作**（P0 支援 daily/weekly/monthly BYMONTHDAY，單一開關控制，起始日智慧推導，小月跳過策略，2分鐘撤銷時限｜規格: spec/recurring/task-recurring.md） [uid:0236f790]
+
+---
+
+## 2025-08-13 - 系統更新 📝
+
+### 🐛 Fixed
+- 修改課程功能（modify_course v1 完成｜規格: spec/modify-course/plan.md） [uid:ceab455d]
+- 時間格式統一（訊息固定顯示 :mm；00:xx → 上午12:xx） [uid:9eaa05c2]
+
+---
+
 ## 2025-08-12 - 系統更新 📝
 
 ### 🐛 Fixed
+- 新增課程時日曆未寫入成功，但是firebase寫入成功 [uid:35c38d0e]
+- **確認按鈕功能恢復**（AI prompt + 規則兜底雙重保險，確保「確認」100% 識別） [uid:679a56d2]
+- **Google Calendar 同步修復**（環境變數載入修復，課程直接寫入日曆） [uid:963526f1]
 - **確認按鈕功能恢復**（AI prompt + 規則兜底雙重保險，確保「確認」100% 識別）
 - **Google Calendar 同步修復**（環境變數載入修復，課程直接寫入日曆）
 
@@ -39,17 +57,6 @@
 - 智能重複類型識別：daily/weekly/monthly 精確識別
 - Google Calendar RRULE 整合：完整的重複規則生成
 - 意圖處理器映射修復：6個補充意圖恢復正常
-
----
-
-## 2025-08-06 - 系統更新 📝
-
-### 🐛 Fixed
-- Redis 對話狀態管理：30分鐘對話上下文
-- Quick Reply 按鈕：確認/修改/取消操作
-- 上下文感知實體提取：智能補充缺失資訊
-- Redis 連接修復：WRONGPASS 錯誤處理
-- 生產環境連接問題：避免 localhost 連接錯誤
 
 ---
 
