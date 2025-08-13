@@ -198,6 +198,8 @@ function extractBracketTags(taskName) {
 function normalizeTaskBase(taskName) {
   const { pureName } = extractBracketTags(taskName);
   let base = pureName.split('（')[0].split('(')[0].split('|')[0].trim();
+  // 去除前綴日期，如：2025-08-13：xxx 或 2025/08/13: xxx
+  base = base.replace(/^\d{4}[\/-]\d{1,2}[\/-]\d{1,2}\s*[：:]+\s*/, '');
   const statusSuffixes = ['尚未實作', '支援', '實作中', '驗收中', '需求定義完成'];
   const versionInProgressRe = /v\d+\s*實作中$/;
   let changed = true;
@@ -356,7 +358,7 @@ async function mergeDuplicatesOnBoard(boardId, listsFilter = null, options = {})
 }
 
 async function createOrUpdateByName(listId, items, options) {
-  const { dryRun = false, labelContext = null } = options || {};
+  const { dryRun = false, labelContext = null, boardIndex = null } = options || {};
   const existing = await getCards(listId);
   const byName = new Map(existing.map(c => [c.name, c]));
   // 以 description 中的 uid 做快速查找
@@ -378,9 +380,19 @@ async function createOrUpdateByName(listId, items, options) {
     const base = normalizeTaskBase(name);
 
     // 精準比對順序：同 uid → 同名（純名優先）→ 同 base
-    const foundByUid = byUid.get(uidLine);
-    const foundByName = byName.get(pureName) || byName.get(name);
-    const foundByBase = byBase.get(base);
+    let foundByUid = byUid.get(uidLine);
+    let foundByName = byName.get(pureName) || byName.get(name);
+    let foundByBase = byBase.get(base);
+    // 若當前列表找不到，再用整個看板索引比對（可跨列表移動）
+    if (!foundByUid && boardIndex && boardIndex.byUidAll) {
+      foundByUid = boardIndex.byUidAll.get(uidLine) || null;
+    }
+    if (!foundByName && boardIndex && boardIndex.byNameAll) {
+      foundByName = boardIndex.byNameAll.get(pureName) || boardIndex.byNameAll.get(name) || null;
+    }
+    if (!foundByBase && boardIndex && boardIndex.byBaseAll) {
+      foundByBase = boardIndex.byBaseAll.get(base) || null;
+    }
     const found = foundByUid || foundByName || foundByBase;
     if (!found) {
       if (dryRun) {
@@ -436,6 +448,25 @@ async function syncPush(boardId, statusFile, options) {
   const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done']
     .filter(n => !listsFilter || listsFilter.includes(n));
   const listsMap = await ensureLists(boardId, wantedLists);
+  // 建立全看板索引，支援跨列表移動
+  const allOpenLists = Object.values(listsMap);
+  const byUidAll = new Map();
+  const byBaseAll = new Map();
+  const byNameAll = new Map();
+  for (const list of allOpenLists) {
+    if (!list) continue;
+    const cards = await getCards(list.id);
+    const uidReAll = /^uid:([0-9a-f]{12})/m;
+    for (const c of (cards || [])) {
+      byNameAll.set(c.name, c);
+      const base = normalizeTaskBase(c.name || '');
+      if (base && !byBaseAll.has(base)) byBaseAll.set(base, c);
+      const m = (c.desc || '').match(uidReAll);
+      if (m) byUidAll.set(`uid:${m[1]}`, c);
+    }
+    await sleep(60);
+  }
+  const boardIndex = { byUidAll, byBaseAll, byNameAll };
   const data = parseProjectStatus(statusFile);
 
   // 準備標籤：
@@ -467,7 +498,7 @@ async function syncPush(boardId, statusFile, options) {
       continue;
     }
     console.log(`→ 同步 ${listName}（${items.length} 項）${dryRun ? '[dry-run]' : ''}`);
-    await createOrUpdateByName(list.id, items, { dryRun, labelContext });
+    await createOrUpdateByName(list.id, items, { dryRun, labelContext, boardIndex });
   }
 }
 
