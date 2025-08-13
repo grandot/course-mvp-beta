@@ -99,15 +99,34 @@ function calculateNextCourseDate(recurrenceType, dayOfWeek = null, scheduleTime 
   }
 
   if (recurrenceType === 'weekly' && dayOfWeek !== null) {
-    // 每週重複：原有邏輯
+    // 支援單天或多天陣列，並考慮當日時間是否已過
     const currentDay = today.getDay();
-    let daysUntilNext = dayOfWeek - currentDay;
-    if (daysUntilNext <= 0) {
-      daysUntilNext += 7; // 下週同一天
+
+    // 將 dayOfWeek 正規化為代碼集合（0~6）
+    const daySet = new Set(
+      Array.isArray(dayOfWeek)
+        ? dayOfWeek.map((d) => (typeof d === 'string' ? Number(d) : d)).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+        : [dayOfWeek]
+    );
+
+    // 如果今天就在集合內，且指定時間未過，直接使用今天
+    if (daySet.has(currentDay) && scheduleTime) {
+      const todayStr = today.toISOString().split('T')[0];
+      const targetDateTime = new Date(`${todayStr}T${scheduleTime}:00`);
+      if (targetDateTime > today) {
+        return todayStr;
+      }
     }
 
+    // 計算距離最近的下一個符合週幾
+    let minDelta = 8; // 大於一週即可
+    for (const d of daySet) {
+      let delta = d - currentDay;
+      if (delta <= 0) delta += 7;
+      if (delta < minDelta) minDelta = delta;
+    }
     const nextDate = new Date(today);
-    nextDate.setDate(today.getDate() + daysUntilNext);
+    nextDate.setDate(today.getDate() + (minDelta === 8 ? 7 : minDelta));
     return nextDate.toISOString().split('T')[0];
   }
 
