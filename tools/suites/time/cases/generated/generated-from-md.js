@@ -174,7 +174,7 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
   },
   {
     "id": "A2.1-E",
-    "name": "A2.1-E 每月重複（目前標示未完成）",
+    "name": "A2.1-E 每月重複",
     "suite": "time",
     "target": "prod",
     "steps": [
@@ -186,7 +186,7 @@ const { UnifiedTestRunner } = require(path.resolve(__dirname, '../../../../..', 
       "評鑑",
       "每月"
     ],
-    "expectedCode": "NOT_IMPLEMENTED_MONTHLY",
+    "expectedCode": "ADD_COURSE_OK",
     "source": "/Users/jw-mba/Desktop/Projects/course-mvp-beta/QA/plans/plan-comprehensive-2025-08-10.md",
     "collectingSteps": true
   },

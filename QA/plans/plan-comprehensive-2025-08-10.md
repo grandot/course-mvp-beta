@@ -138,7 +138,7 @@
 @steps:
 - 小光每月第一個週一上午10點評鑑
 @expect.keywords: 評鑑, 每月
-@expect.code: NOT_IMPLEMENTED_MONTHLY
+@expect.code: ADD_COURSE_OK
 
 ### A2.2-A 重複關鍵詞識別（定期/每週）
 @id: A2.2-A

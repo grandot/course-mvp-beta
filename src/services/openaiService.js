@@ -103,7 +103,7 @@ async function identifyIntent(message) {
 
 可能的意圖：
 - add_course: 新增單次課程
-- create_recurring_course: 創建重複課程（每週、每天等）
+- create_recurring_course: 創建重複課程（每日、每週、每月）
 - query_schedule: 查詢課表或行程
 - set_reminder: 設定課程提醒
 - cancel_course: 取消或刪除課程
@@ -146,7 +146,7 @@ async function extractEntities(message, intent) {
 - scheduleTime: 上課時間，轉換為24小時制（如：下午3點 -> "15:00"）
 - courseDate: 具體日期，轉換為 YYYY-MM-DD 格式
 - timeReference: 時間參考（today/tomorrow/yesterday/this_week 等）
-- recurring: 是否為重複課程（true/false）
+- recurring: 是否為重複課程（true/false），系統支援每日、每週、每月重複
 - dayOfWeek: 星期幾（0=週日，1=週一...6=週六）
 - content: 課程內容或描述
 - reminderTime: 提醒提前時間（分鐘數）
@@ -186,8 +186,14 @@ async function generateResponse(intent, slots, result) {
 5. 如果是失敗操作，用 ❌ 開頭
 6. 如果需要更多資訊，用 ❓ 開頭
 
+重要功能說明：
+- 系統已支援每日、每週、每月重複課程功能
+- 每月重複包括固定日期（如每月1號、15號）
+- 不要告訴用戶「每月重複尚未支援」或「將在後續版本提供」
+
 範例：
 - "✅ 小明每週三下午3:00的數學課已安排好了！"
+- "✅ 小華每月15號上午10:00的鋼琴課已安排好了！"
 - "❌ 抱歉，找不到您提到的課程，請確認學生姓名和課程名稱"
 - "❓ 請問數學課的具體上課時間是幾點呢？"
 
