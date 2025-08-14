@@ -283,7 +283,9 @@ async function getAllStudentCourses(userId, dateRange) {
         },
       );
 
-      allCourses.push(...courses);
+      // 過濾掉已取消的課程
+      const activeCourses = courses.filter(course => !course.cancelled);
+      allCourses.push(...activeCourses);
     }
 
     return allCourses;
@@ -314,15 +316,17 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
 
     if (slots.studentName) {
       // 單一學生：單次課程 + 重複課展開
-      const single = await firebaseService.getCoursesByStudent(
+      const singleAll = await firebaseService.getCoursesByStudent(
         userId,
         slots.studentName,
         { startDate: dateRange.startDate, endDate: dateRange.endDate },
       );
+      const single = singleAll.filter(course => !course.cancelled);
       let expanded = [];
       try {
         // 從所有課程中篩選重複課程並展開
-        const allCourses = await firebaseService.getCoursesByStudent(userId, slots.studentName);
+        const allCoursesRaw = await firebaseService.getCoursesByStudent(userId, slots.studentName);
+        const allCourses = allCoursesRaw.filter(course => !course.cancelled);
         const recurring = allCourses.filter((course) => course.isRecurring);
         expanded = expandRecurringCourses(recurring, dateRange);
       } catch (e) {
@@ -339,15 +343,17 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
       const all = [];
       if (parent.students && parent.students.length > 0) {
         for (const s of parent.students) {
-          const single = await firebaseService.getCoursesByStudent(
+          const singleAll = await firebaseService.getCoursesByStudent(
             userId,
             s.studentName,
             { startDate: dateRange.startDate, endDate: dateRange.endDate },
           );
+          const single = singleAll.filter(course => !course.cancelled);
           let expanded = [];
           try {
             // 從所有課程中篩選重複課程並展開
-            const allCourses = await firebaseService.getCoursesByStudent(userId, s.studentName);
+            const allCoursesRaw = await firebaseService.getCoursesByStudent(userId, s.studentName);
+            const allCourses = allCoursesRaw.filter(course => !course.cancelled);
             const recurring = allCourses.filter((course) => course.isRecurring);
             expanded = expandRecurringCourses(recurring, dateRange);
           } catch (e) {
