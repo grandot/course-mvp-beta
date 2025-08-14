@@ -1172,7 +1172,15 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
     const disableAutoFill = process.env.DISABLE_CONTEXT_AUTO_FILL === 'true';
     const isCriticalIntent = ['add_course', 'create_recurring_course', 'set_reminder', 'cancel_course', 'record_content', 'add_course_content', 'query_course_content'].includes(intent);
     const missingCritical = (!slots.studentName || !slots.courseName) && isCriticalIntent;
-    if (disableAutoFill || missingCritical) {
+    
+    // 特殊情況：Quick Reply 的取消操作應該允許上下文推導
+    const isQuickReplyCancel = intent === 'cancel_course' && !slots.studentName && (
+      message.includes('刪除整個重複') || 
+      message.includes('取消之後全部') || 
+      message.includes('只取消今天')
+    );
+    
+    if ((disableAutoFill || missingCritical) && !isQuickReplyCancel) {
       return slots;
     }
 

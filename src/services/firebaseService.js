@@ -112,6 +112,19 @@ async function getStudent(userId, studentName) {
 }
 
 /**
+ * 取得用戶的所有學生列表
+ */
+async function getStudentsByUser(userId) {
+  try {
+    const parent = await getOrCreateParent(userId);
+    return parent.students || [];
+  } catch (error) {
+    console.error('❌ 取得學生列表失敗:', error);
+    throw error;
+  }
+}
+
+/**
  * 新增學生資料
  */
 async function addStudent(userId, studentName, calendarId) {
@@ -645,6 +658,7 @@ module.exports = {
 
   // 學生操作
   getStudent,
+  getStudentsByUser,
   addStudent,
   updateStudentCalendarId,
 
