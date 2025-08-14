@@ -14,7 +14,13 @@ const { getRedisService } = require('../services/redisService');
 class ConversationManager {
   constructor() {
     this.redisService = getRedisService();
-    this.defaultTTL = 1800; // 30分鐘
+    // 對話記憶 TTL（秒）：可由環境變數覆寫，預設 5 分鐘（300 秒）
+    try {
+      const envTtl = parseInt(process.env.CONVERSATION_TTL_SECONDS, 10);
+      this.defaultTTL = Number.isFinite(envTtl) && envTtl > 0 ? envTtl : 300;
+    } catch (_) {
+      this.defaultTTL = 300;
+    }
     this.maxHistoryLength = 5; // 保留最近5輪對話
     this.isRedisAvailable = null; // 快取 Redis 可用狀態
   }
@@ -243,18 +249,22 @@ class ConversationManager {
 
       // 如果任務成功，設定期待的輸入類型
       if (result.success) {
-        context.state.expectingInput = ['confirmation', 'modification'];
+        // 讀取型查詢不應進入期待輸入狀態
+        const isReadOnly = ['query_schedule', 'query_course_content'].includes(intent);
+        if (!isReadOnly) {
+          context.state.expectingInput = ['confirmation', 'modification'];
 
-        // 根據意圖設定對話流程
-        switch (intent) {
-          case 'add_course':
-            context.state.currentFlow = 'course_creation';
-            break;
-          case 'record_content':
-            context.state.currentFlow = 'content_recording';
-            break;
-          default:
-            context.state.currentFlow = null;
+          // 根據意圖設定對話流程
+          switch (intent) {
+            case 'add_course':
+              context.state.currentFlow = 'course_creation';
+              break;
+            case 'record_content':
+              context.state.currentFlow = 'content_recording';
+              break;
+            default:
+              context.state.currentFlow = null;
+          }
         }
       }
 

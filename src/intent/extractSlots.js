@@ -1185,6 +1185,15 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
           return pinned;
         }
       }
+      
+      // 取消操作：若缺學生，嘗試沿用查詢鎖的學生（不改課名補值策略）
+      if (intent === 'cancel_course' && !slots.studentName) {
+        const session = await conversationManager.getActiveQuerySession(userId).catch(() => null);
+        if (session?.studentName) {
+          console.log(`📎 取消操作沿用查詢會話學生: ${session.studentName}`);
+          slots = { ...slots, studentName: session.studentName };
+        }
+      }
     } catch (e) {
       console.warn('⚠️ 查詢會話鎖應用失敗:', e?.message || e);
     }
@@ -1217,11 +1226,14 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
       console.log('📝 從上下文補充學生名稱:', enhancedSlots.studentName);
     }
 
-    // 補充課程名稱
+    // 補充課程名稱（讀取型查詢不自動補，避免縮小結果集造成誤判）
     if (!enhancedSlots.courseName && context.state.mentionedEntities.courses.length > 0) {
-      // 使用最近提及的課程
-      enhancedSlots.courseName = context.state.mentionedEntities.courses[context.state.mentionedEntities.courses.length - 1];
-      console.log('📝 從上下文補充課程名稱:', enhancedSlots.courseName);
+      const isReadOnlyQuery = intent === 'query_schedule' || intent === 'query_course_content';
+      if (!isReadOnlyQuery) {
+        // 使用最近提及的課程
+        enhancedSlots.courseName = context.state.mentionedEntities.courses[context.state.mentionedEntities.courses.length - 1];
+        console.log('📝 從上下文補充課程名稱:', enhancedSlots.courseName);
+      }
     }
 
     // 補充時間資訊

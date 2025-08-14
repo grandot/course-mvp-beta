@@ -5,6 +5,7 @@
 
 const { firebaseService } = require('../services');
 const { googleCalendarService } = require('../services');
+const { getConversationManager } = require('../conversation/ConversationManager');
 
 /**
  * 根據時間參考計算具體日期
@@ -150,6 +151,20 @@ async function handle_cancel_course_task(slots, userId) {
 
     // 1. 驗證必要參數
     if (!slots.studentName) {
+      // 先進入期待輸入，保留已知的課名等欄位
+      try {
+        const conversationManager = getConversationManager();
+        await conversationManager.setExpectedInput(
+          userId,
+          'cancel_course_flow',
+          ['student_name_input'],
+          {
+            intent: 'cancel_course',
+            existingSlots: slots,
+          },
+        );
+      } catch (_) {}
+
       // 嘗試從用戶的學生列表提供 Quick Reply 選項
       try {
         const students = await firebaseService.getStudentsByUser(userId);
@@ -179,6 +194,20 @@ async function handle_cancel_course_task(slots, userId) {
     }
 
     if (!slots.courseName) {
+      // 先進入期待輸入，保留已知的學生等欄位
+      try {
+        const conversationManager = getConversationManager();
+        await conversationManager.setExpectedInput(
+          userId,
+          'cancel_course_flow',
+          ['course_name_input'],
+          {
+            intent: 'cancel_course',
+            existingSlots: slots,
+          },
+        );
+      } catch (_) {}
+
       return {
         success: false,
         code: 'MISSING_COURSE',
