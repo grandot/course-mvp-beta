@@ -140,6 +140,27 @@ async function handle_cancel_course_task(slots, userId) {
 
     // 1. 驗證必要參數
     if (!slots.studentName) {
+      // 嘗試從用戶的學生列表提供 Quick Reply 選項
+      try {
+        const students = await firebaseService.getStudentsByUser(userId);
+        if (students && students.length > 0) {
+          const quickReply = students.slice(0, 4).map(student => ({
+            label: student.studentName,
+            text: `取消${student.studentName}的課程`
+          }));
+          
+          return {
+            success: false,
+            code: 'MISSING_STUDENT',
+            message: '❌ 請提供學生姓名，例如：「取消小明的數學課」',
+            showQuickReply: true,
+            quickReply
+          };
+        }
+      } catch (error) {
+        console.error('❌ 獲取學生列表失敗:', error);
+      }
+      
       return {
         success: false,
         code: 'MISSING_STUDENT',
