@@ -104,7 +104,7 @@ async function handleTextMessage(event, req = null) {
     if (intent === 'unknown') {
       // unknown 意圖不需要 slots，直接處理
       await conversationManager.recordUserMessage(userId, userMessage, intent);
-      
+
       const result = await executeTask('unknown', {}, userId, event);
 
       await conversationManager.recordBotResponse(userId, result.message, {
@@ -117,7 +117,7 @@ async function handleTextMessage(event, req = null) {
 
     // 第二步：實體提取 + 查詢會話鎖（若為查詢則固定學生/時間）
     const slots = await extractSlots(userMessage, intent, userId);
-    
+
     // 記錄用戶訊息到對話歷史（包含完整的 slots 資訊）
     await conversationManager.recordUserMessage(userId, userMessage, intent, slots);
     if (intent === 'query_schedule') {
@@ -352,6 +352,11 @@ function getQuickReplyForIntent(intent, result = null) {
 
     case 'cancel_course':
     case 'stop_recurring_course':
+      // 只有在需要確認時（如重複課程）才顯示確認按鈕
+      // 如果已經成功刪除，不需要確認按鈕
+      if (result && result.success) {
+        return null;
+      }
       return [
         { label: '✅ 確認刪除', text: '確認' },
         { label: '❌ 取消操作', text: '取消操作' },

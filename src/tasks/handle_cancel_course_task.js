@@ -82,7 +82,7 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
       const courses = await firebaseService.getCoursesByStudent(userId, studentName, { startDate: calculateDateFromReference('tomorrow') });
       return courses.filter((course) => course.courseName === courseName && !course.cancelled);
     } if (scope === 'recurring' || scope === 'all') {
-      // 取消重複課程或所有課程
+      // 取消重複課程或所有課程 - 查找所有相關課程讓 Google Calendar 處理重複邏輯
       const courses = await firebaseService.getCoursesByStudent(userId, studentName);
       return courses.filter((course) => course.courseName === courseName && !course.cancelled);
     }
@@ -114,13 +114,23 @@ async function deleteFromGoogleCalendar(course) {
       return true;
     }
 
-    // 根據產品規則：主動取消不物理刪除 GCal 事件，僅做標記
-    const result = await googleCalendarService.markEventCancelled(student.calendarId, course.calendarEventId);
-    if (result.success) {
-      console.log('✅ Google Calendar 事件已標記為取消:', course.calendarEventId);
-      return true;
+    // 根據刪除範圍決定處理方式
+    if (course.scope === 'all' || course.scope === 'recurring') {
+      // 刪除整個重複事件系列 - 使用 Google Calendar 的重複事件刪除
+      const deleted = await googleCalendarService.deleteRecurringEvent(student.calendarId, course.calendarEventId);
+      if (deleted) {
+        console.log('✅ Google Calendar 重複事件系列已刪除:', course.calendarEventId);
+        return true;
+      }
+    } else {
+      // 根據產品規則：主動取消不物理刪除 GCal 事件，僅做標記
+      const result = await googleCalendarService.markEventCancelled(student.calendarId, course.calendarEventId);
+      if (result.success) {
+        console.log('✅ Google Calendar 事件已標記為取消:', course.calendarEventId);
+        return true;
+      }
     }
-    console.error('❌ Google Calendar 標記取消失敗:', result.message);
+    console.error('❌ Google Calendar 操作失敗');
     return false;
   } catch (error) {
     console.error('❌ Google Calendar 刪除異常:', error);
@@ -144,23 +154,23 @@ async function handle_cancel_course_task(slots, userId) {
       try {
         const students = await firebaseService.getStudentsByUser(userId);
         if (students && students.length > 0) {
-          const quickReply = students.slice(0, 4).map(student => ({
+          const quickReply = students.slice(0, 4).map((student) => ({
             label: student.studentName,
-            text: `取消${student.studentName}的課程`
+            text: `取消${student.studentName}的課程`,
           }));
-          
+
           return {
             success: false,
             code: 'MISSING_STUDENT',
             message: '❌ 請提供學生姓名，例如：「取消小明的數學課」',
             showQuickReply: true,
-            quickReply
+            quickReply,
           };
         }
       } catch (error) {
         console.error('❌ 獲取學生列表失敗:', error);
       }
-      
+
       return {
         success: false,
         code: 'MISSING_STUDENT',

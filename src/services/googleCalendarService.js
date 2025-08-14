@@ -498,31 +498,67 @@ async function updateEvent(calendarId, eventId, updateData) {
 }
 
 /**
- * 刪除事件
+ * 刪除單一事件
  */
-async function deleteEvent(calendarId, eventId, deleteRecurring = false) {
+async function deleteEvent(calendarId, eventId) {
   try {
     const calendarService = initializeGoogleCalendar();
 
-    if (deleteRecurring) {
-      // 刪除整個重複事件系列
-      await calendarService.events.delete({
-        calendarId,
-        eventId,
-      });
-    } else {
-      // 只刪除單一事件實例
-      await calendarService.events.delete({
-        calendarId,
-        eventId,
-      });
-    }
+    await calendarService.events.delete({
+      calendarId,
+      eventId,
+    });
 
     console.log('✅ 事件已刪除:', eventId);
     return true;
   } catch (error) {
     console.error('❌ 刪除事件失敗:', error);
-    throw error;
+    return false;
+  }
+}
+
+/**
+ * 刪除重複事件系列（根據 Google Calendar 架構原則）
+ * 這個函數負責時間邏輯，Firebase 只做業務資料同步
+ */
+async function deleteRecurringEvent(calendarId, eventId) {
+  try {
+    const calendarService = initializeGoogleCalendar();
+
+    // 獲取事件詳情以確認是否為重複事件
+    const event = await calendarService.events.get({
+      calendarId,
+      eventId,
+    });
+
+    if (event.data.recurrence) {
+      // 這是主重複事件，刪除整個系列
+      await calendarService.events.delete({
+        calendarId,
+        eventId,
+      });
+      console.log('✅ 重複事件系列已刪除:', eventId);
+    } else if (event.data.recurringEventId) {
+      // 這是重複事件的實例，需要刪除整個系列
+      const mainEventId = event.data.recurringEventId;
+      await calendarService.events.delete({
+        calendarId,
+        eventId: mainEventId,
+      });
+      console.log('✅ 重複事件系列已刪除（通過實例）:', mainEventId);
+    } else {
+      // 不是重複事件，直接刪除
+      await calendarService.events.delete({
+        calendarId,
+        eventId,
+      });
+      console.log('✅ 單一事件已刪除:', eventId);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ 刪除重複事件失敗:', error);
+    return false;
   }
 }
 
@@ -653,6 +689,7 @@ module.exports = {
   createEvent,
   updateEvent,
   deleteEvent,
+  deleteRecurringEvent,
   getEvent,
   getEvents,
   markEventCancelled,

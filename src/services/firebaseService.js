@@ -250,30 +250,6 @@ async function getCoursesByStudent(userId, studentName, options = {}) {
 }
 
 /**
- * 取得指定學生的重複課程（不套用日期範圍，供查詢時動態展開）
- */
-async function getRecurringCoursesByStudent(userId, studentName) {
-  try {
-    const firestore = initializeFirebase();
-    const query = firestore.collection('courses')
-      .where('userId', '==', userId)
-      .where('studentName', '==', studentName)
-      .where('isRecurring', '==', true);
-
-    const snapshot = await query.get();
-    const courses = [];
-    snapshot.forEach((doc) => {
-      courses.push({ id: doc.id, ...doc.data() });
-    });
-
-    return courses;
-  } catch (error) {
-    console.error('❌ 查詢重複課程失敗:', error);
-    throw error;
-  }
-}
-
-/**
  * 根據條件查找特定課程
  */
 async function findCourse(userId, studentName, courseName, courseDate = null) {
@@ -665,7 +641,6 @@ module.exports = {
   // 課程操作
   saveCourse,
   getCoursesByStudent,
-  getRecurringCoursesByStudent,
   findCourse,
   updateCourseRecord,
   deleteCourse,

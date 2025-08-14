@@ -321,7 +321,9 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
       );
       let expanded = [];
       try {
-        const recurring = await firebaseService.getRecurringCoursesByStudent(userId, slots.studentName);
+        // 從所有課程中篩選重複課程並展開
+        const allCourses = await firebaseService.getCoursesByStudent(userId, slots.studentName);
+        const recurring = allCourses.filter((course) => course.isRecurring);
         expanded = expandRecurringCourses(recurring, dateRange);
       } catch (e) {
         console.warn('⚠️ 重複課查詢或展開失敗，採用單次課程降級:', e?.message || e);
@@ -344,7 +346,9 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
           );
           let expanded = [];
           try {
-            const recurring = await firebaseService.getRecurringCoursesByStudent(userId, s.studentName);
+            // 從所有課程中篩選重複課程並展開
+            const allCourses = await firebaseService.getCoursesByStudent(userId, s.studentName);
+            const recurring = allCourses.filter((course) => course.isRecurring);
             expanded = expandRecurringCourses(recurring, dateRange);
           } catch (e) {
             console.warn('⚠️ 重複課查詢或展開失敗（多學生），採用單次課程降級:', e?.message || e);

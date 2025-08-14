@@ -639,7 +639,7 @@ async function handle_add_course_task(slots, userId, messageEvent = null) {
         const md = (typeof eventData.monthDay === 'number' && eventData.monthDay >= 1 && eventData.monthDay <= 31)
           ? `${eventData.monthDay}號`
           : '';
-        recurringDisplay = `🔄 重複：每月${md ? ' ' + md : ''} ${timeDisplay}\n`;
+        recurringDisplay = `🔄 重複：每月${md ? ` ${md}` : ''} ${timeDisplay}\n`;
       } else {
         // 向下兼容：預設為每週
         const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
