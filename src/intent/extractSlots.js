@@ -451,7 +451,7 @@ function findAllStudentCandidates(message) {
 }
 
 /**
- * 提取課程名稱
+ * 提取課程名稱（增強版：支援模糊匹配和智能推理）
  */
 function extractCourseName(message) {
   // 避免在查詢語句中錯誤提取課程名稱
@@ -461,6 +461,13 @@ function extractCourseName(message) {
   }
 
   const coursePatterns = [
+    // 處理通用課程指稱（優先處理避免被其他模式截取）
+    /的課程$/, // "Lumi的課程" - 返回特殊標記進入模糊匹配邏輯
+
+    // 取消語句專用模式（高精確度）
+    /(?:取消|刪掉)([一-龥A-Za-z]{2,8})(?!的|課程)/, // 取消跆拳道、刪掉鋼琴
+    /(?:取消|刪掉).*?的([一-龥A-Za-z]{2,8})(?!課程|的)/, // 取消小明的跆拳道
+
     // 最高精確度模式 - 明確的課程結構
     /(?:上|學|要上)([一-龥]{2,6})課?/, // 上數學、學英文、要上鋼琴
     /的([一-龥]{2,6})課/, // 的數學課 - 需要在通用課程模式之前
@@ -484,35 +491,50 @@ function extractCourseName(message) {
       console.warn('⚠️ 課程名稱正則失敗:', pattern, e?.message || e);
       match = null;
     }
-    if (match && match[1]) {
-      let courseName = match[1];
+    if (match) {
+      // 處理 "的課程" 這類通用指稱
+      if (pattern.source === '的課程$') {
+        return '*FUZZY_MATCH*'; // 特殊標記，由下游進行模糊匹配
+      }
+      
+      if (match[1]) {
+        let courseName = match[1];
 
-      // 過濾掉明顯不是課程名稱的結果
-      const invalidCourseNames = [
-        '今天', '明天', '昨天', '每天', '這週', '下週', '上週',
-        '小明', '小光', '小美', 'Lumi', '老師', '學生',
-        '查詢', '提醒', '取消', '記錄', '看一下', '安排', '刪掉',
-        '內容', '表現', '很好', '分數', '點的', '期五', '我',
-        '學了', '課學', '天學', '點天', '星期', '課前',
-      ];
+        // 過濾掉明顯不是課程名稱的結果
+        const invalidCourseNames = [
+          '今天', '明天', '昨天', '每天', '這週', '下週', '上週',
+          '小明', '小光', '小美', '小華', 'Lumi', '老師', '學生',
+          '查詢', '提醒', '取消', '記錄', '看一下', '安排', '刪掉',
+          '內容', '表現', '很好', '分數', '點的', '期五', '我',
+          '學了', '課學', '天學', '點天', '星期', '課前',
+        ];
 
-      // 檢查是否包含無效詞彙或字符
-      const containsInvalid = invalidCourseNames.some((invalid) => courseName.includes(invalid));
-
-      if (!containsInvalid
-          && courseName.length >= 2 && courseName.length <= 6
-          && !/[0-9]/.test(courseName) // 不包含數字
-          && !courseName.includes('點') // 避免時間詞彙
-          && !courseName.includes('天')) { // 避免時間詞彙
-        // 如果不包含"課"字且不是以"教學/訓練/班"結尾，自動加上"課"
-        if (!courseName.includes('課')
-            && !courseName.endsWith('教學')
-            && !courseName.endsWith('訓練')
-            && !courseName.endsWith('班')
-            && !courseName.endsWith('評鑑')) {
-          courseName += '課';
+        // 檢查是否包含無效詞彙或字符
+        const containsInvalid = invalidCourseNames.some((invalid) => courseName.includes(invalid));
+        
+        // 額外過濾：如果課程名稱以人名開頭，嘗試提取純課程名稱
+        if (courseName.includes('的')) {
+          const parts = courseName.split('的');
+          if (parts.length >= 2 && parts[1]) {
+            courseName = parts[parts.length - 1]; // 取最後一部分
+          }
         }
-        return courseName;
+
+        if (!containsInvalid
+            && courseName.length >= 2 && courseName.length <= 8 // 放寬長度限制以支援"跆拳道"
+            && !/[0-9]/.test(courseName) // 不包含數字
+            && !courseName.includes('點') // 避免時間詞彙
+            && !courseName.includes('天')) { // 避免時間詞彙
+          // 如果不包含"課"字且不是以"教學/訓練/班"結尾，自動加上"課"
+          if (!courseName.includes('課')
+              && !courseName.endsWith('教學')
+              && !courseName.endsWith('訓練')
+              && !courseName.endsWith('班')
+              && !courseName.endsWith('評鑑')) {
+            courseName += '課';
+          }
+          return courseName;
+        }
       }
     }
   }
