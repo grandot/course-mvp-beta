@@ -287,14 +287,14 @@ function analyzeCommitForChangelog(commit, date) {
   return null;
 }
 
-// 5. 更新 CHANGELOG.md
+// 5. 更新 CHANGELOG.md（增量模式，保留歷史）
 function updateChangelog(status, existing) {
-  console.log('📜 更新 CHANGELOG.md（依 PROJECT_STATUS.md 的 Done 條目）...');
+  console.log('📜 更新 CHANGELOG.md（增量追加 PROJECT_STATUS.md 的 Done 條目）...');
 
   let content = existing.changelog;
 
   // 由 PROJECT_STATUS.md 的 Done 區塊生成 changelog 條目
-  // 覆蓋策略：挑出 Done 區塊中日期 >= changelog 最新日期 的條目，補進 changelog
+  // 增量策略：只追加新的條目，不覆蓋現有歷史
   const doneItems = Array.isArray(existing.doneItems) ? existing.doneItems : [];
   const dateItemMap = new Map(); // dateStr -> [items]
 
@@ -364,47 +364,111 @@ function updateChangelog(status, existing) {
     }
   }
 
-  // 規整：同一天僅保留一個區塊，並按日期由新到舊排序；合併重覆的 bullet
-  function normalizeByDate(md) {
-    const headerMatch = md.match(/^#\s+.*\n\n?/);
-    const header = headerMatch ? headerMatch[0] : '# 📝 Change Log\n\n';
-    const legendIdx = md.search(/^##\s+📋\s+Legend/m);
-    const legend = legendIdx >= 0 ? md.slice(legendIdx).trimStart() : '';
-    const body = legendIdx >= 0 ? md.slice(header.length, legendIdx) : md.slice(header.length);
-
-    // 抽取所有日期區塊
-    const re = /^##\s+(\d{4}-\d{2}-\d{2}).*\n([\s\S]*?)(?=^##\s+\d{4}-\d{2}-\d{2}|^##\s+📋|\Z)/gm;
-    const dateToBullets = new Map();
-    let m;
-    while ((m = re.exec(body)) !== null) {
-      const dateStr = m[1];
-      const sec = m[2] || '';
-      const bullets = sec.split(/\n/)
-        .map(s => s.trim())
-        .filter(s => s.startsWith('- '));
-      if (!dateToBullets.has(dateStr)) dateToBullets.set(dateStr, new Set());
-      const set = dateToBullets.get(dateStr);
-      bullets.forEach(b => set.add(b));
+  // 增量模式：只處理新的日期條目，保留現有歷史
+  function addNewEntriesOnly(md, newDateItemMap) {
+    // 檢查哪些日期是新的或需要更新的
+    const existingDates = new Set();
+    const dateRegex = /^##\s+(\d{4}-\d{2}-\d{2})\b/gm;
+    let match;
+    while ((match = dateRegex.exec(md)) !== null) {
+      existingDates.add(match[1]);
     }
 
-    // 排序（新→舊）
-    const dates = Array.from(dateToBullets.keys()).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
-
-    // 重建內容
-    let out = header;
-    for (const d of dates) {
-      const list = Array.from(dateToBullets.get(d));
-      if (list.length === 0) continue;
-      out += `## ${d} - 系統更新 📝\n\n`;
-      out += '### 🐛 Fixed\n';
-      out += list.join('\n') + '\n\n';
-      out += '---\n\n';
+    let result = md;
+    
+    // 只處理新日期或需要更新的日期
+    for (const [dateStr, items] of newDateItemMap) {
+      if (existingDates.has(dateStr)) {
+        // 日期已存在，跳過以保留歷史（避免重複）
+        console.log(`⏭️ 跳過已存在的日期區塊: ${dateStr}`);
+        continue;
+      }
+      
+      // 這是新日期，需要添加
+      const newSection = `## ${dateStr} - 系統更新 📝\n\n### 🐛 Fixed\n${items.map(item => `- ${item}`).join('\n')}\n\n---\n\n`;
+      
+      // 插入到第一個日期區塊之前
+      const firstDateMatch = result.match(/^##\s+\d{4}-\d{2}-\d{2}/m);
+      if (firstDateMatch) {
+        const insertPos = result.indexOf(firstDateMatch[0]);
+        result = result.slice(0, insertPos) + newSection + result.slice(insertPos);
+      } else {
+        // 沒有日期區塊，插入到 header 後面
+        const headerMatch = result.match(/^#\s+.*\n\n?/);
+        const headerEnd = headerMatch ? headerMatch[0].length : 0;
+        result = result.slice(0, headerEnd) + newSection + result.slice(headerEnd);
+      }
+      
+      console.log(`✅ 添加新日期區塊: ${dateStr} (${items.length} 項)`);
     }
-    if (legend) out += legend.startsWith('\n') ? legend : `\n${legend}`;
-    return out;
+    
+    return result;
   }
 
-  return normalizeByDate(content);
+  return addNewEntriesOnly(content, dateItemMap);
+}
+
+// 檢查 commit 與 Done 區塊一致性
+function checkCommitConsistency(status, existing) {
+  console.log('🔍 檢查 commit 與 Done 區塊一致性...');
+  
+  const warnings = [];
+  const importantCommitPatterns = [
+    { pattern: /fix.*quick.*reply|修復.*快速回覆|修復.*取消.*重複/i, type: 'BUG修復' },
+    { pattern: /feat.*recurring|重複課程|每月|每週|每天/i, type: '重複功能' },
+    { pattern: /fix.*calendar|修復.*日曆|calendar.*sync/i, type: 'Calendar修復' },
+    { pattern: /feat.*modify|修改課程|modify.*course/i, type: '修改功能' }
+  ];
+  
+  // 檢查最近7天的重要 commit
+  const recentImportantCommits = [];
+  for (const commit of status.git.recentCommits.slice(0, 10)) {
+    for (const { pattern, type } of importantCommitPatterns) {
+      if (pattern.test(commit)) {
+        recentImportantCommits.push({ commit, type });
+        break;
+      }
+    }
+  }
+  
+  // 檢查是否有重要 commit 未反映在 Done 區塊
+  for (const { commit, type } of recentImportantCommits) {
+    const commitShort = commit.substring(0, 60);
+    const isDoneItemFound = existing.doneItems.some(itemText => {
+      const lowerItemText = itemText.toLowerCase();
+      const commitText = commit.toLowerCase();
+      
+      // 檢查關鍵詞匹配
+      if (type === 'BUG修復' && (lowerItemText.includes('quick reply') || lowerItemText.includes('取消重複') || lowerItemText.includes('快速回覆'))) {
+        return true;
+      }
+      if (type === '重複功能' && (lowerItemText.includes('重複課程') || lowerItemText.includes('recurring'))) {
+        return true;
+      }
+      if (type === 'Calendar修復' && (lowerItemText.includes('calendar') || lowerItemText.includes('日曆'))) {
+        return true;
+      }
+      if (type === '修改功能' && (lowerItemText.includes('修改課程') || lowerItemText.includes('modify'))) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    if (!isDoneItemFound) {
+      warnings.push(`⚠️ 重要 commit 可能未反映在 Done 區塊：${commitShort}`);
+    }
+  }
+  
+  if (warnings.length > 0) {
+    console.log('\n🚨 一致性檢查警告：');
+    warnings.forEach(warning => console.log(warning));
+    console.log('💡 建議檢查是否需要更新 PROJECT_STATUS.md 的 Done 區塊\n');
+  } else {
+    console.log('✅ commit 與 Done 區塊一致性良好\n');
+  }
+  
+  return warnings;
 }
 
 // 主函數
@@ -424,11 +488,14 @@ async function main() {
     // 2. 解析現有文檔
     const existing = parseExistingDocs();
 
-    // 3. 更新各文檔（僅 PROJECT_STATUS 與 CHANGELOG）
+    // 3. 檢查一致性
+    const warnings = checkCommitConsistency(status, existing);
+
+    // 4. 更新各文檔（僅 PROJECT_STATUS 與 CHANGELOG）
     const updatedProjectStatus = updateProjectStatus(status, existing);
     const updatedChangelog = updateChangelog(status, existing);
 
-    // 4. 寫入文檔（只在有變化時）
+    // 5. 寫入文檔（只在有變化時）
     const updates = {
       projectStatus: writeFile(PROJECT_STATUS, updatedProjectStatus, isDryRun),
       changelog: writeFile(CHANGELOG, updatedChangelog, isDryRun)
