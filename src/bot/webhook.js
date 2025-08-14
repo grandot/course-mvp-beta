@@ -184,7 +184,7 @@ async function handleTextMessage(event, req = null) {
     const responseMessage = render(intent, slots, result);
     let quickReply = null;
 
-    if (result.success) {
+    if (result.showQuickReply || result.success) {
       // 如果任務結果包含 quickReply，使用任務提供的
       if (result.quickReply) {
         quickReply = result.quickReply;

@@ -169,6 +169,7 @@ async function handle_cancel_course_task(slots, userId) {
       if (hasRecurring) {
         return {
           success: false,
+          showQuickReply: true,
           code: 'RECURRING_CANCEL_OPTIONS',
           message: '請問是要取消哪個範圍？\n\n🔘 只取消今天\n🔘 取消明天起所有課程\n🔘 刪除整個重複課程',
           quickReply: [
