@@ -3,6 +3,7 @@
 ## 2025-08-14 - 系統更新 📝
 
 ### 🐛 Fixed
+- **課表查詢數據一致性修復**（修復已取消課程仍顯示在課表中的問題，確保 Firebase 和用戶界面數據同步）
 - **重複課程功能完整實作**（P0 支援 daily/weekly/monthly BYMONTHDAY，單一開關控制，起始日智慧推導，小月跳過策略，2分鐘撤銷時限｜規格: spec/recurring/task-recurring.md） [uid:0236f790]
 - 修復取消重複課程 Quick Reply 不顯示的 BUG [uid:e825f3c7f840]
 
