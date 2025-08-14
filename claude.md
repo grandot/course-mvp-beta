@@ -1,7 +1,11 @@
 ## 專案：LINE 課程管理機器人
 
 使用 LINE 對話記錄管理課程，採用意圖識別架構。  
-核心流程：LINE Bot → parseIntent → extractSlots → handle_XXX_task → Google Calendar + Firebase
+核心流程：LINE Bot → parseIntent（Regex 精準過濾/抽取 → 失敗或歧義 → OpenAI 語意辨識 Fallback）→ extractSlots → handle_XXX_task → Google Calendar + Firebase
+
+- Regex 原則：高精度、窄範圍，只處理明確關鍵詞與簡單實體，保留模糊語義給 AI；每個意圖的 Regex 規則 ≤ 3 條
+
+- Fallback 觸發：未命中、多重命中、缺關鍵實體、規則矛盾時，改用 OpenAI 語意辨識
 
 - Google Calendar 處理時間邏輯
 

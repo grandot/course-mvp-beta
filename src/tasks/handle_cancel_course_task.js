@@ -55,73 +55,7 @@ function getAlternateStudentNames(name) {
 }
 
 /**
- * 智能課程名稱匹配（支援模糊匹配和部分匹配）
- * @param {string} targetCourseName - 目標課程名稱
- * @param {Array} allCourses - 所有課程列表
- * @returns {Array} 匹配的課程
- */
-function smartCourseNameMatch(targetCourseName, allCourses) {
-  if (!targetCourseName || !allCourses || allCourses.length === 0) {
-    return [];
-  }
-
-  // 處理特殊標記：通用課程指稱
-  if (targetCourseName === '*FUZZY_MATCH*') {
-    // 如果用戶說"取消Lumi的課程"但沒有指定具體課程名，返回所有課程供用戶選擇
-    return allCourses.filter(course => !course.cancelled);
-  }
-
-  // 精確匹配
-  let matches = allCourses.filter(course => 
-    course.courseName === targetCourseName && !course.cancelled
-  );
-  
-  if (matches.length > 0) {
-    return matches;
-  }
-
-  // 模糊匹配1：目標課程名包含在實際課程名中
-  // 例如："跆拳道" 匹配 "跆拳道課"
-  matches = allCourses.filter(course => 
-    course.courseName.includes(targetCourseName) && !course.cancelled
-  );
-  
-  if (matches.length > 0) {
-    console.log(`🔍 模糊匹配成功: "${targetCourseName}" → ${matches.map(c => c.courseName).join(', ')}`);
-    return matches;
-  }
-
-  // 模糊匹配2：實際課程名包含在目標課程名中
-  // 例如："跆拳道課程" 匹配 "跆拳道課"
-  matches = allCourses.filter(course => 
-    targetCourseName.includes(course.courseName.replace(/課$/, '')) && !course.cancelled
-  );
-  
-  if (matches.length > 0) {
-    console.log(`🔍 反向模糊匹配成功: "${targetCourseName}" → ${matches.map(c => c.courseName).join(', ')}`);
-    return matches;
-  }
-
-  // 模糊匹配3：去除"課"字後的匹配
-  // 例如："數學" 匹配 "數學課"
-  const cleanTarget = targetCourseName.replace(/課$/, '');
-  matches = allCourses.filter(course => {
-    const cleanCourseName = course.courseName.replace(/課$/, '');
-    return (cleanTarget === cleanCourseName || 
-            cleanCourseName.includes(cleanTarget) || 
-            cleanTarget.includes(cleanCourseName)) && !course.cancelled;
-  });
-
-  if (matches.length > 0) {
-    console.log(`🔍 去課字匹配成功: "${targetCourseName}" → ${matches.map(c => c.courseName).join(', ')}`);
-    return matches;
-  }
-
-  return [];
-}
-
-/**
- * 查找要取消的課程（增強版：支援智能匹配）
+ * 查找要取消的課程
  * @param {string} userId - 用戶ID
  * @param {string} studentName - 學生姓名
  * @param {string} courseName - 課程名稱
@@ -139,38 +73,22 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
       courseDate = calculateDateFromReference(timeReference);
     }
 
-    // 先獲取該學生的所有課程，用於智能匹配
-    const allStudentCourses = await firebaseService.getCoursesByStudent(userId, studentName);
-    
-    // 使用智能匹配找到目標課程
-    const matchedCourses = smartCourseNameMatch(courseName, allStudentCourses);
-    
-    if (matchedCourses.length === 0) {
-      return [];
-    }
-
-    // 如果智能匹配找到多個課程但沒有指定具體課程名，需要用戶澄清
-    if (courseName === '*FUZZY_MATCH*' && matchedCourses.length > 1) {
-      // 返回特殊格式，讓上層處理用戶選擇
-      return { needClarification: true, courses: matchedCourses };
-    }
-
-    // 根據取消範圍過濾課程
-    let targetCourses = matchedCourses;
-
     if (scope === 'single' && courseDate) {
       // 取消單次課程
-      targetCourses = matchedCourses.filter(course => course.courseDate === courseDate);
-    } else if (scope === 'future') {
+      const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
+      return course ? [course] : [];
+    } if (scope === 'future') {
       // 取消明天起所有課程
-      const tomorrowDate = calculateDateFromReference('tomorrow');
-      targetCourses = matchedCourses.filter(course => course.courseDate >= tomorrowDate);
-    } else if (scope === 'recurring' || scope === 'all') {
-      // 取消重複課程或所有課程
-      targetCourses = matchedCourses;
+      const courses = await firebaseService.getCoursesByStudent(userId, studentName, { startDate: calculateDateFromReference('tomorrow') });
+      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
+    } if (scope === 'recurring' || scope === 'all') {
+      // 取消重複課程或所有課程 - 查找所有相關課程讓 Google Calendar 處理重複邏輯
+      const courses = await firebaseService.getCoursesByStudent(userId, studentName);
+      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
     }
-
-    return targetCourses.filter(course => !course.cancelled);
+    // 預設情況：查找最近的課程
+    const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
+    return course ? [course] : [];
   } catch (error) {
     console.error('❌ 查找課程失敗:', error);
     throw error;
@@ -294,7 +212,7 @@ async function handle_cancel_course_task(slots, userId) {
       }
     }
 
-    // 3. 查找要取消的課程（支援智能匹配）
+    // 3. 查找要取消的課程
     let coursesToCancel = await findCoursesToCancel(
       userId,
       slots.studentName,
@@ -303,32 +221,6 @@ async function handle_cancel_course_task(slots, userId) {
       slots.timeReference,
       slots.scope || 'single',
     );
-
-    // 處理需要澄清的情況（多個課程匹配）
-    if (coursesToCancel && coursesToCancel.needClarification) {
-      const courses = coursesToCancel.courses;
-      const uniqueCourseNames = [...new Set(courses.map(c => c.courseName))];
-      
-      if (uniqueCourseNames.length > 1) {
-        // 多種課程類型，讓用戶選擇
-        const quickReply = uniqueCourseNames.slice(0, 4).map(courseName => ({
-          label: courseName,
-          text: `取消${slots.studentName}的${courseName}`,
-        }));
-
-        return {
-          success: false,
-          code: 'NEED_COURSE_CLARIFICATION',
-          message: `請選擇要取消的課程：\n\n${uniqueCourseNames.map(name => `• ${name}`).join('\n')}`,
-          showQuickReply: true,
-          quickReply,
-        };
-      } else {
-        // 同一種課程但多個時段，繼續處理
-        coursesToCancel = courses;
-      }
-    }
-
     if ((!coursesToCancel || coursesToCancel.length === 0) && slots.studentName) {
       // 使用候選名稱再嘗試一次
       const altNames = getAlternateStudentNames(slots.studentName).filter((n) => n !== slots.studentName);
@@ -341,69 +233,15 @@ async function handle_cancel_course_task(slots, userId) {
           slots.timeReference,
           slots.scope || 'single',
         );
-        
-        // 處理替代名稱的澄清情況
-        if (coursesToCancel && coursesToCancel.needClarification) {
-          coursesToCancel = coursesToCancel.courses;
-        }
-        
-        if (coursesToCancel && coursesToCancel.length > 0) {
-          // 更新找到的學生名稱
-          slots.studentName = alt;
-          break;
-        }
+        if (coursesToCancel && coursesToCancel.length > 0) break;
       }
     }
 
     if (!coursesToCancel || coursesToCancel.length === 0) {
-      // 提供更智能的錯誤訊息和建議
-      let errorMessage = `❌ 找不到 ${slots.studentName} 的`;
-      
-      // 如果課程名稱不是通用指稱，提供具體課程名
-      if (slots.courseName !== '*FUZZY_MATCH*') {
-        errorMessage += `「${slots.courseName}」`;
-      } else {
-        errorMessage += '課程';
-      }
-
-      // 嘗試提供相似的課程建議
-      try {
-        const allStudentCourses = await firebaseService.getCoursesByStudent(userId, slots.studentName);
-        const activeCourses = allStudentCourses.filter(course => !course.cancelled);
-        
-        if (activeCourses.length > 0) {
-          const courseNames = [...new Set(activeCourses.map(c => c.courseName))];
-          errorMessage += `\n\n📚 ${slots.studentName} 目前的課程：\n`;
-          errorMessage += courseNames.map(name => `• ${name}`).join('\n');
-          
-          // 提供 Quick Reply 選項
-          const quickReply = courseNames.slice(0, 4).map(courseName => ({
-            label: courseName,
-            text: `取消${slots.studentName}的${courseName}`,
-          }));
-          
-          return {
-            success: false,
-            code: 'NOT_FOUND_WITH_SUGGESTIONS',
-            message: errorMessage,
-            showQuickReply: true,
-            quickReply,
-          };
-        } else {
-          errorMessage += `\n\n📝 ${slots.studentName} 目前沒有安排任何課程`;
-        }
-      } catch (error) {
-        console.warn('⚠️ 無法獲取課程建議:', error.message);
-        errorMessage += '\n\n💡 建議：\n';
-        errorMessage += '• 檢查學生姓名拼寫\n';
-        errorMessage += '• 確認課程是否已安排\n';
-        errorMessage += '• 查看課表確認現有課程';
-      }
-
       return {
         success: false,
         code: 'NOT_FOUND',
-        message: errorMessage,
+        message: `❌ 找不到 ${slots.studentName} 的 ${slots.courseName}，請確認課程是否存在`,
       };
     }
 
