@@ -30,7 +30,7 @@ function saveUidMap(map) {
 }
 
 function sections() {
-  return ['Backlog', 'Next', 'Doing', 'Blocked', 'Done'];
+  return ['Backlog', 'Next', 'Doing', 'Blocked', 'Done', 'BUG'];
 }
 
 function extractSection(md, title) {

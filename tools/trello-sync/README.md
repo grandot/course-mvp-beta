@@ -67,8 +67,46 @@ source ~/.zshrc
 - 推送時：
   - 找到相同 UID 的卡 → 若在錯誤列表則移動 → 標題以 MD 為準（去掉技術標記） → 更新描述表頭（uid/source/syncedAt）與 `ref: spec/...`（若 MD 有）。
   - 找不到 → 依 MD 建立新卡，補上描述表頭。
+  - **增強功能（`--enhanced`）**：同步 MD 中的附件和 checklist 到 Trello 卡片。
 - 拉回時：
   - 直接用 Trello 卡名覆蓋 `PROJECT_STATUS.md` 對應區塊（請先確定不要保留本地修改）。
+  - **自動包含**：Trello 卡片中的附件和 checklist 會自動格式化到 MD 中。
+
+## 增強功能：附件與 Checklist 同步
+
+### MD 格式規範
+```markdown
+### Doing
+- 主要任務標題 [uid:abc12345]
+  - 📎 [設計稿.png](https://example.com/design.png)
+  - 📎 [需求文檔.pdf](https://example.com/requirement.pdf)
+  - 任務列表1
+    - 子任務1
+    - 子任務2
+  - 檢查列表
+    - 檢查項目A
+    - 檢查項目B
+```
+
+### 功能說明
+- **Push 模式（MD → Trello）**：需要 `--enhanced` 參數才會同步附件和 checklist
+- **Pull 模式（Trello → MD）**：總是包含 Trello 中已存在的附件和 checklist
+- **附件格式**：`- 📎 [filename](url)`
+- **Checklist 格式**：
+  - Checklist 名稱：`- 任務列表名稱`
+  - Checklist 項目：`  - 項目名稱`（兩個空格縮排）
+
+### 使用範例
+```bash
+# 啟用增強功能推送
+./bin/trello:push --enhanced
+
+# 使用環境變數
+ENABLE_TRELLO_ENHANCED=true ./bin/trello:push
+
+# 拉回時自動包含附件和 checklist（無需額外參數）
+./bin/trello:pull
+```
 
 ### 資料檔案
 - UID 映射：`tools/trello-sync/PROJECT_STATUS.uidmap.json`（僅此一份；根目錄舊檔已淘汰）
