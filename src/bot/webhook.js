@@ -48,11 +48,29 @@ async function executeTaskLegacy(intent, slots, userId, messageEvent) {
  */
 async function handleTextMessage(event, req = null) {
   try {
-    const userMessage = event.message.text;
+    let userMessage = event.message.text;
     const { userId } = event.source;
     const { replyToken } = event;
     const { info, error: logError, generateTraceId } = require('../utils/logger');
     const traceId = generateTraceId('line');
+
+    // 🔘 QuickReply 消息處理
+    const {
+      processQuickReplyMessage,
+      getCleanMessageForProcessing,
+      logQuickReplyProcessing,
+    } = require('../utils/quickReplyUtils');
+    
+    // 處理 QuickReply 消息包裹
+    const quickReplyResult = processQuickReplyMessage(userMessage);
+    const displayMessage = quickReplyResult.processedMessage; // 用於顯示和記錄
+    const processingMessage = getCleanMessageForProcessing(displayMessage); // 用於後端處理
+    
+    // 記錄 QuickReply 處理信息
+    logQuickReplyProcessing(userMessage, displayMessage, quickReplyResult.wasWrapped);
+    
+    // 更新 userMessage 為顯示版本（包含【】）
+    userMessage = displayMessage;
 
     // inbound log (single-line JSON)
     info({
@@ -68,6 +86,7 @@ async function handleTextMessage(event, req = null) {
     const conversationManager = getConversationManager();
 
     // 里程碑1：若啟用 IntentRouter，改由 Router 決策
+    // 🔘 使用純淨消息進行意圖解析，避免【】符號干擾
     let intent;
     const qaHeader = (req && (req.headers['x-qa-mode'] || req.query?.qaMode || '')).toString().toLowerCase();
     const isQaFlow = qaHeader === 'real' || (userId && String(userId).startsWith('U_test_'));
@@ -75,12 +94,12 @@ async function handleTextMessage(event, req = null) {
     if (useRouter) {
       const { createRequestContext } = require('../nlu/RequestContext');
       const { routeIntent } = require('../nlu/IntentRouter');
-      const ctx = await createRequestContext(userId, userMessage, req);
+      const ctx = await createRequestContext(userId, processingMessage, req);
       const routed = await routeIntent(ctx);
       intent = routed.intent;
     } else {
       // 舊路徑（保留回退）
-      intent = await parseIntent(userMessage, userId);
+      intent = await parseIntent(processingMessage, userId);
     }
     info({
       stage: 'nlp', traceId, userId, intent,
@@ -94,8 +113,9 @@ async function handleTextMessage(event, req = null) {
     } catch (_) {}
 
     // 里程碑1保險絲：僅保留提醒覆寫，關閉查詢覆寫避免壓過 AI
+    // 🔘 使用純淨消息進行意圖檢查
     try {
-      const msg = String(userMessage || '');
+      const msg = String(processingMessage || '');
       if (msg.includes('提醒')) {
         intent = 'set_reminder';
       }
@@ -116,7 +136,8 @@ async function handleTextMessage(event, req = null) {
     }
 
     // 第二步：實體提取 + 查詢會話鎖（若為查詢則固定學生/時間）
-    const slots = await extractSlots(userMessage, intent, userId);
+    // 🔘 使用純淨消息進行槽位提取，避免【】符號干擾
+    const slots = await extractSlots(processingMessage, intent, userId);
 
     // 記錄用戶訊息到對話歷史（包含完整的 slots 資訊）
     await conversationManager.recordUserMessage(userId, userMessage, intent, slots);
