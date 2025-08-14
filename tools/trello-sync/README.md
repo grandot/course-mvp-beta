@@ -57,6 +57,7 @@ source ~/.zshrc
 - `--purge-concurrency=<N>`：刪卡並行度（1~16，預設 8）。
 - `--dry-run`：僅輸出即將執行的動作，不寫 Trello。
 - `--labels`：啟用 `[P1][Feature]` 等標籤自動化（也可用環境變數 `ENABLE_TRELLO_LABELS=true`）。
+- `--enhanced`：啟用附件與 checklist 雙向同步（也可用環境變數 `ENABLE_TRELLO_ENHANCED=true`）。
 - `--mode=pull`：改為拉回模式（Trello → MD）。
 - `--merge-duplicates`：依 UID 合併重複卡（保留最早活動卡，封存其餘）。
 

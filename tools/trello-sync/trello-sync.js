@@ -96,6 +96,50 @@ async function updateCard(cardId, patch = {}) {
   return trello('PUT', `/cards/${cardId}`, patch);
 }
 
+// 新增：獲取卡片詳細資訊（包含附件和 checklist）
+async function getCardDetails(cardId) {
+  return trello('GET', `/cards/${cardId}`, {
+    fields: 'name,id,desc,labels,dateLastActivity,pos,url,idList',
+    attachments: 'true',
+    checklists: 'all'
+  });
+}
+
+// 新增：獲取卡片附件
+async function getCardAttachments(cardId) {
+  return trello('GET', `/cards/${cardId}/attachments`);
+}
+
+// 新增：獲取卡片 checklists
+async function getCardChecklists(cardId) {
+  return trello('GET', `/cards/${cardId}/checklists`);
+}
+
+// 新增：建立附件（URL 連結）
+async function createAttachment(cardId, url, name) {
+  return trello('POST', `/cards/${cardId}/attachments`, { url, name });
+}
+
+// 新增：建立 checklist
+async function createChecklist(cardId, name) {
+  return trello('POST', `/checklists`, { idCard: cardId, name });
+}
+
+// 新增：建立 checklist 項目
+async function createCheckItem(checklistId, name) {
+  return trello('POST', `/checklists/${checklistId}/checkItems`, { name });
+}
+
+// 新增：刪除附件
+async function deleteAttachment(cardId, attachmentId) {
+  return trello('DELETE', `/cards/${cardId}/attachments/${attachmentId}`);
+}
+
+// 新增：刪除 checklist
+async function deleteChecklist(checklistId) {
+  return trello('DELETE', `/checklists/${checklistId}`);
+}
+
 async function getLabels(boardId) {
   return trello('GET', `/boards/${boardId}/labels`, { fields: 'id,name,color' });
 }
@@ -207,6 +251,147 @@ function stripInlineTokens(text) {
     .trim();
 }
 
+// 新增：解析 MD 項目結構（用於 Push）
+function parseMDItem(mdContent) {
+  const lines = mdContent.split('\n');
+  const mainLine = lines[0]; // 例如：- 主要任務標題 [uid:xxxxxxxx]
+  
+  // 提取主標題（去除 UID）
+  const titleMatch = mainLine.match(/^-\s*(.+?)\s*\[uid:[^\]]+\]/);
+  const title = titleMatch ? titleMatch[1].trim() : mainLine.replace(/^-\s*/, '').trim();
+  
+  // 提取 UID
+  const uidMatch = mainLine.match(/\[uid:([^\]]+)\]/);
+  const uid = uidMatch ? uidMatch[1] : null;
+  
+  const attachments = [];
+  const checklists = [];
+  let currentChecklist = null;
+  
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // 附件格式：  - 📎 [filename](url)
+    if (trimmed.match(/^- 📎 \[([^\]]+)\]\(([^)]+)\)/)) {
+      const match = trimmed.match(/^- 📎 \[([^\]]+)\]\(([^)]+)\)/);
+      attachments.push({ name: match[1], url: match[2] });
+    }
+    
+    // Checklist 標題（兩個空格縮排）：  - 任務列表名稱
+    else if (line.match(/^  - [^📎]/) && !line.includes('    ')) {
+      const name = trimmed.replace(/^- /, '');
+      currentChecklist = { name, items: [] };
+      checklists.push(currentChecklist);
+    }
+    
+    // Checklist 項目（四個空格縮排）：    - 項目名稱
+    else if (line.match(/^    - /) && currentChecklist) {
+      const itemName = trimmed.replace(/^- /, '');
+      currentChecklist.items.push(itemName);
+    }
+  }
+  
+  return { title, uid, attachments, checklists };
+}
+
+// 新增：格式化卡片為 MD 格式（用於 Pull）
+function formatCardToMD(card, details) {
+  const uidInDesc = parseUidFromDesc(card.desc || '');
+  const uid = uidInDesc || deriveUidLabelName(card.name);
+  
+  let content = `${card.name} [${uid}]`;
+  
+  // 格式化附件
+  if (details && details.attachments && details.attachments.length > 0) {
+    const attachmentLines = details.attachments.map(att => 
+      `  - 📎 [${att.name}](${att.url})`
+    );
+    content += '\n' + attachmentLines.join('\n');
+  }
+  
+  // 格式化 checklists（不使用任何 emoji 或 checkbox）
+  if (details && details.checklists && details.checklists.length > 0) {
+    const checklistLines = details.checklists.map(checklist => {
+      const items = checklist.checkItems.map(item => 
+        `    - ${item.name}`
+      ).join('\n');
+      return `  - ${checklist.name}\n${items}`;
+    });
+    content += '\n' + checklistLines.join('\n');
+  }
+  
+  return content;
+}
+
+// 新增：檢查是否為簡單卡片（無附件和 checklist）
+function isSimpleCard(details) {
+  return (!details || !details.attachments || details.attachments.length === 0) &&
+         (!details || !details.checklists || details.checklists.length === 0);
+}
+
+// 新增：同步卡片的附件和 checklist（用於 Push）
+async function syncCardContent(cardId, mdItem, options = {}) {
+  const { dryRun = false } = options;
+  
+  if (!ENABLE_TRELLO_ENHANCED && !process.argv.includes('--enhanced')) {
+    return; // 功能未啟用
+  }
+  
+  const parsed = parseMDItem(mdItem);
+  const { attachments, checklists } = parsed;
+  
+  if (dryRun) {
+    if (attachments.length > 0) {
+      console.log(`[dry-run] 將同步 ${attachments.length} 個附件`);
+    }
+    if (checklists.length > 0) {
+      console.log(`[dry-run] 將同步 ${checklists.length} 個 checklist`);
+    }
+    return;
+  }
+  
+  try {
+    // 同步附件
+    if (attachments.length > 0) {
+      const existingAttachments = await getCardAttachments(cardId);
+      for (const att of attachments) {
+        const exists = existingAttachments.find(ea => ea.url === att.url);
+        if (!exists) {
+          await createAttachment(cardId, att.url, att.name);
+          console.log(`  📎 新增附件：${att.name}`);
+          await sleep(120);
+        }
+      }
+    }
+    
+    // 同步 checklists
+    if (checklists.length > 0) {
+      const existingChecklists = await getCardChecklists(cardId);
+      for (const cl of checklists) {
+        let checklist = existingChecklists.find(ec => ec.name === cl.name);
+        if (!checklist) {
+          checklist = await createChecklist(cardId, cl.name);
+          console.log(`  ☑️ 新增 checklist：${cl.name}`);
+          await sleep(120);
+        }
+        
+        // 同步 checklist 項目
+        for (const item of cl.items) {
+          const exists = checklist.checkItems?.find(ci => ci.name === item);
+          if (!exists) {
+            await createCheckItem(checklist.id, item);
+            console.log(`    - 新增項目：${item}`);
+            await sleep(100);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`[警告] 同步卡片內容失敗：${error.message}`);
+  }
+}
+
 // 產生穩定的卡片唯一識別標籤名稱（不依賴括號後綴/規格連結）
 function normalizeTaskBase(taskName) {
   const { pureName } = extractBracketTags(taskName);
@@ -272,7 +457,7 @@ function upsertHeaderAndRefInDesc(originalDesc, uidLine, sourceValue, specRef) {
 
 function parseProjectStatus(filePath) {
   const md = fs.readFileSync(filePath, 'utf8');
-  const sections = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done'];
+  const sections = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done', 'BUG'];
   const result = {};
   for (const name of sections) {
     const text = extractSection(md, name);
@@ -386,7 +571,7 @@ async function mergeDuplicatesOnBoard(boardId, listsFilter = null, options = {})
 }
 
 async function createOrUpdateByName(listId, items, options) {
-  const { dryRun = false, labelContext = null, boardIndex = null } = options || {};
+  const { dryRun = false, labelContext = null, boardIndex = null, enableEnhanced = false } = options || {};
   const existing = await getCards(listId);
   const byName = new Map(existing.map(c => [c.name, c]));
   // 以 description 中的 uid 做快速查找
@@ -438,6 +623,12 @@ async function createOrUpdateByName(listId, items, options) {
             if (label) await addLabelToCard(created.id, label.id);
           }
         }
+        
+        // 同步附件和 checklist（增強功能）
+        if (enableEnhanced) {
+          await syncCardContent(created.id, name, { dryRun });
+        }
+        
         await sleep(120);
       }
     } else {
@@ -478,6 +669,12 @@ async function createOrUpdateByName(listId, items, options) {
             if (label) await addLabelToCard(found.id, label.id);
           }
         }
+        
+        // 同步附件和 checklist（增強功能）
+        if (enableEnhanced) {
+          await syncCardContent(found.id, name, { dryRun });
+        }
+        
         await sleep(120);
       }
     }
@@ -537,8 +734,8 @@ async function reorderListToMatch(list, items, boardIndex) {
 }
 
 async function syncPush(boardId, statusFile, options) {
-  const { listsFilter = null, dryRun = false, enableLabels = ENABLE_TRELLO_LABELS } = options || {};
-  const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done']
+  const { listsFilter = null, dryRun = false, enableLabels = ENABLE_TRELLO_LABELS, enableEnhanced = false } = options || {};
+  const wantedLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done', 'BUG']
     .filter(n => !listsFilter || listsFilter.includes(n));
   const purge = process.argv.includes('--purge');
   const purgeConcArg = (process.argv.find(a => a.startsWith('--purge-concurrency=')) || '').split('=')[1];
@@ -625,7 +822,7 @@ async function syncPush(boardId, statusFile, options) {
       continue;
     }
     console.log(`→ 同步 ${listName}（${items.length} 項）${dryRun ? '[dry-run]' : ''}`);
-    await createOrUpdateByName(list.id, items, { dryRun, labelContext, boardIndex });
+    await createOrUpdateByName(list.id, items, { dryRun, labelContext, boardIndex, enableEnhanced });
     // 同步後依 Markdown 順序重排，讓人類一眼可見更新
     if (!dryRun) {
       await reorderListToMatch(list, items, boardIndex);
@@ -641,12 +838,21 @@ const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
   const listsFilter = listsArg ? listsArg.split(',').map(s => s.trim()).filter(Boolean) : null;
   const enableLabelsFlag = process.argv.includes('--labels');
   const mergeDup = process.argv.includes('--merge-duplicates');
+  const enhancedFlag = process.argv.includes('--enhanced');
+  
+  // 增強功能開關：命令行參數優先於環境變數
+  const ENABLE_TRELLO_ENHANCED = enhancedFlag || (process.env.ENABLE_TRELLO_ENHANCED || 'false') === 'true';
+  
+  if (ENABLE_TRELLO_ENHANCED) {
+    console.log('🔧 已啟用 Trello 增強功能（附件與 checklist 同步）');
+  }
 
   if (!isPull && !mergeDup) {
     await syncPush(TRELLO_BOARD_ID, statusFile, {
       listsFilter,
       dryRun,
       enableLabels: enableLabelsFlag || ENABLE_TRELLO_LABELS,
+      enableEnhanced: ENABLE_TRELLO_ENHANCED,
     });
     console.log('完成：MD → Trello 單向推送');
     return;
@@ -658,11 +864,12 @@ const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
     return;
   }
 
-  // Pull 模式：從 Trello 讀取五個列表，直接覆寫 PROJECT_STATUS.md 的五個區塊
+  // Pull 模式：從 Trello 讀取列表，覆寫 PROJECT_STATUS.md 的對應區塊
   const canonicalBoardId = await getCanonicalBoardIdMaybe(TRELLO_BOARD_ID);
   const board = await getBoardMeta(canonicalBoardId);
   const lists = await getLists(canonicalBoardId);
-  const wanted = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done'];
+  const allLists = ['Backlog', 'Next', 'Doing', 'Blocked', 'Done', 'BUG'];
+  const wanted = listsFilter || allLists;
   const byName = new Map(lists.filter(l => !l.closed).map(l => [l.name, l]));
 
   const pulled = {};
@@ -696,8 +903,30 @@ const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
         } catch (_) {}
       }
     }
-    const names = (cards || []).map(c => c.name);
-    pulled[name] = names;
+    // 從卡片描述中提取 UID，重新組合為 MD 格式（卡片名稱 + [uid:xxx]）
+    const namesWithUid = [];
+    for (const c of (cards || [])) {
+      const uidInDesc = parseUidFromDesc(c.desc || '');
+      let baseMD;
+      if (uidInDesc) {
+        baseMD = `${c.name} [${uidInDesc}]`;
+      } else {
+        // 如果描述中沒有 UID，生成一個基於名稱的 UID
+        const derivedUid = deriveUidLabelName(c.name || '');
+        baseMD = `${c.name} [${derivedUid}]`;
+      }
+      
+      // Pull 模式：總是獲取並顯示 Trello 中的完整內容（附件、checklist）
+      try {
+        const details = await getCardDetails(c.id);
+        const formatted = formatCardToMD(c, details);
+        namesWithUid.push(formatted);
+      } catch (e) {
+        console.warn(`[警告] 獲取卡片詳細資訊失敗：${c.name} ${c.id} ${e && e.message}`);
+        namesWithUid.push(baseMD);
+      }
+    }
+    pulled[name] = namesWithUid;
     await sleep(100);
   }
 
@@ -724,13 +953,15 @@ const statusFile = path.resolve(process.cwd(), 'PROJECT_STATUS.md');
   }
 
   let newMd = md;
-  newMd = replaceSection(newMd, 'Backlog', pulled.Backlog || []);
-  newMd = replaceSection(newMd, 'Next', pulled.Next || []);
-  newMd = replaceSection(newMd, 'Doing', pulled.Doing || []);
-  newMd = replaceSection(newMd, 'Blocked', pulled.Blocked || []);
-  newMd = replaceSection(newMd, 'Done', (pulled.Done || []));
+  // 只更新從 Trello 拉取的列表，保持其他列表不變
+  for (const name of wanted) {
+    if (pulled.hasOwnProperty(name)) {
+      newMd = replaceSection(newMd, name, pulled[name] || []);
+    }
+  }
   fs.writeFileSync(statusFile, newMd, 'utf8');
-  console.log('已將 Trello 內容寫回 PROJECT_STATUS.md（五個區塊的條目已覆寫）');
+  const updatedLists = wanted.join('、');
+  console.log(`已將 Trello 內容寫回 PROJECT_STATUS.md（${updatedLists} 區塊已更新）`);
 
   // 不再同步或修改 AI 任務上下文檔案
 }
