@@ -81,11 +81,19 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
     } if (scope === 'future') {
       // 取消明天起所有課程
       const courses = await firebaseService.getCoursesByStudent(userId, studentName, { startDate: calculateDateFromReference('tomorrow') });
-      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
+      return courses.filter((course) => {
+        const dbName = String(course.courseName || '').replace(/課$/, '');
+        const queryName = String(courseName || '').replace(/課$/, '');
+        return dbName === queryName && !course.cancelled;
+      });
     } if (scope === 'recurring' || scope === 'all') {
       // 取消重複課程或所有課程 - 查找所有相關課程讓 Google Calendar 處理重複邏輯
       const courses = await firebaseService.getCoursesByStudent(userId, studentName);
-      return courses.filter((course) => course.courseName === courseName && !course.cancelled);
+      return courses.filter((course) => {
+        const dbName = String(course.courseName || '').replace(/課$/, '');
+        const queryName = String(courseName || '').replace(/課$/, '');
+        return dbName === queryName && !course.cancelled;
+      });
     }
     // 預設情況：查找最近的課程
     const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
@@ -222,7 +230,11 @@ async function handle_cancel_course_task(slots, userId) {
       let hasRecurring = false;
       for (const candidate of candidates) {
         const courses = await firebaseService.getCoursesByStudent(userId, candidate);
-        if (courses.some((c) => c.courseName === slots.courseName && c.isRecurring)) {
+        if (courses.some((c) => {
+          const dbName = String(c.courseName || '').replace(/課$/, '');
+          const queryName = String(slots.courseName || '').replace(/課$/, '');
+          return dbName === queryName && c.isRecurring;
+        })) {
           hasRecurring = true; break;
         }
       }

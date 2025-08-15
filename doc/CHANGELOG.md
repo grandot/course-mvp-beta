@@ -1,5 +1,38 @@
 # 📝 Change Log
 
+## 2025-08-15 - 修復取消課程課名匹配問題
+
+### 🐛 Fixed
+- **取消課程功能修復**：修正課程名稱比對邏輯，解決「跆拳道」vs「跆拳道課」無法匹配的問題
+- **課名正規化**：在取消課程時去除尾字「課」進行比對，提升匹配容錯性
+- **重複課檢測**：一併修復重複課程檢測的課名比對邏輯，確保 Quick Reply 正確顯示
+
+### 🔧 Technical
+- 修改 `handle_cancel_course_task.js` 三處課名比對邏輯
+- 使用防禦性編程：`String(... || '').replace(/課$/, '')`
+- 影響範圍：future/recurring/all 取消範圍及重複課檢查
+
+### 📊 測試結果
+- ✅ 「取消跆拳道」能成功找到「跆拳道」課程
+- ✅ 「取消跆拳道課」能成功找到「跆拳道」課程
+- ✅ 保持其他取消功能正常運作
+
+---
+
+## 2025-08-14 - QA 測試系統增強（意圖/QuickReply 斷言 + 六行卡模板）
+
+### ✨ Added
+- `qa-system/core/TagMarkdownParser.js` 新增支援：`@expect.intent`、`@expect.quickReplyIncludes`
+- `qa-system/core/UnifiedTestRunner.js` 本機測試加入意圖/QuickReply 斷言，詳細報告顯示「預期意圖」與「QuickReply 命中矩陣」
+- `QA/TEST-TEMPLATE.md` 改版為「六行卡」：人類易讀（測試輸入 / 我預期看到 / 實際看到 / 結論 / 怎麼修 / 影響面）
+
+### 🧪 Testing
+- `tools/internal/qa/generate-from-md.js` 仍沿用現有流程；若於 MD 加入 `@expect.*` 斷言，即可參與自動判定
+
+### 影響
+- 報告更直觀：意圖誤分流、缺少 QuickReply 能一眼看出；主管審閱效率提升
+- 與既有測試指令完全相容：`node tools/render-suite.js --basic`、`node tools/quick-suite.js --target prod`
+
 ## 2025-08-14 - 修復查詢與取消課程上下文問題
 
 ### 🐛 Fixed / 💡 Behavior
