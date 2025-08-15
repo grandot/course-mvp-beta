@@ -460,6 +460,9 @@ function extractCourseName(message) {
     return null;
   }
 
+  // 先清洗掉動作詞前綴
+  const cleanedMessage = message.replace(/^(設定|不要|取消|刪掉|刪除|删除|幫我|請|查詢|記錄|提醒|提醒我|醒我|改|改到|改成|修改|調整|更改)/, '');
+
   const coursePatterns = [
     // 最高精確度模式 - 明確的課程結構
     /(?:上|學|要上)([一-龥]{2,6})課?/, // 上數學、學英文、要上鋼琴
@@ -479,7 +482,7 @@ function extractCourseName(message) {
   for (const pattern of coursePatterns) {
     let match = null;
     try {
-      match = message.match(pattern);
+      match = cleanedMessage.match(pattern);
     } catch (e) {
       console.warn('⚠️ 課程名稱正則失敗:', pattern, e?.message || e);
       match = null;
@@ -491,7 +494,7 @@ function extractCourseName(message) {
       const invalidCourseNames = [
         '今天', '明天', '昨天', '每天', '這週', '下週', '上週',
         '小明', '小光', '小美', '小華', 'Lumi', '老師', '學生',
-        '查詢', '提醒', '取消', '記錄', '看一下', '安排', '刪掉',
+        '查詢', '提醒', '取消', '記錄', '看一下', '安排', '刪掉', '刪除', '删除',
         '內容', '表現', '很好', '分數', '點的', '期五', '我',
         '學了', '課學', '天學', '點天', '星期', '課前',
       ];
@@ -923,21 +926,21 @@ function stripTimeSuffixFromName(name) {
 }
 
 function hasActionWords(text) {
-  const actionWords = ['設定', '不要', '取消', '刪掉', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我', '改', '改到', '改成', '修改', '調整', '更改'];
+  const actionWords = ['設定', '不要', '取消', '刪掉', '刪除', '删除', '幫我', '請', '要', '安排', '查詢', '記錄', '提醒', '提醒我', '醒我', '改', '改到', '改成', '修改', '調整', '更改'];
   return actionWords.some((word) => text.includes(word));
 }
 
 function cleanStudentName(rawName) {
   // 移除常見的動作詞前綴
   const cleaned = rawName
-    .replace(/^(設定|不要|取消|刪掉|幫我|請|查詢|記錄|提醒|提醒我|醒我|改|改到|改成|修改|調整|更改)/, '')
+    .replace(/^(設定|不要|取消|刪掉|刪除|删除|幫我|請|查詢|記錄|提醒|提醒我|醒我|改|改到|改成|修改|調整|更改)/, '')
     .replace(/(的|之)$/, '');
   return cleaned.trim();
 }
 
 function extractStudentFromCourseName(rawCourse) {
   // 移除動作詞後，嘗試提取學生姓名
-  const cleaned = rawCourse.replace(/^(設定|不要|取消|刪掉|查詢|記錄)/, '');
+  const cleaned = rawCourse.replace(/^(設定|不要|取消|刪掉|刪除|删除|查詢|記錄)/, '');
 
   // 匹配 "學生姓名+課程名稱" 格式
   const nameMatch = cleaned.match(/^([小大]?[一-龥A-Za-z]{2,6})([一-龥A-Za-z]{2,6}課)$/);
@@ -951,7 +954,7 @@ function extractStudentFromCourseName(rawCourse) {
 function cleanCourseName(rawCourse) {
   // 移除動作詞，保留純課程名
   const cleaned = rawCourse
-    .replace(/^(設定|不要|取消|刪掉|查詢|記錄)/, '');
+    .replace(/^(設定|不要|取消|刪掉|刪除|删除|查詢|記錄)/, '');
 
   // 如果包含人名+課程的格式，提取課程部分
   const courseMatch = cleaned.match(/([小大]?[一-龥A-Za-z]{2,6})([一-龥A-Za-z]{2,6}課)$/);
