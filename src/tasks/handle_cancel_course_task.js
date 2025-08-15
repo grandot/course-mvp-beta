@@ -121,24 +121,28 @@ async function deleteFromGoogleCalendar(course) {
       return true;
     }
 
-    // 查找學生的 calendarId
-    const student = await firebaseService.getStudent(course.userId, course.studentName);
-    if (!student || !student.calendarId) {
-      console.log('⚠️ 找不到學生的 calendarId，跳過 Google Calendar 刪除');
-      return true;
+    // 使用已設置的 calendarId 或查找學生的 calendarId
+    let calendarId = course.calendarId;
+    if (!calendarId) {
+      const student = await firebaseService.getStudent(course.userId, course.studentName);
+      if (!student || !student.calendarId) {
+        console.log('⚠️ 找不到學生的 calendarId，跳過 Google Calendar 刪除');
+        return true;
+      }
+      calendarId = student.calendarId;
     }
 
     // 根據刪除範圍決定處理方式
     if (course.scope === 'all' || course.scope === 'recurring') {
       // 刪除整個重複事件系列 - 使用 Google Calendar 的重複事件刪除
-      const deleted = await googleCalendarService.deleteRecurringEvent(student.calendarId, course.calendarEventId);
+      const deleted = await googleCalendarService.deleteRecurringEvent(calendarId, course.calendarEventId);
       if (deleted) {
         console.log('✅ Google Calendar 重複事件系列已刪除:', course.calendarEventId);
         return true;
       }
     } else {
       // 根據產品規則：主動取消不物理刪除 GCal 事件，僅做標記
-      const result = await googleCalendarService.markEventCancelled(student.calendarId, course.calendarEventId);
+      const result = await googleCalendarService.markEventCancelled(calendarId, course.calendarEventId);
       if (result.success) {
         console.log('✅ Google Calendar 事件已標記為取消:', course.calendarEventId);
         return true;
@@ -312,6 +316,17 @@ async function handle_cancel_course_task(slots, userId) {
 
     for (const course of coursesToCancel) {
       try {
+        // 設置取消範圍到課程物件
+        course.scope = slots.scope || 'single';
+        
+        // 確保有 calendarId（避免二次查詢）
+        if (!course.calendarId && course.studentName) {
+          const student = await firebaseService.getStudent(course.userId, course.studentName);
+          if (student && student.calendarId) {
+            course.calendarId = student.calendarId;
+          }
+        }
+        
         // 3.1 從 Google Calendar 刪除（如果有事件ID）
         const gcalDeleted = await deleteFromGoogleCalendar(course);
 
@@ -349,13 +364,29 @@ async function handle_cancel_course_task(slots, userId) {
     let message = '';
 
     if (successCount > 0) {
-      if (successCount === 1) {
+      const scope = slots.scope || 'single';
+      
+      if (scope === 'all' || scope === 'recurring') {
+        // 刪除整個重複課程系列
+        message += `✅ 已刪除整個重複課程\n`;
+        message += `📚 課程：${slots.studentName} 的 ${slots.courseName}`;
+        if (successCount > 1) {
+          message += `\n📊 共影響 ${successCount} 堂課`;
+        }
+      } else if (scope === 'future') {
+        // 取消明天起所有課程
+        message += `✅ 已取消明天起所有課程\n`;
+        message += `📚 課程：${slots.studentName} 的 ${slots.courseName}`;
+        message += `\n📊 共取消 ${successCount} 堂課`;
+      } else if (successCount === 1) {
+        // 單次課程取消
         const successCourse = cancelResults.find((r) => r.success).course;
         const dateStr = successCourse.courseDate;
         const timeStr = successCourse.scheduleTime;
         message += `✅ 已取消 ${slots.studentName} 的 ${slots.courseName}\n`;
         message += `📅 原定時間：${dateStr} ${timeStr}`;
       } else {
+        // 多堂單次課程
         message += `✅ 已取消 ${successCount} 堂 ${slots.studentName} 的 ${slots.courseName}`;
       }
     }
@@ -370,7 +401,7 @@ async function handle_cancel_course_task(slots, userId) {
       message += '\n\n💡 提示：已取消的課程仍保留在記錄中，可隨時查看歷史資料';
     }
 
-    console.log(`📊 取消結果統計: 成功=${successCount}, 失敗=${failCount}`);
+    console.log(`📊 取消結果統計: scope=${slots.scope || 'single'}, 成功=${successCount}, 失敗=${failCount}, deleteRecurringEvent=${(slots.scope === 'all' || slots.scope === 'recurring') ? 'true' : 'false'}`);
 
     return {
       success: successCount > 0,
