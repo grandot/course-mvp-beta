@@ -10,7 +10,7 @@ async function testWeeklyArrayExpansion() {
   const mockCourses = [
     {
       studentName: 'Lumi',
-      courseName: '半趣味科學課',
+      courseName: '趣味科學課',
       scheduleTime: '15:30',
       courseDate: '2025-08-18', // 週一
       recurring: true,

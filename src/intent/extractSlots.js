@@ -104,8 +104,8 @@ function parseScheduleTime(message) {
         if (hour < 12) hour += 12;
       }
 
-      // 處理半點
-      const finalMinute = message.includes('半') ? 30 : minute;
+      // 處理半點：僅當當前匹配片段包含「半」時視為 30 分
+      const finalMinute = (typeof match[0] === 'string' && match[0].includes('半')) ? 30 : minute;
 
       return `${hour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
     }
