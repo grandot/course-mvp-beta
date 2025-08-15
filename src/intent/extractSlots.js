@@ -500,8 +500,8 @@ function extractCourseName(message) {
     if (match && match[1]) {
       let courseName = match[1];
 
-      // 保險：若原句包含「點半」且課名以「半」開頭，多半是「三點半」殘留，去除一次前綴「半」
-      if (/^半/.test(courseName) && /點半/.test(message)) {
+      // 保險：若原句包含「點半」且課名為純「半」殘留，去除前綴「半」
+      if (/^半$/.test(courseName) && /點半/.test(message)) {
         courseName = courseName.replace(/^半/, '');
       }
 

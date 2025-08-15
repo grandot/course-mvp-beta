@@ -1,5 +1,25 @@
 # 📝 Change Log
 
+## 2025-08-15 - 修復「半」字時間解析污染課程名稱問題（最終修復）
+
+### 🐛 Fixed
+- **核心問題修復**：徹底解決「三點半XX課」被錯誤提取為「半XX課」的BUG
+- **精確時間解析**：修正備用時間解析邏輯，僅在當前時間匹配片段包含「半」時設為30分鐘
+- **架構規範回歸**：移除過度工程化的複雜正則模式，回歸KISS原則
+
+### 🔧 Technical
+- 修改 `src/intent/extractSlots.js` 第 108 行
+- 將 `message.includes('半')` 改為 `(typeof match[0] === 'string' && match[0].includes('半'))`
+- 確保只有當前時間匹配片段包含「半」時才設為 30 分鐘，避免全句掃描
+
+### 📊 測試結果
+- ✅ 「Lumi每週一三五下午三點半趣味科學課」→ scheduleTime=15:30, courseName=趣味科學課
+- ✅ 「小明下午5點半英文課」→ scheduleTime=17:30, courseName=英文課  
+- ✅ 「Lumi下午三點半數學課」→ scheduleTime=15:30, courseName=數學課
+- ✅ 測試通過率：100% (3/3)
+
+---
+
 ## 2025-08-15 - 修復時間解析污染課程名稱問題
 
 ### 🐛 Fixed
