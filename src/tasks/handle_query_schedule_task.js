@@ -222,10 +222,21 @@ function expandRecurringCourses(recurringCourses, dateRange) {
         });
       }
     } else if (recurrenceType === 'weekly') {
-      const dayOfWeek = typeof c.dayOfWeek === 'number' ? c.dayOfWeek : null;
-      if (dayOfWeek === null) continue;
+      // 支援數字或陣列格式的 dayOfWeek
+      let daysSet;
+      if (typeof c.dayOfWeek === 'number') {
+        daysSet = new Set([c.dayOfWeek]);
+      } else if (Array.isArray(c.dayOfWeek)) {
+        // 過濾有效的週幾值（0-6）
+        daysSet = new Set(c.dayOfWeek.filter((d) => typeof d === 'number' && d >= 0 && d <= 6));
+      } else {
+        continue; // 無效格式，跳過
+      }
+
+      if (daysSet.size === 0) continue; // 沒有有效的週幾值
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        if (d.getDay() === dayOfWeek) {
+        if (daysSet.has(d.getDay())) {
           const dateStr = d.toISOString().split('T')[0];
           results.push({
             ...c,
