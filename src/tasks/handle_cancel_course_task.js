@@ -95,9 +95,14 @@ async function findCoursesToCancel(userId, studentName, courseName, specificDate
         return dbName === queryName && !course.cancelled;
       });
     }
-    // 預設情況：查找最近的課程
-    const course = await firebaseService.findCourse(userId, studentName, courseName, courseDate);
-    return course ? [course] : [];
+    // 預設情況：查找最近的課程（使用模糊匹配邏輯）
+    const allCourses = await firebaseService.getCoursesByStudent(userId, studentName);
+    const filtered = allCourses.filter((course) => {
+      const dbName = String(course.courseName || '').replace(/課$/, '');
+      const queryName = String(courseName || '').replace(/課$/, '');
+      return dbName === queryName && !course.cancelled;
+    });
+    return filtered.length > 0 ? [filtered[0]] : [];
   } catch (error) {
     console.error('❌ 查找課程失敗:', error);
     throw error;
