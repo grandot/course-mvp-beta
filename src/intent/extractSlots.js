@@ -463,6 +463,16 @@ function extractCourseName(message) {
   // 先清洗掉動作詞前綴
   const cleanedMessage = message.replace(/^(設定|不要|取消|刪掉|刪除|删除|幫我|請|查詢|記錄|提醒|提醒我|醒我|改|改到|改成|修改|調整|更改)/, '');
 
+  // 時間片段預清洗：避免「三點半」「HH:mm」「上午/下午」等殘留影響課名提取
+  // 之後的匹配一律使用 timeCleanedMessage
+  const timeCleanedMessage = cleanedMessage
+    // HH:mm 或 HH：mm
+    .replace(/\b\d{1,2}[:：]\d{2}\b/g, ' ')
+    // 上/下午、早上、晚上、晚間
+    .replace(/(上午|下午|早上|晚上|晚間)/g, ' ')
+    // 中文或數字 + 點 + （半|整|..分）
+    .replace(/((?:[零一二三四五六七八九十兩]{1,3}|\d{1,2}))點(?:半|整|(?:[零一二三四五六七八九十兩]{1,2}|\d{1,2})分)?/g, ' ');
+
   const coursePatterns = [
     // 最高精確度模式 - 明確的課程結構
     /(?:上|學|要上)([一-龥]{2,6})課?/, // 上數學、學英文、要上鋼琴
@@ -482,13 +492,18 @@ function extractCourseName(message) {
   for (const pattern of coursePatterns) {
     let match = null;
     try {
-      match = cleanedMessage.match(pattern);
+      match = timeCleanedMessage.match(pattern);
     } catch (e) {
       console.warn('⚠️ 課程名稱正則失敗:', pattern, e?.message || e);
       match = null;
     }
     if (match && match[1]) {
       let courseName = match[1];
+
+      // 保險：若原句包含「點半」且課名以「半」開頭，多半是「三點半」殘留，去除一次前綴「半」
+      if (/^半/.test(courseName) && /點半/.test(message)) {
+        courseName = courseName.replace(/^半/, '');
+      }
 
       // 過濾掉明顯不是課程名稱的結果
       const invalidCourseNames = [
