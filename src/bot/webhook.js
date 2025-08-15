@@ -60,15 +60,15 @@ async function handleTextMessage(event, req = null) {
       getCleanMessageForProcessing,
       logQuickReplyProcessing,
     } = require('../utils/quickReplyUtils');
-    
+
     // 處理 QuickReply 消息包裹
     const quickReplyResult = processQuickReplyMessage(userMessage);
     const displayMessage = quickReplyResult.processedMessage; // 用於顯示和記錄
     const processingMessage = getCleanMessageForProcessing(displayMessage); // 用於後端處理
-    
+
     // 記錄 QuickReply 處理信息
     logQuickReplyProcessing(userMessage, displayMessage, quickReplyResult.wasWrapped);
-    
+
     // 更新 userMessage 為顯示版本（包含【】）
     userMessage = displayMessage;
 

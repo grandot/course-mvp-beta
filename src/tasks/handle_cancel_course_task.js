@@ -244,6 +244,20 @@ async function handle_cancel_course_task(slots, userId) {
         }
       }
       if (hasRecurring) {
+        // 保存當前 slots 到對話狀態，供 QuickReply 使用
+        try {
+          const conversationManager = getConversationManager();
+          await conversationManager.setExpectedInput(
+            userId,
+            'cancel_course_flow',
+            ['scope_input'],
+            {
+              intent: 'cancel_course',
+              existingSlots: slots,
+            },
+          );
+        } catch (_) {}
+
         return {
           success: false,
           showQuickReply: true,

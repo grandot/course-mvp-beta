@@ -64,6 +64,8 @@ class TagMarkdownParser {
           expectedKeywords: [],
           expectedCode: undefined,
           expectedSuccess: undefined,
+          expectedIntent: undefined,
+          expectedQuickReplyIncludes: undefined,
           source: sourcePath
         };
         continue;
@@ -107,6 +109,18 @@ class TagMarkdownParser {
       if (mExpectSuccess) {
         const v = mExpectSuccess[1].toLowerCase();
         current.expectedSuccess = (v === 'true' || v === '1' || v === 'yes');
+        continue;
+      }
+
+      // 期望：意圖名稱
+      const mExpectIntent = line.match(/^@expect\.intent\s*:\s*([a-z0-9_]+)$/i);
+      if (mExpectIntent) { current.expectedIntent = mExpectIntent[1].trim(); continue; }
+
+      // 期望：QuickReply 應包含（以逗號/頓號分隔）
+      const mExpectQR = line.match(/^@expect\.quickReplyIncludes\s*:\s*(.+)$/i);
+      if (mExpectQR) {
+        current.expectedQuickReplyIncludes = mExpectQR[1]
+          .split(/,|、/).map(s => s.trim()).filter(Boolean);
         continue;
       }
     }

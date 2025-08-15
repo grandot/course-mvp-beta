@@ -284,7 +284,7 @@ async function getAllStudentCourses(userId, dateRange) {
       );
 
       // 過濾掉已取消的課程
-      const activeCourses = courses.filter(course => !course.cancelled);
+      const activeCourses = courses.filter((course) => !course.cancelled);
       allCourses.push(...activeCourses);
     }
 
@@ -321,12 +321,12 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
         slots.studentName,
         { startDate: dateRange.startDate, endDate: dateRange.endDate },
       );
-      const single = singleAll.filter(course => !course.cancelled);
+      const single = singleAll.filter((course) => !course.cancelled);
       let expanded = [];
       try {
         // 從所有課程中篩選重複課程並展開
         const allCoursesRaw = await firebaseService.getCoursesByStudent(userId, slots.studentName);
-        const allCourses = allCoursesRaw.filter(course => !course.cancelled);
+        const allCourses = allCoursesRaw.filter((course) => !course.cancelled);
         const recurring = allCourses.filter((course) => course.isRecurring);
         expanded = expandRecurringCourses(recurring, dateRange);
       } catch (e) {
@@ -335,7 +335,13 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
       courses = dedupeCourses([...single, ...expanded]);
 
       if (slots.courseName) {
-        courses = courses.filter((course) => course.courseName.includes(slots.courseName));
+        // 課名正規化（移除尾字「課」），雙向包含以提高容錯
+        const normalize = (s) => String(s || '').replace(/課$/, '');
+        const q = normalize(slots.courseName);
+        courses = courses.filter((course) => {
+          const name = normalize(course.courseName);
+          return name.includes(q) || q.includes(name);
+        });
       }
     } else {
       // 多學生：每位學生單次 + 重複展開彙總
@@ -348,12 +354,12 @@ async function handle_query_schedule_task(slots, userId, messageEvent = null) {
             s.studentName,
             { startDate: dateRange.startDate, endDate: dateRange.endDate },
           );
-          const single = singleAll.filter(course => !course.cancelled);
+          const single = singleAll.filter((course) => !course.cancelled);
           let expanded = [];
           try {
             // 從所有課程中篩選重複課程並展開
             const allCoursesRaw = await firebaseService.getCoursesByStudent(userId, s.studentName);
-            const allCourses = allCoursesRaw.filter(course => !course.cancelled);
+            const allCourses = allCoursesRaw.filter((course) => !course.cancelled);
             const recurring = allCourses.filter((course) => course.isRecurring);
             expanded = expandRecurringCourses(recurring, dateRange);
           } catch (e) {

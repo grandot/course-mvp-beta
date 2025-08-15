@@ -20,9 +20,9 @@ function isQuickReplyWrapped(message) {
   if (!message || typeof message !== 'string') {
     return false;
   }
-  
-  return message.startsWith(QUICKREPLY_BRACKETS.START) && 
-         message.endsWith(QUICKREPLY_BRACKETS.END);
+
+  return message.startsWith(QUICKREPLY_BRACKETS.START)
+         && message.endsWith(QUICKREPLY_BRACKETS.END);
 }
 
 /**
@@ -34,12 +34,12 @@ function wrapQuickReplyText(text) {
   if (!text || typeof text !== 'string') {
     return text;
   }
-  
+
   // 避免重複包裹
   if (isQuickReplyWrapped(text)) {
     return text;
   }
-  
+
   return `${QUICKREPLY_BRACKETS.START}${text}${QUICKREPLY_BRACKETS.END}`;
 }
 
@@ -52,16 +52,16 @@ function unwrapQuickReplyText(wrappedText) {
   if (!wrappedText || typeof wrappedText !== 'string') {
     return wrappedText;
   }
-  
+
   // 如果不是包裹格式，直接返回
   if (!isQuickReplyWrapped(wrappedText)) {
     return wrappedText;
   }
-  
+
   // 移除包裹符號
   return wrappedText.slice(
     QUICKREPLY_BRACKETS.START.length,
-    -QUICKREPLY_BRACKETS.END.length
+    -QUICKREPLY_BRACKETS.END.length,
   ).trim();
 }
 
@@ -77,38 +77,38 @@ function isPotentialQuickReplyMessage(message) {
   if (!message || typeof message !== 'string') {
     return false;
   }
-  
+
   // 已經是包裹格式，不需要處理
   if (isQuickReplyWrapped(message)) {
     return false;
   }
-  
+
   const trimmedMessage = message.trim();
-  
+
   // 精準的 QuickReply 選項列表（基於實際 webhook.js 中的 QuickReply 按鈕）
   const exactQuickReplyOptions = [
     // 確認操作
     '確認', '確認刪除',
-    
-    // 取消操作  
+
+    // 取消操作
     '取消', '取消操作',
-    
+
     // 課程操作
     '修改', '刪除', '新增', '查詢', '記錄',
-    
+
     // 簡單回應
     '是', '否', '好', '不要',
-    
+
     // 時間相關
     '今天', '明天', '昨天',
-    
+
     // 重複課程操作
     '只取消今天', '取消之後全部', '刪除整個重複',
-    
+
     // 常見功能按鈕
     '新增課程', '查詢課表', '記錄內容', '設定提醒',
   ];
-  
+
   // 只有完全匹配已知 QuickReply 選項才包裝
   return exactQuickReplyOptions.includes(trimmedMessage);
 }
@@ -125,13 +125,13 @@ function processQuickReplyMessage(message) {
     wasWrapped: false,
     originalMessage: message,
   };
-  
+
   // 檢查是否需要包裹
   if (isPotentialQuickReplyMessage(message)) {
     result.processedMessage = wrapQuickReplyText(message);
     result.wasWrapped = true;
   }
-  
+
   return result;
 }
 
@@ -165,14 +165,14 @@ module.exports = {
   unwrapQuickReplyText,
   processQuickReplyMessage,
   getCleanMessageForProcessing,
-  
+
   // 檢查功能
   isQuickReplyWrapped,
   isPotentialQuickReplyMessage,
-  
+
   // 工具功能
   logQuickReplyProcessing,
-  
+
   // 常量
   QUICKREPLY_BRACKETS,
 };

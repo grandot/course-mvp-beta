@@ -1204,7 +1204,7 @@ async function enhanceSlotsWithContext(slots, message, intent, userId) {
     const missingCritical = (!slots.studentName || !slots.courseName) && isCriticalIntent;
     
     // 特殊情況：Quick Reply 的取消操作應該允許上下文推導
-    const isQuickReplyCancel = intent === 'cancel_course' && !slots.studentName && (
+    const isQuickReplyCancel = intent === 'cancel_course' && (!slots.studentName || !slots.courseName) && (
       message.includes('刪除整個重複') || 
       message.includes('取消之後全部') || 
       message.includes('只取消今天')

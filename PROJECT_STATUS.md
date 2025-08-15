@@ -39,6 +39,7 @@
 ### Blocked
 - 圖片上傳 404（LINE API）— 需官方支援或替代流程決策 [uid:e424a45a]
 ### Done
+- 2025-08-14：QA 測試系統增強（支援 `@expect.intent`、`@expect.quickReplyIncludes`；本機加入意圖/QuickReply 斷言並於報告顯示命中矩陣；`QA/TEST-TEMPLATE.md` 改為六行卡模板｜文件: qa-system/README.md） [uid:9f2a6e10]
 - 2025-08-14：**重複課程功能完整實作**（P0 支援 daily/weekly/monthly BYMONTHDAY，單一開關控制，起始日智慧推導，小月跳過策略，2分鐘撤銷時限｜規格: spec/recurring/task-recurring.md） [uid:0236f790]
 - 2025-08-13：修改課程功能（modify_course v1 完成｜規格: spec/modify-course/plan.md） [uid:ceab455d]
 - 2025-08-12：新增課程時日曆未寫入成功，但是firebase寫入成功 [uid:35c38d0e]

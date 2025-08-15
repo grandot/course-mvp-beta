@@ -153,9 +153,20 @@ class UnifiedTestRunner {
         const successMatch = (testCase.expectedSuccess === null || testCase.expectedSuccess === undefined)
           ? true
           : (result.success === testCase.expectedSuccess);
-        const final = codeMatch && successMatch;
+
+        // 額外加入：意圖與 QuickReply 比對
+        const expectedIntent = testCase.expectedIntent;
+        const intentMatch = expectedIntent ? (result.intent === expectedIntent) : true;
+
+        const expectedQR = Array.isArray(testCase.expectedQuickReplyIncludes) ? testCase.expectedQuickReplyIncludes : null;
+        const qrItems = Array.isArray(result.quickReply) ? result.quickReply : [];
+        const quickReplyMatch = expectedQR
+          ? expectedQR.every(token => qrItems.some(it => String(it.label || it.text || '').includes(token)))
+          : true;
+
+        const final = codeMatch && successMatch && intentMatch && quickReplyMatch;
         if (!final) {
-          console.log(`❌ 結構化比對失敗 - ${testCase.id} (expected code=${testCase.expectedCode}, success=${testCase.expectedSuccess}) got code=${result.code}, success=${result.success}`);
+          console.log(`❌ 結構化比對失敗 - ${testCase.id} (code:${codeMatch?'✅':'❌'} intent:${intentMatch?'✅':'❌'} qr:${quickReplyMatch?'✅':'❌'} success:${successMatch?'✅':'❌'})`);
         }
         return {
           testCase: testCase,
@@ -164,7 +175,10 @@ class UnifiedTestRunner {
           intent: result.intent,
           keywordMatch: true,
           code: result.code,
-          taskSuccess: result.success
+          taskSuccess: result.success,
+          intentMatch,
+          quickReplyMatch,
+          quickReply: result.quickReply || null
         };
       }
 
@@ -188,7 +202,18 @@ class UnifiedTestRunner {
         fallbackSemantic = output.includes(expected);
       }
 
-      const finalSuccess = (expectedSuccess === null
+      // 加入：意圖與 QuickReply 斷言（在無 code/success 斷言時也可生效）
+      const expectedIntent = testCase.expectedIntent;
+      const intentMatch = expectedIntent ? (result.intent === expectedIntent) : true;
+
+      const expectedQR = Array.isArray(testCase.expectedQuickReplyIncludes) ? testCase.expectedQuickReplyIncludes : null;
+      const qrItems = Array.isArray(result.quickReply) ? result.quickReply : [];
+      const quickReplyMatch = expectedQR
+        ? expectedQR.every(token => qrItems.some(it => String(it.label || it.text || '').includes(token)))
+        : true;
+
+      const structuredOk = intentMatch && quickReplyMatch;
+      const finalSuccess = structuredOk && (expectedSuccess === null
         ? (keywordMatch && fallbackSemantic)
         : (keywordMatch && semanticSuccessAligns));
       
@@ -206,7 +231,7 @@ class UnifiedTestRunner {
       if (finalSuccess) {
         console.log(`✅ 測試通過 - ${testCase.id}: ${testCase.name}`);
       } else {
-        console.log(`❌ 測試失敗 - ${testCase.id}: semantic=${expectedSuccess}, keywordMatch=${keywordMatch}`);
+        console.log(`❌ 測試失敗 - ${testCase.id}: intentMatch=${intentMatch}, quickReplyMatch=${quickReplyMatch}, semantic=${expectedSuccess}, keywordMatch=${keywordMatch}`);
       }
       
       return {
@@ -216,7 +241,10 @@ class UnifiedTestRunner {
         intent: result.intent,
         keywordMatch: keywordMatch,
         code: result.code,
-        taskSuccess: result.success
+        taskSuccess: result.success,
+        intentMatch,
+        quickReplyMatch,
+        quickReply: result.quickReply || null
       };
       
     } catch (error) {
@@ -406,6 +434,10 @@ class UnifiedTestRunner {
       if (expectedKeywords.length > 0) expectLines.push(`- 關鍵詞：${expectedKeywords.join('、')}`);
       if (expectedCode) expectLines.push(`- 預期代碼：${expectedCode}`);
       if (expectedSuccess) expectLines.push(`- 預期成功：${expectedSuccess}`);
+      if (tc.expectedIntent) expectLines.push(`- 預期意圖：${tc.expectedIntent}`);
+      if (Array.isArray(tc.expectedQuickReplyIncludes) && tc.expectedQuickReplyIncludes.length > 0) {
+        expectLines.push(`- 預期 QuickReply：${tc.expectedQuickReplyIncludes.join('、')}`);
+      }
       if (expectLines.length === 0) expectLines.push('- 無明確期望（僅觀察行為）');
       lines.push('**期望**');
       lines.push('');
@@ -428,6 +460,17 @@ class UnifiedTestRunner {
         lines.push('');
         if (expectedKeywords.length > 0) {
           lines.push(renderKeywordMatrix(expectedKeywords, localItem.output || ''));
+          lines.push('');
+        }
+        if (Array.isArray(tc.expectedQuickReplyIncludes) && tc.expectedQuickReplyIncludes.length > 0) {
+          const items = Array.isArray(localItem.quickReply) ? localItem.quickReply : [];
+          const rows = tc.expectedQuickReplyIncludes.map(k => {
+            const hit = items.some(it => String(it.label || it.text || '').includes(k));
+            return `| ${k} | ${hit ? '✅' : '❌'} |`;
+          });
+          lines.push('| QuickReply | 命中 |');
+          lines.push('| --- | --- |');
+          rows.forEach(r => lines.push(r));
           lines.push('');
         }
       }
