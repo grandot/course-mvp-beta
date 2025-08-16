@@ -293,6 +293,17 @@ async function parseIntent(message, userId = null) {
 
     // 補問邏輯改由 IntentRouter 處理（這裡保持純意圖識別）
 
+    // 每月重複課程 - 高精度業務規則（在AI之前攔截）
+    const monthlyPattern = /(每個?月).{0,8}(\d{1,2})號/;
+    const hasQueryWords = /(課表|查|查詢|看|有什麼課|有課嗎)/.test(msg);
+    const hasCourseWords = /課|測驗|評量|訓練|班|教學|科/.test(msg);
+    
+    if (monthlyPattern.test(msg) && !hasQueryWords && hasCourseWords) {
+      console.log('✅ 高精度規則匹配: 每月重複課程');
+      if (enableDiag) { diagMod.pushPath(diag, 'monthly-recurring-rule'); diag.finalIntent = 'create_recurring_course'; await diagMod.logDiagnostics(diag); }
+      return 'create_recurring_course';
+    }
+
     // AI 主判（延長超時、提高信心閾值、加診斷日誌；非課程語句交由 prompt 決策）
     try {
       const enableAI = process.env.ENABLE_AI_FALLBACK === 'true';

@@ -112,6 +112,13 @@ async function identifyIntent(message) {
 - confirm_action: 確認操作（確認、好的、是的）
 - unknown: 無法識別或不屬於課程管理相關
 
+範例：
+- "小華每月15號上午10點鋼琴課" → create_recurring_course (每月重複)
+- "Lumi每月20號數學測驗" → create_recurring_course (每月重複)
+- "查本月課表" → query_schedule (查詢本月)
+- "看這個月課表" → query_schedule (查詢本月)
+- "小明明天英文課" → add_course (單次課程)
+
 回傳格式（純 JSON，不要額外文字）：
 {"intent": "意圖名稱", "confidence": 0.0~1.0}
 

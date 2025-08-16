@@ -325,6 +325,10 @@ async function createReminder(reminderData) {
       ...reminderData,
       executed: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      // 确保 triggerTime 是 Firestore Timestamp
+      triggerTime: reminderData.triggerTime instanceof Date 
+        ? admin.firestore.Timestamp.fromDate(reminderData.triggerTime)
+        : reminderData.triggerTime,
     };
 
     const docRef = await remindersRef.add(reminderDoc);
@@ -347,7 +351,7 @@ async function createReminder(reminderData) {
 async function getPendingReminders() {
   try {
     const firestore = initializeFirebase();
-    const now = new Date();
+    const now = admin.firestore.Timestamp.now();
 
     const snapshot = await firestore.collection('reminders')
       .where('executed', '==', false)
@@ -368,19 +372,22 @@ async function getPendingReminders() {
 }
 
 /**
- * 標記提醒為已執行
+ * 標記提醒為已執行（擴展版本，支援狀態和原因）
  */
-async function markReminderExecuted(reminderId) {
+async function markReminderExecuted(reminderId, executionData = {}) {
   try {
     const firestore = initializeFirebase();
     const reminderRef = firestore.collection('reminders').doc(reminderId);
 
-    await reminderRef.update({
+    const updateData = {
       executed: true,
       executedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+      ...executionData
+    };
 
-    console.log('✅ 提醒已標記為執行:', reminderId);
+    await reminderRef.update(updateData);
+
+    console.log('✅ 提醒已標記為執行:', reminderId, executionData.status || 'executed');
     return true;
   } catch (error) {
     console.error('❌ 標記提醒執行失敗:', error);
@@ -604,6 +611,44 @@ async function deleteImage(imageUrl) {
   }
 }
 
+/**
+ * 根據 ID 查詢課程
+ */
+async function getCourseById(courseId) {
+  try {
+    const firestore = initializeFirebase();
+    const courseRef = firestore.collection('courses').doc(courseId);
+    const courseDoc = await courseRef.get();
+
+    if (!courseDoc.exists) {
+      return null;
+    }
+
+    return { id: courseDoc.id, ...courseDoc.data() };
+  } catch (error) {
+    console.error('❌ 查詢課程失敗:', error);
+    throw error;
+  }
+}
+
+/**
+ * 更新提醒重試資訊
+ */
+async function updateReminderRetry(reminderId, retryData) {
+  try {
+    const firestore = initializeFirebase();
+    const reminderRef = firestore.collection('reminders').doc(reminderId);
+
+    await reminderRef.update(retryData);
+
+    console.log('✅ 提醒重試資訊已更新:', reminderId);
+    return true;
+  } catch (error) {
+    console.error('❌ 更新提醒重試失敗:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   // 初始化
   initializeFirebase,
@@ -649,6 +694,8 @@ module.exports = {
   createReminder,
   getPendingReminders,
   markReminderExecuted,
+  updateReminderRetry,
+  getCourseById,
 
   // 圖片上傳操作
   uploadImage,

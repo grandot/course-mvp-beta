@@ -10,87 +10,39 @@ const axios = require('axios');
 // 初始化 Firebase Admin SDK
 admin.initializeApp();
 
+// 導入提醒執行器和監控工具
+const { reminderExecutor } = require('../src/services/reminderExecutorService');
+const { healthChecker, ReminderLogger } = require('../src/utils/reminderMonitor');
+
 const db = admin.firestore();
 
 /**
- * 定時提醒檢查函式
+ * 定時提醒檢查函式（使用新的提醒執行器）
  * 每5分鐘執行一次，檢查需要發送的提醒
  */
 exports.checkReminders = functions.pubsub
   .schedule('every 5 minutes')
   .timeZone('Asia/Taipei')
   .onRun(async (context) => {
-    console.log('🔄 開始檢查待發送提醒...');
+    console.log('🔄 開始執行提醒檢查（使用 ReminderExecutor）...');
     
     try {
-      const now = new Date();
-      const nowTimestamp = admin.firestore.Timestamp.fromDate(now);
+      // 使用新的提醒執行器
+      const result = await reminderExecutor.execute();
       
-      // 查詢需要發送的提醒
-      const pendingReminders = await db.collection('reminders')
-        .where('executed', '==', false)
-        .where('triggerTime', '<=', nowTimestamp)
-        .limit(50) // 限制批次處理數量
-        .get();
+      // 記錄執行結果
+      ReminderLogger.logExecution(result);
       
-      console.log(`📋 找到 ${pendingReminders.size} 筆待發送提醒`);
-      
-      if (pendingReminders.empty) {
-        console.log('✅ 目前沒有需要發送的提醒');
-        return null;
+      // 執行健康檢查
+      const health = await healthChecker.checkHealth();
+      if (health.level === 'warning' || health.level === 'error') {
+        ReminderLogger.logHealthCheck(health);
       }
       
-      // 批次處理提醒
-      const batch = db.batch();
-      const reminderPromises = [];
-      
-      pendingReminders.forEach((doc) => {
-        const reminderData = doc.data();
-        
-        // 發送提醒
-        const reminderPromise = sendReminderMessage(reminderData)
-          .then((success) => {
-            if (success) {
-              // 標記為已執行
-              batch.update(doc.ref, {
-                executed: true,
-                executedAt: admin.firestore.FieldValue.serverTimestamp(),
-                executionStatus: 'success'
-              });
-            } else {
-              // 記錄失敗但不重試（避免無限循環）
-              batch.update(doc.ref, {
-                executed: true,
-                executedAt: admin.firestore.FieldValue.serverTimestamp(),
-                executionStatus: 'failed'
-              });
-            }
-          })
-          .catch((error) => {
-            console.error(`❌ 提醒發送失敗 (${doc.id}):`, error);
-            // 標記為失敗
-            batch.update(doc.ref, {
-              executed: true,
-              executedAt: admin.firestore.FieldValue.serverTimestamp(),
-              executionStatus: 'error',
-              errorMessage: error.message
-            });
-          });
-        
-        reminderPromises.push(reminderPromise);
-      });
-      
-      // 等待所有提醒發送完成
-      await Promise.all(reminderPromises);
-      
-      // 批次更新 Firestore
-      await batch.commit();
-      
-      console.log(`✅ 成功處理 ${pendingReminders.size} 筆提醒`);
-      return { processedCount: pendingReminders.size };
+      return result;
       
     } catch (error) {
-      console.error('❌ 檢查提醒時發生錯誤:', error);
+      console.error('❌ 提醒執行器執行失敗:', error);
       throw error;
     }
   });
@@ -259,8 +211,8 @@ exports.triggerReminderCheck = functions.https.onRequest(async (req, res) => {
   try {
     console.log('🔧 手動觸發提醒檢查...');
     
-    // 執行提醒檢查邏輯（重用定時任務的邏輯）
-    const result = await exports.checkReminders.run();
+    // 直接呼叫提醒執行器
+    const result = await reminderExecutor.execute();
     
     res.status(200).json({
       success: true,
@@ -270,6 +222,59 @@ exports.triggerReminderCheck = functions.https.onRequest(async (req, res) => {
     
   } catch (error) {
     console.error('❌ 手動觸發提醒檢查失敗:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 提醒系統健康檢查
+ * HTTP 觸發，用於監控和觀測
+ */
+exports.getReminderHealth = functions.https.onRequest(async (req, res) => {
+  try {
+    const health = await healthChecker.checkHealth();
+    const monitoring = healthChecker.getMonitoringSummary();
+    const metrics = healthChecker.getPerformanceMetrics();
+    
+    res.status(200).json({
+      success: true,
+      health,
+      monitoring,
+      metrics
+    });
+    
+  } catch (error) {
+    console.error('❌ 健康檢查失敗:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 取得提醒執行器統計（簡化版本）
+ * HTTP 觸發，用於快速查看狀態
+ */
+exports.getReminderStats = functions.https.onRequest(async (req, res) => {
+  try {
+    const stats = reminderExecutor.getStats();
+    const config = {
+      enabled: reminderExecutor.isEnabled(),
+      isRunning: reminderExecutor.isRunning
+    };
+    
+    res.status(200).json({
+      success: true,
+      stats,
+      config
+    });
+    
+  } catch (error) {
+    console.error('❌ 取得提醒統計失敗:', error);
     res.status(500).json({
       success: false,
       error: error.message
