@@ -213,7 +213,11 @@ function expandRecurringCourses(recurringCourses, dateRange) {
     const recurrenceType = c.recurrenceType || 'weekly';
     if (recurrenceType === 'daily') {
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
+        // 修復：使用本地日期避免 UTC 時區轉換問題
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
         results.push({
           ...c,
           courseDate: dateStr,
@@ -237,7 +241,11 @@ function expandRecurringCourses(recurringCourses, dateRange) {
 
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         if (daysSet.has(d.getDay())) {
-          const dateStr = d.toISOString().split('T')[0];
+          // 修復：使用本地日期避免 UTC 時區轉換問題
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
           results.push({
             ...c,
             courseDate: dateStr,
