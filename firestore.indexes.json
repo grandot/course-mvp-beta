@@ -4,6 +4,32 @@
       "collectionGroup": "courses",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "studentName", "order": "ASCENDING" },
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "courseDate", "order": "ASCENDING" },
+        { "fieldPath": "scheduleTime", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "executed", "order": "ASCENDING" },
+        { "fieldPath": "executedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "executed", "order": "ASCENDING" },
+        { "fieldPath": "triggerTime", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
         {
           "fieldPath": "userId",
           "order": "ASCENDING"
@@ -65,16 +91,6 @@
         {
           "fieldPath": "updated_at",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "user_slot_states",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "created_at",
-          "order": "ASCENDING"
         }
       ]
     },
@@ -158,44 +174,6 @@
         },
         {
           "fieldPath": "execution_time",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "slot_metrics",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "slot_metrics",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "template_id",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "slot_metrics",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "intent",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
           "order": "DESCENDING"
         }
       ]

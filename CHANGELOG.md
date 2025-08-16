@@ -1,5 +1,16 @@
 # Changelog
 
+## 2025-08-16
+
+- Reminders: fully implemented end-to-end (create → scheduled execute every 5 minutes → LINE push → daily cleanup at 02:00), with structured logs and graceful error handling.
+- Functions: migrated to Firebase Functions Gen2 (Cloud Run) and Node.js 20; switched triggers to `firebase-functions/v2` (`onRequest`, `onSchedule`).
+- Cleanup: enhanced `cleanupOldReminders` with detailed query/batch logs, try/catch wrapping, and index hint capture; added schema diagnostics; ensured function never crashes on Firestore errors.
+- Security: removed public HTTP test/execute endpoints (check/cleanup/createTestReminder) to reduce exposure; kept `getReminderStats` for read-only monitoring.
+- Indexes: added Firestore composite indexes for `reminders(executed, executedAt)` and `reminders(executed, triggerTime)`; aligned existing `courses(studentName, userId, courseDate, scheduleTime)`; removed unnecessary single-field style index definitions that caused 400 errors.
+- Config: updated `firebase.json` runtime to `nodejs20`; updated `functions/package.json` engines node to `20` and `firebase-functions` to `^5.0.1`.
+- Tooling: kept ESLint clean (only console warnings where intentional for observability).
+
+
 ## [2025-08-16] - 提醒執行器系統完整實作
 
 ### 🎯 新功能

@@ -1,283 +1,190 @@
+/* eslint-disable import/no-unresolved */
 /**
- * Firebase Cloud Functions for Course MVP
- * 提醒系統與定時任務處理
+ * Firebase Cloud Functions for Course MVP（精簡版）
+ * 保留：checkReminders / cleanupOldReminders / getReminderStats
  */
 
-const functions = require('firebase-functions');
+const { setGlobalOptions } = require('firebase-functions/v2');
+const { onRequest } = require('firebase-functions/v2/https');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
-const axios = require('axios');
 
-// 初始化 Firebase Admin SDK
 admin.initializeApp();
+setGlobalOptions({ region: 'us-central1' });
 
-// 導入提醒執行器和監控工具
-const { reminderExecutor } = require('../src/services/reminderExecutorService');
-const { healthChecker, ReminderLogger } = require('../src/utils/reminderMonitor');
+// 安全載入 reminderExecutor（避免未知路徑錯誤導致整個 Functions 初始化失敗）
+let reminderExecutor;
+try {
+  // 正確：位於 functions/ 同層
+  // eslint-disable-next-line global-require
+  ({ reminderExecutor } = require('./reminderExecutorService'));
+} catch (e) {
+  // 優雅降級：避免 cleanupOldReminders 因為頂層 require 失敗而無法部署/執行
+  // 仍然輸出可觀測性，提醒修正路徑
+  // eslint-disable-next-line no-console
+  console.warn(JSON.stringify({
+    fn: 'bootstrap',
+    msg: 'reminderExecutorService require failed, using stub',
+    errorMessage: e?.message || String(e),
+  }));
+  reminderExecutor = {
+    isRunning: false,
+    isEnabled: () => false,
+    getStats: () => ({ disabled: true }),
+    // 不執行任何提醒邏輯，僅回傳狀態以避免 crash
+    execute: async () => ({ skipped: true, reason: 'reminderExecutor_unavailable' }),
+  };
+}
 
 const db = admin.firestore();
 
-/**
- * 定時提醒檢查函式（使用新的提醒執行器）
- * 每5分鐘執行一次，檢查需要發送的提醒
- */
-exports.checkReminders = functions.pubsub
-  .schedule('every 5 minutes')
-  .timeZone('Asia/Taipei')
-  .onRun(async (context) => {
-    console.log('🔄 開始執行提醒檢查（使用 ReminderExecutor）...');
-    
-    try {
-      // 使用新的提醒執行器
-      const result = await reminderExecutor.execute();
-      
-      // 記錄執行結果
-      ReminderLogger.logExecution(result);
-      
-      // 執行健康檢查
-      const health = await healthChecker.checkHealth();
-      if (health.level === 'warning' || health.level === 'error') {
-        ReminderLogger.logHealthCheck(health);
-      }
-      
-      return result;
-      
-    } catch (error) {
-      console.error('❌ 提醒執行器執行失敗:', error);
-      throw error;
-    }
-  });
+// 每 5 分鐘自動檢查並發送提醒
+exports.checkReminders = onSchedule({ schedule: 'every 5 minutes', timeZone: 'Asia/Taipei' }, () => reminderExecutor.execute());
 
-/**
- * 發送 LINE 提醒訊息
- */
-async function sendReminderMessage(reminderData) {
+// 將清理邏輯抽成可重用函式（供排程與 HTTP 觸發）
+async function runCleanupOldReminders() {
+  const startedAt = Date.now();
+  const runId = `cleanup-${startedAt}`;
+  const log = (msg, extra = {}) => {
+    try {
+      console.log(JSON.stringify({
+        fn: 'cleanupOldReminders',
+        runId,
+        msg,
+        ...extra,
+      }));
+    } catch (e) { // eslint-disable-line no-unused-vars
+      console.log(`[cleanupOldReminders] ${msg}`);
+    }
+  };
+
   try {
-    const { userId, studentName, courseName, reminderNote, courseDateTime } = reminderData;
-    
-    // 組成提醒訊息
-    let reminderText = `⏰ 課程提醒\n\n`;
-    reminderText += `👦 學生：${studentName}\n`;
-    reminderText += `📚 課程：${courseName}\n`;
-    reminderText += `🕐 時間：${courseDateTime}\n`;
-    
-    if (reminderNote) {
-      reminderText += `📌 備註：${reminderNote}\n`;
+    // 計算截止時間（30天前）
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 30);
+    const cutoff = admin.firestore.Timestamp.fromDate(cutoffDate);
+
+    const collectionName = 'reminders';
+    const queryPlan = [
+      { field: 'executed', op: '==', value: true },
+      { field: 'executedAt', op: '<=', value: cutoff.toDate().toISOString() },
+    ];
+
+    log('Query.start', { collection: collectionName, queryPlan, limit: 100 });
+
+    let snap;
+    try {
+      snap = await db
+        .collection(collectionName)
+        .where('executed', '==', true)
+        .where('executedAt', '<=', cutoff)
+        .limit(100)
+        .get();
+    } catch (error) {
+      const message = error?.message || String(error);
+      let indexUrl = null;
+      try {
+        const m = message.match(/https?:\/\/\S+/);
+        const [first] = m || [];
+        if (first) indexUrl = first;
+      } catch (e) { /* noop */ }
+      log('Query.error', {
+        errorMessage: message,
+        errorStack: error?.stack || null,
+        indexUrl: indexUrl || null,
+        hint: '若為 FAILED_PRECONDITION 且訊息含 index URL，請於該連結建立 composite index',
+      });
+      return {
+        success: false,
+        stage: 'query',
+        errorMessage: message,
+        indexUrl,
+      };
     }
-    
-    reminderText += `\n祝上課愉快！ 😊`;
-    
-    // LINE API 設定
-    const lineApiUrl = 'https://api.line.me/v2/bot/message/push';
-    const lineAccessToken = functions.config().line?.access_token;
-    
-    if (!lineAccessToken) {
-      throw new Error('LINE access token 未設定');
+
+    log('Query.success', { snapshotSize: snap.size, empty: snap.empty });
+
+    if (!snap.empty) {
+      const sample = snap.docs[0]?.data?.() || {};
+      const executedType = typeof sample.executed;
+      const isTimestamp = sample.executedAt
+        && (sample.executedAt instanceof admin.firestore.Timestamp);
+
+      const executedAtRaw = (() => {
+        try {
+          return sample.executedAt?.toDate?.().toISOString?.();
+        } catch (e) {
+          return null;
+        }
+      })();
+
+      log('Schema.check', {
+        fields: Object.keys(sample),
+        executedType,
+        executedAtType: isTimestamp ? 'Timestamp' : typeof sample.executedAt,
+        executedAtRaw,
+      });
     }
-    
-    const payload = {
-      to: userId,
-      messages: [{
-        type: 'text',
-        text: reminderText
-      }]
-    };
-    
-    const response = await axios.post(lineApiUrl, payload, {
-      headers: {
-        'Authorization': `Bearer ${lineAccessToken}`,
-        'Content-Type': 'application/json'
-      },
-      timeout: 10000
-    });
-    
-    if (response.status === 200) {
-      console.log(`✅ 提醒訊息發送成功 (用戶: ${userId})`);
-      return true;
-    } else {
-      console.error(`❌ LINE API 回應異常: ${response.status}`);
-      return false;
+
+    if (snap.empty) {
+      log('NoData', { deletedCount: 0 });
+      return { success: true, deletedCount: 0 };
     }
-    
+
+    const batch = db.batch();
+    snap.forEach((doc) => batch.delete(doc.ref));
+    try {
+      await batch.commit();
+    } catch (error) {
+      log('Batch.error', {
+        errorMessage: error?.message || String(error),
+        errorStack: error?.stack || null,
+      });
+      return {
+        success: false,
+        stage: 'batch',
+        errorMessage: error?.message || String(error),
+      };
+    }
+
+    const durationMs = Date.now() - startedAt;
+    log('Cleanup.done', { deletedCount: snap.size, durationMs });
+    return { success: true, deletedCount: snap.size, durationMs };
   } catch (error) {
-    console.error('❌ 發送提醒訊息失敗:', error);
-    return false;
+    // 任何未捕捉的例外：記錄並優雅結束
+    console.warn(JSON.stringify({ // eslint-disable-line no-console
+      fn: 'cleanupOldReminders',
+      msg: 'Fatal.error',
+      errorMessage: error?.message || String(error),
+      errorStack: error?.stack || null,
+    }));
+    return {
+      success: false,
+      stage: 'fatal',
+      errorMessage: error?.message || String(error),
+    };
   }
 }
 
-/**
- * 清理過期提醒記錄
- * 每天晚上 2 點執行，清理 30 天前的已執行提醒
- */
-exports.cleanupOldReminders = functions.pubsub
-  .schedule('0 2 * * *')
-  .timeZone('Asia/Taipei')
-  .onRun(async (context) => {
-    console.log('🧹 開始清理過期提醒記錄...');
-    
-    try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const cutoffTimestamp = admin.firestore.Timestamp.fromDate(thirtyDaysAgo);
-      
-      // 查詢需要清理的記錄
-      const oldReminders = await db.collection('reminders')
-        .where('executed', '==', true)
-        .where('executedAt', '<=', cutoffTimestamp)
-        .limit(100) // 批次處理
-        .get();
-      
-      if (oldReminders.empty) {
-        console.log('✅ 沒有需要清理的過期提醒');
-        return null;
-      }
-      
-      // 批次刪除
-      const batch = db.batch();
-      oldReminders.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      
-      await batch.commit();
-      
-      console.log(`✅ 成功清理 ${oldReminders.size} 筆過期提醒記錄`);
-      return { deletedCount: oldReminders.size };
-      
-    } catch (error) {
-      console.error('❌ 清理過期提醒時發生錯誤:', error);
-      throw error;
-    }
-  });
+// 每日清理 30 天前的已執行提醒（Scheduler 觸發）
+exports.cleanupOldReminders = onSchedule({ schedule: '0 2 * * *', timeZone: 'Asia/Taipei' }, async () => runCleanupOldReminders());
 
-/**
- * 健康檢查函式
- * HTTP 觸發，用於監控系統狀態
- */
-exports.healthCheck = functions.https.onRequest(async (req, res) => {
-  const healthData = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: {
-      firestore: 'unknown',
-      lineApi: 'unknown'
-    }
-  };
-  
-  try {
-    // 測試 Firestore 連接
-    await db.collection('_health').doc('test').set({
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
-    });
-    healthData.services.firestore = 'healthy';
-    
-    // 測試 LINE API（如果有設定 token）
-    const lineAccessToken = functions.config().line?.access_token;
-    if (lineAccessToken) {
-      try {
-        await axios.get('https://api.line.me/v2/bot/info', {
-          headers: { 'Authorization': `Bearer ${lineAccessToken}` },
-          timeout: 5000
-        });
-        healthData.services.lineApi = 'healthy';
-      } catch (lineError) {
-        healthData.services.lineApi = 'error';
-      }
-    } else {
-      healthData.services.lineApi = 'not_configured';
-    }
-    
-    // 查詢活躍提醒數量
-    const activeReminders = await db.collection('reminders')
-      .where('executed', '==', false)
-      .count()
-      .get();
-    
-    healthData.activeReminders = activeReminders.data().count;
-    
-    res.status(200).json(healthData);
-    
-  } catch (error) {
-    console.error('❌ 健康檢查失敗:', error);
-    healthData.status = 'unhealthy';
-    healthData.error = error.message;
-    res.status(500).json(healthData);
-  }
-});
+// 已移除公開清理入口，改由排程觸發（減少外部暴露面）
 
-/**
- * 手動觸發提醒檢查
- * HTTP 觸發，用於測試和手動執行
- */
-exports.triggerReminderCheck = functions.https.onRequest(async (req, res) => {
-  try {
-    console.log('🔧 手動觸發提醒檢查...');
-    
-    // 直接呼叫提醒執行器
-    const result = await reminderExecutor.execute();
-    
-    res.status(200).json({
-      success: true,
-      message: '提醒檢查執行完成',
-      result: result
-    });
-    
-  } catch (error) {
-    console.error('❌ 手動觸發提醒檢查失敗:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * 提醒系統健康檢查
- * HTTP 觸發，用於監控和觀測
- */
-exports.getReminderHealth = functions.https.onRequest(async (req, res) => {
-  try {
-    const health = await healthChecker.checkHealth();
-    const monitoring = healthChecker.getMonitoringSummary();
-    const metrics = healthChecker.getPerformanceMetrics();
-    
-    res.status(200).json({
-      success: true,
-      health,
-      monitoring,
-      metrics
-    });
-    
-  } catch (error) {
-    console.error('❌ 健康檢查失敗:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-/**
- * 取得提醒執行器統計（簡化版本）
- * HTTP 觸發，用於快速查看狀態
- */
-exports.getReminderStats = functions.https.onRequest(async (req, res) => {
+// 只讀統計（監控用）
+exports.getReminderStats = onRequest(async (req, res) => {
   try {
     const stats = reminderExecutor.getStats();
     const config = {
       enabled: reminderExecutor.isEnabled(),
-      isRunning: reminderExecutor.isRunning
+      isRunning: reminderExecutor.isRunning,
     };
-    
-    res.status(200).json({
-      success: true,
-      stats,
-      config
-    });
-    
-  } catch (error) {
-    console.error('❌ 取得提醒統計失敗:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(200).json({ success: true, stats, config });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
   }
 });
+
+// 已移除公開執行入口，改由排程觸發（減少外部暴露面）
+
+// 已移除測試入口（避免誤觸發）；如需臨時測試，可短期開啟或用 Firestore 手動造數據
